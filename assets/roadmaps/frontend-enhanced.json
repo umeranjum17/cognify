@@ -1,0 +1,2370 @@
+{
+  "id": "frontend",
+  "title": "Frontend",
+  "description": "Learn Frontend step by step",
+  "version": "1.0.0",
+  "lastUpdated": "2025-07-11T21:32:49.287Z",
+  "source": "roadmap.sh",
+  "categories": [
+    {
+      "id": "fundamentals",
+      "title": "Fundamentals",
+      "description": "Core concepts and basic knowledge required to get started",
+      "icon": "foundation",
+      "topics": [
+        {
+          "id": "seo-basics",
+          "title": "SEO Basics",
+          "description": "Learn about SEO Basics",
+          "difficulty": "beginner",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of SEO Basics",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using SEO Basics",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "accessibility",
+          "title": "Accessibility",
+          "description": "Learn about Accessibility",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Accessibility",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Accessibility",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "css",
+          "title": "CSS",
+          "description": "Learn about CSS",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of CSS",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using CSS",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "fetch-api-ajax-xhr",
+          "title": "Fetch API / Ajax (XHR)",
+          "description": "Learn about Fetch API / Ajax (XHR)",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [
+            "api"
+          ],
+          "learningObjectives": [
+            "Understand the fundamentals of Fetch API / Ajax (XHR)",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Fetch API / Ajax (XHR)",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "forms-and-validations",
+          "title": "Forms and Validations",
+          "description": "Learn about Forms and Validations",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Forms and Validations",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Forms and Validations",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "html",
+          "title": "HTML",
+          "description": "Learn about HTML",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of HTML",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using HTML",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "html-templates",
+          "title": "HTML Templates",
+          "description": "Learn about HTML Templates",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of HTML Templates",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using HTML Templates",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "javascript",
+          "title": "JavaScript",
+          "description": "Learn about JavaScript",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [
+            "javascript"
+          ],
+          "learningObjectives": [
+            "Understand the fundamentals of JavaScript",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using JavaScript",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "learn-dom-manipulation",
+          "title": "Learn DOM Manipulation",
+          "description": "Learn about Learn DOM Manipulation",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Learn DOM Manipulation",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Learn DOM Manipulation",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "sasspostcss",
+          "title": "SassPostCSS",
+          "description": "Learn about SassPostCSS",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of SassPostCSS",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using SassPostCSS",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "writing-csstailwind",
+          "title": "Writing CSSTailwind",
+          "description": "Learn about Writing CSSTailwind",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Writing CSSTailwind",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Writing CSSTailwind",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "writing-semantic-html",
+          "title": "Writing Semantic HTML",
+          "description": "Learn about Writing Semantic HTML",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Writing Semantic HTML",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Writing Semantic HTML",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "css-architecturecss-preprocessorsbem",
+          "title": "CSS ArchitectureCSS PreprocessorsBEM",
+          "description": "Learn about CSS ArchitectureCSS PreprocessorsBEM",
+          "difficulty": "advanced",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of CSS ArchitectureCSS PreprocessorsBEM",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using CSS ArchitectureCSS PreprocessorsBEM",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        }
+      ],
+      "order": 0,
+      "estimatedHours": 39,
+      "topicCount": 13
+    },
+    {
+      "id": "css-&-styling",
+      "title": "CSS & Styling",
+      "description": "Learn about CSS & Styling concepts and practices",
+      "icon": "category",
+      "topics": [
+        {
+          "id": "responsive-design",
+          "title": "Responsive Design",
+          "description": "Learn about Responsive Design",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Responsive Design",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Responsive Design",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        }
+      ],
+      "order": 1,
+      "estimatedHours": 3,
+      "topicCount": 1
+    },
+    {
+      "id": "javascript-frameworks",
+      "title": "JavaScript Frameworks",
+      "description": "Learn about JavaScript Frameworks concepts and practices",
+      "icon": "category",
+      "topics": [
+        {
+          "id": "angular",
+          "title": "Angular",
+          "description": "Learn about Angular",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Angular",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Angular",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "nextjs",
+          "title": "Next.js",
+          "description": "Learn about Next.js",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [
+            "javascript"
+          ],
+          "learningObjectives": [
+            "Understand the fundamentals of Next.js",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Next.js",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "nuxtjs",
+          "title": "Nuxt.js",
+          "description": "Learn about Nuxt.js",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [
+            "javascript"
+          ],
+          "learningObjectives": [
+            "Understand the fundamentals of Nuxt.js",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Nuxt.js",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "react",
+          "title": "React",
+          "description": "Learn about React",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [
+            "react"
+          ],
+          "learningObjectives": [
+            "Understand the fundamentals of React",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using React",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "react-native",
+          "title": "React Native",
+          "description": "Learn about React Native",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [
+            "react"
+          ],
+          "learningObjectives": [
+            "Understand the fundamentals of React Native",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using React Native",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "svelte",
+          "title": "Svelte",
+          "description": "Learn about Svelte",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Svelte",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Svelte",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "svelte-kit",
+          "title": "Svelte Kit",
+          "description": "Learn about Svelte Kit",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Svelte Kit",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Svelte Kit",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "vuejs",
+          "title": "Vue.js",
+          "description": "Learn about Vue.js",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [
+            "javascript"
+          ],
+          "learningObjectives": [
+            "Understand the fundamentals of Vue.js",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Vue.js",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "vuepress",
+          "title": "Vuepress",
+          "description": "Learn about Vuepress",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Vuepress",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Vuepress",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        }
+      ],
+      "order": 2,
+      "estimatedHours": 27,
+      "topicCount": 9
+    },
+    {
+      "id": "build-tools",
+      "title": "Build Tools",
+      "description": "Learn about Build Tools concepts and practices",
+      "icon": "category",
+      "topics": [
+        {
+          "id": "parcel",
+          "title": "Parcel",
+          "description": "Learn about Parcel",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Parcel",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Parcel",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "rollup",
+          "title": "Rollup",
+          "description": "Learn about Rollup",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Rollup",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Rollup",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "typescript",
+          "title": "TypeScript",
+          "description": "Learn about TypeScript",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of TypeScript",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using TypeScript",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "typescriptnodejs",
+          "title": "TypeScriptNodejs",
+          "description": "Learn about TypeScriptNodejs",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [
+            "javascript"
+          ],
+          "learningObjectives": [
+            "Understand the fundamentals of TypeScriptNodejs",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using TypeScriptNodejs",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "vite",
+          "title": "Vite",
+          "description": "Learn about Vite",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Vite",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Vite",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "vitestjest",
+          "title": "VitestJest",
+          "description": "Learn about VitestJest",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of VitestJest",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using VitestJest",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "webpack",
+          "title": "Webpack",
+          "description": "Learn about Webpack",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Webpack",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Webpack",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        }
+      ],
+      "order": 3,
+      "estimatedHours": 21,
+      "topicCount": 7
+    },
+    {
+      "id": "testing",
+      "title": "Testing",
+      "description": "Quality assurance and testing methodologies",
+      "icon": "bug_report",
+      "topics": [
+        {
+          "id": "cypress",
+          "title": "Cypress",
+          "description": "Learn about Cypress",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Cypress",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Cypress",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "playwright",
+          "title": "Playwright",
+          "description": "Learn about Playwright",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Playwright",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Playwright",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        }
+      ],
+      "order": 4,
+      "estimatedHours": 6,
+      "topicCount": 2
+    },
+    {
+      "id": "performance",
+      "title": "Performance",
+      "description": "Optimization techniques and performance monitoring",
+      "icon": "speed",
+      "topics": [
+        {
+          "id": "using-lighthouse",
+          "title": "Using Lighthouse",
+          "description": "Learn about Using Lighthouse",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Using Lighthouse",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Using Lighthouse",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        }
+      ],
+      "order": 5,
+      "estimatedHours": 3,
+      "topicCount": 1
+    },
+    {
+      "id": "progressive-web-apps",
+      "title": "Progressive Web Apps",
+      "description": "Learn about Progressive Web Apps concepts and practices",
+      "icon": "category",
+      "topics": [
+        {
+          "id": "pwas",
+          "title": "PWAs",
+          "description": "Learn about PWAs",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of PWAs",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using PWAs",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "service-workers",
+          "title": "Service Workers",
+          "description": "Learn about Service Workers",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Service Workers",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Service Workers",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        }
+      ],
+      "order": 6,
+      "estimatedHours": 6,
+      "topicCount": 2
+    },
+    {
+      "id": "mobile-development",
+      "title": "Mobile Development",
+      "description": "Learn about Mobile Development concepts and practices",
+      "icon": "category",
+      "topics": [
+        {
+          "id": "flutter",
+          "title": "Flutter",
+          "description": "Learn about Flutter",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Flutter",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Flutter",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "ionic",
+          "title": "Ionic",
+          "description": "Learn about Ionic",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Ionic",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Ionic",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        }
+      ],
+      "order": 7,
+      "estimatedHours": 6,
+      "topicCount": 2
+    },
+    {
+      "id": "other",
+      "title": "Other",
+      "description": "Learn about Other concepts and practices",
+      "icon": "category",
+      "topics": [
+        {
+          "id": "learn-the-basics",
+          "title": "Learn the basics",
+          "description": "Learn about Learn the basics",
+          "difficulty": "beginner",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Learn the basics",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Learn the basics",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "web-security-basics",
+          "title": "Web Security Basics",
+          "description": "Learn about Web Security Basics",
+          "difficulty": "beginner",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [
+            "security"
+          ],
+          "learningObjectives": [
+            "Understand the fundamentals of Web Security Basics",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Web Security Basics",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "alternative-option-pick-this-or-purple",
+          "title": "Alternative Option / Pick this or purple",
+          "description": "Learn about Alternative Option / Pick this or purple",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Alternative Option / Pick this or purple",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Alternative Option / Pick this or purple",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "apollo",
+          "title": "Apollo",
+          "description": "Learn about Apollo",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Apollo",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Apollo",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "astro",
+          "title": "Astro",
+          "description": "Learn about Astro",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Astro",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Astro",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "authentication-strategies",
+          "title": "Authentication Strategies",
+          "description": "Learn about Authentication Strategies",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Authentication Strategies",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Authentication Strategies",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "bitbucket",
+          "title": "Bitbucket",
+          "description": "Learn about Bitbucket",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Bitbucket",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Bitbucket",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "browser-apis",
+          "title": "Browser APIs",
+          "description": "Learn about Browser APIs",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [
+            "api"
+          ],
+          "learningObjectives": [
+            "Understand the fundamentals of Browser APIs",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Browser APIs",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "build-tools",
+          "title": "Build Tools",
+          "description": "Learn about Build Tools",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Build Tools",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Build Tools",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "components-also-worth-looking-at-are",
+          "title": "Components. Also worth looking at are",
+          "description": "Learn about Components. Also worth looking at are",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Components. Also worth looking at are",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Components. Also worth looking at are",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "content-security-policy",
+          "title": "Content Security Policy",
+          "description": "Learn about Content Security Policy",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [
+            "security"
+          ],
+          "learningObjectives": [
+            "Understand the fundamentals of Content Security Policy",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Content Security Policy",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "continue-learning-with-following-relevant-tracks",
+          "title": "Continue Learning with following relevant tracks",
+          "description": "Learn about Continue Learning with following relevant tracks",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Continue Learning with following relevant tracks",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Continue Learning with following relevant tracks",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "corshttps",
+          "title": "CORSHTTPS",
+          "description": "Learn about CORSHTTPS",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of CORSHTTPS",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using CORSHTTPS",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "credentials",
+          "title": "Credentials",
+          "description": "Learn about Credentials",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Credentials",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Credentials",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "custom-elements",
+          "title": "Custom Elements",
+          "description": "Learn about Custom Elements",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Custom Elements",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Custom Elements",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "desktop-apps",
+          "title": "Desktop Apps",
+          "description": "Learn about Desktop Apps",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Desktop Apps",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Desktop Apps",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "device-orientation",
+          "title": "Device Orientation",
+          "description": "Learn about Device Orientation",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Device Orientation",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Device Orientation",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "electron",
+          "title": "Electron",
+          "description": "Learn about Electron",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Electron",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Electron",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "eleventy",
+          "title": "Eleventy",
+          "description": "Learn about Eleventy",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Eleventy",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Eleventy",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "frontend",
+          "title": "Front-end",
+          "description": "Learn about Front-end",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Front-end",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Front-end",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "fullstack",
+          "title": "Fullstack",
+          "description": "Learn about Fullstack",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Fullstack",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Fullstack",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "git",
+          "title": "Git",
+          "description": "Learn about Git",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Git",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Git",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "github",
+          "title": "GitHub",
+          "description": "Learn about GitHub",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of GitHub",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using GitHub",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "gitlab",
+          "title": "GitLab",
+          "description": "Learn about GitLab",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of GitLab",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using GitLab",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "graphql",
+          "title": "GraphQL",
+          "description": "Learn about GraphQL",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of GraphQL",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using GraphQL",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "internet",
+          "title": "Internet",
+          "description": "Learn about Internet",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Internet",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Internet",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "linters-and-formatters",
+          "title": "Linters and Formatters",
+          "description": "Learn about Linters and Formatters",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Linters and Formatters",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Linters and Formatters",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "location",
+          "title": "Location",
+          "description": "Learn about Location",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Location",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Location",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "making-layouts",
+          "title": "Making Layouts",
+          "description": "Learn about Making Layouts",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Making Layouts",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Making Layouts",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "measure-improve-perf",
+          "title": "Measure & Improve Perf.",
+          "description": "Learn about Measure & Improve Perf.",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Measure & Improve Perf.",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Measure & Improve Perf.",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "mobile-apps",
+          "title": "Mobile Apps",
+          "description": "Learn about Mobile Apps",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Mobile Apps",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Mobile Apps",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "module-bundlers",
+          "title": "Module Bundlers",
+          "description": "Learn about Module Bundlers",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Module Bundlers",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Module Bundlers",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "notifications",
+          "title": "Notifications",
+          "description": "Learn about Notifications",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Notifications",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Notifications",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "order-not-strict-learn-anytime",
+          "title": "Order not strict / Learn anytime",
+          "description": "Learn about Order not strict / Learn anytime",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Order not strict / Learn anytime",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Order not strict / Learn anytime",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "owasp-security-risks",
+          "title": "OWASP Security Risks",
+          "description": "Learn about OWASP Security Risks",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [
+            "security"
+          ],
+          "learningObjectives": [
+            "Understand the fundamentals of OWASP Security Risks",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using OWASP Security Risks",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "package-managers",
+          "title": "Package Managers",
+          "description": "Learn about Package Managers",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Package Managers",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Package Managers",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "payments",
+          "title": "Payments",
+          "description": "Learn about Payments",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Payments",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Payments",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "performance-best-practices",
+          "title": "Performance Best Practices",
+          "description": "Learn about Performance Best Practices",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [
+            "performance"
+          ],
+          "learningObjectives": [
+            "Understand the fundamentals of Performance Best Practices",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Performance Best Practices",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "performance-metrics",
+          "title": "Performance Metrics",
+          "description": "Learn about Performance Metrics",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [
+            "performance"
+          ],
+          "learningObjectives": [
+            "Understand the fundamentals of Performance Metrics",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Performance Metrics",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "personal-recommendation-opinion",
+          "title": "Personal Recommendation / Opinion",
+          "description": "Learn about Personal Recommendation / Opinion",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Personal Recommendation / Opinion",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Personal Recommendation / Opinion",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "pick-a-framework",
+          "title": "Pick a Framework",
+          "description": "Learn about Pick a Framework",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Pick a Framework",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Pick a Framework",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "prettiereslint",
+          "title": "PrettierESLint",
+          "description": "Learn about PrettierESLint",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of PrettierESLint",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using PrettierESLint",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "prpl-pattern",
+          "title": "PRPL Pattern",
+          "description": "Learn about PRPL Pattern",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of PRPL Pattern",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using PRPL Pattern",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "qwik",
+          "title": "Qwik",
+          "description": "Learn about Qwik",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Qwik",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Qwik",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "rail-model",
+          "title": "RAIL Model",
+          "description": "Learn about RAIL Model",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of RAIL Model",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using RAIL Model",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "relay-modern",
+          "title": "Relay Modern",
+          "description": "Learn about Relay Modern",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Relay Modern",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Relay Modern",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "server-sent-events",
+          "title": "Server Sent Events",
+          "description": "Learn about Server Sent Events",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Server Sent Events",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Server Sent Events",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "shadow-dom",
+          "title": "Shadow DOM",
+          "description": "Learn about Shadow DOM",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Shadow DOM",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Shadow DOM",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "solid-js",
+          "title": "Solid JS",
+          "description": "Learn about Solid JS",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [
+            "javascript"
+          ],
+          "learningObjectives": [
+            "Understand the fundamentals of Solid JS",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Solid JS",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "ssr",
+          "title": "SSR",
+          "description": "Learn about SSR",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of SSR",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using SSR",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "static-site-generators",
+          "title": "Static Site Generators",
+          "description": "Learn about Static Site Generators",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Static Site Generators",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Static Site Generators",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "storage",
+          "title": "Storage",
+          "description": "Learn about Storage",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Storage",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Storage",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "swc",
+          "title": "SWC",
+          "description": "Learn about SWC",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of SWC",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using SWC",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "tauri",
+          "title": "Tauri",
+          "description": "Learn about Tauri",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Tauri",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Tauri",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "testing",
+          "title": "Testing",
+          "description": "Learn about Testing",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [
+            "testing"
+          ],
+          "learningObjectives": [
+            "Understand the fundamentals of Testing",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Testing",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "using-devtools",
+          "title": "Using DevTools",
+          "description": "Learn about Using DevTools",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Using DevTools",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Using DevTools",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "vcs-hosting",
+          "title": "VCS Hosting",
+          "description": "Learn about VCS Hosting",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of VCS Hosting",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using VCS Hosting",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "version-control-systems",
+          "title": "Version Control Systems",
+          "description": "Learn about Version Control Systems",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Version Control Systems",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Version Control Systems",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "visit-beginner-friendly-version",
+          "title": "Visit Beginner Friendly Version",
+          "description": "Learn about Visit Beginner Friendly Version",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Visit Beginner Friendly Version",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Visit Beginner Friendly Version",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "web-componentstype-checkers",
+          "title": "Web ComponentsType Checkers",
+          "description": "Learn about Web ComponentsType Checkers",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Web ComponentsType Checkers",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Web ComponentsType Checkers",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "web-sockets",
+          "title": "Web Sockets",
+          "description": "Learn about Web Sockets",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Web Sockets",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Web Sockets",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        }
+      ],
+      "order": 8,
+      "estimatedHours": 183,
+      "topicCount": 61
+    }
+  ],
+  "metadata": {
+    "totalTopics": 98,
+    "totalCategories": 9,
+    "estimatedHours": 294,
+    "difficulty": "intermediate",
+    "completionRate": 0,
+    "tags": [
+      "client-side",
+      "ui",
+      "javascript",
+      "responsive"
+    ],
+    "prerequisites": [
+      "HTML/CSS basics",
+      "JavaScript fundamentals"
+    ],
+    "learningPath": [
+      {
+        "step": 1,
+        "category": "Fundamentals",
+        "description": "Complete Fundamentals topics",
+        "estimatedHours": 39
+      },
+      {
+        "step": 2,
+        "category": "CSS & Styling",
+        "description": "Complete CSS & Styling topics",
+        "estimatedHours": 3
+      },
+      {
+        "step": 3,
+        "category": "JavaScript Frameworks",
+        "description": "Complete JavaScript Frameworks topics",
+        "estimatedHours": 27
+      },
+      {
+        "step": 4,
+        "category": "Build Tools",
+        "description": "Complete Build Tools topics",
+        "estimatedHours": 21
+      },
+      {
+        "step": 5,
+        "category": "Testing",
+        "description": "Complete Testing topics",
+        "estimatedHours": 6
+      },
+      {
+        "step": 6,
+        "category": "Performance",
+        "description": "Complete Performance topics",
+        "estimatedHours": 3
+      },
+      {
+        "step": 7,
+        "category": "Progressive Web Apps",
+        "description": "Complete Progressive Web Apps topics",
+        "estimatedHours": 6
+      },
+      {
+        "step": 8,
+        "category": "Mobile Development",
+        "description": "Complete Mobile Development topics",
+        "estimatedHours": 6
+      },
+      {
+        "step": 9,
+        "category": "Other",
+        "description": "Complete Other topics",
+        "estimatedHours": 183
+      }
+    ]
+  }
+}

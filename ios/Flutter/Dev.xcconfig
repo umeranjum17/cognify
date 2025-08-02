@@ -1,0 +1,6 @@
+#include "Generated.xcconfig"
+
+// Dev flavor configuration
+PRODUCT_BUNDLE_IDENTIFIER = com.umerfarooq1995.cognify-flutter.dev
+PRODUCT_NAME = Cognify Dev
+DISPLAY_NAME = Cognify Dev

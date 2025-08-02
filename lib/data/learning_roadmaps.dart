@@ -1,0 +1,406 @@
+import '../models/roadmap_models.dart';
+
+class LearningRoadmaps {
+  static final Map<LearningRole, LearningPath> _roadmaps = {
+    LearningRole.backend: _backendRoadmap,
+    LearningRole.frontend: _frontendRoadmap,
+    LearningRole.fullstack: _fullstackRoadmap,
+    LearningRole.devops: _devopsRoadmap,
+    LearningRole.dataScience: _dataScienceRoadmap,
+    LearningRole.flutter: _mobileRoadmap,
+    LearningRole.gamedev: _gamedevRoadmap,
+  };
+
+  // Backend Developer Roadmap
+  static const LearningPath _backendRoadmap = LearningPath(
+    role: LearningRole.backend,
+    title: 'Backend Developer',
+    description: 'Master server-side development, APIs, and system architecture',
+    fundamentals: [
+      RoadmapTopic(
+        id: 'backend_lang',
+        name: 'Programming Languages',
+        description: 'Master a backend language like Python, Java, Node.js, or Go',
+        difficulty: DifficultyLevel.fundamentals,
+        estimatedHours: 80,
+        prerequisites: [],
+        keyConcepts: ['Syntax', 'Data Types', 'Control Flow', 'Functions', 'OOP'],
+        resources: ['Official Documentation', 'Online Courses', 'Practice Projects'],
+        iconName: 'code',
+      ),
+      RoadmapTopic(
+        id: 'databases_sql',
+        name: 'Databases & SQL',
+        description: 'Learn relational databases and SQL fundamentals',
+        difficulty: DifficultyLevel.fundamentals,
+        estimatedHours: 40,
+        prerequisites: ['backend_lang'],
+        keyConcepts: ['Tables', 'Queries', 'Joins', 'Indexes', 'Normalization'],
+        resources: ['SQL Tutorial', 'Database Design Course', 'Practice Queries'],
+        iconName: 'database',
+      ),
+      RoadmapTopic(
+        id: 'rest_apis',
+        name: 'REST APIs',
+        description: 'Build and consume RESTful web services',
+        difficulty: DifficultyLevel.fundamentals,
+        estimatedHours: 30,
+        prerequisites: ['backend_lang'],
+        keyConcepts: ['HTTP Methods', 'Status Codes', 'JSON', 'API Design', 'Testing'],
+        resources: ['REST API Tutorial', 'Postman', 'API Documentation'],
+        iconName: 'api',
+      ),
+    ],
+    intermediate: [
+      RoadmapTopic(
+        id: 'system_design',
+        name: 'System Design Basics',
+        description: 'Learn to design scalable systems and architectures',
+        difficulty: DifficultyLevel.intermediate,
+        estimatedHours: 60,
+        prerequisites: ['rest_apis', 'databases_sql'],
+        keyConcepts: ['Scalability', 'Load Balancing', 'Caching', 'Database Design'],
+        resources: ['System Design Primer', 'Case Studies', 'Design Patterns'],
+        iconName: 'architecture',
+      ),
+      RoadmapTopic(
+        id: 'caching',
+        name: 'Caching Strategies',
+        description: 'Implement caching with Redis and other solutions',
+        difficulty: DifficultyLevel.intermediate,
+        estimatedHours: 25,
+        prerequisites: ['databases_sql'],
+        keyConcepts: ['Redis', 'Cache Patterns', 'TTL', 'Cache Invalidation'],
+        resources: ['Redis Documentation', 'Caching Patterns', 'Performance Testing'],
+        iconName: 'speed',
+      ),
+      RoadmapTopic(
+        id: 'auth_security',
+        name: 'Authentication & Security',
+        description: 'Implement secure authentication and authorization',
+        difficulty: DifficultyLevel.intermediate,
+        estimatedHours: 35,
+        prerequisites: ['rest_apis'],
+        keyConcepts: ['JWT', 'OAuth', 'HTTPS', 'Password Hashing', 'CORS'],
+        resources: ['Security Best Practices', 'OAuth Guide', 'JWT Tutorial'],
+        iconName: 'security',
+      ),
+    ],
+    advanced: [
+      RoadmapTopic(
+        id: 'microservices',
+        name: 'Microservices Architecture',
+        description: 'Design and implement microservices-based systems',
+        difficulty: DifficultyLevel.advanced,
+        estimatedHours: 70,
+        prerequisites: ['system_design', 'auth_security'],
+        keyConcepts: ['Service Decomposition', 'API Gateway', 'Service Discovery', 'Circuit Breaker'],
+        resources: ['Microservices Patterns', 'Docker', 'Kubernetes Basics'],
+        iconName: 'microservices',
+      ),
+      RoadmapTopic(
+        id: 'message_queues',
+        name: 'Message Queues & Event Streaming',
+        description: 'Implement asynchronous communication patterns',
+        difficulty: DifficultyLevel.advanced,
+        estimatedHours: 45,
+        prerequisites: ['system_design'],
+        keyConcepts: ['RabbitMQ', 'Apache Kafka', 'Event Sourcing', 'CQRS'],
+        resources: ['Message Queue Tutorial', 'Kafka Documentation', 'Event-Driven Architecture'],
+        iconName: 'queue',
+      ),
+      RoadmapTopic(
+        id: 'database_optimization',
+        name: 'Database Optimization',
+        description: 'Advanced database performance tuning and optimization',
+        difficulty: DifficultyLevel.advanced,
+        estimatedHours: 40,
+        prerequisites: ['databases_sql', 'caching'],
+        keyConcepts: ['Query Optimization', 'Indexing Strategies', 'Partitioning', 'Replication'],
+        resources: ['Database Performance Tuning', 'Query Analysis', 'Monitoring Tools'],
+        iconName: 'optimization',
+      ),
+    ],
+    expert: [
+      RoadmapTopic(
+        id: 'distributed_systems',
+        name: 'Distributed Systems',
+        description: 'Master distributed computing and consensus algorithms',
+        difficulty: DifficultyLevel.expert,
+        estimatedHours: 100,
+        prerequisites: ['microservices', 'message_queues'],
+        keyConcepts: ['CAP Theorem', 'Consensus Algorithms', 'Distributed Transactions', 'Eventual Consistency'],
+        resources: ['Distributed Systems Papers', 'Raft Algorithm', 'Byzantine Fault Tolerance'],
+        iconName: 'distributed',
+      ),
+      RoadmapTopic(
+        id: 'performance_optimization',
+        name: 'Performance Engineering',
+        description: 'Advanced performance optimization and monitoring',
+        difficulty: DifficultyLevel.expert,
+        estimatedHours: 60,
+        prerequisites: ['database_optimization', 'microservices'],
+        keyConcepts: ['Profiling', 'Memory Management', 'Concurrency', 'Load Testing'],
+        resources: ['Performance Monitoring', 'Profiling Tools', 'Optimization Techniques'],
+        iconName: 'performance',
+      ),
+    ],
+  );
+
+  // Frontend Developer Roadmap
+  static const LearningPath _frontendRoadmap = LearningPath(
+    role: LearningRole.frontend,
+    title: 'Frontend Developer',
+    description: 'Master modern frontend development and user interfaces',
+    fundamentals: [
+      RoadmapTopic(
+        id: 'html_css_js',
+        name: 'HTML, CSS & JavaScript',
+        description: 'Master the core web technologies',
+        difficulty: DifficultyLevel.fundamentals,
+        estimatedHours: 60,
+        prerequisites: [],
+        keyConcepts: ['Semantic HTML', 'CSS Grid/Flexbox', 'ES6+', 'DOM Manipulation'],
+        resources: ['MDN Web Docs', 'JavaScript.info', 'CSS Grid Garden'],
+        iconName: 'web',
+      ),
+      RoadmapTopic(
+        id: 'react_basics',
+        name: 'React Fundamentals',
+        description: 'Learn React components, state, and props',
+        difficulty: DifficultyLevel.fundamentals,
+        estimatedHours: 40,
+        prerequisites: ['html_css_js'],
+        keyConcepts: ['Components', 'JSX', 'State', 'Props', 'Event Handling'],
+        resources: ['React Documentation', 'React Tutorial', 'Create React App'],
+        iconName: 'react',
+      ),
+    ],
+    intermediate: [
+      RoadmapTopic(
+        id: 'state_management',
+        name: 'State Management',
+        description: 'Learn Redux, Context API, and state patterns',
+        difficulty: DifficultyLevel.intermediate,
+        estimatedHours: 35,
+        prerequisites: ['react_basics'],
+        keyConcepts: ['Redux', 'Context API', 'State Patterns', 'Immutability'],
+        resources: ['Redux Toolkit', 'State Management Patterns', 'Context API Guide'],
+        iconName: 'state',
+      ),
+    ],
+    advanced: [
+      RoadmapTopic(
+        id: 'performance_optimization_fe',
+        name: 'Performance Optimization',
+        description: 'Optimize React apps for performance',
+        difficulty: DifficultyLevel.advanced,
+        estimatedHours: 30,
+        prerequisites: ['state_management'],
+        keyConcepts: ['Code Splitting', 'Lazy Loading', 'Memoization', 'Bundle Analysis'],
+        resources: ['React Performance', 'Webpack Bundle Analyzer', 'Lighthouse'],
+        iconName: 'performance',
+      ),
+    ],
+    expert: [
+      RoadmapTopic(
+        id: 'micro_frontends',
+        name: 'Micro-frontends',
+        description: 'Implement micro-frontend architectures',
+        difficulty: DifficultyLevel.expert,
+        estimatedHours: 50,
+        prerequisites: ['performance_optimization_fe'],
+        keyConcepts: ['Module Federation', 'Single-SPA', 'Independent Deployment'],
+        resources: ['Micro-frontends Guide', 'Module Federation', 'Architecture Patterns'],
+        iconName: 'microservices',
+      ),
+    ],
+  );
+
+  // Full Stack Developer Roadmap
+  static const LearningPath _fullstackRoadmap = LearningPath(
+    role: LearningRole.fullstack,
+    title: 'Full Stack Developer',
+    description: 'Master both frontend and backend development',
+    fundamentals: [
+      RoadmapTopic(
+        id: 'fullstack_basics',
+        name: 'Full Stack Basics',
+        description: 'Understanding the full web development stack',
+        difficulty: DifficultyLevel.fundamentals,
+        estimatedHours: 60,
+        prerequisites: [],
+        keyConcepts: ['Client-Server Architecture', 'HTTP', 'Databases', 'Frontend Frameworks'],
+        resources: ['Full Stack Guide', 'Web Development Bootcamp', 'MERN/MEAN Stack'],
+        iconName: 'fullstack',
+      ),
+      RoadmapTopic(
+        id: 'frontend_basics_fs',
+        name: 'Frontend Fundamentals',
+        description: 'HTML, CSS, JavaScript, and React basics',
+        difficulty: DifficultyLevel.fundamentals,
+        estimatedHours: 50,
+        prerequisites: ['fullstack_basics'],
+        keyConcepts: ['HTML5', 'CSS3', 'JavaScript ES6+', 'React Components'],
+        resources: ['MDN Web Docs', 'React Documentation', 'Frontend Masters'],
+        iconName: 'frontend',
+      ),
+      RoadmapTopic(
+        id: 'backend_basics_fs',
+        name: 'Backend Fundamentals',
+        description: 'Server-side development with Node.js and databases',
+        difficulty: DifficultyLevel.fundamentals,
+        estimatedHours: 50,
+        prerequisites: ['fullstack_basics'],
+        keyConcepts: ['Node.js', 'Express.js', 'MongoDB', 'REST APIs'],
+        resources: ['Node.js Documentation', 'Express Guide', 'MongoDB Tutorial'],
+        iconName: 'backend',
+      ),
+    ],
+    intermediate: [
+      RoadmapTopic(
+        id: 'fullstack_integration',
+        name: 'Frontend-Backend Integration',
+        description: 'Connect frontend and backend applications',
+        difficulty: DifficultyLevel.intermediate,
+        estimatedHours: 40,
+        prerequisites: ['frontend_basics_fs', 'backend_basics_fs'],
+        keyConcepts: ['API Integration', 'State Management', 'Authentication', 'CORS'],
+        resources: ['Full Stack Tutorial', 'API Integration Guide', 'Authentication Patterns'],
+        iconName: 'integration',
+      ),
+    ],
+    advanced: [
+      RoadmapTopic(
+        id: 'deployment_devops',
+        name: 'Deployment & DevOps',
+        description: 'Deploy full stack applications to production',
+        difficulty: DifficultyLevel.advanced,
+        estimatedHours: 35,
+        prerequisites: ['fullstack_integration'],
+        keyConcepts: ['Docker', 'CI/CD', 'Cloud Platforms', 'Monitoring'],
+        resources: ['Docker Tutorial', 'AWS/Heroku Deployment', 'CI/CD Pipelines'],
+        iconName: 'deployment',
+      ),
+    ],
+    expert: [],
+  );
+
+  static const LearningPath _devopsRoadmap = LearningPath(
+    role: LearningRole.devops,
+    title: 'DevOps Engineer',
+    description: 'Master infrastructure, deployment, and operations',
+    fundamentals: [
+      RoadmapTopic(
+        id: 'linux_networking',
+        name: 'Linux & Networking',
+        description: 'Master Linux systems and networking fundamentals',
+        difficulty: DifficultyLevel.fundamentals,
+        estimatedHours: 60,
+        prerequisites: [],
+        keyConcepts: ['Linux Commands', 'Shell Scripting', 'Networking', 'Security'],
+        resources: ['Linux Command Line', 'Networking Basics', 'Shell Scripting Guide'],
+        iconName: 'linux',
+      ),
+      RoadmapTopic(
+        id: 'cloud_platforms',
+        name: 'Cloud Platforms',
+        description: 'Learn AWS, Azure, or Google Cloud Platform',
+        difficulty: DifficultyLevel.fundamentals,
+        estimatedHours: 50,
+        prerequisites: ['linux_networking'],
+        keyConcepts: ['EC2/VMs', 'Storage', 'Networking', 'IAM', 'Basic Services'],
+        resources: ['AWS Free Tier', 'Cloud Practitioner Guide', 'Hands-on Labs'],
+        iconName: 'cloud',
+      ),
+    ],
+    intermediate: [
+      RoadmapTopic(
+        id: 'containerization',
+        name: 'Docker & Containerization',
+        description: 'Master containerization with Docker',
+        difficulty: DifficultyLevel.intermediate,
+        estimatedHours: 40,
+        prerequisites: ['linux_networking'],
+        keyConcepts: ['Docker Images', 'Containers', 'Dockerfile', 'Docker Compose'],
+        resources: ['Docker Documentation', 'Container Best Practices', 'Docker Hub'],
+        iconName: 'docker',
+      ),
+      RoadmapTopic(
+        id: 'cicd_pipelines',
+        name: 'CI/CD Pipelines',
+        description: 'Implement continuous integration and deployment',
+        difficulty: DifficultyLevel.intermediate,
+        estimatedHours: 45,
+        prerequisites: ['containerization'],
+        keyConcepts: ['Jenkins', 'GitHub Actions', 'GitLab CI', 'Pipeline as Code'],
+        resources: ['CI/CD Best Practices', 'Jenkins Tutorial', 'GitHub Actions Guide'],
+        iconName: 'pipeline',
+      ),
+    ],
+    advanced: [
+      RoadmapTopic(
+        id: 'kubernetes',
+        name: 'Kubernetes Orchestration',
+        description: 'Container orchestration with Kubernetes',
+        difficulty: DifficultyLevel.advanced,
+        estimatedHours: 60,
+        prerequisites: ['containerization', 'cicd_pipelines'],
+        keyConcepts: ['Pods', 'Services', 'Deployments', 'ConfigMaps', 'Ingress'],
+        resources: ['Kubernetes Documentation', 'K8s Tutorial', 'Certified Kubernetes'],
+        iconName: 'kubernetes',
+      ),
+    ],
+    expert: [
+      RoadmapTopic(
+        id: 'sre_practices',
+        name: 'Site Reliability Engineering',
+        description: 'Advanced SRE practices and monitoring',
+        difficulty: DifficultyLevel.expert,
+        estimatedHours: 70,
+        prerequisites: ['kubernetes'],
+        keyConcepts: ['SLIs/SLOs', 'Error Budgets', 'Incident Response', 'Chaos Engineering'],
+        resources: ['SRE Book', 'Monitoring Best Practices', 'Incident Management'],
+        iconName: 'sre',
+      ),
+    ],
+  );
+
+  static const LearningPath _dataScienceRoadmap = LearningPath(
+    role: LearningRole.dataScience,
+    title: 'Data Scientist',
+    description: 'Master data analysis, machine learning, and statistics',
+    fundamentals: [],
+    intermediate: [],
+    advanced: [],
+    expert: [],
+  );
+
+  static const LearningPath _mobileRoadmap = LearningPath(
+    role: LearningRole.flutter,
+    title: 'Mobile Developer',
+    description: 'Master iOS and Android development',
+    fundamentals: [],
+    intermediate: [],
+    advanced: [],
+    expert: [],
+  );
+
+  static const LearningPath _gamedevRoadmap = LearningPath(
+    role: LearningRole.gamedev,
+    title: 'Game Developer',
+    description: 'Master game engines and interactive media development',
+    fundamentals: [],
+    intermediate: [],
+    advanced: [],
+    expert: [],
+  );
+
+  static List<LearningPath> getAllRoadmaps() {
+    return _roadmaps.values.toList();
+  }
+
+  static LearningPath getRoadmap(LearningRole role) {
+    return _roadmaps[role]!;
+  }
+}

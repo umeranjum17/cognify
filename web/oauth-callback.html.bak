@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OAuth Callback - Cognify</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top: 3px solid white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .success { color: #4ade80; }
+        .error { color: #f87171; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="spinner" id="spinner"></div>
+        <h1 id="title">Processing OAuth Callback...</h1>
+        <p id="message">Please wait while we redirect you back to the app.</p>
+    </div>
+
+    <script>
+        // Extract OAuth parameters from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('code');
+        const state = urlParams.get('state');
+        const error = urlParams.get('error');
+        
+        const spinner = document.getElementById('spinner');
+        const title = document.getElementById('title');
+        const message = document.getElementById('message');
+
+        function updateUI(success, titleText, messageText) {
+            spinner.style.display = 'none';
+            title.textContent = titleText;
+            title.className = success ? 'success' : 'error';
+            message.textContent = messageText;
+        }
+
+        function redirectToApp() {
+            // Try multiple redirect methods for better compatibility
+            const appSchemes = [
+                `cognify://oauth/callback?code=${code}&state=${state}`,
+                `cognify-free://oauth/callback?code=${code}&state=${state}`
+            ];
+            
+            // Try custom scheme first
+            let redirected = false;
+            appSchemes.forEach((scheme, index) => {
+                setTimeout(() => {
+                    if (!redirected) {
+                        window.location.href = scheme;
+                        if (index === 0) redirected = true;
+                    }
+                }, index * 100);
+            });
+            
+            // Fallback: show success message if redirect doesn't work
+            setTimeout(() => {
+                if (!redirected) {
+                    updateUI(true, 'Authentication Successful!', 
+                        'Please return to the Cognify app to continue. You can close this window.');
+                }
+            }, 2000);
+        }
+
+        // Handle the OAuth callback
+        if (error) {
+            updateUI(false, 'Authentication Failed', `Error: ${error}`);
+        } else if (code && state) {
+            updateUI(true, 'Authentication Successful!', 'Redirecting back to the app...');
+            setTimeout(redirectToApp, 1000);
+        } else {
+            updateUI(false, 'Invalid Callback', 'Missing required OAuth parameters.');
+        }
+
+        // Auto-close window after 10 seconds
+        setTimeout(() => {
+            window.close();
+        }, 10000);
+    </script>
+</body>
+</html>

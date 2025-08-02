@@ -1,0 +1,6 @@
+#include "Generated.xcconfig"
+
+// Umer flavor configuration
+PRODUCT_BUNDLE_IDENTIFIER = com.umerfarooq1995.cognify-flutter.umer
+PRODUCT_NAME = Cognify Umer
+DISPLAY_NAME = Cognify Umer

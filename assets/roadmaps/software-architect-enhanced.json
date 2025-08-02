@@ -1,0 +1,2321 @@
+{
+  "id": "software-architect",
+  "title": "Software Architect",
+  "description": "Learn Software Architect step by step",
+  "version": "1.0.0",
+  "lastUpdated": "2025-07-11T21:32:49.297Z",
+  "source": "roadmap.sh",
+  "categories": [
+    {
+      "id": "architecture-fundamentals",
+      "title": "Architecture Fundamentals",
+      "description": "Learn about Architecture Fundamentals concepts and practices",
+      "icon": "category",
+      "topics": [
+        {
+          "id": "understand-the-basics",
+          "title": "Understand the Basics",
+          "description": "Learn about Understand the Basics",
+          "difficulty": "beginner",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Understand the Basics",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Understand the Basics",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "software-architect",
+          "title": "Software Architect",
+          "description": "Learn about Software Architect",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Software Architect",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Software Architect",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "what-is-a-software-architect",
+          "title": "What is a Software Architect",
+          "description": "Learn about What is a Software Architect",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of What is a Software Architect",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using What is a Software Architect",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "application-architecture",
+          "title": "Application Architecture",
+          "description": "Learn about Application Architecture",
+          "difficulty": "advanced",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Application Architecture",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Application Architecture",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "enterprise-architecture",
+          "title": "Enterprise Architecture",
+          "description": "Learn about Enterprise Architecture",
+          "difficulty": "advanced",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Enterprise Architecture",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Enterprise Architecture",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "levels-of-architecture",
+          "title": "Levels of Architecture",
+          "description": "Learn about Levels of Architecture",
+          "difficulty": "advanced",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Levels of Architecture",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Levels of Architecture",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "oreilly-software-architecture",
+          "title": "OReilly - Software Architecture",
+          "description": "Learn about OReilly - Software Architecture",
+          "difficulty": "advanced",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of OReilly - Software Architecture",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using OReilly - Software Architecture",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "software-architecture",
+          "title": "Software Architecture",
+          "description": "Learn about Software Architecture",
+          "difficulty": "advanced",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Software Architecture",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Software Architecture",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "solution-architecture",
+          "title": "Solution Architecture",
+          "description": "Learn about Solution Architecture",
+          "difficulty": "advanced",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Solution Architecture",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Solution Architecture",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "what-is-software-architecture",
+          "title": "What is Software Architecture",
+          "description": "Learn about What is Software Architecture",
+          "difficulty": "advanced",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of What is Software Architecture",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using What is Software Architecture",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        }
+      ],
+      "order": 0,
+      "estimatedHours": 30,
+      "topicCount": 10
+    },
+    {
+      "id": "design-principles",
+      "title": "Design Principles",
+      "description": "Learn about Design Principles concepts and practices",
+      "icon": "category",
+      "topics": [
+        {
+          "id": "patterns-and-design-principles",
+          "title": "Patterns and Design Principles",
+          "description": "Learn about Patterns and Design Principles",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Patterns and Design Principles",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Patterns and Design Principles",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "standards-tools-design-principles",
+          "title": "standards, tools, design principles,",
+          "description": "Learn about standards, tools, design principles,",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of standards, tools, design principles,",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using standards, tools, design principles,",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        }
+      ],
+      "order": 1,
+      "estimatedHours": 6,
+      "topicCount": 2
+    },
+    {
+      "id": "architecture-patterns",
+      "title": "Architecture Patterns",
+      "description": "Learn about Architecture Patterns concepts and practices",
+      "icon": "category",
+      "topics": [
+        {
+          "id": "microservices",
+          "title": "Microservices",
+          "description": "Learn about Microservices",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Microservices",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Microservices",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        }
+      ],
+      "order": 2,
+      "estimatedHours": 3,
+      "topicCount": 1
+    },
+    {
+      "id": "apis-&-integration",
+      "title": "APIs & Integration",
+      "description": "Learn about APIs & Integration concepts and practices",
+      "icon": "category",
+      "topics": [
+        {
+          "id": "apis-and-integrations",
+          "title": "APIs and Integrations",
+          "description": "Learn about APIs and Integrations",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [
+            "api"
+          ],
+          "learningObjectives": [
+            "Understand the fundamentals of APIs and Integrations",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using APIs and Integrations",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "graphql",
+          "title": "GraphQL",
+          "description": "Learn about GraphQL",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of GraphQL",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using GraphQL",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "grpc",
+          "title": "GRPC",
+          "description": "Learn about GRPC",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of GRPC",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using GRPC",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "rest",
+          "title": "REST",
+          "description": "Learn about REST",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of REST",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using REST",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "service-mesh",
+          "title": "Service Mesh",
+          "description": "Learn about Service Mesh",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Service Mesh",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Service Mesh",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        }
+      ],
+      "order": 3,
+      "estimatedHours": 15,
+      "topicCount": 5
+    },
+    {
+      "id": "devops-&-operations",
+      "title": "DevOps & Operations",
+      "description": "Learn about DevOps & Operations concepts and practices",
+      "icon": "category",
+      "topics": [
+        {
+          "id": "infrastructure-as-code",
+          "title": "Infrastructure as Code",
+          "description": "Learn about Infrastructure as Code",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Infrastructure as Code",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Infrastructure as Code",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "visit-devops-roadmap",
+          "title": "Visit DevOps Roadmap",
+          "description": "Learn about Visit DevOps Roadmap",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Visit DevOps Roadmap",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Visit DevOps Roadmap",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        }
+      ],
+      "order": 4,
+      "estimatedHours": 6,
+      "topicCount": 2
+    },
+    {
+      "id": "other",
+      "title": "Other",
+      "description": "Learn about Other concepts and practices",
+      "icon": "category",
+      "topics": [
+        {
+          "id": "a-software-expert-who-makes-high-level",
+          "title": "A software expert who makes high level",
+          "description": "Learn about A software expert who makes high level",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of A software expert who makes high level",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using A software expert who makes high level",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "actors",
+          "title": "Actors",
+          "description": "Learn about Actors",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Actors",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Actors",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "analytics",
+          "title": "Analytics",
+          "description": "Learn about Analytics",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Analytics",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Analytics",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "apache-spark",
+          "title": "Apache Spark",
+          "description": "Learn about Apache Spark",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Apache Spark",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Apache Spark",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "atlassian-tools",
+          "title": "Atlassian Tools",
+          "description": "Learn about Atlassian Tools",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Atlassian Tools",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Atlassian Tools",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "auth-strategies",
+          "title": "Auth Strategies",
+          "description": "Learn about Auth Strategies",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Auth Strategies",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Auth Strategies",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "babok",
+          "title": "BABOK",
+          "description": "Learn about BABOK",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of BABOK",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using BABOK",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "balance",
+          "title": "Balance",
+          "description": "Learn about Balance",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Balance",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Balance",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "certifications",
+          "title": "Certifications",
+          "description": "Learn about Certifications",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Certifications",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Certifications",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "ci-cd",
+          "title": "CI / CD",
+          "description": "Learn about CI / CD",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of CI / CD",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using CI / CD",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "clientserver",
+          "title": "Client/Server",
+          "description": "Learn about Client/Server",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Client/Server",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Client/Server",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "cloud-design-patterns",
+          "title": "Cloud Design Patterns",
+          "description": "Learn about Cloud Design Patterns",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Cloud Design Patterns",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Cloud Design Patterns",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "cloud-providers",
+          "title": "Cloud Providers",
+          "description": "Learn about Cloud Providers",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Cloud Providers",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Cloud Providers",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "collaborate-with-others",
+          "title": "Collaborate with Others",
+          "description": "Learn about Collaborate with Others",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Collaborate with Others",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Collaborate with Others",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "communication",
+          "title": "Communication",
+          "description": "Learn about Communication",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Communication",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Communication",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "consult-coach-developers",
+          "title": "Consult & Coach Developers",
+          "description": "Learn about Consult & Coach Developers",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Consult & Coach Developers",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Consult & Coach Developers",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "consult-and-coach",
+          "title": "Consult and Coach",
+          "description": "Learn about Consult and Coach",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Consult and Coach",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Consult and Coach",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "containers",
+          "title": "Containers",
+          "description": "Learn about Containers",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Containers",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Containers",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "datawarehouses-principles",
+          "title": "Datawarehouses Principles",
+          "description": "Learn about Datawarehouses Principles",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Datawarehouses Principles",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Datawarehouses Principles",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "decision-making",
+          "title": "Decision Making",
+          "description": "Learn about Decision Making",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Decision Making",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Decision Making",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "describes-how-an-application-is-built",
+          "title": "Describes how an application is built",
+          "description": "Learn about Describes how an application is built",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Describes how an application is built",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Describes how an application is built",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "design-choices-including-technical",
+          "title": "design choices, including technical",
+          "description": "Learn about design choices, including technical",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of design choices, including technical",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using design choices, including technical",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "documentation",
+          "title": "Documentation",
+          "description": "Learn about Documentation",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Documentation",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Documentation",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "domain-driven-designtest-driven-development",
+          "title": "Domain Driven DesignTest Driven Development",
+          "description": "Learn about Domain Driven DesignTest Driven Development",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Domain Driven DesignTest Driven Development",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Domain Driven DesignTest Driven Development",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "enforcing-standards",
+          "title": "Enforcing standards",
+          "description": "Learn about Enforcing standards",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Enforcing standards",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Enforcing standards",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "estimate-and-evaluate",
+          "title": "Estimate and Evaluate",
+          "description": "Learn about Estimate and Evaluate",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Estimate and Evaluate",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Estimate and Evaluate",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "firewalls",
+          "title": "Firewalls",
+          "description": "Learn about Firewalls",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Firewalls",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Firewalls",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "frameworks",
+          "title": "Frameworks",
+          "description": "Learn about Frameworks",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Frameworks",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Frameworks",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "git",
+          "title": "Git",
+          "description": "Learn about Git",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Git",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Git",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "hadoop",
+          "title": "Hadoop",
+          "description": "Learn about Hadoop",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Hadoop",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Hadoop",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "hashing-algorithms",
+          "title": "Hashing Algorithms",
+          "description": "Learn about Hashing Algorithms",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Hashing Algorithms",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Hashing Algorithms",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "how-to-code",
+          "title": "How to Code",
+          "description": "Learn about How to Code",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of How to Code",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using How to Code",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "iaf",
+          "title": "IAF",
+          "description": "Learn about IAF",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of IAF",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using IAF",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "ibm-bpmemc-dms",
+          "title": "IBM BPMEMC DMS",
+          "description": "Learn about IBM BPMEMC DMS",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of IBM BPMEMC DMS",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using IBM BPMEMC DMS",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "important-skills-to-learn",
+          "title": "Important Skills to Learn",
+          "description": "Learn about Important Skills to Learn",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Important Skills to Learn",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Important Skills to Learn",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "java-kotlin-scala",
+          "title": "Java / Kotlin / Scala",
+          "description": "Learn about Java / Kotlin / Scala",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Java / Kotlin / Scala",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Java / Kotlin / Scala",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "javascript-typescript",
+          "title": "JavaScript / TypeScript",
+          "description": "Learn about JavaScript / TypeScript",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [
+            "javascript"
+          ],
+          "learningObjectives": [
+            "Understand the fundamentals of JavaScript / TypeScript",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using JavaScript / TypeScript",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "keep-learning",
+          "title": "Keep learning",
+          "description": "Learn about Keep learning",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Keep learning",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Keep learning",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "layered",
+          "title": "Layered",
+          "description": "Learn about Layered",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Layered",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Layered",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "less",
+          "title": "LeSS",
+          "description": "Learn about LeSS",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of LeSS",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using LeSS",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "linux-unix",
+          "title": "Linux / Unix",
+          "description": "Learn about Linux / Unix",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Linux / Unix",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Linux / Unix",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "management",
+          "title": "Management",
+          "description": "Learn about Management",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Management",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Management",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "marketing-skills",
+          "title": "Marketing Skills",
+          "description": "Learn about Marketing Skills",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Marketing Skills",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Marketing Skills",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "messaging-queues",
+          "title": "Messaging Queues",
+          "description": "Learn about Messaging Queues",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Messaging Queues",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Messaging Queues",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "microfrontends",
+          "title": "Microfrontends",
+          "description": "Learn about Microfrontends",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Microfrontends",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Microfrontends",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "ms-dynamics",
+          "title": "MS Dynamics",
+          "description": "Learn about MS Dynamics",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of MS Dynamics",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using MS Dynamics",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "networks",
+          "title": "Networks",
+          "description": "Learn about Networks",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Networks",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Networks",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "nosql-databases",
+          "title": "NoSQL Databases",
+          "description": "Learn about NoSQL Databases",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [
+            "database"
+          ],
+          "learningObjectives": [
+            "Understand the fundamentals of NoSQL Databases",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using NoSQL Databases",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "oop",
+          "title": "OOP",
+          "description": "Learn about OOP",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of OOP",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using OOP",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "operations-knowledge",
+          "title": "Operations Knowledge",
+          "description": "Learn about Operations Knowledge",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Operations Knowledge",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Operations Knowledge",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "owasp",
+          "title": "OWASP",
+          "description": "Learn about OWASP",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of OWASP",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using OWASP",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "pki",
+          "title": "PKI",
+          "description": "Learn about PKI",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of PKI",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using PKI",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "programming-languages",
+          "title": "Programming Languages",
+          "description": "Learn about Programming Languages",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Programming Languages",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Programming Languages",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "proxies",
+          "title": "Proxies",
+          "description": "Learn about Proxies",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Proxies",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Proxies",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "pythonrubygo",
+          "title": "PythonRubyGo",
+          "description": "Learn about PythonRubyGo",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [
+            "python"
+          ],
+          "learningObjectives": [
+            "Understand the fundamentals of PythonRubyGo",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using PythonRubyGo",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "requirements-elicitation",
+          "title": "Requirements Elicitation",
+          "description": "Learn about Requirements Elicitation",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Requirements Elicitation",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Requirements Elicitation",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "responsibilities",
+          "title": "Responsibilities",
+          "description": "Learn about Responsibilities",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Responsibilities",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Responsibilities",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "safe",
+          "title": "SaFE",
+          "description": "Learn about SaFE",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of SaFE",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using SaFE",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "salesforce",
+          "title": "Salesforce",
+          "description": "Learn about Salesforce",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Salesforce",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Salesforce",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "security",
+          "title": "Security",
+          "description": "Learn about Security",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [
+            "security"
+          ],
+          "learningObjectives": [
+            "Understand the fundamentals of Security",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Security",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "serverless",
+          "title": "Serverless",
+          "description": "Learn about Serverless",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Serverless",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Serverless",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "serverless-concepts",
+          "title": "Serverless Concepts",
+          "description": "Learn about Serverless Concepts",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Serverless Concepts",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Serverless Concepts",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "service-oriented",
+          "title": "Service Oriented",
+          "description": "Learn about Service Oriented",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Service Oriented",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Service Oriented",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "simplifying-things",
+          "title": "Simplifying things",
+          "description": "Learn about Simplifying things",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Simplifying things",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Simplifying things",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "slack",
+          "title": "Slack",
+          "description": "Learn about Slack",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Slack",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Slack",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "solid",
+          "title": "SOLID",
+          "description": "Learn about SOLID",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of SOLID",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using SOLID",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "sql-databases",
+          "title": "SQL Databases",
+          "description": "Learn about SQL Databases",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [
+            "database"
+          ],
+          "learningObjectives": [
+            "Understand the fundamentals of SQL Databases",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using SQL Databases",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "tech-decisions",
+          "title": "Tech decisions",
+          "description": "Learn about Tech decisions",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Tech decisions",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Tech decisions",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "technical-skills",
+          "title": "Technical Skills",
+          "description": "Learn about Technical Skills",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Technical Skills",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Technical Skills",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "togaf",
+          "title": "TOGAF",
+          "description": "Learn about TOGAF",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of TOGAF",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using TOGAF",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "tools",
+          "title": "Tools",
+          "description": "Learn about Tools",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Tools",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Tools",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "trello",
+          "title": "Trello",
+          "description": "Learn about Trello",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Trello",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Trello",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "uml",
+          "title": "UML",
+          "description": "Learn about UML",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of UML",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using UML",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "working-with-data",
+          "title": "Working with Data",
+          "description": "Learn about Working with Data",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Working with Data",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Working with Data",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "architectures",
+          "title": "Architectures",
+          "description": "Learn about Architectures",
+          "difficulty": "advanced",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Architectures",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Architectures",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "design-architecture-decisions",
+          "title": "Design & Architecture decisions",
+          "description": "Learn about Design & Architecture decisions",
+          "difficulty": "advanced",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Design & Architecture decisions",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Design & Architecture decisions",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "design-and-architecture",
+          "title": "Design and Architecture",
+          "description": "Learn about Design and Architecture",
+          "difficulty": "advanced",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Design and Architecture",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Design and Architecture",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "distributed-systems",
+          "title": "Distributed Systems",
+          "description": "Learn about Distributed Systems",
+          "difficulty": "advanced",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Distributed Systems",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Distributed Systems",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "enterprise-software",
+          "title": "Enterprise Software",
+          "description": "Learn about Enterprise Software",
+          "difficulty": "advanced",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Enterprise Software",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Enterprise Software",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        }
+      ],
+      "order": 5,
+      "estimatedHours": 237,
+      "topicCount": 79
+    }
+  ],
+  "metadata": {
+    "totalTopics": 99,
+    "totalCategories": 6,
+    "estimatedHours": 297,
+    "difficulty": "intermediate",
+    "completionRate": 0,
+    "tags": [
+      "design",
+      "patterns",
+      "scalability",
+      "systems"
+    ],
+    "prerequisites": [
+      "Software development experience",
+      "System design basics"
+    ],
+    "learningPath": [
+      {
+        "step": 1,
+        "category": "Architecture Fundamentals",
+        "description": "Complete Architecture Fundamentals topics",
+        "estimatedHours": 30
+      },
+      {
+        "step": 2,
+        "category": "Design Principles",
+        "description": "Complete Design Principles topics",
+        "estimatedHours": 6
+      },
+      {
+        "step": 3,
+        "category": "Architecture Patterns",
+        "description": "Complete Architecture Patterns topics",
+        "estimatedHours": 3
+      },
+      {
+        "step": 4,
+        "category": "APIs & Integration",
+        "description": "Complete APIs & Integration topics",
+        "estimatedHours": 15
+      },
+      {
+        "step": 5,
+        "category": "DevOps & Operations",
+        "description": "Complete DevOps & Operations topics",
+        "estimatedHours": 6
+      },
+      {
+        "step": 6,
+        "category": "Other",
+        "description": "Complete Other topics",
+        "estimatedHours": 237
+      }
+    ]
+  }
+}

@@ -1,0 +1,2996 @@
+{
+  "id": "ai-engineer",
+  "title": "Ai Engineer",
+  "description": "Learn Ai Engineer step by step",
+  "version": "1.0.0",
+  "lastUpdated": "2025-07-11T21:32:49.230Z",
+  "source": "roadmap.sh",
+  "categories": [
+    {
+      "id": "deep-learning",
+      "title": "Deep Learning",
+      "description": "Learn about Deep Learning concepts and practices",
+      "icon": "category",
+      "topics": [
+        {
+          "id": "sentence-transformers",
+          "title": "Sentence Transformers",
+          "description": "Learn about Sentence Transformers",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Sentence Transformers",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Sentence Transformers",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "transformersjs",
+          "title": "Transformers.js",
+          "description": "Learn about Transformers.js",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [
+            "javascript"
+          ],
+          "learningObjectives": [
+            "Understand the fundamentals of Transformers.js",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Transformers.js",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        }
+      ],
+      "order": 0,
+      "estimatedHours": 6,
+      "topicCount": 2
+    },
+    {
+      "id": "specialized-areas",
+      "title": "Specialized Areas",
+      "description": "Learn about Specialized Areas concepts and practices",
+      "icon": "category",
+      "topics": [
+        {
+          "id": "recommendation-systems",
+          "title": "Recommendation Systems",
+          "description": "Learn about Recommendation Systems",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Recommendation Systems",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Recommendation Systems",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        }
+      ],
+      "order": 1,
+      "estimatedHours": 3,
+      "topicCount": 1
+    },
+    {
+      "id": "other",
+      "title": "Other",
+      "description": "Learn about Other concepts and practices",
+      "icon": "category",
+      "topics": [
+        {
+          "id": "introduction",
+          "title": "Introduction",
+          "description": "Learn about Introduction",
+          "difficulty": "beginner",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Introduction",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Introduction",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "adding-enduser-ids-in-prompts",
+          "title": "Adding end-user IDs in prompts",
+          "description": "Learn about Adding end-user IDs in prompts",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Adding end-user IDs in prompts",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Adding end-user IDs in prompts",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "agents-usecases",
+          "title": "Agents Usecases",
+          "description": "Learn about Agents Usecases",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Agents Usecases",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Agents Usecases",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "ai-data-scientistprompt-engineering",
+          "title": "AI & Data ScientistPrompt Engineering",
+          "description": "Learn about AI & Data ScientistPrompt Engineering",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of AI & Data ScientistPrompt Engineering",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using AI & Data ScientistPrompt Engineering",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "ai-agents",
+          "title": "AI Agents",
+          "description": "Learn about AI Agents",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of AI Agents",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using AI Agents",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "ai-and-data-scientist-roadmap",
+          "title": "AI and Data Scientist Roadmap",
+          "description": "Learn about AI and Data Scientist Roadmap",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of AI and Data Scientist Roadmap",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using AI and Data Scientist Roadmap",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "ai-code-editors",
+          "title": "AI Code Editors",
+          "description": "Learn about AI Code Editors",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of AI Code Editors",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using AI Code Editors",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "ai-engineer",
+          "title": "AI Engineer",
+          "description": "Learn about AI Engineer",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of AI Engineer",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using AI Engineer",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "ai-engineer-vs-ml-engineer",
+          "title": "AI Engineer vs ML Engineer",
+          "description": "Learn about AI Engineer vs ML Engineer",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of AI Engineer vs ML Engineer",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using AI Engineer vs ML Engineer",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "ai-safety-and-ethics",
+          "title": "AI Safety and Ethics",
+          "description": "Learn about AI Safety and Ethics",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of AI Safety and Ethics",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using AI Safety and Ethics",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "ai-vs-agi",
+          "title": "AI vs AGI",
+          "description": "Learn about AI vs AGI",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of AI vs AGI",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using AI vs AGI",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "anomaly-detection",
+          "title": "Anomaly Detection",
+          "description": "Learn about Anomaly Detection",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Anomaly Detection",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Anomaly Detection",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "audio-processing",
+          "title": "Audio Processing",
+          "description": "Learn about Audio Processing",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Audio Processing",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Audio Processing",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "azure-aiaws-sagemaker",
+          "title": "Azure AIAWS Sagemaker",
+          "description": "Learn about Azure AIAWS Sagemaker",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Azure AIAWS Sagemaker",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Azure AIAWS Sagemaker",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "benefits-of-pretrained-models",
+          "title": "Benefits of Pre-trained Models",
+          "description": "Learn about Benefits of Pre-trained Models",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Benefits of Pre-trained Models",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Benefits of Pre-trained Models",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "bias-and-fareness",
+          "title": "Bias and Fareness",
+          "description": "Learn about Bias and Fareness",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Bias and Fareness",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Bias and Fareness",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "building-ai-agents",
+          "title": "Building AI Agents",
+          "description": "Learn about Building AI Agents",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Building AI Agents",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Building AI Agents",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "capabilities-context-length",
+          "title": "Capabilities / Context Length",
+          "description": "Learn about Capabilities / Context Length",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Capabilities / Context Length",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Capabilities / Context Length",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "chat-completions-api",
+          "title": "Chat Completions API",
+          "description": "Learn about Chat Completions API",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [
+            "api"
+          ],
+          "learningObjectives": [
+            "Understand the fundamentals of Chat Completions API",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Chat Completions API",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "chromapinecone",
+          "title": "ChromaPinecone",
+          "description": "Learn about ChromaPinecone",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [
+            "api"
+          ],
+          "learningObjectives": [
+            "Understand the fundamentals of ChromaPinecone",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using ChromaPinecone",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "chunking",
+          "title": "Chunking",
+          "description": "Learn about Chunking",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Chunking",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Chunking",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "code-completion-tools",
+          "title": "Code Completion Tools",
+          "description": "Learn about Code Completion Tools",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Code Completion Tools",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Code Completion Tools",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "common-terminology",
+          "title": "Common Terminology",
+          "description": "Learn about Common Terminology",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Common Terminology",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Common Terminology",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "conducting-adversarial-testing",
+          "title": "Conducting adversarial testing",
+          "description": "Learn about Conducting adversarial testing",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [
+            "testing"
+          ],
+          "learningObjectives": [
+            "Understand the fundamentals of Conducting adversarial testing",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Conducting adversarial testing",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "constraining-outputs-and-inputs",
+          "title": "Constraining outputs and inputs",
+          "description": "Learn about Constraining outputs and inputs",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Constraining outputs and inputs",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Constraining outputs and inputs",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "continue-learning-with-following-relevant-tracks",
+          "title": "Continue learning with following relevant tracks",
+          "description": "Learn about Continue learning with following relevant tracks",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Continue learning with following relevant tracks",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Continue learning with following relevant tracks",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "cutoff-dates-knowledge",
+          "title": "Cut-off Dates / Knowledge",
+          "description": "Learn about Cut-off Dates / Knowledge",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Cut-off Dates / Knowledge",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Cut-off Dates / Knowledge",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "dalle-api",
+          "title": "DALL-E API",
+          "description": "Learn about DALL-E API",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [
+            "api"
+          ],
+          "learningObjectives": [
+            "Understand the fundamentals of DALL-E API",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using DALL-E API",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "data-analyst-roadamp",
+          "title": "Data Analyst Roadamp",
+          "description": "Learn about Data Analyst Roadamp",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Data Analyst Roadamp",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Data Analyst Roadamp",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "data-classification",
+          "title": "Data Classification",
+          "description": "Learn about Data Classification",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Data Classification",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Data Classification",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "development-tools",
+          "title": "Development Tools",
+          "description": "Learn about Development Tools",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Development Tools",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Development Tools",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "embedding",
+          "title": "Embedding",
+          "description": "Learn about Embedding",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Embedding",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Embedding",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "embeddings",
+          "title": "Embeddings",
+          "description": "Learn about Embeddings",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Embeddings",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Embeddings",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "embeddings-vector-databases",
+          "title": "Embeddings & Vector Databases",
+          "description": "Learn about Embeddings & Vector Databases",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [
+            "database"
+          ],
+          "learningObjectives": [
+            "Understand the fundamentals of Embeddings & Vector Databases",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Embeddings & Vector Databases",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "finding-open-source-models",
+          "title": "Finding Open Source Models",
+          "description": "Learn about Finding Open Source Models",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Finding Open Source Models",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Finding Open Source Models",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "finetuning",
+          "title": "Fine-tuning",
+          "description": "Learn about Fine-tuning",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Fine-tuning",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Fine-tuning",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "frontendbackendfullstack",
+          "title": "FrontendBackendFull-Stack",
+          "description": "Learn about FrontendBackendFull-Stack",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of FrontendBackendFull-Stack",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using FrontendBackendFull-Stack",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "generation",
+          "title": "Generation",
+          "description": "Learn about Generation",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Generation",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Generation",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "hugging-face",
+          "title": "Hugging Face",
+          "description": "Learn about Hugging Face",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Hugging Face",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Hugging Face",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "hugging-face-hub",
+          "title": "Hugging Face Hub",
+          "description": "Learn about Hugging Face Hub",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Hugging Face Hub",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Hugging Face Hub",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "hugging-face-models",
+          "title": "Hugging Face Models",
+          "description": "Learn about Hugging Face Models",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Hugging Face Models",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Hugging Face Models",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "hugging-face-tasks",
+          "title": "Hugging Face Tasks",
+          "description": "Learn about Hugging Face Tasks",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Hugging Face Tasks",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Hugging Face Tasks",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "image-generation",
+          "title": "Image Generation",
+          "description": "Learn about Image Generation",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Image Generation",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Image Generation",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "image-understanding",
+          "title": "Image Understanding",
+          "description": "Learn about Image Understanding",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Image Understanding",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Image Understanding",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "impact-on-product-development",
+          "title": "Impact on Product Development",
+          "description": "Learn about Impact on Product Development",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Impact on Product Development",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Impact on Product Development",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "implementing-multimodal-ai",
+          "title": "Implementing Multimodal AI",
+          "description": "Learn about Implementing Multimodal AI",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Implementing Multimodal AI",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Implementing Multimodal AI",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "implementing-rag",
+          "title": "Implementing RAG",
+          "description": "Learn about Implementing RAG",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Implementing RAG",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Implementing RAG",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "implementing-vector-search",
+          "title": "Implementing Vector Search",
+          "description": "Learn about Implementing Vector Search",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Implementing Vector Search",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Implementing Vector Search",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "indexing-embeddings",
+          "title": "Indexing Embeddings",
+          "description": "Learn about Indexing Embeddings",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Indexing Embeddings",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Indexing Embeddings",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "inference",
+          "title": "Inference",
+          "description": "Learn about Inference",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Inference",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Inference",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "inference-sdk",
+          "title": "Inference SDK",
+          "description": "Learn about Inference SDK",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Inference SDK",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Inference SDK",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "know-your-customers-usecases",
+          "title": "Know your Customers / Usecases",
+          "description": "Learn about Know your Customers / Usecases",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Know your Customers / Usecases",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Know your Customers / Usecases",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "lancedbqdrant",
+          "title": "LanceDBQdrant",
+          "description": "Learn about LanceDBQdrant",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of LanceDBQdrant",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using LanceDBQdrant",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "langchain-for-multimodal-apps",
+          "title": "LangChain for Multimodal Apps",
+          "description": "Learn about LangChain for Multimodal Apps",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of LangChain for Multimodal Apps",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using LangChain for Multimodal Apps",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "langchainllama-index",
+          "title": "LangchainLlama Index",
+          "description": "Learn about LangchainLlama Index",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of LangchainLlama Index",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using LangchainLlama Index",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "limitations-and-considerations",
+          "title": "Limitations and Considerations",
+          "description": "Learn about Limitations and Considerations",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Limitations and Considerations",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Limitations and Considerations",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "llamaindex-for-multimodal-apps",
+          "title": "LlamaIndex for Multimodal Apps",
+          "description": "Learn about LlamaIndex for Multimodal Apps",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of LlamaIndex for Multimodal Apps",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using LlamaIndex for Multimodal Apps",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "llms",
+          "title": "LLMs",
+          "description": "Learn about LLMs",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of LLMs",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using LLMs",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "managing-tokens",
+          "title": "Managing Tokens",
+          "description": "Learn about Managing Tokens",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Managing Tokens",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Managing Tokens",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "manual-implementation",
+          "title": "Manual Implementation",
+          "description": "Learn about Manual Implementation",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Manual Implementation",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Manual Implementation",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "maximum-tokens",
+          "title": "Maximum Tokens",
+          "description": "Learn about Maximum Tokens",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Maximum Tokens",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Maximum Tokens",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "mistral-aicohere",
+          "title": "Mistral AICohere",
+          "description": "Learn about Mistral AICohere",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Mistral AICohere",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Mistral AICohere",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "models-on-hugging-face",
+          "title": "Models on Hugging Face",
+          "description": "Learn about Models on Hugging Face",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Models on Hugging Face",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Models on Hugging Face",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "mongodb-atlas",
+          "title": "MongoDB Atlas",
+          "description": "Learn about MongoDB Atlas",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of MongoDB Atlas",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using MongoDB Atlas",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "multimodal-ai-tasks",
+          "title": "Multimodal AI Tasks",
+          "description": "Learn about Multimodal AI Tasks",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Multimodal AI Tasks",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Multimodal AI Tasks",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "multimodal-aimultimodal-ai-usecases",
+          "title": "Multimodal AIMultimodal AI Usecases",
+          "description": "Learn about Multimodal AIMultimodal AI Usecases",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Multimodal AIMultimodal AI Usecases",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Multimodal AIMultimodal AI Usecases",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "ollama",
+          "title": "Ollama",
+          "description": "Learn about Ollama",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Ollama",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Ollama",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "ollama-models",
+          "title": "Ollama Models",
+          "description": "Learn about Ollama Models",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Ollama Models",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Ollama Models",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "ollama-sdk",
+          "title": "Ollama SDK",
+          "description": "Learn about Ollama SDK",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Ollama SDK",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Ollama SDK",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "open-ai-assistant-api",
+          "title": "Open AI Assistant API",
+          "description": "Learn about Open AI Assistant API",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [
+            "api"
+          ],
+          "learningObjectives": [
+            "Understand the fundamentals of Open AI Assistant API",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Open AI Assistant API",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "open-ai-embedding-models",
+          "title": "Open AI Embedding Models",
+          "description": "Learn about Open AI Embedding Models",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Open AI Embedding Models",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Open AI Embedding Models",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "open-ai-embeddings-api",
+          "title": "Open AI Embeddings API",
+          "description": "Learn about Open AI Embeddings API",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [
+            "api"
+          ],
+          "learningObjectives": [
+            "Understand the fundamentals of Open AI Embeddings API",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Open AI Embeddings API",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "open-ai-models",
+          "title": "Open AI Models",
+          "description": "Learn about Open AI Models",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Open AI Models",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Open AI Models",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "open-ai-platform",
+          "title": "Open AI Platform",
+          "description": "Learn about Open AI Platform",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Open AI Platform",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Open AI Platform",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "open-ai-playground",
+          "title": "Open AI Playground",
+          "description": "Learn about Open AI Playground",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Open AI Playground",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Open AI Playground",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "open-vs-closed-source-models",
+          "title": "Open vs Closed Source Models",
+          "description": "Learn about Open vs Closed Source Models",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Open vs Closed Source Models",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Open vs Closed Source Models",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "opensource-embeddings",
+          "title": "Open-Source Embeddings",
+          "description": "Learn about Open-Source Embeddings",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Open-Source Embeddings",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Open-Source Embeddings",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "openai-api",
+          "title": "OpenAI API",
+          "description": "Learn about OpenAI API",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [
+            "api"
+          ],
+          "learningObjectives": [
+            "Understand the fundamentals of OpenAI API",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using OpenAI API",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "openai-assistant-api",
+          "title": "OpenAI Assistant API",
+          "description": "Learn about OpenAI Assistant API",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [
+            "api"
+          ],
+          "learningObjectives": [
+            "Understand the fundamentals of OpenAI Assistant API",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using OpenAI Assistant API",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "openai-functions-tools",
+          "title": "OpenAI Functions / Tools",
+          "description": "Learn about OpenAI Functions / Tools",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of OpenAI Functions / Tools",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using OpenAI Functions / Tools",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "openai-models",
+          "title": "OpenAI Models",
+          "description": "Learn about OpenAI Models",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of OpenAI Models",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using OpenAI Models",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "openai-moderation-api",
+          "title": "OpenAI Moderation API",
+          "description": "Learn about OpenAI Moderation API",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [
+            "api"
+          ],
+          "learningObjectives": [
+            "Understand the fundamentals of OpenAI Moderation API",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using OpenAI Moderation API",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "openai-vision-api",
+          "title": "OpenAI Vision API",
+          "description": "Learn about OpenAI Vision API",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [
+            "api"
+          ],
+          "learningObjectives": [
+            "Understand the fundamentals of OpenAI Vision API",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using OpenAI Vision API",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "opensource-ai",
+          "title": "OpenSource AI",
+          "description": "Learn about OpenSource AI",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of OpenSource AI",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using OpenSource AI",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "performing-similarity-search",
+          "title": "Performing Similarity Search",
+          "description": "Learn about Performing Similarity Search",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Performing Similarity Search",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Performing Similarity Search",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "popular-ai-models",
+          "title": "Popular AI Models",
+          "description": "Learn about Popular AI Models",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Popular AI Models",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Popular AI Models",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "popular-open-source-models",
+          "title": "Popular Open Source Models",
+          "description": "Learn about Popular Open Source Models",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Popular Open Source Models",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Popular Open Source Models",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "popular-vector-dbs-pick-one",
+          "title": "Popular Vector DBs (pick one)",
+          "description": "Learn about Popular Vector DBs (pick one)",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Popular Vector DBs (pick one)",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Popular Vector DBs (pick one)",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "prerequisites-one-of-these",
+          "title": "Pre-requisites (One of these)",
+          "description": "Learn about Pre-requisites (One of these)",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Pre-requisites (One of these)",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Pre-requisites (One of these)",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "pretrained-models",
+          "title": "Pre-trained Models",
+          "description": "Learn about Pre-trained Models",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Pre-trained Models",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Pre-trained Models",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "pricing-considerations",
+          "title": "Pricing Considerations",
+          "description": "Learn about Pricing Considerations",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Pricing Considerations",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Pricing Considerations",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "prompt-engineering",
+          "title": "Prompt Engineering",
+          "description": "Learn about Prompt Engineering",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Prompt Engineering",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Prompt Engineering",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "prompt-engineering-roadmap",
+          "title": "Prompt Engineering Roadmap",
+          "description": "Learn about Prompt Engineering Roadmap",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Prompt Engineering Roadmap",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Prompt Engineering Roadmap",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "prompt-injection-attacks",
+          "title": "Prompt Injection Attacks",
+          "description": "Learn about Prompt Injection Attacks",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Prompt Injection Attacks",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Prompt Injection Attacks",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "purpose-and-functionality",
+          "title": "Purpose and Functionality",
+          "description": "Learn about Purpose and Functionality",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Purpose and Functionality",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Purpose and Functionality",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "rag",
+          "title": "RAG",
+          "description": "Learn about RAG",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of RAG",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using RAG",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "rag-implementation",
+          "title": "RAG & Implementation",
+          "description": "Learn about RAG & Implementation",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of RAG & Implementation",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using RAG & Implementation",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "rag-alternative",
+          "title": "RAG Alternative",
+          "description": "Learn about RAG Alternative",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of RAG Alternative",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using RAG Alternative",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "rag-usecases",
+          "title": "RAG Usecases",
+          "description": "Learn about RAG Usecases",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of RAG Usecases",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using RAG Usecases",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "rag-vs-finetuning",
+          "title": "RAG vs Fine-tuning",
+          "description": "Learn about RAG vs Fine-tuning",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of RAG vs Fine-tuning",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using RAG vs Fine-tuning",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "react-prompting",
+          "title": "ReAct Prompting",
+          "description": "Learn about ReAct Prompting",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [
+            "react"
+          ],
+          "learningObjectives": [
+            "Understand the fundamentals of ReAct Prompting",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using ReAct Prompting",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "related-roadmaps",
+          "title": "Related Roadmaps",
+          "description": "Learn about Related Roadmaps",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Related Roadmaps",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Related Roadmaps",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "replicate",
+          "title": "Replicate",
+          "description": "Learn about Replicate",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Replicate",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Replicate",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "retrieval-process",
+          "title": "Retrieval Process",
+          "description": "Learn about Retrieval Process",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Retrieval Process",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Retrieval Process",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "robust-prompt-engineering",
+          "title": "Robust prompt engineering",
+          "description": "Learn about Robust prompt engineering",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Robust prompt engineering",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Robust prompt engineering",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "roles-and-responsiblities",
+          "title": "Roles and Responsiblities",
+          "description": "Learn about Roles and Responsiblities",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Roles and Responsiblities",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Roles and Responsiblities",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "safety-best-practices",
+          "title": "Safety Best Practices",
+          "description": "Learn about Safety Best Practices",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Safety Best Practices",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Safety Best Practices",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "scrimba-ai-engineer-path",
+          "title": "Scrimba - AI Engineer Path",
+          "description": "Learn about Scrimba - AI Engineer Path",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Scrimba - AI Engineer Path",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Scrimba - AI Engineer Path",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "security-and-privacy-concerns",
+          "title": "Security and Privacy Concerns",
+          "description": "Learn about Security and Privacy Concerns",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [
+            "security"
+          ],
+          "learningObjectives": [
+            "Understand the fundamentals of Security and Privacy Concerns",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Security and Privacy Concerns",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "semantic-search",
+          "title": "Semantic Search",
+          "description": "Learn about Semantic Search",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Semantic Search",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Semantic Search",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "speechtotext",
+          "title": "Speech-to-Text",
+          "description": "Learn about Speech-to-Text",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Speech-to-Text",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Speech-to-Text",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "supabase",
+          "title": "Supabase",
+          "description": "Learn about Supabase",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Supabase",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Supabase",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "texttospeech",
+          "title": "Text-to-Speech",
+          "description": "Learn about Text-to-Speech",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Text-to-Speech",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Text-to-Speech",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "token-counting",
+          "title": "Token Counting",
+          "description": "Learn about Token Counting",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Token Counting",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Token Counting",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "training",
+          "title": "Training",
+          "description": "Learn about Training",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Training",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Training",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "understanding-ai-safety-issues",
+          "title": "Understanding AI Safety Issues",
+          "description": "Learn about Understanding AI Safety Issues",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Understanding AI Safety Issues",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Understanding AI Safety Issues",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "use-cases-for-embeddings",
+          "title": "Use Cases for Embeddings",
+          "description": "Learn about Use Cases for Embeddings",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Use Cases for Embeddings",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Use Cases for Embeddings",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "using-open-source-models",
+          "title": "Using Open Source Models",
+          "description": "Learn about Using Open Source Models",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Using Open Source Models",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Using Open Source Models",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "using-pretrained-models",
+          "title": "Using Pre-trained Models",
+          "description": "Learn about Using Pre-trained Models",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Using Pre-trained Models",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Using Pre-trained Models",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "using-sdks-directly",
+          "title": "Using SDKs Directly",
+          "description": "Learn about Using SDKs Directly",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Using SDKs Directly",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Using SDKs Directly",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "vector-database",
+          "title": "Vector Database",
+          "description": "Learn about Vector Database",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [
+            "database"
+          ],
+          "learningObjectives": [
+            "Understand the fundamentals of Vector Database",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Vector Database",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "vector-databases",
+          "title": "Vector Databases",
+          "description": "Learn about Vector Databases",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [
+            "database"
+          ],
+          "learningObjectives": [
+            "Understand the fundamentals of Vector Databases",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Vector Databases",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "video-understanding",
+          "title": "Video Understanding",
+          "description": "Learn about Video Understanding",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Video Understanding",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Video Understanding",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "ways-of-implementing-rag",
+          "title": "Ways of Implementing RAG",
+          "description": "Learn about Ways of Implementing RAG",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Ways of Implementing RAG",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Ways of Implementing RAG",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "weaviatefaiss",
+          "title": "WeaviateFAISS",
+          "description": "Learn about WeaviateFAISS",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of WeaviateFAISS",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using WeaviateFAISS",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "what-are-embeddings",
+          "title": "What are Embeddings",
+          "description": "Learn about What are Embeddings",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of What are Embeddings",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using What are Embeddings",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "whisper-api",
+          "title": "Whisper API",
+          "description": "Learn about Whisper API",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [
+            "api"
+          ],
+          "learningObjectives": [
+            "Understand the fundamentals of Whisper API",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Whisper API",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "writing-prompts",
+          "title": "Writing Prompts",
+          "description": "Learn about Writing Prompts",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Writing Prompts",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Writing Prompts",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        }
+      ],
+      "order": 2,
+      "estimatedHours": 384,
+      "topicCount": 128
+    }
+  ],
+  "metadata": {
+    "totalTopics": 131,
+    "totalCategories": 3,
+    "estimatedHours": 393,
+    "difficulty": "intermediate",
+    "completionRate": 0,
+    "tags": [
+      "machine-learning",
+      "data-science",
+      "python",
+      "algorithms"
+    ],
+    "prerequisites": [
+      "Programming experience",
+      "Mathematics background"
+    ],
+    "learningPath": [
+      {
+        "step": 1,
+        "category": "Deep Learning",
+        "description": "Complete Deep Learning topics",
+        "estimatedHours": 6
+      },
+      {
+        "step": 2,
+        "category": "Specialized Areas",
+        "description": "Complete Specialized Areas topics",
+        "estimatedHours": 3
+      },
+      {
+        "step": 3,
+        "category": "Other",
+        "description": "Complete Other topics",
+        "estimatedHours": 384
+      }
+    ]
+  }
+}

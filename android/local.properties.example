@@ -1,0 +1,27 @@
+# Flutter SDK path (automatically set by Flutter)
+flutter.sdk=/path/to/flutter
+
+# Android SDK path (automatically set by Android Studio)
+sdk.dir=/path/to/android/sdk
+
+# Release signing configuration
+# Copy this file to local.properties and fill in your actual values
+# DO NOT commit local.properties to version control
+
+# Keystore file path (relative to android/app directory)
+storeFile=../keystore/release.keystore
+
+# Keystore password
+storePassword=your_keystore_password
+
+# Key alias
+keyAlias=your_key_alias
+
+# Key password
+keyPassword=your_key_password
+
+# Example:
+# storeFile=../keystore/cognify-release.keystore
+# storePassword=mySecurePassword123
+# keyAlias=cognify-key
+# keyPassword=mySecurePassword123

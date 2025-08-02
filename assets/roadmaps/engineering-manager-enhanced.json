@@ -1,0 +1,3712 @@
+{
+  "id": "engineering-manager",
+  "title": "Engineering Manager",
+  "description": "Learn Engineering Manager step by step",
+  "version": "1.0.0",
+  "lastUpdated": "2025-07-11T21:32:49.265Z",
+  "source": "roadmap.sh",
+  "categories": [
+    {
+      "id": "leadership-fundamentals",
+      "title": "Leadership Fundamentals",
+      "description": "Core leadership and management skills",
+      "icon": "groups",
+      "topics": [
+        {
+          "id": "change-management",
+          "title": "Change management",
+          "description": "Learn about Change management",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Change management",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Change management",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "communication",
+          "title": "Communication",
+          "description": "Learn about Communication",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Communication",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Communication",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "communication-planning",
+          "title": "Communication planning",
+          "description": "Learn about Communication planning",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Communication planning",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Communication planning",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "crisis-management",
+          "title": "Crisis Management",
+          "description": "Learn about Crisis Management",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Crisis Management",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Crisis Management",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "delegation",
+          "title": "Delegation",
+          "description": "Learn about Delegation",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Delegation",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Delegation",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "dependency-management",
+          "title": "Dependency management",
+          "description": "Learn about Dependency management",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Dependency management",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Dependency management",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "executive-communication",
+          "title": "Executive Communication",
+          "description": "Learn about Executive Communication",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Executive Communication",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Executive Communication",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "financial-management",
+          "title": "Financial Management",
+          "description": "Learn about Financial Management",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Financial Management",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Financial Management",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "incident-management",
+          "title": "Incident Management",
+          "description": "Learn about Incident Management",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Incident Management",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Incident Management",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "integration-management",
+          "title": "Integration management",
+          "description": "Learn about Integration management",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Integration management",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Integration management",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "knowledge-management",
+          "title": "Knowledge Management",
+          "description": "Learn about Knowledge Management",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Knowledge Management",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Knowledge Management",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "leadership-skills",
+          "title": "Leadership Skills",
+          "description": "Learn about Leadership Skills",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Leadership Skills",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Leadership Skills",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "mentoring-and-coaching",
+          "title": "Mentoring and Coaching",
+          "description": "Learn about Mentoring and Coaching",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Mentoring and Coaching",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Mentoring and Coaching",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "mentoring-programs",
+          "title": "Mentoring Programs",
+          "description": "Learn about Mentoring Programs",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Mentoring Programs",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Mentoring Programs",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "milestone-management",
+          "title": "Milestone Management",
+          "description": "Learn about Milestone Management",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Milestone Management",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Milestone Management",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "partner-management",
+          "title": "Partner Management",
+          "description": "Learn about Partner Management",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Partner Management",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Partner Management",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "people-management",
+          "title": "People Management",
+          "description": "Learn about People Management",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of People Management",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using People Management",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "production-issues-management",
+          "title": "Production issues management",
+          "description": "Learn about Production issues management",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Production issues management",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Production issues management",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "project-management",
+          "title": "Project Management",
+          "description": "Learn about Project Management",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Project Management",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Project Management",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "release-management",
+          "title": "Release Management",
+          "description": "Learn about Release Management",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Release Management",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Release Management",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "resistance-management",
+          "title": "Resistance management",
+          "description": "Learn about Resistance management",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Resistance management",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Resistance management",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "risk-management",
+          "title": "Risk Management",
+          "description": "Learn about Risk Management",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Risk Management",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Risk Management",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "scope-management",
+          "title": "Scope Management",
+          "description": "Learn about Scope Management",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Scope Management",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Scope Management",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "stakeholder-communication",
+          "title": "Stakeholder Communication",
+          "description": "Learn about Stakeholder Communication",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Stakeholder Communication",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Stakeholder Communication",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "stakeholder-management",
+          "title": "Stakeholder Management",
+          "description": "Learn about Stakeholder Management",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Stakeholder Management",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Stakeholder Management",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "team-motivation",
+          "title": "Team Motivation",
+          "description": "Learn about Team Motivation",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Team Motivation",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Team Motivation",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "technical-debt-and-management",
+          "title": "Technical Debt and Management",
+          "description": "Learn about Technical Debt and Management",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Technical Debt and Management",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Technical Debt and Management",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "technical-leadership",
+          "title": "Technical Leadership",
+          "description": "Learn about Technical Leadership",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Technical Leadership",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Technical Leadership",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "vendor-management",
+          "title": "Vendor Management",
+          "description": "Learn about Vendor Management",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Vendor Management",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Vendor Management",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "war-room-management",
+          "title": "War Room Management",
+          "description": "Learn about War Room Management",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of War Room Management",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using War Room Management",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        }
+      ],
+      "order": 0,
+      "estimatedHours": 90,
+      "topicCount": 30
+    },
+    {
+      "id": "people-management",
+      "title": "People Management",
+      "description": "Team building and people development",
+      "icon": "people",
+      "topics": [
+        {
+          "id": "career-development-planning",
+          "title": "Career Development Planning",
+          "description": "Learn about Career Development Planning",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Career Development Planning",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Career Development Planning",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "customer-feedback-integration",
+          "title": "Customer feedback integration",
+          "description": "Learn about Customer feedback integration",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Customer feedback integration",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Customer feedback integration",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "feedback-delivery",
+          "title": "Feedback Delivery",
+          "description": "Learn about Feedback Delivery",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Feedback Delivery",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Feedback Delivery",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "hiring-and-recruitment",
+          "title": "Hiring and Recruitment",
+          "description": "Learn about Hiring and Recruitment",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Hiring and Recruitment",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Hiring and Recruitment",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        }
+      ],
+      "order": 1,
+      "estimatedHours": 12,
+      "topicCount": 4
+    },
+    {
+      "id": "project-management",
+      "title": "Project Management",
+      "description": "Learn about Project Management concepts and practices",
+      "icon": "category",
+      "topics": [
+        {
+          "id": "agile-methodologies",
+          "title": "Agile methodologies",
+          "description": "Learn about Agile methodologies",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Agile methodologies",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Agile methodologies",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "budget-planning",
+          "title": "Budget Planning",
+          "description": "Learn about Budget Planning",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Budget Planning",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Budget Planning",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "contingency-planning",
+          "title": "Contingency planning",
+          "description": "Learn about Contingency planning",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Contingency planning",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Contingency planning",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "migration-planning",
+          "title": "Migration planning",
+          "description": "Learn about Migration planning",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Migration planning",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Migration planning",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "project-planning",
+          "title": "Project Planning",
+          "description": "Learn about Project Planning",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Project Planning",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Project Planning",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "sprint-planning",
+          "title": "Sprint Planning",
+          "description": "Learn about Sprint Planning",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Sprint Planning",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Sprint Planning",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "timeline-estimation",
+          "title": "Timeline Estimation",
+          "description": "Learn about Timeline Estimation",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Timeline Estimation",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Timeline Estimation",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        }
+      ],
+      "order": 2,
+      "estimatedHours": 21,
+      "topicCount": 7
+    },
+    {
+      "id": "process-&-culture",
+      "title": "Process & Culture",
+      "description": "Learn about Process & Culture concepts and practices",
+      "icon": "category",
+      "topics": [
+        {
+          "id": "best-practices",
+          "title": "Best Practices",
+          "description": "Learn about Best Practices",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Best Practices",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Best Practices",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "code-review-best-practices",
+          "title": "Code Review Best Practices",
+          "description": "Learn about Code Review Best Practices",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Code Review Best Practices",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Code Review Best Practices",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "documentation",
+          "title": "Documentation",
+          "description": "Learn about Documentation",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Documentation",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Documentation",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "engineering-culture",
+          "title": "Engineering Culture",
+          "description": "Learn about Engineering Culture",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Engineering Culture",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Engineering Culture",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "knowledge-sharing-practices",
+          "title": "Knowledge sharing practices",
+          "description": "Learn about Knowledge sharing practices",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Knowledge sharing practices",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Knowledge sharing practices",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "process-documentation",
+          "title": "Process documentation",
+          "description": "Learn about Process documentation",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Process documentation",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Process documentation",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "security-best-practices",
+          "title": "Security Best Practices",
+          "description": "Learn about Security Best Practices",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [
+            "security"
+          ],
+          "learningObjectives": [
+            "Understand the fundamentals of Security Best Practices",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Security Best Practices",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "technical-documentation",
+          "title": "Technical Documentation",
+          "description": "Learn about Technical Documentation",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Technical Documentation",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Technical Documentation",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "architecture-documentation",
+          "title": "Architecture documentation",
+          "description": "Learn about Architecture documentation",
+          "difficulty": "advanced",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Architecture documentation",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Architecture documentation",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        }
+      ],
+      "order": 3,
+      "estimatedHours": 27,
+      "topicCount": 9
+    },
+    {
+      "id": "other",
+      "title": "Other",
+      "description": "Learn about Other concepts and practices",
+      "icon": "category",
+      "topics": [
+        {
+          "id": "api-strategy",
+          "title": "API strategy",
+          "description": "Learn about API strategy",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [
+            "api"
+          ],
+          "learningObjectives": [
+            "Understand the fundamentals of API strategy",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using API strategy",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "architectural-decisionmaking",
+          "title": "Architectural Decision-Making",
+          "description": "Learn about Architectural Decision-Making",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Architectural Decision-Making",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Architectural Decision-Making",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "backend-development",
+          "title": "Backend Development",
+          "description": "Learn about Backend Development",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Backend Development",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Backend Development",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "bias-recognition-mitigation",
+          "title": "Bias Recognition / Mitigation",
+          "description": "Learn about Bias Recognition / Mitigation",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Bias Recognition / Mitigation",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Bias Recognition / Mitigation",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "blameless-postmortems",
+          "title": "Blameless Post-mortems",
+          "description": "Learn about Blameless Post-mortems",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Blameless Post-mortems",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Blameless Post-mortems",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "board-presentations",
+          "title": "Board presentations",
+          "description": "Learn about Board presentations",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Board presentations",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Board presentations",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "brown-bags",
+          "title": "Brown Bags",
+          "description": "Learn about Brown Bags",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Brown Bags",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Brown Bags",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "budget-requests",
+          "title": "Budget requests",
+          "description": "Learn about Budget requests",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Budget requests",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Budget requests",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "build-vs-buy-evaluation",
+          "title": "Build vs Buy Evaluation",
+          "description": "Learn about Build vs Buy Evaluation",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Build vs Buy Evaluation",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Build vs Buy Evaluation",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "business-acumen",
+          "title": "Business Acumen",
+          "description": "Learn about Business Acumen",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Business Acumen",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Business Acumen",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "business-case-development",
+          "title": "Business Case Development",
+          "description": "Learn about Business Case Development",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Business Case Development",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Business Case Development",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "business-continuity",
+          "title": "Business continuity",
+          "description": "Learn about Business continuity",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Business continuity",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Business continuity",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "change-strategy",
+          "title": "Change strategy",
+          "description": "Learn about Change strategy",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Change strategy",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Change strategy",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "cicd-implementation",
+          "title": "CI/CD Implementation",
+          "description": "Learn about CI/CD Implementation",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of CI/CD Implementation",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using CI/CD Implementation",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "company-culture",
+          "title": "Company Culture",
+          "description": "Learn about Company Culture",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Company Culture",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Company Culture",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "competitive-analysis",
+          "title": "Competitive Analysis",
+          "description": "Learn about Competitive Analysis",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Competitive Analysis",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Competitive Analysis",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "conflict-resolution",
+          "title": "Conflict Resolution",
+          "description": "Learn about Conflict Resolution",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Conflict Resolution",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Conflict Resolution",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "cost-optimization",
+          "title": "Cost Optimization",
+          "description": "Learn about Cost Optimization",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Cost Optimization",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Cost Optimization",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "crossdepartment-collaboration",
+          "title": "Cross-department collaboration",
+          "description": "Learn about Cross-department collaboration",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Cross-department collaboration",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Cross-department collaboration",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "crossfunctional-collaboration",
+          "title": "Cross-functional Collaboration",
+          "description": "Learn about Cross-functional Collaboration",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Cross-functional Collaboration",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Cross-functional Collaboration",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "culture-building",
+          "title": "Culture Building",
+          "description": "Learn about Culture Building",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Culture Building",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Culture Building",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "culture-evolution",
+          "title": "Culture evolution",
+          "description": "Learn about Culture evolution",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Culture evolution",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Culture evolution",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "customer-relations",
+          "title": "Customer Relations",
+          "description": "Learn about Customer Relations",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Customer Relations",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Customer Relations",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "customer-success-alignment",
+          "title": "Customer success alignment",
+          "description": "Learn about Customer success alignment",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Customer success alignment",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Customer success alignment",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "decision-records",
+          "title": "Decision records",
+          "description": "Learn about Decision records",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Decision records",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Decision records",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "defining-and-enforcing-values",
+          "title": "Defining and Enforcing Values",
+          "description": "Learn about Defining and Enforcing Values",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Defining and Enforcing Values",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Defining and Enforcing Values",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "development-release-workflow",
+          "title": "Development / Release Workflow",
+          "description": "Learn about Development / Release Workflow",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Development / Release Workflow",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Development / Release Workflow",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "devops-engineering",
+          "title": "DevOps Engineering",
+          "description": "Learn about DevOps Engineering",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of DevOps Engineering",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using DevOps Engineering",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "disaster-recovery",
+          "title": "Disaster recovery",
+          "description": "Learn about Disaster recovery",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Disaster recovery",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Disaster recovery",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "em-vs-tech-lead-vs-icpeopleproduct",
+          "title": "EM vs Tech Lead vs ICPeopleProduct",
+          "description": "Learn about EM vs Tech Lead vs ICPeopleProduct",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of EM vs Tech Lead vs ICPeopleProduct",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using EM vs Tech Lead vs ICPeopleProduct",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "emergency-protocols",
+          "title": "Emergency protocols",
+          "description": "Learn about Emergency protocols",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Emergency protocols",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Emergency protocols",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "emotional-intelligence",
+          "title": "Emotional Intelligence",
+          "description": "Learn about Emotional Intelligence",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Emotional Intelligence",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Emotional Intelligence",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "engineering-manager",
+          "title": "Engineering Manager",
+          "description": "Learn about Engineering Manager",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Engineering Manager",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Engineering Manager",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "execution",
+          "title": "Execution",
+          "description": "Learn about Execution",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Execution",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Execution",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "executive-summaries",
+          "title": "Executive summaries",
+          "description": "Learn about Executive summaries",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Executive summaries",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Executive summaries",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "external-collaboration",
+          "title": "External collaboration",
+          "description": "Learn about External collaboration",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of External collaboration",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using External collaboration",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "feature-prioritization",
+          "title": "Feature prioritization",
+          "description": "Learn about Feature prioritization",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Feature prioritization",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Feature prioritization",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "foundational-knowledge",
+          "title": "Foundational Knowledge",
+          "description": "Learn about Foundational Knowledge",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Foundational Knowledge",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Foundational Knowledge",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "impact-assessment",
+          "title": "Impact assessment",
+          "description": "Learn about Impact assessment",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Impact assessment",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Impact assessment",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "incident-response",
+          "title": "Incident Response",
+          "description": "Learn about Incident Response",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Incident Response",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Incident Response",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "inclusive-environment-creation",
+          "title": "Inclusive environment creation",
+          "description": "Learn about Inclusive environment creation",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Inclusive environment creation",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Inclusive environment creation",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "innovation-fostering",
+          "title": "Innovation fostering",
+          "description": "Learn about Innovation fostering",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Innovation fostering",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Innovation fostering",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "key-focus-areas",
+          "title": "Key Focus Areas",
+          "description": "Learn about Key Focus Areas",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Key Focus Areas",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Key Focus Areas",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "knowledge-bases",
+          "title": "Knowledge bases",
+          "description": "Learn about Knowledge bases",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Knowledge bases",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Knowledge bases",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "knowledge-transfer",
+          "title": "Knowledge Transfer",
+          "description": "Learn about Knowledge Transfer",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Knowledge Transfer",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Knowledge Transfer",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "kpi-definition",
+          "title": "KPI Definition",
+          "description": "Learn about KPI Definition",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of KPI Definition",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using KPI Definition",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "learning-culture-development",
+          "title": "Learning culture development",
+          "description": "Learn about Learning culture development",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Learning culture development",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Learning culture development",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "legacy-system-retirement",
+          "title": "Legacy System Retirement",
+          "description": "Learn about Legacy System Retirement",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Legacy System Retirement",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Legacy System Retirement",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "lessons-learned",
+          "title": "Lessons Learned",
+          "description": "Learn about Lessons Learned",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Lessons Learned",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Lessons Learned",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "market-awareness",
+          "title": "Market awareness",
+          "description": "Learn about Market awareness",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Market awareness",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Market awareness",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "measurement",
+          "title": "Measurement",
+          "description": "Learn about Measurement",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Measurement",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Measurement",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "oneonone-meetings",
+          "title": "One-on-One Meetings",
+          "description": "Learn about One-on-One Meetings",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of One-on-One Meetings",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using One-on-One Meetings",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "organization-structure",
+          "title": "Organization structure",
+          "description": "Learn about Organization structure",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Organization structure",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Organization structure",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "organizational-awareness",
+          "title": "Organizational Awareness",
+          "description": "Learn about Organizational Awareness",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Organizational Awareness",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Organizational Awareness",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "organizational-change",
+          "title": "Organizational Change",
+          "description": "Learn about Organizational Change",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Organizational Change",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Organizational Change",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "performance-evaluations",
+          "title": "Performance Evaluations",
+          "description": "Learn about Performance Evaluations",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [
+            "performance"
+          ],
+          "learningObjectives": [
+            "Understand the fundamentals of Performance Evaluations",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Performance Evaluations",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "politics-navigation",
+          "title": "Politics navigation",
+          "description": "Learn about Politics navigation",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Politics navigation",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Politics navigation",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "postincident-analysis",
+          "title": "Post-incident analysis",
+          "description": "Learn about Post-incident analysis",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Post-incident analysis",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Post-incident analysis",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "process",
+          "title": "Process",
+          "description": "Learn about Process",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Process",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Process",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "process-changes",
+          "title": "Process changes",
+          "description": "Learn about Process changes",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Process changes",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Process changes",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "product-strategy-alignment",
+          "title": "Product strategy alignment",
+          "description": "Learn about Product strategy alignment",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Product strategy alignment",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Product strategy alignment",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "project-postmortems",
+          "title": "Project Postmortems",
+          "description": "Learn about Project Postmortems",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Project Postmortems",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Project Postmortems",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "project-tracking",
+          "title": "Project Tracking",
+          "description": "Learn about Project Tracking",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Project Tracking",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Project Tracking",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "quality-and-process",
+          "title": "Quality and Process",
+          "description": "Learn about Quality and Process",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Quality and Process",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Quality and Process",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "quality-metrics",
+          "title": "Quality Metrics",
+          "description": "Learn about Quality Metrics",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Quality Metrics",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Quality Metrics",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "recognition-programs",
+          "title": "Recognition programs",
+          "description": "Learn about Recognition programs",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Recognition programs",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Recognition programs",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "related-roadmaps",
+          "title": "Related Roadmaps",
+          "description": "Learn about Related Roadmaps",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Related Roadmaps",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Related Roadmaps",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "reorganizations",
+          "title": "Reorganizations",
+          "description": "Learn about Reorganizations",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Reorganizations",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Reorganizations",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "responsibility-shifts",
+          "title": "Responsibility shifts",
+          "description": "Learn about Responsibility shifts",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Responsibility shifts",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Responsibility shifts",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "risk-mitigation",
+          "title": "Risk Mitigation",
+          "description": "Learn about Risk Mitigation",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Risk Mitigation",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Risk Mitigation",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "roi-analysis",
+          "title": "ROI analysis",
+          "description": "Learn about ROI analysis",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of ROI analysis",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using ROI analysis",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "role-transitions",
+          "title": "Role transitions",
+          "description": "Learn about Role transitions",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Role transitions",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Role transitions",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "scaling-infrastructure",
+          "title": "Scaling Infrastructure",
+          "description": "Learn about Scaling Infrastructure",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Scaling Infrastructure",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Scaling Infrastructure",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "security-incident-handling",
+          "title": "Security incident handling",
+          "description": "Learn about Security incident handling",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [
+            "security"
+          ],
+          "learningObjectives": [
+            "Understand the fundamentals of Security incident handling",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Security incident handling",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "service-recovery",
+          "title": "Service Recovery",
+          "description": "Learn about Service Recovery",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Service Recovery",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Service Recovery",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "social-connections",
+          "title": "Social connections",
+          "description": "Learn about Social connections",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Social connections",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Social connections",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "software-architect",
+          "title": "Software Architect",
+          "description": "Learn about Software Architect",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Software Architect",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Software Architect",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "software-architectsystem-design",
+          "title": "Software ArchitectSystem Design",
+          "description": "Learn about Software ArchitectSystem Design",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Software ArchitectSystem Design",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Software ArchitectSystem Design",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "software-engineering-background",
+          "title": "Software Engineering Background",
+          "description": "Learn about Software Engineering Background",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Software Engineering Background",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Software Engineering Background",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "status-reporting",
+          "title": "Status Reporting",
+          "description": "Learn about Status Reporting",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Status Reporting",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Status Reporting",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "strategic-proposals",
+          "title": "Strategic proposals",
+          "description": "Learn about Strategic proposals",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Strategic proposals",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Strategic proposals",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "strategic-thinking",
+          "title": "Strategic Thinking",
+          "description": "Learn about Strategic Thinking",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Strategic Thinking",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Strategic Thinking",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "system-design",
+          "title": "System Design",
+          "description": "Learn about System Design",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of System Design",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using System Design",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "system-monitoring-performance",
+          "title": "System Monitoring & Performance",
+          "description": "Learn about System Monitoring & Performance",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [
+            "performance"
+          ],
+          "learningObjectives": [
+            "Understand the fundamentals of System Monitoring & Performance",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using System Monitoring & Performance",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "team-change",
+          "title": "Team Change",
+          "description": "Learn about Team Change",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Team Change",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Team Change",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "team-culture",
+          "title": "Team Culture",
+          "description": "Learn about Team Culture",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Team Culture",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Team Culture",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "team-development",
+          "title": "Team Development",
+          "description": "Learn about Team Development",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Team Development",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Team Development",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "team-health-metrics",
+          "title": "Team Health Metrics",
+          "description": "Learn about Team Health Metrics",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Team Health Metrics",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Team Health Metrics",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "team-meetings",
+          "title": "Team Meetings",
+          "description": "Learn about Team Meetings",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Team Meetings",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Team Meetings",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "team-mergers",
+          "title": "Team mergers",
+          "description": "Learn about Team mergers",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Team mergers",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Team mergers",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "team-structure-and-design",
+          "title": "Team Structure and Design",
+          "description": "Learn about Team Structure and Design",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Team Structure and Design",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Team Structure and Design",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "team-support",
+          "title": "Team Support",
+          "description": "Learn about Team Support",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Team Support",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Team Support",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "team-traditions-and-rituals",
+          "title": "Team Traditions and Rituals",
+          "description": "Learn about Team Traditions and Rituals",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Team Traditions and Rituals",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Team Traditions and Rituals",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "tech-talks",
+          "title": "Tech Talks",
+          "description": "Learn about Tech Talks",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Tech Talks",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Tech Talks",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "technical-change",
+          "title": "Technical Change",
+          "description": "Learn about Technical Change",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Technical Change",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Technical Change",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "technical-customer-support",
+          "title": "Technical customer support",
+          "description": "Learn about Technical customer support",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Technical customer support",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Technical customer support",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "technical-excellence-mindset",
+          "title": "Technical excellence mindset",
+          "description": "Learn about Technical excellence mindset",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Technical excellence mindset",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Technical excellence mindset",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "technical-partnerships",
+          "title": "Technical partnerships",
+          "description": "Learn about Technical partnerships",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Technical partnerships",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Technical partnerships",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "technical-risk-assessment",
+          "title": "Technical Risk Assessment",
+          "description": "Learn about Technical Risk Assessment",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Technical Risk Assessment",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Technical Risk Assessment",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "technical-roadmapping",
+          "title": "Technical Roadmapping",
+          "description": "Learn about Technical Roadmapping",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Technical Roadmapping",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Technical Roadmapping",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "technical-standards-setting",
+          "title": "Technical Standards Setting",
+          "description": "Learn about Technical Standards Setting",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Technical Standards Setting",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Technical Standards Setting",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "technical-strategy",
+          "title": "Technical Strategy",
+          "description": "Learn about Technical Strategy",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Technical Strategy",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Technical Strategy",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "technology-adoption",
+          "title": "Technology adoption",
+          "description": "Learn about Technology adoption",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Technology adoption",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Technology adoption",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "technology-partnerships",
+          "title": "Technology partnerships",
+          "description": "Learn about Technology partnerships",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Technology partnerships",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Technology partnerships",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "testing-strategies",
+          "title": "Testing Strategies",
+          "description": "Learn about Testing Strategies",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [
+            "testing"
+          ],
+          "learningObjectives": [
+            "Understand the fundamentals of Testing Strategies",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Testing Strategies",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "tool-transitions",
+          "title": "Tool transitions",
+          "description": "Learn about Tool transitions",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Tool transitions",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Tool transitions",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "trust-influence-building",
+          "title": "Trust / Influence Building",
+          "description": "Learn about Trust / Influence Building",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Trust / Influence Building",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Trust / Influence Building",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "velocity-tracking",
+          "title": "Velocity Tracking",
+          "description": "Learn about Velocity Tracking",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Velocity Tracking",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Velocity Tracking",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "vendor-relationships",
+          "title": "Vendor relationships",
+          "description": "Learn about Vendor relationships",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Vendor relationships",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Vendor relationships",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "vision-alignment",
+          "title": "Vision alignment",
+          "description": "Learn about Vision alignment",
+          "difficulty": "intermediate",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Vision alignment",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Vision alignment",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "software-design-architecture",
+          "title": "Software Design & Architecture",
+          "description": "Learn about Software Design & Architecture",
+          "difficulty": "advanced",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Software Design & Architecture",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Software Design & Architecture",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "system-design-and-architecture",
+          "title": "System Design and Architecture",
+          "description": "Learn about System Design and Architecture",
+          "difficulty": "advanced",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of System Design and Architecture",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using System Design and Architecture",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        },
+        {
+          "id": "visit-the-following-relevant-tracks-about-system-d",
+          "title": "Visit the following relevant tracks about system design and architecture",
+          "description": "Learn about Visit the following relevant tracks about system design and architecture",
+          "difficulty": "advanced",
+          "estimatedTime": "2-4 hours",
+          "prerequisites": [],
+          "resources": [],
+          "isCompleted": false,
+          "estimatedHours": 3,
+          "tags": [],
+          "learningObjectives": [
+            "Understand the fundamentals of Visit the following relevant tracks about system design and architecture",
+            "Learn best practices and common patterns",
+            "Apply knowledge through practical examples"
+          ],
+          "practicalExercises": [
+            "Build a simple project using Visit the following relevant tracks about system design and architecture",
+            "Complete hands-on tutorials and examples",
+            "Practice with real-world scenarios"
+          ]
+        }
+      ],
+      "order": 4,
+      "estimatedHours": 339,
+      "topicCount": 113
+    }
+  ],
+  "metadata": {
+    "totalTopics": 163,
+    "totalCategories": 5,
+    "estimatedHours": 489,
+    "difficulty": "intermediate",
+    "completionRate": 0,
+    "tags": [
+      "leadership",
+      "management",
+      "team",
+      "process"
+    ],
+    "prerequisites": [
+      "Technical background",
+      "Leadership interest"
+    ],
+    "learningPath": [
+      {
+        "step": 1,
+        "category": "Leadership Fundamentals",
+        "description": "Complete Leadership Fundamentals topics",
+        "estimatedHours": 90
+      },
+      {
+        "step": 2,
+        "category": "People Management",
+        "description": "Complete People Management topics",
+        "estimatedHours": 12
+      },
+      {
+        "step": 3,
+        "category": "Project Management",
+        "description": "Complete Project Management topics",
+        "estimatedHours": 21
+      },
+      {
+        "step": 4,
+        "category": "Process & Culture",
+        "description": "Complete Process & Culture topics",
+        "estimatedHours": 27
+      },
+      {
+        "step": 5,
+        "category": "Other",
+        "description": "Complete Other topics",
+        "estimatedHours": 339
+      }
+    ]
+  }
+}

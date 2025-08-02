@@ -1,0 +1,114 @@
+{
+  "version": "2.0.0",
+  "lastUpdated": "2025-07-11T21:35:48.843Z",
+  "totalRoadmaps": 5,
+  "totalTopics": 640,
+  "totalHours": 1920,
+  "roadmaps": [
+    {
+      "id": "ai-engineer",
+      "title": "Ai Engineer",
+      "description": "Learn Ai Engineer step by step",
+      "totalTopics": 131,
+      "totalCategories": 3,
+      "estimatedHours": 393,
+      "difficulty": "intermediate",
+      "tags": [
+        "machine-learning",
+        "data-science",
+        "python",
+        "algorithms"
+      ],
+      "prerequisites": [
+        "Programming experience",
+        "Mathematics background"
+      ],
+      "jsonFile": "ai-engineer-enhanced.json",
+      "lastUpdated": "2025-07-11T21:32:49.230Z"
+    },
+    {
+      "id": "backend",
+      "title": "Backend",
+      "description": "Learn Backend step by step",
+      "totalTopics": 149,
+      "totalCategories": 13,
+      "estimatedHours": 447,
+      "difficulty": "intermediate",
+      "tags": [
+        "server-side",
+        "api",
+        "database",
+        "architecture"
+      ],
+      "prerequisites": [
+        "Basic programming knowledge",
+        "Understanding of web concepts"
+      ],
+      "jsonFile": "backend-enhanced.json",
+      "lastUpdated": "2025-07-11T21:32:49.249Z"
+    },
+    {
+      "id": "engineering-manager",
+      "title": "Engineering Manager",
+      "description": "Learn Engineering Manager step by step",
+      "totalTopics": 163,
+      "totalCategories": 5,
+      "estimatedHours": 489,
+      "difficulty": "intermediate",
+      "tags": [
+        "leadership",
+        "management",
+        "team",
+        "process"
+      ],
+      "prerequisites": [
+        "Technical background",
+        "Leadership interest"
+      ],
+      "jsonFile": "engineering-manager-enhanced.json",
+      "lastUpdated": "2025-07-11T21:32:49.265Z"
+    },
+    {
+      "id": "frontend",
+      "title": "Frontend",
+      "description": "Learn Frontend step by step",
+      "totalTopics": 98,
+      "totalCategories": 9,
+      "estimatedHours": 294,
+      "difficulty": "intermediate",
+      "tags": [
+        "client-side",
+        "ui",
+        "javascript",
+        "responsive"
+      ],
+      "prerequisites": [
+        "HTML/CSS basics",
+        "JavaScript fundamentals"
+      ],
+      "jsonFile": "frontend-enhanced.json",
+      "lastUpdated": "2025-07-11T21:32:49.287Z"
+    },
+    {
+      "id": "software-architect",
+      "title": "Software Architect",
+      "description": "Learn Software Architect step by step",
+      "totalTopics": 99,
+      "totalCategories": 6,
+      "estimatedHours": 297,
+      "difficulty": "intermediate",
+      "tags": [
+        "design",
+        "patterns",
+        "scalability",
+        "systems"
+      ],
+      "prerequisites": [
+        "Software development experience",
+        "System design basics"
+      ],
+      "jsonFile": "software-architect-enhanced.json",
+      "lastUpdated": "2025-07-11T21:32:49.297Z"
+    }
+  ]
+}
