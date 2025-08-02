@@ -75,3 +75,13 @@
     java.lang.Object writeReplace();
     java.lang.Object readResolve();
 }
+
+# Keep Play Core classes for Flutter deferred components (Android 14+)
+-keep class com.google.android.play.core.** { *; }
+-keep class com.google.android.play.core.tasks.** { *; }
+
+# Suppress warnings for deprecated Play Core classes (Android 14 compatibility)
+-dontwarn com.google.android.gms.common.annotation.NoNullnessRewrite
+-dontwarn com.google.android.play.core.tasks.OnFailureListener
+-dontwarn com.google.android.play.core.tasks.OnSuccessListener
+-dontwarn com.google.android.play.core.tasks.Task

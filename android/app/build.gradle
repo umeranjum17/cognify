@@ -24,12 +24,15 @@ if (flutterVersionName == null) {
 
 android {
     namespace "com.umerfarooq1995.cognify_flutter"
-    compileSdk flutter.compileSdkVersion
+    compileSdkVersion 35
     ndkVersion flutter.ndkVersion
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_11
         targetCompatibility JavaVersion.VERSION_11
+        kotlinOptions {
+        freeCompilerArgs += ["-Xlint:-options"]
+    }
     }
 
     kotlinOptions {
@@ -43,7 +46,7 @@ android {
     defaultConfig {
         applicationId "com.umerfarooq1995.cognify_flutter"
         minSdkVersion flutter.minSdkVersion
-        targetSdkVersion flutter.targetSdkVersion
+        targetSdkVersion 34
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
     }
@@ -99,4 +102,19 @@ flutter {
     source '../..'
 }
 
-dependencies {}
+dependencies {
+    // Play In-App Reviews
+    implementation 'com.google.android.play:review:2.0.1'
+    implementation 'com.google.android.play:review-ktx:2.0.1'
+    // Play In-App Updates
+    implementation 'com.google.android.play:app-update:2.1.0'
+    implementation 'com.google.android.play:app-update-ktx:2.1.0'
+    // Play Asset Delivery
+    implementation 'com.google.android.play:asset-delivery:2.2.2'
+    implementation 'com.google.android.play:asset-delivery-ktx:2.2.2'
+    // Play Feature Delivery
+    implementation 'com.google.android.play:feature-delivery:2.1.0'
+    implementation 'com.google.android.play:feature-delivery-ktx:2.1.0'
+    // Additional Play Services for better compatibility
+    implementation 'com.google.android.gms:play-services-base:18.2.0'
+}
