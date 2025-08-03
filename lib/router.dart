@@ -43,6 +43,20 @@ class AppRouter {
           builder: (_) => SourcesScreen(initialUrl: sharedUrl),
         );
       case '/onboarding':
+      case '/oauth/callback':
+        // Safety-net handler for OAuth deep links when legacy router is invoked
+        // Parse query params from settings.name (may contain full deep link) or Uri.base
+        final parsed = Uri.tryParse(settings.name ?? '') ?? Uri.base;
+        final code = parsed.queryParameters['code'] ?? Uri.base.queryParameters['code'];
+        final state = parsed.queryParameters['state'] ?? Uri.base.queryParameters['state'];
+        final error = parsed.queryParameters['error'] ?? Uri.base.queryParameters['error'];
+        return CupertinoPageRoute(
+          builder: (_) => OAuthCallbackScreen(
+            code: code,
+            state: state,
+            error: error,
+          ),
+        );
         return CupertinoPageRoute(builder: (_) => const OnboardingScreen());
       default:
         return CupertinoPageRoute(

@@ -11,6 +11,7 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_android/webview_flutter_android.dart';
 
+import 'providers/app_access_provider.dart';
 // New imports
 import 'firebase_options.dart';
 import 'providers/firebase_auth_provider.dart';
@@ -232,6 +233,13 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
         ChangeNotifierProvider(create: (_) => OAuthAuthProvider()),
         // New providers
         ChangeNotifierProvider(create: (_) => FirebaseAuthProvider()..initialize()),
+// Access gating provider (tester whitelist + RevenueCat entitlement)
+ChangeNotifierProvider(
+  create: (context) => AppAccessProvider(
+    authProvider: context.read<FirebaseAuthProvider>(),
+    subscriptionProvider: context.read<SubscriptionProvider>(),
+  ),
+),
         ChangeNotifierProvider(create: (_) => SubscriptionProvider()),
       ],
       child: Consumer<ThemeProvider>(

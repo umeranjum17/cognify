@@ -84,7 +84,8 @@
             'http://localhost',
             'https://localhost',
             'http://127.0.0.1',
-            'https://127.0.0.1'
+            'https://127.0.0.1',
+            'cognify'
             // Add production origins here, e.g. 'https://app.yourdomain.com'
         ];
         const MAX_STATE_AGE_MS = 10 * 60 * 1000; // 10 minutes
@@ -167,69 +168,66 @@
             const platform = stateData.platform || 'web';
 
             const webUrl = `${origin}/oauth/callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(encodedState)}`;
-            const mobileSchemes = [
-                `cognify://oauth/callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(encodedState)}`,
-                `cognify-free://oauth/callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(encodedState)}`
-            ];
+            const mobileDeepLink = `cognify://oauth/callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(encodedState)}`;
 
-            debugLog('Prepared redirect targets', { webUrl, mobileSchemes, platform });
+            debugLog('Prepared redirect targets', { webUrl, mobileDeepLink, platform });
 
             let redirected = false;
 
-            // Prefer web redirect if platform says 'web'
-            if (platform === 'web') {
+            // For mobile platforms, try direct deep link
+            if (platform === 'android' || platform === 'ios') {
+                try {
+                    // Try Android intent first for better reliability
+                    if (platform === 'android') {
+                        window.location.href = `intent://oauth/callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(encodedState)}#Intent;scheme=cognify;package=com.umerfarooq1995.cognify_flutter;end`;
+                    } else {
+                        window.location.href = mobileDeepLink;
+                    }
+                    redirected = true;
+                } catch (e) {
+                    debugLog('Mobile deep link failed, trying fallback', e.message);
+                    // Fallback to custom scheme
+                    setTimeout(() => {
+                        try {
+                            window.location.href = mobileDeepLink;
+                        } catch (e2) {
+                            debugLog('Mobile fallback failed', e2.message);
+                        }
+                    }, 500);
+                }
+            } else {
+                // Web platform - redirect to origin
                 try {
                     window.location.href = webUrl;
                     redirected = true;
                 } catch (e) {
-                    debugLog('Primary web redirect failed', e.message);
+                    debugLog('Web redirect failed', e.message);
                 }
             }
 
-            // Try mobile schemes if not yet redirected
-            if (!redirected && platform !== 'web') {
-                mobileSchemes.forEach((scheme, idx) => {
-                    setTimeout(() => {
-                        if (!redirected) {
-                            try {
-                                window.location.href = scheme;
-                                if (idx === 0) redirected = true;
-                            } catch (e) {
-                                debugLog(`Mobile scheme ${idx} failed`, e.message);
-                            }
-                        }
-                    }, idx * 200);
-                });
-            }
-
-            // Web fallback after delay
-            if (!redirected) {
-                setTimeout(() => {
-                    if (!redirected) {
-                        try {
-                            window.location.href = webUrl;
-                            redirected = true;
-                        } catch (e) {
-                            debugLog('Web fallback failed', e.message);
-                        }
-                    }
-                }, 1000);
-            }
-
-            // Manual action after attempts
+            // Manual action fallback
             setTimeout(() => {
                 updateUI(true, 'Authentication Successful!', 'If the app did not open automatically, use the button below.', true);
                 openAppBtn.onclick = () => {
-                    const all = [webUrl, ...mobileSchemes];
-                    all.forEach(u => {
-                        try { window.location.href = u; } catch (_) {}
-                    });
+                    if (platform === 'android' || platform === 'ios') {
+                        try { 
+                            if (platform === 'android') {
+                                window.location.href = `intent://oauth/callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(encodedState)}#Intent;scheme=cognify;package=com.umerfarooq1995.cognify_flutter;end`;
+                            } else {
+                                window.location.href = mobileDeepLink;
+                            }
+                        } catch (_) {}
+                    } else {
+                        try { window.location.href = webUrl; } catch (_) {}
+                    }
                 };
-            }, 3000);
+            }, 2000);
         }
 
         function handleCallback() {
             debugLog('Starting callback handler', { codeTrunc: code ? code.substring(0, 8) + '...' : null });
+
+            // No need for mobile redirect loop - handle all cases in main flow
 
             if (error) {
                 updateUI(false, 'Authentication Failed', `Error: ${error}`);

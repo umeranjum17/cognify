@@ -86,21 +86,27 @@
                 <data android:scheme="https" />
             </intent-filter>
 
-            <!-- Intent filter for App Links (OAuth callback) -->
+            <!-- HTTPS App Link for OAuth callback (use stable prod domain) -->
+            <!-- TODO: Replace 'cognify.app' with your production domain if different -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https"
-                      android:host="oauth-callback-deploy-31lv2szz2-umeranjum17s-projects.vercel.app" />
+                <data
+                    android:scheme="https"
+                    android:host="cognify.app"
+                    android:pathPrefix="/openrouter/callback" />
             </intent-filter>
 
-            <!-- Fallback intent filter for custom schemes (if needed) -->
+            <!-- Custom scheme deep link fallback used by the callback HTML -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="cognify" android:host="oauth" />
+                <data
+                    android:scheme="cognify"
+                    android:host="oauth"
+                    android:pathPrefix="/callback" />
             </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.

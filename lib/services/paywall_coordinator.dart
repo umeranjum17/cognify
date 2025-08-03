@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:provider/provider.dart';
 
+import '../providers/app_access_provider.dart';
 import '../providers/firebase_auth_provider.dart';
 import '../providers/subscription_provider.dart';
 import '../services/revenuecat_service.dart';
@@ -18,20 +19,21 @@ class PaywallCoordinator {
   Future<void> ensurePremiumFlow(BuildContext context) async {
     final auth = context.read<FirebaseAuthProvider>();
     final subs = context.read<SubscriptionProvider>();
+    final access = context.read<AppAccessProvider>();
 
     // Ensure auth initialized
     if (!auth.initialized && !auth.initializing) {
       await auth.initialize();
     }
 
-    // Already premium -> nothing to do
-    if (subs.initialized && subs.isEntitled) {
-      return;
-    }
-
     // Initialize subscription provider early, optionally with uid
     if (!subs.initialized) {
       await subs.initialize(appUserId: auth.uid);
+    }
+
+    // If already has premium access (tester or entitlement), nothing to do
+    if (access.hasPremiumAccess) {
+      return;
     }
 
     // If not signed in -> route to sign-in first
@@ -49,6 +51,11 @@ class PaywallCoordinator {
       if (uid != null && uid.isNotEmpty) {
         await RevenueCatService.instance.identify(uid);
       }
+    }
+
+    // Re-evaluate after sign-in
+    if (access.hasPremiumAccess) {
+      return; // Tester or now entitled due to previous purchases
     }
 
     // Fetch offerings

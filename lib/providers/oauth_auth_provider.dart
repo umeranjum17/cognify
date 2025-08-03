@@ -325,8 +325,6 @@ class OAuthAuthProvider extends ChangeNotifier {
     return base64Url.encode(digest.bytes).replaceAll('=', '');
   }
 
-
-
   /// Generate PKCE code verifier
   String _generateCodeVerifier() {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
@@ -334,15 +332,14 @@ class OAuthAuthProvider extends ChangeNotifier {
     return List.generate(128, (i) => chars[random.nextInt(chars.length)]).join();
   }
 
-  /// Launch OAuth flow using App Links (recommended approach)
+  /// Launch OAuth flow using App Links / deep links
   Future<OAuthResult> _launchOAuthFlow(String codeChallenge, String randomState) async {
     try {
-      // Always use Vercel deployment for OAuth callback (it redirects back to the initiator)
-      // Updated to latest production deployment domain
-      const redirectUri = 'https://oauth-callback-deploy-d0lytnnxf-umeranjum17s-projects.vercel.app/callback';
+      // Use the same Vercel callback for all platforms - it will handle mobile deep linking
+      final redirectUri = 'https://oauth-callback-deploy.vercel.app/callback';
 
       // Build enhanced state that captures the initiator's origin (and platform)
-      final enhancedState = OAuthState.fromCurrentEnvironment(randomState: randomState);
+      final enhancedState = OAuthState.fromCurrentEnvironment(randomState: randomState).copyWith(platform: 'android');
       final encodedState = enhancedState.encode();
 
       print('🔄 Using OAuth redirect URI: $redirectUri');
@@ -399,8 +396,6 @@ class OAuthAuthProvider extends ChangeNotifier {
     }
   }
 
-
-
   /// Store credentials securely
   Future<void> _storeCredentials(String apiKey) async {
     await _secureStorage.write(key: _apiKeyStorageKey, value: apiKey);
@@ -455,26 +450,33 @@ class OAuthAuthProvider extends ChangeNotifier {
         print('Received App Link: $uri');
 
         // Check if this is our OAuth callback
-        // App Links will receive the callback from our web domain
-        if (uri.host.contains('vercel.app') ||
+        if ((uri.host.contains('vercel.app') && uri.path == '/callback') ||
             uri.host == 'localhost' ||
-            uri.scheme == 'cognify' ||
-            uri.scheme == 'cognify-free') {
+            (uri.scheme == 'cognify' && uri.host == 'oauth' && uri.path == '/callback')) {
+          final code = uri.queryParameters['code'];
+          final state = uri.queryParameters['state'];
+          final error = uri.queryParameters['error'];
 
-          if (uri.path.contains('/callback') || uri.path.contains('oauth')) {
-            final code = uri.queryParameters['code'];
-            final state = uri.queryParameters['state'];
-            final error = uri.queryParameters['error'];
+          if (error != null) {
+            return OAuthResult.error('oauth_error', error);
+          }
 
-            if (error != null) {
-              return OAuthResult.error('oauth_error', error);
+          if (code != null && state != null) {
+            // For the enhanced state, we need to decode and validate
+            try {
+              final decoded = OAuthState.decode(state);
+              if (decoded != null && decoded.randomState == expectedState) {
+                return OAuthResult.success(code);
+              } else {
+                print('State validation failed - expected: $expectedState, got: ${decoded?.randomState}');
+                return OAuthResult.error('invalid_callback', 'State validation failed');
+              }
+            } catch (e) {
+              print('State decoding failed: $e');
+              return OAuthResult.error('invalid_callback', 'Invalid state format');
             }
-
-            if (code != null && state == expectedState) {
-              return OAuthResult.success(code);
-            } else {
-              return OAuthResult.error('invalid_callback', 'Invalid authorization code or state');
-            }
+          } else {
+            return OAuthResult.error('invalid_callback', 'Missing authorization code or state');
           }
         }
       }
@@ -570,12 +572,7 @@ class OAuthAuthProvider extends ChangeNotifier {
       print('❌ Error in web callback waiting: $e');
       return OAuthResult.error('callback_error', e.toString());
     }
-    
   }
-
-
-
-
 }
 
 /// OAuth authentication result

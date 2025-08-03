@@ -70,13 +70,15 @@ android {
         }
         dev {
             dimension "environment"
-            applicationId "com.umerfarooq1995.cognify_flutter.dev"
+            // Align to single Firebase client
+            applicationId "com.umerfarooq1995.cognify_flutter"
             versionNameSuffix "-dev"
             resValue "string", "app_name", "Cognify Dev"
         }
         umer {
             dimension "environment"
-            applicationId "com.umerfarooq1995.cognify_flutter.umer"
+            // Align to single Firebase client
+            applicationId "com.umerfarooq1995.cognify_flutter"
             versionNameSuffix "-umer"
             resValue "string", "app_name", "Cognify Umer"
         }
@@ -118,3 +120,6 @@ dependencies {
     // Additional Play Services for better compatibility
     implementation 'com.google.android.gms:play-services-base:18.2.0'
 }
+
+// Firebase Google Services plugin to process google-services.json
+apply plugin: "com.google.gms.google-services"

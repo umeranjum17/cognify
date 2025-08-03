@@ -23,54 +23,65 @@ class _OAuthOnboardingScreenState extends State<OAuthOnboardingScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
+        // Keep content away from notches/system UI
+        top: true,
+        bottom: true,
         child: Consumer<OAuthAuthProvider>(
           builder: (context, authProvider, child) {
             return Padding(
               padding: const EdgeInsets.all(24.0),
-              child: Column(
-                children: [
-                  Expanded(
-                    child: SingleChildScrollView(
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(
-                          minHeight: MediaQuery.of(context).size.height - 200,
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                        // App logo and welcome
-                        _buildWelcomeSection(context),
-                        
-                        const SizedBox(height: 32),
+              // Use CustomScrollView + SliverFillRemaining to:
+              // - center content on tall screens
+              // - allow scrolling on small screens
+              // - avoid overlap with any top banners (ConnectionStatusBanner)
+              child: CustomScrollView(
+                slivers: [
+                  SliverPadding(
+                    padding: const EdgeInsets.only(top: 16), // avoids top overlay clipping on Android
+                    sliver: SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: Column(
+                        children: [
+                          // Main body centered
+                          Expanded(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                // App logo and welcome
+                                _buildWelcomeSection(context),
 
-                        // Value proposition
-                        _buildValueProposition(context),
+                                const SizedBox(height: 32),
 
-                        const SizedBox(height: 32),
-                        
-                        // Authentication options - prioritize manual entry
-                        if (!_showManualEntry) ...[
-                          _buildManualEntryToggle(context),
-                          const SizedBox(height: 16),
-                          _buildOAuthButton(context, authProvider),
-                        ] else ...[
-                          _buildManualApiKeyEntry(context, authProvider),
-                          const SizedBox(height: 16),
-                          _buildBackToOAuthButton(context),
+                                // Value proposition
+                                _buildValueProposition(context),
+
+                                const SizedBox(height: 32),
+
+                                // Authentication options - prioritize manual entry
+                                if (!_showManualEntry) ...[
+                                  _buildManualEntryToggle(context),
+                                  const SizedBox(height: 16),
+                                  _buildOAuthButton(context, authProvider),
+                                ] else ...[
+                                  _buildManualApiKeyEntry(context, authProvider),
+                                  const SizedBox(height: 16),
+                                  _buildBackToOAuthButton(context),
+                                ],
+
+                                if (_errorMessage != null) ...[
+                                  const SizedBox(height: 16),
+                                  _buildErrorMessage(context),
+                                ],
+                              ],
+                            ),
+                          ),
+
+                          // Footer (features list)
+                          _buildFooter(context),
                         ],
-                        
-                        if (_errorMessage != null) ...[
-                          const SizedBox(height: 16),
-                          _buildErrorMessage(context),
-                        ],
-                          ],
-                        ),
                       ),
                     ),
                   ),
-
-                  // Footer
-                  _buildFooter(context),
                 ],
               ),
             );
@@ -95,8 +106,6 @@ class _OAuthOnboardingScreenState extends State<OAuthOnboardingScreen> {
     });
   }
 
-
-
   Widget _buildBackToOAuthButton(BuildContext context) {
     return TextButton.icon(
       onPressed: () {
@@ -113,7 +122,7 @@ class _OAuthOnboardingScreenState extends State<OAuthOnboardingScreen> {
 
   Widget _buildErrorMessage(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -144,7 +153,7 @@ class _OAuthOnboardingScreenState extends State<OAuthOnboardingScreen> {
 
   Widget _buildFooter(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Column(
       children: [
         Text(
@@ -198,6 +207,8 @@ class _OAuthOnboardingScreenState extends State<OAuthOnboardingScreen> {
           ),
           obscureText: true,
           enabled: !authProvider.isLoading,
+          // Improve UX: enable button state updates as user types
+          onChanged: (_) => setState(() {}),
         ),
         const SizedBox(height: 16),
         SizedBox(
@@ -291,7 +302,7 @@ class _OAuthOnboardingScreenState extends State<OAuthOnboardingScreen> {
 
   Widget _buildValueProposition(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -331,7 +342,7 @@ class _OAuthOnboardingScreenState extends State<OAuthOnboardingScreen> {
 
   Widget _buildWelcomeSection(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Column(
       children: [
         const CognifyLogo(size: 80, variant: 'robot'),
@@ -375,8 +386,6 @@ class _OAuthOnboardingScreenState extends State<OAuthOnboardingScreen> {
     }
   }
 
-
-
   Future<void> _handleManualLogin(OAuthAuthProvider authProvider) async {
     setState(() {
       _errorMessage = null;
@@ -398,7 +407,8 @@ class _OAuthOnboardingScreenState extends State<OAuthOnboardingScreen> {
       }
     } else {
       setState(() {
-        _errorMessage = 'Invalid API key. Please verify your key is correct and has proper permissions. Get your API key from https://openrouter.ai/keys';
+        _errorMessage =
+            'Invalid API key. Please verify your key is correct and has proper permissions. Get your API key from https://openrouter.ai/keys';
       });
     }
   }
@@ -416,7 +426,8 @@ class _OAuthOnboardingScreenState extends State<OAuthOnboardingScreen> {
       }
     } else {
       setState(() {
-        _errorMessage = 'OAuth authentication failed. Please try again or enter your API key manually.';
+        _errorMessage =
+            'OAuth authentication failed. Please try again or enter your API key manually.';
         _showManualEntry = true; // Automatically show manual entry
       });
     }

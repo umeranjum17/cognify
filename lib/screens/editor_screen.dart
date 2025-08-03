@@ -3711,81 +3711,209 @@ class _EditorScreenState extends State<EditorScreen> {
   void _showWebSearchUpgrade() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Row(
-          children: [
-            Icon(Icons.star, color: Theme.of(context).colorScheme.primary),
-            const SizedBox(width: 8),
-            const Text('Unlock Web Search'),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Web search integration is available in the Premium version.',
-              style: TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Premium Benefits:',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              '• Web search integration (online AI responses)\n'
-              '• Internet globe toggle for real-time information\n'
-              '• Access to trending topics\n'
-              '• Export conversations to PDF/markdown\n'
-              '• Custom themes and UI customization\n'
-              '• Priority support',
-            ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primaryContainer,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.price_check,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Only \$7.99/month',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.primary,
+      barrierDismissible: true,
+      builder: (context) {
+        final theme = Theme.of(context);
+        final isDark = theme.brightness == Brightness.dark;
+
+        return Dialog(
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final maxWidth = constraints.maxWidth;
+              final cardWidth = maxWidth > 560 ? 520.0 : maxWidth - 32;
+
+              return Center(
+                child: Container(
+                  width: cardWidth,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surface,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: isDark ? 0.5 : 0.08),
+                        blurRadius: 24,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                    border: Border.all(
+                      color: theme.colorScheme.outline.withValues(alpha: 0.12),
                     ),
                   ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Maybe Later'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              context.push('/subscription');
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: Stack(
+                      children: [
+                        // Subtle top accent
+                        Positioned(
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          child: Container(
+                            height: 4,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  theme.colorScheme.primary.withValues(alpha: 0.9),
+                                  theme.colorScheme.secondary.withValues(alpha: 0.9),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Header
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Icon(
+                                      Icons.public,
+                                      color: theme.colorScheme.primary,
+                                      size: 20,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      'Unlock Web Search',
+                                      style: theme.textTheme.titleLarge?.copyWith(
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                  ),
+                                  IconButton(
+                                    tooltip: 'Close',
+                                    onPressed: () => Navigator.of(context).pop(),
+                                    icon: Icon(
+                                      Icons.close_rounded,
+                                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 10),
+                              Text(
+                                'Web search integration is available in Premium. Get better, up‑to‑date answers with one toggle.',
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+
+                              // Benefits list
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(
+                                    color: theme.colorScheme.outline.withValues(alpha: 0.12),
+                                  ),
+                                ),
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: const [
+                                    _BenefitRow(icon: Icons.travel_explore, text: 'Online AI responses (real-time web)'),
+                                    _BenefitRow(icon: Icons.public, text: 'Internet globe toggle for live info'),
+                                    _BenefitRow(icon: Icons.trending_up, text: 'Access to trending topics'),
+                                    _BenefitRow(icon: Icons.picture_as_pdf, text: 'Export to PDF and Markdown'),
+                                    _BenefitRow(icon: Icons.color_lens, text: 'Custom themes and UI personalization'),
+                                    _BenefitRow(icon: Icons.support_agent, text: 'Priority support'),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 14),
+
+                              // Pricing pill
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.primary.withValues(alpha: 0.08),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: theme.colorScheme.primary.withValues(alpha: 0.2),
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.price_check, color: theme.colorScheme.primary),
+                                    const SizedBox(width: 10),
+                                    RichText(
+                                      text: TextSpan(
+                                        style: theme.textTheme.titleMedium?.copyWith(
+                                          color: theme.colorScheme.primary,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                        children: const [
+                                          TextSpan(text: 'Only '),
+                                          TextSpan(text: '\$7.99', style: TextStyle(fontSize: 18)),
+                                          TextSpan(text: '/month', style: TextStyle(fontWeight: FontWeight.w600)),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+
+                              // Actions
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: OutlinedButton(
+                                      onPressed: () => Navigator.of(context).pop(),
+                                      style: OutlinedButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(vertical: 14),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                      ),
+                                      child: const Text('Maybe Later'),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: ElevatedButton.icon(
+                                      onPressed: () {
+                                        Navigator.of(context).pop();
+                                        context.push('/subscription');
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(vertical: 14),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                      ),
+                                      icon: const Icon(Icons.upgrade_rounded),
+                                      label: const Text('Upgrade Now'),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
             },
-            child: const Text('Upgrade Now'),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
-
-
+// Helper: subscribe to session cost updates (restored if missing)
   void _subscribeToSessionCostUpdates() {
     print('🎯 Subscribing to session cost updates...');
     _costSubscription = SessionCostService().costUpdates.listen((costData) {
@@ -3799,6 +3927,7 @@ class _EditorScreenState extends State<EditorScreen> {
       }
     });
   }
+
   Future<void> _takePhoto() async {
     try {
       final picker = ImagePicker();
@@ -3828,10 +3957,7 @@ class _EditorScreenState extends State<EditorScreen> {
     }
   }
 
-  // Typing effect methods
   // Typing effect methods removed
-
-
 
   Future<void> _updateKnowledgeGraph() async {
     try {
@@ -3859,3 +3985,38 @@ class _EditorScreenState extends State<EditorScreen> {
   }
 }
 
+// A compact benefit row used in the premium modal.
+class _BenefitRow extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  const _BenefitRow({super.key, required this.icon, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primary.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 14, color: theme.colorScheme.primary),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              text,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                height: 1.3,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

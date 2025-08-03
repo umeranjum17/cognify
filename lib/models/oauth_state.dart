@@ -117,4 +117,21 @@ class OAuthState {
     final rs = randomState.length > 8 ? '${randomState.substring(0, 8)}...' : randomState;
     return 'OAuthState(randomState=$rs, origin=$origin, ts=$timestamp, ver=$version, pf=$platform)';
   }
+
+  /// Create a copy of this OAuthState with the given fields replaced by new values.
+  OAuthState copyWith({
+    String? randomState,
+    String? origin,
+    int? timestamp,
+    String? version,
+    String? platform,
+  }) {
+    return OAuthState(
+      randomState: randomState ?? this.randomState,
+      origin: origin ?? this.origin,
+      timestamp: timestamp ?? this.timestamp,
+      version: version ?? this.version,
+      platform: platform ?? this.platform,
+    );
+  }
 }
