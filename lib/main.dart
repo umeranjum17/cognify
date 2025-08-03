@@ -11,6 +11,14 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_android/webview_flutter_android.dart';
 
+// New imports
+import 'firebase_options.dart';
+import 'providers/firebase_auth_provider.dart';
+import 'providers/subscription_provider.dart';
+import 'screens/auth/sign_in_screen.dart';
+import 'screens/subscription/paywall_screen.dart';
+import 'services/revenuecat_service.dart';
+
 import 'providers/mode_config_provider.dart';
 import 'providers/oauth_auth_provider.dart';
 import 'screens/conversation_history_screen.dart';
@@ -222,6 +230,9 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => ModeConfigProvider()),
         ChangeNotifierProvider(create: (_) => OAuthAuthProvider()),
+        // New providers
+        ChangeNotifierProvider(create: (_) => FirebaseAuthProvider()..initialize()),
+        ChangeNotifierProvider(create: (_) => SubscriptionProvider()),
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, _) {
@@ -347,7 +358,14 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
               );
             }
 
-            // Check authentication state and redirect accordingly
+            // If user has Firebase session, initialize RevenueCat with UID
+            final firebaseAuth = context.read<FirebaseAuthProvider>();
+            final subs = context.read<SubscriptionProvider>();
+            if (!subs.initialized) {
+              subs.initialize(appUserId: firebaseAuth.uid);
+            }
+
+            // Check OpenRouter API auth (legacy) for editor access, otherwise show onboarding
             return MaterialPage(
               key: state.pageKey,
               child: Consumer<OAuthAuthProvider>(
@@ -492,7 +510,22 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
             child: const TrendingTopicsScreen(),
           ),
         ),
-        // Subscription management route (placeholder for now)
+        // New: Sign-in and Paywall routes
+        GoRoute(
+          path: '/sign-in',
+          pageBuilder: (context, state) => MaterialPage(
+            key: state.pageKey,
+            child: const SignInScreen(),
+          ),
+        ),
+        GoRoute(
+          path: '/paywall',
+          pageBuilder: (context, state) => MaterialPage(
+            key: state.pageKey,
+            child: const PaywallScreen(),
+          ),
+        ),
+        // Subscription management placeholder
         GoRoute(
           path: '/subscription',
           pageBuilder: (context, state) => MaterialPage(
@@ -517,6 +550,18 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
       print('👤 [USER] Initialized user with ID: $userId');
     } catch (e) {
       print('❌ [USER] Error initializing user service: $e');
+    }
+
+    // Initialize RevenueCat with Firebase UID if logged-in
+    try {
+      final firebaseAuth = context.read<FirebaseAuthProvider>();
+      if (firebaseAuth.isSignedIn && firebaseAuth.uid != null) {
+        await RevenueCatService.instance.initialize(appUserId: firebaseAuth.uid);
+      } else {
+        await RevenueCatService.instance.initialize();
+      }
+    } catch (e) {
+      print('❌ [RevenueCat] Initialization error: $e');
     }
 
     // Check for shared content and redirect if needed

@@ -9,6 +9,10 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 
+// Enhanced state/origin handling for dynamic callback
+import '../services/environment_service.dart';
+import '../models/oauth_state.dart';
+
 /// OAuth authentication provider for OpenRouter
 class OAuthAuthProvider extends ChangeNotifier {
   static const String _apiKeyStorageKey = 'openrouter_api_key';
@@ -28,6 +32,7 @@ class OAuthAuthProvider extends ChangeNotifier {
 
   // OAuth PKCE state
   String? _codeVerifier;
+  // Random state used for CSRF protection (stored separately from encoded state)
   String? _state;
 
   // Deep link listener
@@ -50,9 +55,9 @@ class OAuthAuthProvider extends ChangeNotifier {
       // Generate PKCE code verifier and challenge
       _codeVerifier = _generateCodeVerifier();
       final codeChallenge = await _generateCodeChallenge(_codeVerifier!);
-      _state = _generateCodeVerifier(); // Use as state parameter
+      _state = _generateCodeVerifier(); // Random state for CSRF
 
-      // Store OAuth state and code verifier for web callback
+      // Store random state and code verifier for callback verification
       await _secureStorage.write(key: _oauthStateStorageKey, value: _state!);
       await _secureStorage.write(key: _oauthCodeVerifierStorageKey, value: _codeVerifier!);
 
@@ -115,8 +120,9 @@ class OAuthAuthProvider extends ChangeNotifier {
   }
 
   /// Handle OAuth callback from web redirect
+  /// Note: `state` here is the enhanced Base64URL-encoded state that includes origin info.
   Future<void> handleOAuthCallback(String? code, String? state, String? error) async {
-    print('🔄 OAuth callback received - code: ${code != null && code.length > 10 ? '${code.substring(0, 10)}...' : code}, state: $state, error: $error');
+    print('🔄 OAuth callback received - code: ${code != null && code.length > 10 ? '${code.substring(0, 10)}...' : code}, state: ${state != null ? state.substring(0, state.length.clamp(0, 20)) + '...' : state}, error: $error');
 
     try {
       if (error != null) {
@@ -131,14 +137,30 @@ class OAuthAuthProvider extends ChangeNotifier {
         return;
       }
 
-      // Load stored OAuth state and code verifier for web callback
-      final storedState = await _secureStorage.read(key: _oauthStateStorageKey);
+      // Load stored random state and code verifier for verification
+      final storedRandomState = await _secureStorage.read(key: _oauthStateStorageKey);
       final storedCodeVerifier = await _secureStorage.read(key: _oauthCodeVerifierStorageKey);
 
-      print('🔄 Stored state: $storedState, stored code verifier: ${storedCodeVerifier != null ? 'present' : 'null'}');
+      print('🔄 Stored random state: $storedRandomState, stored code verifier: ${storedCodeVerifier != null ? 'present' : 'null'}');
 
-      if (state != storedState) {
-        print('❌ OAuth state mismatch - expected: $storedState, received: $state');
+      // Decode enhanced state
+      final decoded = OAuthState.decode(state);
+      if (decoded == null) {
+        print('❌ Failed to decode enhanced OAuth state');
+        _setLoading(false);
+        return;
+      }
+
+      // Validate random state matches what we generated
+      if (decoded.randomState != storedRandomState) {
+        print('❌ OAuth random state mismatch - expected: $storedRandomState, received: ${decoded.randomState}');
+        _setLoading(false);
+        return;
+      }
+
+      // Validate timestamp/origin
+      if (!decoded.isValid()) {
+        print('❌ OAuth state validation failed (timestamp/origin)');
         _setLoading(false);
         return;
       }
@@ -149,7 +171,7 @@ class OAuthAuthProvider extends ChangeNotifier {
         return;
       }
 
-      print('✅ OAuth state matches, proceeding with code exchange...');
+      print('✅ OAuth state validated, proceeding with code exchange...');
 
       // Exchange code for API key
       print('🔄 Exchanging code for API key...');
@@ -313,12 +335,19 @@ class OAuthAuthProvider extends ChangeNotifier {
   }
 
   /// Launch OAuth flow using App Links (recommended approach)
-  Future<OAuthResult> _launchOAuthFlow(String codeChallenge, String state) async {
+  Future<OAuthResult> _launchOAuthFlow(String codeChallenge, String randomState) async {
     try {
-      // Always use Vercel deployment for OAuth callback (it redirects back to localhost for development)
-      const redirectUri = 'https://oauth-callback-deploy-grzgl2jm7-umeranjum17s-projects.vercel.app/callback';
+      // Always use Vercel deployment for OAuth callback (it redirects back to the initiator)
+      // Updated to latest production deployment domain
+      const redirectUri = 'https://oauth-callback-deploy-d0lytnnxf-umeranjum17s-projects.vercel.app/callback';
+
+      // Build enhanced state that captures the initiator's origin (and platform)
+      final enhancedState = OAuthState.fromCurrentEnvironment(randomState: randomState);
+      final encodedState = enhancedState.encode();
 
       print('🔄 Using OAuth redirect URI: $redirectUri');
+      print('🔄 Enhanced state origin: ${enhancedState.origin}');
+      print('🔄 Encoded state (trunc): ${encodedState.substring(0, encodedState.length.clamp(0, 24))}...');
 
       // Build the OAuth authorization URL
       final authUri = Uri.parse('https://openrouter.ai/auth').replace(
@@ -326,7 +355,7 @@ class OAuthAuthProvider extends ChangeNotifier {
           'callback_url': redirectUri,
           'code_challenge': codeChallenge,
           'code_challenge_method': 'S256',
-          'state': state,
+          'state': encodedState,
         },
       );
 
@@ -346,11 +375,11 @@ class OAuthAuthProvider extends ChangeNotifier {
       // Handle platform-specific callback waiting
       if (kIsWeb) {
         // On web, we need to handle the callback differently
-        return await _waitForWebCallback(state);
+        return await _waitForWebCallback(randomState);
       } else {
         // On mobile, use App Links
         _appLinks = AppLinks();
-        return await _waitForAppLinkCallback(state);
+        return await _waitForAppLinkCallback(randomState);
       }
 
     } catch (e) {
@@ -541,6 +570,7 @@ class OAuthAuthProvider extends ChangeNotifier {
       print('❌ Error in web callback waiting: $e');
       return OAuthResult.error('callback_error', e.toString());
     }
+    
   }
 
 

@@ -22,7 +22,7 @@
             border-radius: 12px;
             backdrop-filter: blur(10px);
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            max-width: 400px;
+            max-width: 480px;
         }
         .spinner {
             border: 3px solid rgba(255, 255, 255, 0.3);
@@ -53,6 +53,16 @@
         .button:hover {
             background: rgba(255, 255, 255, 0.3);
         }
+        .debug-info {
+            font-size: 0.8em;
+            opacity: 0.7;
+            margin-top: 1rem;
+            text-align: left;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 0.5rem;
+            border-radius: 4px;
+            white-space: pre-wrap;
+        }
     </style>
 </head>
 <body>
@@ -63,20 +73,43 @@
         <div id="actions" style="display: none;">
             <a href="#" id="openApp" class="button">Open Cognify App</a>
         </div>
+        <div id="debugInfo" class="debug-info" style="display:none"></div>
     </div>
 
     <script>
-        // Extract OAuth parameters from URL
+        // Toggle to false in production
+        const DEBUG_MODE = true;
+
+        const ALLOWED_ORIGINS = [
+            'http://localhost',
+            'https://localhost',
+            'http://127.0.0.1',
+            'https://127.0.0.1'
+            // Add production origins here, e.g. 'https://app.yourdomain.com'
+        ];
+        const MAX_STATE_AGE_MS = 10 * 60 * 1000; // 10 minutes
+
+        // Extract OAuth parameters
         const urlParams = new URLSearchParams(window.location.search);
         const code = urlParams.get('code');
-        const state = urlParams.get('state');
+        const encodedState = urlParams.get('state');
         const error = urlParams.get('error');
-        
+
+        // DOM refs
         const spinner = document.getElementById('spinner');
         const title = document.getElementById('title');
         const message = document.getElementById('message');
         const actions = document.getElementById('actions');
         const openAppBtn = document.getElementById('openApp');
+        const debugInfo = document.getElementById('debugInfo');
+
+        function debugLog(msg, data) {
+            if (!DEBUG_MODE) return;
+            const text = `[OAuth Debug] ${msg}${data ? ' ' + JSON.stringify(data, null, 2) : ''}`;
+            console.log(text);
+            debugInfo.style.display = 'block';
+            debugInfo.textContent += text + '\n';
+        }
 
         function updateUI(success, titleText, messageText, showButton = false) {
             spinner.style.display = 'none';
@@ -88,102 +121,156 @@
             }
         }
 
-        function redirectToApp() {
-            // For web, redirect back to the Flutter app with OAuth parameters
-            const flutterAppUrl = `http://localhost:3000/oauth/callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state)}`;
+        function decodeOAuthState(stateParam) {
+            if (!stateParam) throw new Error('Missing state parameter');
+            debugLog('Decoding state (truncated)', stateParam.substring(0, 32) + '...');
 
-            // Try multiple redirect methods for better compatibility
-            const appSchemes = [
-                `cognify://oauth/callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state)}`,
-                `cognify-free://oauth/callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state)}`,
-                flutterAppUrl // Add web redirect
+            // Convert Base64URL -> Base64 and pad
+            let s = stateParam.replace(/-/g, '+').replace(/_/g, '/');
+            while (s.length % 4 !== 0) s += '=';
+
+            const jsonStr = atob(s);
+            const data = JSON.parse(jsonStr);
+
+            // Validate fields
+            if (!data.randomState || !data.origin || !data.timestamp) {
+                throw new Error('State missing required fields');
+            }
+
+            // Validate age
+            const age = Date.now() - Number(data.timestamp);
+            if (Number.isNaN(age) || age > MAX_STATE_AGE_MS) {
+                throw new Error(`State too old (${Math.round(age/1000)}s)`);
+            }
+
+            // Validate origin
+            const allowed = ALLOWED_ORIGINS.some(prefix => data.origin.startsWith(prefix));
+            if (!allowed) {
+                throw new Error(`Origin not allowed: ${data.origin}`);
+            }
+
+            debugLog('State decoded', data);
+            return data;
+        }
+
+        function storeOAuthResult(key, payload) {
+            try {
+                localStorage.setItem(key, JSON.stringify(payload));
+                debugLog('Stored result to localStorage', { key, payload });
+            } catch (e) {
+                debugLog('Failed to store result', e.message);
+            }
+        }
+
+        function redirectToOrigin(stateData) {
+            const origin = stateData.origin;
+            const platform = stateData.platform || 'web';
+
+            const webUrl = `${origin}/oauth/callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(encodedState)}`;
+            const mobileSchemes = [
+                `cognify://oauth/callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(encodedState)}`,
+                `cognify-free://oauth/callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(encodedState)}`
             ];
+
+            debugLog('Prepared redirect targets', { webUrl, mobileSchemes, platform });
 
             let redirected = false;
 
-            // For web browsers, redirect directly to the Flutter app
-            if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-                // We're on the deployed callback page, redirect to Flutter app
+            // Prefer web redirect if platform says 'web'
+            if (platform === 'web') {
                 try {
-                    window.location.href = flutterAppUrl;
+                    window.location.href = webUrl;
                     redirected = true;
                 } catch (e) {
-                    console.log('Web redirect failed:', e);
+                    debugLog('Primary web redirect failed', e.message);
                 }
             }
 
-            // Try custom scheme redirects for mobile
-            if (!redirected) {
-                appSchemes.forEach((scheme, index) => {
+            // Try mobile schemes if not yet redirected
+            if (!redirected && platform !== 'web') {
+                mobileSchemes.forEach((scheme, idx) => {
                     setTimeout(() => {
                         if (!redirected) {
                             try {
                                 window.location.href = scheme;
-                                if (index === 0) redirected = true;
+                                if (idx === 0) redirected = true;
                             } catch (e) {
-                                console.log('Redirect attempt failed:', e);
+                                debugLog(`Mobile scheme ${idx} failed`, e.message);
                             }
                         }
-                    }, index * 200);
+                    }, idx * 200);
                 });
             }
 
-            // Show manual option after attempts
-            setTimeout(() => {
-                updateUI(true, 'Authentication Successful!',
-                    'If the app didn\'t open automatically, click the button below:', true);
-
-                openAppBtn.onclick = () => {
-                    appSchemes.forEach(scheme => {
+            // Web fallback after delay
+            if (!redirected) {
+                setTimeout(() => {
+                    if (!redirected) {
                         try {
-                            window.location.href = scheme;
+                            window.location.href = webUrl;
+                            redirected = true;
                         } catch (e) {
-                            console.log('Manual redirect failed:', e);
+                            debugLog('Web fallback failed', e.message);
                         }
+                    }
+                }, 1000);
+            }
+
+            // Manual action after attempts
+            setTimeout(() => {
+                updateUI(true, 'Authentication Successful!', 'If the app did not open automatically, use the button below.', true);
+                openAppBtn.onclick = () => {
+                    const all = [webUrl, ...mobileSchemes];
+                    all.forEach(u => {
+                        try { window.location.href = u; } catch (_) {}
                     });
                 };
             }, 3000);
         }
 
-        // Store OAuth result in localStorage for web polling
-        function storeOAuthResult() {
-            if (state) {
-                try {
-                    const result = {
-                        status: error ? 'error' : 'completed',
-                        state,
-                        code,
-                        error,
-                        timestamp: Date.now()
-                    };
-                    localStorage.setItem(`oauth_result_${state}`, JSON.stringify(result));
-                    console.log('OAuth result stored in localStorage:', result);
-                } catch (e) {
-                    console.log('Failed to store OAuth result in localStorage:', e);
-                }
+        function handleCallback() {
+            debugLog('Starting callback handler', { codeTrunc: code ? code.substring(0, 8) + '...' : null });
+
+            if (error) {
+                updateUI(false, 'Authentication Failed', `Error: ${error}`);
+                return;
             }
-        }
+            if (!code || !encodedState) {
+                updateUI(false, 'Invalid Callback', 'Missing required OAuth parameters.');
+                return;
+            }
 
-        // Handle the OAuth callback
-        if (error) {
-            updateUI(false, 'Authentication Failed', `Error: ${error}`);
-            storeOAuthResult();
-        } else if (code && state) {
-            updateUI(true, 'Authentication Successful!', 'Redirecting back to the app...');
-            storeOAuthResult();
-            setTimeout(redirectToApp, 1000);
-        } else {
-            updateUI(false, 'Invalid Callback', 'Missing required OAuth parameters.');
-        }
-
-        // Auto-close window after 15 seconds
-        setTimeout(() => {
+            let stateData;
             try {
-                window.close();
+                stateData = decodeOAuthState(encodedState);
             } catch (e) {
-                console.log('Could not close window automatically');
+                updateUI(false, 'State Error', `Failed to validate callback state: ${e.message}`);
+                // Fallback to localhost:3000 to not block dev completely
+                setTimeout(() => {
+                    const fallbackUrl = `http://localhost:3000/oauth/callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(encodedState)}`;
+                    try { window.location.href = fallbackUrl; } catch (_) {}
+                }, 1500);
+                return;
             }
-        }, 15000);
+
+            // Optional: store result for polling flows
+            storeOAuthResult(`oauth_result_${stateData.randomState}`, {
+                status: 'completed',
+                state: encodedState,
+                code,
+                origin: stateData.origin,
+                ts: Date.now()
+            });
+
+            updateUI(true, 'Authentication Successful!', 'Redirecting back to the app...');
+            setTimeout(() => redirectToOrigin(stateData), 500);
+        }
+
+        // Kick off
+        handleCallback();
+
+        // Auto-close after 30s
+        setTimeout(() => { try { window.close(); } catch (_) {} }, 30000);
     </script>
 </body>
 </html>
