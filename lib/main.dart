@@ -252,10 +252,9 @@ ChangeNotifierProvider(
             routerConfig: _router,
             debugShowCheckedModeBanner: false,
             builder: (context, child) {
-              return ConnectionStatusBanner(
-                  child: PopScope(
-                    canPop: true,
-                    onPopInvokedWithResult: (didPop, result) async {
+              return PopScope(
+                canPop: true,
+                onPopInvokedWithResult: (didPop, result) async {
                   if (didPop) return;
 
                   final router = GoRouter.of(context);
@@ -298,10 +297,9 @@ ChangeNotifierProvider(
                     print('🔙 Navigating to home...');
                     router.go('/');
                   }
-                    },
-                    child: child!,
-                  ),
-                  );
+                },
+                child: child!,
+              );
             },
           );
         },
@@ -342,13 +340,71 @@ ChangeNotifierProvider(
       _initializeApp();
     });
 
-    final initialLocation = Uri.base.path.isEmpty ? '/' : Uri.base.path;
-    print('🚀 Initial location: $initialLocation');
+    // Normalize initial location so deep links like cognify://oauth/callback map to a GoRouter path
+    final defaultRouteName = WidgetsBinding.instance.platformDispatcher.defaultRouteName;
+    String initialLocation;
+    try {
+      String incoming = defaultRouteName;
+      // Extra diagnostics to catch rare cold-start cases where GoRouter is fed a custom-scheme
+      print('🔍 [DL] defaultRouteName(raw): $incoming');
+      print('🔍 [DL] Uri.base at init: ${Uri.base}');
+      if (incoming.contains('://')) {
+        final u = Uri.parse(incoming);
+        print('🔍 [DL] Parsed incoming => scheme=${u.scheme}, host=${u.host}, path=${u.path}, query=${u.query}');
+        // Handle custom scheme URLs - redirect any cognify:// link to editor
+        if (u.scheme == 'cognify') {
+          print('🛡️ [DL] Custom scheme detected. Preventing GoRouter from seeing "$incoming"');
+          // Preserve the callback parameters for the provider path by stashing them in a static flag if needed (handled by provider listener)
+          initialLocation = '/editor';
+        } else {
+          // Handle other schemes (https, http, etc.) by converting to in-app path
+          initialLocation = Uri(path: u.path, queryParameters: u.queryParameters).toString();
+        }
+      } else if (incoming.startsWith('/')) {
+        initialLocation = incoming;
+      } else if (Uri.base.path.isNotEmpty) {
+        initialLocation = Uri.base.toString().contains('http')
+            ? Uri.base.toString().substring(Uri.base.toString().indexOf('/', Uri.base.toString().indexOf('://') + 3))
+            : Uri.base.path;
+      } else {
+        initialLocation = '/';
+      }
+      if (!initialLocation.startsWith('/')) {
+        initialLocation = '/$initialLocation';
+      }
+    } catch (e, st) {
+      print('❌ [DL] Error parsing initial location: $e');
+      print('❌ [DL] Stack: $st');
+      initialLocation = '/';
+    }
+    print('🚀 Initial location (normalized): $initialLocation');
     print('🚀 Base URI: ${Uri.base}');
-    
+    print('🚀 defaultRouteName: $defaultRouteName');
+
+    // Build router with a global redirect to defend against any late-arriving custom-scheme locations
     _router = GoRouter(
       initialLocation: initialLocation,
       debugLogDiagnostics: true,
+      redirect: (context, state) {
+        final loc = state.uri.toString();
+        // Defensive: if a custom scheme ever leaks into GoRouter, catch and reroute
+        if (loc.contains('://')) {
+          final u = Uri.tryParse(loc);
+          print('🧯 [RouterRedirect] Intercepted location="$loc" parsed="$u"');
+          if (u != null && u.scheme == 'cognify') {
+            print('🧯 [RouterRedirect] Rerouting custom-scheme to /editor');
+            return '/editor';
+          }
+          // For other schemes, convert to path-only best-effort
+          if (u != null && (u.scheme == 'http' || u.scheme == 'https')) {
+            final pathOnly = Uri(path: u.path, queryParameters: u.queryParameters).toString();
+            final fixed = pathOnly.startsWith('/') ? pathOnly : '/$pathOnly';
+            print('🧯 [RouterRedirect] Rerouting http(s) to "$fixed"');
+            return fixed;
+          }
+        }
+        return null;
+      },
       routes: [
         GoRoute(
           path: '/',
@@ -409,22 +465,7 @@ ChangeNotifierProvider(
             child: const OAuthOnboardingScreen(),
           ),
         ),
-        // Test route
-        GoRoute(
-          path: '/test',
-          pageBuilder: (context, state) {
-            print('🧪 Test route hit!');
-            return MaterialPage(
-              key: state.pageKey,
-              child: const Scaffold(
-                body: Center(
-                  child: Text('Test route works!'),
-                ),
-              ),
-            );
-          },
-        ),
-        // OAuth callback route
+      
         GoRoute(
           path: '/oauth/callback',
           pageBuilder: (context, state) {
