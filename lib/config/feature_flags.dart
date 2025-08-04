@@ -33,6 +33,7 @@ class FeatureFlags {
 • All app settings and configurations
 • Offline AI functionality
 ''';
+
   // Feature names for subscription checks
   static const String FEATURE_WEB_SEARCH = 'web_search_integration';
   static const String FEATURE_INTERNET_GLOBE = 'internet_globe_toggle';
@@ -42,6 +43,7 @@ class FeatureFlags {
   static const String FEATURE_CUSTOM_THEMES = 'custom_themes';
 
   static const String FEATURE_PRIORITY_SUPPORT = 'priority_support';
+
   // Free features list
   static const List<String> FREE_FEATURES = [
     'basic_chat',
@@ -64,15 +66,19 @@ class FeatureFlags {
     FEATURE_PRIORITY_SUPPORT,
   ];
 
-  static bool get ENABLE_PRIORITY_SUPPORT => EnvironmentConfig.enablePrioritySupport;
-  // Premium feature toggles (features that use brave_searchtool)
-  static bool get ENABLE_WEB_SEARCH => EnvironmentConfig.enableWebSearch;
   // Build-time constants - set based on environment and user subscription
+  static bool get ENABLE_PRIORITY_SUPPORT => EnvironmentConfig.enablePrioritySupport;
+
+  // Flag name intentionally explicit for clarity in code reviews:
+  // In development builds, when this is true we unlock the editor's Internet Globe
+  // regardless of subscription. Keep true in dev, false in prod.
+  static const bool DEV_UNLOCK_INTERNET_GLOBE = true;
+
+  // The following map to environment-configured visibility in production
   static bool get IS_FREE_VERSION => EnvironmentConfig.isFreeVersion;
   static bool get SHOW_CUSTOM_THEMES => EnvironmentConfig.showCustomThemes;
   static bool get SHOW_EXPORT_FEATURES => EnvironmentConfig.showExportFeatures;
   static bool get SHOW_INTERNET_GLOBE => EnvironmentConfig.showInternetGlobe;
-
   static bool get SHOW_TRENDING_TOPICS => EnvironmentConfig.showTrendingTopics;
 
   static bool get SHOW_UPGRADE_PROMPTS => IS_FREE_VERSION;
@@ -96,11 +102,11 @@ class FeatureFlags {
     if (FREE_FEATURES.contains(featureName)) {
       return true;
     }
-    
+
     if (PREMIUM_FEATURES.contains(featureName)) {
       return !IS_FREE_VERSION;
     }
-    
+
     return false;
   }
 }

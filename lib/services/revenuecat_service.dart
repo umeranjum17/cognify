@@ -1,10 +1,19 @@
-// RevenueCat service scaffold
-// Handles SDK init, offerings fetch, purchase, restore, and entitlement checks.
+// RevenueCat service - hardened for graceful degradation and fail-closed gating.
+// Ensures that any SDK errors/timeouts never crash the app. When RC is unavailable,
+// premium stays locked unless user is in tester whitelist via AppAccessProvider.
+//
+// Key guarantees:
+// - Idempotent initialize() with guarded _configured flag
+// - Timeouts on all RC calls to avoid hangs
+// - All methods swallow exceptions and log via debugPrint
+// - Purchase operations return explicit failure if RC unavailable
+// - Streams never throw; listener is wrapped defensively
 
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
+
 import '../config/subscriptions_config.dart';
 
 class RevenueCatService {
@@ -19,84 +28,146 @@ class RevenueCatService {
 
   Stream<CustomerInfo> get customerInfoStream => _customerInfoController.stream;
 
-  Future<void> initialize({String? appUserId}) async {
-    // Configure SDK with platform-specific public SDK key
-    final configuration = PurchasesConfiguration(
-      defaultTargetPlatform == TargetPlatform.iOS
-          ? SubscriptionsConfig.rcPublicKeyIOS
-          : SubscriptionsConfig.rcPublicKeyAndroid,
-    );
+  bool _configured = false;
 
-    await Purchases.configure(configuration);
+  Future<void> initialize({
+    String? appUserId,
+    Duration timeout = const Duration(seconds: 6),
+  }) async {
+    if (_configured) return; // idempotent
+
+    try {
+      // Configure SDK with platform-specific public SDK key
+      final configuration = PurchasesConfiguration(
+        defaultTargetPlatform == TargetPlatform.iOS
+            ? SubscriptionsConfig.rcPublicKeyIOS
+            : SubscriptionsConfig.rcPublicKeyAndroid,
+      );
+
+      await _withTimeout(() => Purchases.configure(configuration), timeout);
+      _configured = true;
+    } catch (e, st) {
+      debugPrint('❌ [RevenueCat] configure failed, continuing without RC: $e');
+      debugPrint('$st');
+      // Do not rethrow; fail closed and allow app to continue.
+      _configured = false;
+      return;
+    }
 
     // Identify user after configure if we have an ID (anonymous if null)
     if (appUserId != null && appUserId.isNotEmpty) {
       try {
-        await Purchases.logIn(appUserId);
+        await _withTimeout(() => Purchases.logIn(appUserId), timeout);
       } catch (e) {
-        debugPrint('RevenueCat logIn error: $e');
+        debugPrint('⚠️ [RevenueCat] logIn error: $e');
       }
     }
 
     // Warm caches and set up listener
     try {
-      _customerInfoCache = await Purchases.getCustomerInfo();
+      _customerInfoCache =
+          await _withTimeout(() => Purchases.getCustomerInfo(), timeout);
       if (_customerInfoCache != null) {
         _customerInfoController.add(_customerInfoCache!);
       }
     } catch (e) {
-      debugPrint('RevenueCat getCustomerInfo error: $e');
+      debugPrint('⚠️ [RevenueCat] getCustomerInfo error: $e');
     }
 
-    Purchases.addCustomerInfoUpdateListener((customerInfo) {
-      _customerInfoCache = customerInfo;
-      _customerInfoController.add(customerInfo);
-    });
+    // Add listener defensively
+    try {
+      Purchases.addCustomerInfoUpdateListener((customerInfo) {
+        _customerInfoCache = customerInfo;
+        // Never throw from stream add
+        try {
+          _customerInfoController.add(customerInfo);
+        } catch (e) {
+          debugPrint('⚠️ [RevenueCat] stream add error: $e');
+        }
+      });
+    } catch (e) {
+      debugPrint('⚠️ [RevenueCat] addCustomerInfoUpdateListener failed: $e');
+    }
   }
 
-  Future<void> identify(String appUserId) async {
+  Future<void> identify(String appUserId,
+      {Duration timeout = const Duration(seconds: 6)}) async {
+    if (!_configured) return; // silently no-op if RC unavailable
     try {
-      await Purchases.logIn(appUserId);
-      final info = await Purchases.getCustomerInfo();
+      await _withTimeout(() => Purchases.logIn(appUserId), timeout);
+      final info =
+          await _withTimeout(() => Purchases.getCustomerInfo(), timeout);
       _customerInfoCache = info;
       _customerInfoController.add(info);
     } catch (e) {
-      debugPrint('RevenueCat identify error: $e');
+      debugPrint('⚠️ [RevenueCat] identify error: $e');
     }
   }
 
-  Future<void> logOut() async {
+  Future<void> logOut({Duration timeout = const Duration(seconds: 6)}) async {
+    if (!_configured) return;
     try {
-      await Purchases.logOut();
-      final info = await Purchases.getCustomerInfo();
+      await _withTimeout(() => Purchases.logOut(), timeout);
+      final info =
+          await _withTimeout(() => Purchases.getCustomerInfo(), timeout);
       _customerInfoCache = info;
       _customerInfoController.add(info);
     } catch (e) {
-      debugPrint('RevenueCat logout error: $e');
+      debugPrint('⚠️ [RevenueCat] logout error: $e');
     }
   }
 
-  Future<Offerings?> getOfferings({bool forceRefresh = false}) async {
+  Future<Offerings?> getOfferings({
+    bool forceRefresh = false,
+    Duration timeout = const Duration(seconds: 8),
+  }) async {
+    if (!_configured) return null;
     if (!forceRefresh && _offeringsCache != null) return _offeringsCache;
-    _offeringsCache = await Purchases.getOfferings();
+    try {
+      _offeringsCache =
+          await _withTimeout(() => Purchases.getOfferings(), timeout);
+    } catch (e) {
+      debugPrint('⚠️ [RevenueCat] getOfferings error: $e');
+      // Keep previous cache or null
+    }
     return _offeringsCache;
   }
 
-  Future<CustomerInfo> restorePurchases() async {
-    final info = await Purchases.restorePurchases();
-    _customerInfoCache = info;
-    _customerInfoController.add(info);
-    return info;
+  Future<CustomerInfo?> restorePurchases(
+      {Duration timeout = const Duration(seconds: 10)}) async {
+    if (!_configured) return _customerInfoCache; // no-op if RC down
+    try {
+      final info =
+          await _withTimeout(() => Purchases.restorePurchases(), timeout);
+      _customerInfoCache = info;
+      _customerInfoController.add(info);
+      return info;
+    } catch (e) {
+      debugPrint('⚠️ [RevenueCat] restorePurchases error: $e');
+      return _customerInfoCache;
+    }
   }
 
   bool get isEntitledToPremium {
     final entitlements = _customerInfoCache?.entitlements.active;
-    return entitlements?.containsKey(SubscriptionsConfig.entitlementPremium) == true;
+    return entitlements
+            ?.containsKey(SubscriptionsConfig.entitlementPremium) ==
+        true;
   }
 
-  Future<PurchaseResult> purchasePackage(Package pkg) async {
+  Future<PurchaseResult> purchasePackage(
+    Package pkg, {
+    Duration timeout = const Duration(minutes: 2),
+  }) async {
+    if (!_configured) {
+      return PurchaseResult(
+        success: false,
+        errorMessage: 'Purchasing unavailable',
+      );
+    }
     try {
-      final customerInfo = await Purchases.purchasePackage(pkg);
+      final customerInfo =
+          await _withTimeout(() => Purchases.purchasePackage(pkg), timeout);
       _customerInfoCache = customerInfo;
       _customerInfoController.add(customerInfo);
       final entitled = customerInfo.entitlements.active.containsKey(
@@ -114,7 +185,17 @@ class RevenueCatService {
   }
 
   void dispose() {
-    _customerInfoController.close();
+    try {
+      _customerInfoController.close();
+    } catch (_) {}
+  }
+
+  // Helper to enforce timeouts and prevent hangs
+  Future<T> _withTimeout<T>(Future<T> Function() op, Duration timeout) {
+    return op().timeout(timeout, onTimeout: () {
+      throw TimeoutException(
+          'RevenueCat operation timed out after ${timeout.inSeconds}s');
+    });
   }
 }
 

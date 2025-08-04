@@ -30,6 +30,9 @@ import '../services/openrouter_client.dart';
 import '../services/services_manager.dart';
 import '../services/session_cost_service.dart';
 import '../services/unified_api_service.dart';
+import '../services/environment_service.dart';
+import '../config/feature_flags.dart';
+import '../providers/subscription_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/cost_display_widget.dart';
 import '../widgets/enhanced_loading_indicator.dart';
@@ -569,6 +572,7 @@ class _EditorScreenState extends State<EditorScreen> {
 
   Widget _buildMainContent(BuildContext context, ThemeData theme) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         // Selected Sources Banner
         if (_selectedSources.isNotEmpty)
@@ -890,8 +894,16 @@ class _EditorScreenState extends State<EditorScreen> {
                       ),
                     ],
                   ),
-                  child: Column(
-                    children: [
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      // Prevent input area from forcing overflow by capping height
+                      maxHeight: 240,
+                    ),
+                    child: SingleChildScrollView(
+                      physics: const ClampingScrollPhysics(),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
                       // Text input area (top section)
                       Container(
                         width: double.infinity,
@@ -1104,10 +1116,11 @@ class _EditorScreenState extends State<EditorScreen> {
                           ),
                         ],
                       ),
-
                     ],
                   ),
                 ),
+              ),
+            ),
 
 
              ],
@@ -1951,10 +1964,21 @@ class _EditorScreenState extends State<EditorScreen> {
   // Premium feature methods
   Future<bool> _checkWebSearchAccess() async {
     try {
-      // For now, return false to indicate free version (web search is premium)
-      // In a real implementation, this would check subscription status
-      return false;
-    } catch (e) {
+      // Dev override: allow internet globe in development when the explicit dev flag is enabled.
+      if (EnvironmentService.isDevelopment() && FeatureFlags.DEV_UNLOCK_INTERNET_GLOBE) {
+        return true;
+      }
+
+      // Production or dev without override: require active subscription entitlement.
+      try {
+        final sub = Provider.of<SubscriptionProvider>(context, listen: false);
+        // active -> access granted, otherwise locked (unknown/inactive fail-closed)
+        return sub.isEntitled;
+      } catch (_) {
+        // If provider not available, fail closed
+        return false;
+      }
+    } catch (_) {
       return false;
     }
   }

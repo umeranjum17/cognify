@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
-import '../config/feature_flags.dart';
-import '../services/premium_feature_gate.dart';
+import '../providers/app_access_provider.dart';
 import '../widgets/cognify_logo.dart';
 
 /// Trending topics screen - Premium feature only
@@ -30,10 +30,9 @@ class _TrendingTopicsScreenState extends State<TrendingTopicsScreen> {
           ),
         ],
       ),
-      body: FutureBuilder<bool>(
-        future: PremiumFeatureGate().canAccess(FeatureFlags.FEATURE_TRENDING_TOPICS),
-        builder: (context, snapshot) {
-          final hasAccess = snapshot.data ?? false;
+      body: Consumer<AppAccessProvider>(
+        builder: (context, appAccess, child) {
+          final hasAccess = appAccess.hasPremiumAccess;
           
           if (!hasAccess) {
             return _buildPremiumPrompt();
@@ -271,7 +270,8 @@ class _TrendingTopicsScreenState extends State<TrendingTopicsScreen> {
 
   Future<void> _loadTrendingTopics() async {
     // Check if user has access to this premium feature
-    final hasAccess = await PremiumFeatureGate().canAccess(FeatureFlags.FEATURE_TRENDING_TOPICS);
+    final appAccess = Provider.of<AppAccessProvider>(context, listen: false);
+    final hasAccess = appAccess.hasPremiumAccess;
     
     if (!hasAccess) {
       setState(() {

@@ -4,7 +4,10 @@ import 'package:provider/provider.dart';
 
 import '../../config/subscriptions_config.dart';
 import '../../providers/subscription_provider.dart';
+import '../../providers/firebase_auth_provider.dart';
 import '../../services/revenuecat_service.dart';
+import 'package:provider/provider.dart';
+import '../../providers/firebase_auth_provider.dart';
 
 /// PaywallScreen()
 class PaywallScreen extends StatefulWidget {
@@ -107,7 +110,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
                       style: Theme.of(context).textTheme.headlineSmall),
                   const SizedBox(height: 8),
                   Text(
-                    'Enjoy all premium features with an active subscription.',
+                    'Secure your subscription to your account so you can restore it on any device.',
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 24),
@@ -132,6 +135,80 @@ class _PaywallScreenState extends State<PaywallScreen> {
                       child: Center(child: CircularProgressIndicator()),
                     )
                   else
+                    // Sign-in gate: if user is not signed in, show rationale + Google sign-in and return early UI
+                    Builder(
+                      builder: (context) {
+                        final auth = context.watch<FirebaseAuthProvider>();
+                        if (auth.isSignedIn) {
+                          return const SizedBox.shrink();
+                        }
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            const SizedBox(height: 12),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).colorScheme.surfaceVariant,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: const [
+                                  Text('Keep your access safe',
+                                      style: TextStyle(fontWeight: FontWeight.bold)),
+                                  SizedBox(height: 6),
+                                  Text(
+                                    'We\'ll link your purchase to your Google account so you can restore it on any device.',
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              width: double.infinity,
+                              height: 48,
+                              child: ElevatedButton.icon(
+                                onPressed: _busy
+                                    ? null
+                                    : () async {
+                                        setState(() {
+                                          _busy = true;
+                                          _error = null;
+                                        });
+                                        try {
+                                          await context.read<FirebaseAuthProvider>().signInWithGoogle();
+                                          // After sign-in, refresh offerings to show purchase options.
+                                          await context.read<SubscriptionProvider>().refreshOfferings();
+                                          await _loadOfferings();
+                                        } catch (e) {
+                                          setState(() {
+                                            _error = e.toString();
+                                          });
+                                        } finally {
+                                          if (mounted) {
+                                            setState(() {
+                                              _busy = false;
+                                            });
+                                          }
+                                        }
+                                      },
+                                icon: const Icon(Icons.login),
+                                label: Text(_busy ? 'Signing in...' : 'Continue with Google'),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            TextButton(
+                              onPressed: _busy ? null : _restore,
+                              child: const Text('Restore Purchases'),
+                            ),
+                            const SizedBox(height: 8),
+                          ],
+                        );
+                      },
+                    ),
+                  if (packages.isNotEmpty)
                     ...[
                       for (final pkg in packages)
                         RadioListTile<Package>(

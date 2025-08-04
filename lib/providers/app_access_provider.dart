@@ -8,6 +8,7 @@ import '../providers/subscription_provider.dart';
 /// AppAccessProvider()
 /// Single source of truth for premium access:
 /// hasPremiumAccess = isTester (email whitelist) OR RevenueCat entitlement.
+/// Fails closed when subscription state is unknown (i.e., locked by default).
 class AppAccessProvider extends ChangeNotifier {
   AppAccessProvider({
     required FirebaseAuthProvider authProvider,
@@ -24,20 +25,25 @@ class AppAccessProvider extends ChangeNotifier {
   final SubscriptionProvider _subs;
 
   bool _isTester = false;
-  bool _hasPremiumAccess = false;
+  bool _hasPremiumAccess = false; // true only for tester or active entitlement
 
   bool get isTester => _isTester;
   bool get hasPremiumAccess => _hasPremiumAccess;
 
   String? get userEmail => _auth.user?.email;
 
+  // Features are gated by default when subscription state is unknown.
+  // Testers always allowed regardless of RC state.
   void _evaluate() {
     final email = _auth.user?.email;
     final tester = TesterWhitelist.isTesterEmail(email);
-    final entitled = _subs.isEntitled;
+
+    // Determine entitlement-based access using tri-state
+    final subsState = _subs.state; // unknown | inactive | active
+    final entitled = subsState == SubscriptionState.active;
 
     final newTester = tester;
-    final newHasPremium = tester || entitled;
+    final newHasPremium = tester || entitled; // testers always allowed
 
     if (newTester != _isTester || newHasPremium != _hasPremiumAccess) {
       _isTester = newTester;

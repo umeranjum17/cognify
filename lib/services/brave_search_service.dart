@@ -57,7 +57,7 @@ class BraveSearchService {
     
     try {
       final apiKey = await AppConfig().braveSearchApiKey ?? 'BSA6Crcr3bFuvfEOIgHdL-y7IO_YPqr';
-      return apiKey != null && apiKey.isNotEmpty;
+      return apiKey.isNotEmpty;
     } catch (e) {
       return false;
     }
@@ -190,10 +190,10 @@ class BraveSearchService {
               'title': result['title'] ?? 'Image',
               'description': result['description'] ?? '',
               'source': result['page_url'] ?? result['url'] ?? '', // result.url is the page URL
-              'width': result['properties']?['width'] ?? result['thumbnail']?['width'] ?? null,
-              'height': result['properties']?['height'] ?? result['thumbnail']?['height'] ?? null,
-              'size': result['properties']?['size'] ?? null,
-              'page_fetched': result['page_fetched'] ?? null,
+              'width': result['properties']?['width'] ?? result['thumbnail']?['width'],
+              'height': result['properties']?['height'] ?? result['thumbnail']?['height'],
+              'size': result['properties']?['size'],
+              'page_fetched': result['page_fetched'],
               'confidence': result['confidence'] ?? 'unknown'
             };
           }).where((img) => img != null).toList(), // Remove null entries

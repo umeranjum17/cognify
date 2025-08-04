@@ -4,7 +4,7 @@
 class SubscriptionsConfig {
   // RevenueCat public SDK keys (Environment: Production)
   // Get these from RevenueCat → Project → API Keys
-  static const String rcPublicKeyAndroid = 'TODO_REVENUECAT_PUBLIC_SDK_KEY_ANDROID';
+  static const String rcPublicKeyAndroid = 'RC_ANDROID_PUBLIC_SDK_KEY_GOES_HERE';
   static const String rcPublicKeyIOS = 'TODO_REVENUECAT_PUBLIC_SDK_KEY_IOS';
 
   // Offering and entitlement identifiers
