@@ -7,5 +7,5 @@
 // Re-export the main agent system for backward compatibility
 export 'agents/agent_system.dart';
 export 'agents/planner_agent.dart';
-export 'agents/executor_agent.dart';
+export 'agents/executor_engine.dart';
 export 'agents/writer_agent.dart';

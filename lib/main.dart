@@ -37,12 +37,31 @@ import 'services/user_service.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_provider.dart';
 import 'widgets/connection_status_indicator.dart';
+import 'utils/logger.dart';
+import 'config/app_config.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize WebView platform implementation
   WebViewPlatform.instance ??= AndroidWebViewPlatform();
+
+  // Initialize logger with appropriate verbosity
+  Logger.initialize();
+  
+  // Check if verbose logging should be enabled
+  try {
+    final appConfig = AppConfig();
+    await appConfig.initialize();
+    final verboseLogging = await appConfig.verboseLogging;
+    Logger.setVerboseMode(verboseLogging);
+    if (verboseLogging) {
+      Logger.info('Verbose logging enabled');
+    }
+  } catch (e) {
+    // Fallback to default logging if config fails
+    Logger.warn('Failed to initialize logging config: $e');
+  }
 
   // Initialize services
   await ServicesManager().initialize();

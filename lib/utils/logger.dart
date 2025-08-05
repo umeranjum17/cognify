@@ -18,13 +18,15 @@ enum LogLevel {
 class Logger {
   static LogLevel _currentLevel = LogLevel.info;
   static bool _initialized = false;
+  static bool _verboseMode = false; // Control for very detailed logging
 
   /// Initialize logger with appropriate level based on build mode
   static void initialize() {
     if (_initialized) return;
     
     if (kDebugMode) {
-      _currentLevel = ConfigService.isDebug ? LogLevel.debug : LogLevel.info;
+      // Reduce default debug output - only show warnings and errors by default
+      _currentLevel = ConfigService.isDebug ? LogLevel.warn : LogLevel.warn;
     } else {
       _currentLevel = LogLevel.warn; // Production: only warnings and errors
     }
@@ -34,6 +36,28 @@ class Logger {
   /// Set log level programmatically
   static void setLevel(LogLevel level) {
     _currentLevel = level;
+  }
+
+  /// Enable/disable verbose mode for detailed debugging
+  static void setVerboseMode(bool enabled) {
+    _verboseMode = enabled;
+    if (enabled && _currentLevel == LogLevel.warn) {
+      _currentLevel = LogLevel.debug;
+    }
+  }
+
+  /// Enable verbose mode temporarily for debugging (call this in debug console)
+  static void enableVerboseDebugging() {
+    _verboseMode = true;
+    _currentLevel = LogLevel.debug;
+    info('Verbose debugging enabled - detailed logs will now be shown');
+  }
+
+  /// Disable verbose mode
+  static void disableVerboseDebugging() {
+    _verboseMode = false;
+    _currentLevel = LogLevel.warn;
+    info('Verbose debugging disabled - only warnings and errors will be shown');
   }
 
   /// Log error messages (always shown)
@@ -51,14 +75,18 @@ class Logger {
     _log(LogLevel.info, message);
   }
 
-  /// Log debug messages (detailed execution info)
+  /// Log debug messages (detailed execution info) - only in verbose mode
   static void debug(String message) {
-    _log(LogLevel.debug, message);
+    if (_verboseMode) {
+      _log(LogLevel.debug, message);
+    }
   }
 
-  /// Log trace messages (very detailed, per-operation info)
+  /// Log trace messages (very detailed, per-operation info) - only in verbose mode
   static void trace(String message) {
-    _log(LogLevel.trace, message);
+    if (_verboseMode) {
+      _log(LogLevel.trace, message);
+    }
   }
 
   /// Internal logging implementation
@@ -128,7 +156,10 @@ class Stopwatch2 {
   
   void stop() {
     _stopwatch.stop();
-    _logger.debug('$_name completed in ${_stopwatch.elapsedMilliseconds}ms');
+    // Only log timing in verbose mode to reduce noise
+    if (Logger._verboseMode) {
+      _logger.debug('$_name completed in ${_stopwatch.elapsedMilliseconds}ms');
+    }
   }
   
   void stopInfo() {

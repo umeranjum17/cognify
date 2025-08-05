@@ -57,7 +57,7 @@ class ExecutorEngine {
       // Check cache first
       final cachedResult = _getCachedResult(toolSpec.name, toolSpec.input);
       if (cachedResult != null) {
-        _logger.debug('Using cached result for ${toolSpec.name}');
+        
         onProgress?.call({
           'tool': toolSpec.name,
           'message': '⚡ Using cached result',
@@ -66,7 +66,7 @@ class ExecutorEngine {
         return cachedResult;
       }
 
-      _logger.debug('Executing tool: ${toolSpec.name}');
+      
       onProgress?.call({
         'tool': toolSpec.name,
         'message': '🔧 Starting ${toolSpec.name}...',
@@ -155,7 +155,7 @@ class ExecutorEngine {
     }
 
     final planTimer = Stopwatch2('Plan execution', _logger);
-    _logger.info('Executing plan with ${toolSpecs.length} tools');
+    
 
     // Phase 1: Execute search tools in parallel
     final searchTools = toolSpecs.where((spec) => 
@@ -176,7 +176,7 @@ class ExecutorEngine {
       !searchTools.contains(spec) && !fetchTools.contains(spec)
     ).toList();
 
-    _logger.info('Phase 1: ${searchTools.length} search, ${fetchTools.length} fetch, ${otherTools.length} other tools');
+    
 
     // Execute search tools in parallel
     final searchResults = <ToolResult>[];
@@ -219,12 +219,12 @@ class ExecutorEngine {
       });
 
       searchResults.addAll(await Future.wait(searchFutures));
-      searchTimer.stopInfo();
+      
       
       // Extract URLs for content fetching
       final urlsToFetch = await _extractUrlsFromSearchResults(searchResults);
       for (final url in urlsToFetch) {
-        _logger.debug('Adding web_fetch for URL: $url');
+        
         fetchTools.add(ToolSpec(
           name: 'web_fetch',
           input: {'url': url, 'extractText': true},
@@ -258,7 +258,7 @@ class ExecutorEngine {
       });
 
       fetchResults.addAll(await Future.wait(fetchFutures));
-      fetchTimer.stopInfo();
+      
     }
 
     // Execute other tools in parallel
@@ -285,7 +285,7 @@ class ExecutorEngine {
       });
 
       otherResults.addAll(await Future.wait(otherFutures));
-      otherTimer.stopInfo();
+      
     }
 
     // Combine all results
@@ -319,10 +319,10 @@ class ExecutorEngine {
     final uniqueSources = ToolResultProcessor.deduplicateSources(allSources);
     final cleanSources = ToolResultProcessor.cleanSources(uniqueSources);
 
-    processingTimer.stop();
-    planTimer.stopInfo();
     
-    _logger.info('Plan completed: ${allResults.length} tools executed, ${cleanSources.length} sources, ${allImages.length} images');
+    
+    
+    
 
     // Store extracted sources and images in the results
     if (allResults.isNotEmpty && !allResults.first.failed) {
@@ -350,7 +350,7 @@ class ExecutorEngine {
 
   Future<void> initialize() async {
     try {
-      _logger.info('Initializing Executor Engine');
+      
 
       // Create tool map for quick lookup
       _toolsManager = ToolsManager();
@@ -359,7 +359,7 @@ class ExecutorEngine {
       }
 
       _initialized = true;
-      _logger.info('Executor Engine initialized with ${_toolsManager.allTools.length} tools');
+      
     } catch (error) {
       _logger.error('Executor Engine initialization failed', error);
       rethrow;
@@ -377,7 +377,7 @@ class ExecutorEngine {
     }
     
     _resultCache[cacheKey] = result;
-    _logger.trace('Cached result for $toolName');
+    
   }
 
   /// Extract URLs from search results for content fetching
@@ -397,7 +397,7 @@ class ExecutorEngine {
       }
     }
     
-    _logger.debug('Found ${urlsToFetch.length} unique URLs for content extraction');
+    
     return urlsToFetch;
   }
 

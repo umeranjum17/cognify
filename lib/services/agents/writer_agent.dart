@@ -70,9 +70,9 @@ class WriterAgent {
     // Create images section for markdown inclusion (aligned with server-side)
     String imagesSection = '';
     if (images.isNotEmpty) {
-      print('🖼️ Creating images section with ${images.length} images');
+      
       for (final image in images) {
-        print('🖼️ Image: ${image['title']} -> ${image['url']}');
+        
       }
       
       imagesSection = '''
@@ -85,7 +85,7 @@ class WriterAgent {
         final imageUrl = image['url'] ?? '';
         final imageTitle = image['title'] ?? 'Image';
         
-        print('🖼️ Creating image section for: "$imageTitle" with URL: "$imageUrl"');
+        
         
         // Include all images with valid URLs (no CORS filtering in disabled security mode)
         if (imageUrl.isNotEmpty) {
@@ -97,7 +97,7 @@ ${i + 1}. **$imageTitle**
 
 ''';
         } else {
-          print('🖼️ Skipping image with empty URL: $imageTitle');
+          
         }
       }
     }
@@ -270,7 +270,7 @@ $responseGuidelines''';
 
   Future<void> initialize() async {
     try {
-      print('✍️ Initializing Writer Agent with model: $modelName (mode: $mode)');
+      
 
       // Calculate max tokens based on mode - use conservative limits
       int maxTokens;
@@ -282,10 +282,10 @@ $responseGuidelines''';
       }
 
       // Log streaming configuration
-      print('🔍 Writer Agent: Streaming configuration for model: $modelName');
-      print('🔍 Writer Agent: Max tokens set to: $maxTokens');
+      
+      
 
-      print('✅ Writer Agent initialized with $maxTokens max tokens');
+      
     } catch (error) {
       print('❌ Writer Agent initialization failed: $error');
       rethrow;
@@ -305,13 +305,13 @@ $responseGuidelines''';
     List<Map<String, dynamic>> attachments = const [],
   }) async {
     try {
-      print('✍️ Writing response for: "${originalQuery.substring(0, math.min(50, originalQuery.length))}..."');
+      
 
       // Debug: Log image information
       final images = _getPreExtractedImages(toolResults);
-      print('🖼️ Writer Agent: Processing ${images.length} images for query: "$originalQuery"');
+      
       if (images.isNotEmpty) {
-        print('🖼️ Writer Agent: First image: ${images[0]['title']} (${images[0]['url']})');
+        
       }
 
       final writingPrompt = createWritingPrompt(
@@ -325,12 +325,12 @@ $responseGuidelines''';
       );
 
       final estimatedTokens = (writingPrompt.length / 4).round();
-      print('📝 Writer Agent: Prompt length: ${writingPrompt.length} characters');
-      print('📝 Writer Agent: Estimated tokens: $estimatedTokens');
+      
+      
 
       final messageInput = await createMessageInput(writingPrompt, attachments);
 
-      print('🤖 Writer Agent using model: $modelName for non-streaming');
+      
       
       // Calculate max tokens based on mode (aligned with server-side)
       int maxTokens;
@@ -340,7 +340,7 @@ $responseGuidelines''';
         maxTokens = 2500; // Aligned with server-side default
       }
       
-      print('🤖 Writer Agent: Max tokens: $maxTokens');
+      
       final response = await _openRouterClient.createChatCompletion(
         model: modelName,
         messages: [messageInput],
@@ -372,7 +372,7 @@ $responseGuidelines''';
         print('🔗 Writer generation ID: $generationId');
       }
       if (usage != null) {
-        print('💰 Writer usage: ${usage['prompt_tokens'] ?? 0} input + ${usage['completion_tokens'] ?? 0} output = ${usage['total_tokens'] ?? 0} tokens');
+        
       }
 
       // Log actual token usage comparison
@@ -381,25 +381,25 @@ $responseGuidelines''';
       // Debug: Check if response includes images when they should
       if (images.isNotEmpty) {
         final hasImagesInResponse = content.contains('![') && content.contains('](');
-        print('🖼️ Writer Agent: Response includes images: ${hasImagesInResponse ? 'YES' : 'NO'}');
+        
         if (hasImagesInResponse) {
           // Find all image markdown in the response
           final imageMatches = RegExp(r'!\[([^\]]*)\]\(([^)]+)\)').allMatches(content);
-          print('🖼️ Writer Agent: Found ${imageMatches.length} image markdown in response');
+          
           for (final match in imageMatches) {
             print('🖼️ Writer Agent: Image markdown: ![${match.group(1)}](${match.group(2)})');
           }
         } else {
-          print('⚠️ Writer Agent: Images were available but not included in response. This may indicate the model ignored image instructions.');
-          print('🖼️ Writer Agent: Available images were:');
+          
+          
           for (final image in images) {
             print('🖼️ Writer Agent: - ${image['title']}: ${image['url']}');
           }
         }
       }
 
-      print('📝 Writer Agent: Final response length: ${content.length} characters');
-      print('📝 Writer Agent: Estimated response tokens: ${(content.length / 4).round()} tokens');
+      
+      
 
       return {
         'content': content,
@@ -434,13 +434,13 @@ $responseGuidelines''';
     List<Map<String, dynamic>> attachments = const [],
   }) async {
     try {
-      print('✍️ Writing response for: "${originalQuery.substring(0, math.min(50, originalQuery.length))}..."');
+      
 
       // Debug: Log image information
       final images = _getPreExtractedImages(toolResults);
-      print('🖼️ Writer Agent: Processing ${images.length} images for query: "$originalQuery"');
+      
       if (images.isNotEmpty) {
-        print('🖼️ Writer Agent: First image: ${images[0]['title']} (${images[0]['url']})');
+        
       }
 
       final writingPrompt = createWritingPrompt(
@@ -454,8 +454,8 @@ $responseGuidelines''';
       );
 
       final estimatedTokens = (writingPrompt.length / 4).round();
-      print('📝 Writer Agent: Prompt length: ${writingPrompt.length} characters');
-      print('📝 Writer Agent: Estimated tokens: $estimatedTokens');
+      
+      
 
       final messageInput = await createMessageInput(writingPrompt, attachments);
 
@@ -467,9 +467,9 @@ $responseGuidelines''';
         maxTokens = 2500;
       }
       
-      print('🤖 Writer Agent using model: $modelName for data generation');
-      print('🤖 Writer Agent: Max tokens: $maxTokens');
-      print('🤖 Writer Agent: Temperature: 0.8');
+      
+      
+      
       
       // Get response without streaming
       final response = await _openRouterClient.createChatCompletion(
@@ -503,7 +503,7 @@ $responseGuidelines''';
         print('🔗 Writer generation ID: $generationId');
       }
       if (usage != null) {
-        print('💰 Writer usage: ${usage['prompt_tokens'] ?? 0} input + ${usage['completion_tokens'] ?? 0} output = ${usage['total_tokens'] ?? 0} tokens');
+        
       }
 
       // Log actual token usage comparison
@@ -512,25 +512,25 @@ $responseGuidelines''';
       // Debug: Check if response includes images when they should
       if (images.isNotEmpty) {
         final hasImagesInResponse = content.contains('![') && content.contains('](');
-        print('🖼️ Writer Agent: Response includes images: ${hasImagesInResponse ? 'YES' : 'NO'}');
+        
         if (hasImagesInResponse) {
           // Find all image markdown in the response
           final imageMatches = RegExp(r'!\[([^\]]*)\]\(([^)]+)\)').allMatches(content);
-          print('🖼️ Writer Agent: Found ${imageMatches.length} image markdown in response');
+          
           for (final match in imageMatches) {
             print('🖼️ Writer Agent: Image markdown: ![${match.group(1)}](${match.group(2)})');
           }
         } else {
-          print('⚠️ Writer Agent: Images were available but not included in response. This may indicate the model ignored image instructions.');
-          print('🖼️ Writer Agent: Available images were:');
+          
+          
           for (final image in images) {
             print('🖼️ Writer Agent: - ${image['title']}: ${image['url']}');
           }
         }
       }
 
-      print('📝 Writer Agent: Final response length: ${content.length} characters');
-      print('📝 Writer Agent: Estimated response tokens: ${(content.length / 4).round()} tokens');
+      
+      
 
       return {
         'content': content,
@@ -567,13 +567,13 @@ $responseGuidelines''';
     List<Map<String, dynamic>> attachments = const [],
   }) async* {
     try {
-      print('✍️ Writing response for: "${originalQuery.substring(0, math.min(50, originalQuery.length))}..."');
+      
 
       // Debug: Log image information
       final images = _getPreExtractedImages(toolResults);
-      print('🖼️ Writer Agent: Processing ${images.length} images for query: "$originalQuery"');
+      
       if (images.isNotEmpty) {
-        print('🖼️ Writer Agent: First image: ${images[0]['title']} (${images[0]['url']})');
+        
       }
 
       final writingPrompt = createWritingPrompt(
@@ -587,14 +587,14 @@ $responseGuidelines''';
       );
 
       final estimatedTokens = (writingPrompt.length / 4).round();
-      print('📝 Writer Agent: Prompt length: ${writingPrompt.length} characters');
-      print('📝 Writer Agent: Estimated tokens: $estimatedTokens');
+      
+      
 
       final messageInput = await createMessageInput(writingPrompt, attachments);
 
       // Stream the response
       String fullResponse = '';
-      print('🤖 Writer Agent using model: $modelName for streaming');
+      
       
       // Calculate max tokens based on mode (aligned with server-side)
       int maxTokens;
@@ -604,9 +604,9 @@ $responseGuidelines''';
         maxTokens = 2500; // Aligned with server-side default
       }
       
-      print('🤖 Writer Agent: Max tokens: $maxTokens');
-      print('🤖 Writer Agent: Temperature: 0.8');
-      print('🤖 Writer Agent: Prompt length: ${writingPrompt.length} characters');
+      
+      
+      
       
       // Track generation ID and usage from streaming response (aligned with server-side)
       String? generationId;
@@ -643,12 +643,12 @@ $responseGuidelines''';
           // Log actual token usage comparison for streaming
           _logActualTokenUsage(usage, estimatedTokens);
           
-          print('🤖 Writer Agent: Stream completed, generationId: $generationId, usage: $usage');
-          print('🤖 Writer Agent: Full response length: ${fullResponse.length} chars');
+          
+          
           
           // Emit final metadata if not already emitted
           if (generationId != null || usage != null) {
-            print('🤖 Writer Agent: Yielding complete event with generationId: $generationId');
+            
             yield ChatStreamEvent.complete(
               message: fullResponse,
               costData: usage,
@@ -657,7 +657,7 @@ $responseGuidelines''';
               llmUsed: 'writer-agent',
             );
           } else {
-            print('🤖 Writer Agent: No generationId or usage, but yielding complete event anyway');
+            
             yield ChatStreamEvent.complete(
               message: fullResponse,
               costData: null,
@@ -682,7 +682,7 @@ $responseGuidelines''';
       if (images.isNotEmpty) {
         final hasImagesInResponse = fullResponse.contains('![') && fullResponse.contains('](');
         if (!hasImagesInResponse) {
-          print('⚠️ Writer Agent: Images were available but not included in response');
+          
         }
       }
 
@@ -904,7 +904,7 @@ $context
       return '';
     }
     
-    print('🔍 DEBUG: Processing ${webFetchResults.length} web_fetch results');
+    
     
     String sourcesSection = '''
 
@@ -918,7 +918,7 @@ $context
       
       if (output == null) continue;
       
-      print('🔍 DEBUG: Processing web_fetch result $i with output: $output');
+      
       
       // Handle both single page and multiple page results
       List<Map<String, dynamic>> pages = [];
@@ -926,7 +926,7 @@ $context
       if (output.containsKey('results')) {
         // Multiple pages structure
         final results = output['results'] as List<dynamic>? ?? [];
-        print('🔍 DEBUG: Processing web_fetch result $i with ${results.length} pages (multi-page structure)');
+        
         
         for (final page in results) {
           if (page is Map<String, dynamic>) {
@@ -935,7 +935,7 @@ $context
         }
       } else {
         // Single page structure (direct content)
-        print('🔍 DEBUG: Processing web_fetch result $i as single page (direct structure)');
+        
         pages.add(output);
       }
       
@@ -960,7 +960,7 @@ ${i + 1}.${j + 1}. **$title**
         final random = DateTime.now().microsecondsSinceEpoch % 10000 + 5000; // pseudo-random, deterministic per run
         final previewLength = (random > contentLength) ? contentLength : random;
         
-        print('🔍 DEBUG: Preview generation - contentLength: $contentLength, random: $random, previewLength: $previewLength');
+        
         
         // Add assertions to catch issues
         assert(previewLength > 0, 'Preview length must be positive');
@@ -1045,7 +1045,7 @@ ${i + 1}.${j + 1}. **$title**
   /// Log actual token usage and compare with estimates
   void _logActualTokenUsage(Map<String, dynamic>? usage, int estimatedTokens) {
     if (usage == null) {
-      print('📊 Actual token usage: Not available');
+      
       return;
     }
 
@@ -1057,12 +1057,12 @@ ${i + 1}.${j + 1}. **$title**
     final accuracyEmoji = accuracy < 10 ? '🎯' : accuracy < 25 ? '📊' : '⚠️';
     
     print('\n${'=' * 60}');
-    print('💰 ACTUAL TOKEN USAGE ANALYSIS');
+    
     print('=' * 60);
-    print('📝 Estimated tokens: $estimatedTokens');
-    print('📝 Actual prompt tokens: $promptTokens');
-    print('📝 Actual completion tokens: $completionTokens');
-    print('📝 Total tokens used: $totalTokens');
+    
+    
+    
+    
     print('$accuracyEmoji Estimation accuracy: ${accuracy.toStringAsFixed(1)}% ${accuracy < 10 ? '(Excellent)' : accuracy < 25 ? '(Good)' : '(Needs improvement)'}');
     
     if (accuracy > 25) {
@@ -1121,7 +1121,7 @@ ${i + 1}.${j + 1}. **$title**
 
     // Print fancy table
     print('\n${'=' * 80}');
-    print('📊 PROMPT LENGTH BREAKDOWN ANALYSIS');
+    
     print('=' * 80);
     print('${'Section'.padRight(25)} ${'Chars'.padRight(8)} ${'Tokens'.padRight(8)} ${'%'.padRight(6)} ${'Bar'}');
     print('-' * 80);
@@ -1193,11 +1193,11 @@ ${i + 1}.${j + 1}. **$title**
     if (takeFromEnd) {
       // Take from the end
       randomized = content.substring(content.length - targetLength);
-      print('🎲 Content randomized: ${content.length} → ${randomized.length} chars (from END)');
+      
     } else {
       // Take from the beginning
       randomized = content.substring(0, targetLength);
-      print('🎲 Content randomized: ${content.length} → ${randomized.length} chars (from START)');
+      
     }
     
     // Remove punctuation and convert to lowercase
@@ -1207,7 +1207,7 @@ ${i + 1}.${j + 1}. **$title**
         .replaceAll(RegExp(r'\s+'), ' ') // Normalize multiple spaces to single space
         .trim();
     
-    print('🎲 Content normalized: ${randomized.length} → ${normalized.length} chars (lowercase, no punctuation)');
+    
     
     return normalized;
   }

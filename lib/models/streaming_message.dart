@@ -17,9 +17,7 @@ class StreamingMessageController {
   /// Add new content chunk
   void addContent(String chunk) {
     _accumulatedContent += chunk;
-    print('🤖 StreamingMessageController: Added ${chunk.length} chars, total: ${_accumulatedContent.length} chars');
     _contentController.add(_accumulatedContent);
-    print('🤖 StreamingMessageController: Emitted content to stream');
   }
   
   /// Close the stream controller

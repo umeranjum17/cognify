@@ -31,16 +31,16 @@ class PlannerAgent {
     Map<String, dynamic>? options,
   }) async {
     try {
-      print('🔍 Creating execution plan for: "${query.substring(0, math.min(50, query.length))}..."');
+      
 
       // Step 1: Perform sequential thinking analysis (only for DeepSearch mode)
       Map<String, dynamic>? thinkingResult;
       if (mode.toLowerCase() == 'deepsearch') {
-        print('🧠 Performing sequential thinking analysis for DeepSearch mode...');
+        
         thinkingResult = await _performSequentialThinking(query, mode);
-        print('🧠 Sequential thinking completed with ${thinkingResult['search_strategies']?.length ?? 0} strategies');
+        
       } else {
-        print('💬 Chat mode: Skipping sequential thinking for faster response');
+        
       }
 
       final fileAttachments = processFileAttachments(attachments ?? []);
@@ -76,13 +76,13 @@ class PlannerAgent {
       final usage = response['usage'] as Map<String, dynamic>?;
       
       if (generationId != null) {
-        print('🔗 Planner generation ID: $generationId');
+        
       }
       if (usage != null) {
-        print('💰 Planner usage: ${usage['prompt_tokens'] ?? 0} input + ${usage['completion_tokens'] ?? 0} output = ${usage['total_tokens'] ?? 0} tokens');
+        
       }
 
-      print('🔍 Planner response: $content');
+      
       
       // Clean the response by removing markdown code blocks
       String cleanedContent = content.trim();
@@ -96,19 +96,19 @@ class PlannerAgent {
       }
       cleanedContent = cleanedContent.trim();
       
-      print('🔍 Cleaned planner response: $cleanedContent');
+      
       
       // Parse the JSON response
       final jsonResponse = jsonDecode(cleanedContent);
       final tools = jsonResponse['tools'] as List<dynamic>?;
       
       if (tools != null) {
-        print('🔍 Planned tools: ${tools.map((t) => t['name']).toList()}');
+        
         for (final tool in tools) {
-          print('🔍 Tool: ${tool['name']} - ${tool['reasoning']}');
+          
         }
       } else {
-        print('🔍 No tools planned in response');
+        
       }
 
       // Parse the response - handle both pure JSON and JSON wrapped in markdown
@@ -129,7 +129,7 @@ class PlannerAgent {
 
       try {
         final plan = jsonDecode(jsonContent) as Map<String, dynamic>;
-        print('✅ Successfully parsed planner response');
+        
         final toolSpecs = _parseExecutionPlan(plan);
 
         // Enhance tool specs with thinking results if available
@@ -153,7 +153,7 @@ class PlannerAgent {
         if (jsonMatch != null) {
           try {
             final extractedJson = jsonMatch.group(0)!;
-            print('✅ Extracted JSON: ${extractedJson.substring(0, math.min(100, extractedJson.length))}...');
+            
             final plan = jsonDecode(extractedJson) as Map<String, dynamic>;
             final toolSpecs = _parseExecutionPlan(plan);
 
@@ -351,10 +351,10 @@ ${mode.toLowerCase() == 'deepsearch'
       }).join('\n');
 
       _toolDescriptionsCache = toolDescriptions;
-      print('Generated tool descriptions for ${toolsManager.allTools.length} tools');
+      
       return toolDescriptions;
     } catch (error) {
-      print('Failed to generate tool descriptions: $error');
+      
       // Fallback to basic tool list
       final toolsManager = ToolsManager();
       return toolsManager.allTools.map((tool) => '- ${tool.name}: ${tool.description}').join('\n');
@@ -426,14 +426,14 @@ ${mode.toLowerCase() == 'deepsearch'
         'summary': '${processedFiles.length} file(s) attached to query'
       };
     } catch (error) {
-      print('Failed to process file attachments: $error');
+      
       return null;
     }
   }
 
   /// Create fallback plan when planning fails
   List<ToolSpec> _createFallbackPlan(String query, List<String> enabledTools, [String mode = 'chat']) {
-    print('Using fallback plan');
+    
 
     final searchLimits = _getModeSearchLimits(mode);
 

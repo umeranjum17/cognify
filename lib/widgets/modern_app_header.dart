@@ -363,39 +363,43 @@ class ModernAppHeader extends StatelessWidget implements PreferredSizeWidget {
         ),
       ),
 
-      PopupMenuItem<String>(
-        value: 'trending',
-        child: Row(
-          children: [
-            Icon(
-              Icons.trending_up,
-              size: 20,
-              color: theme.textTheme.bodyMedium?.color,
-            ),
-            const SizedBox(width: 12),
-            Text(
-              'Trending Topics',
-              style: theme.textTheme.bodyMedium,
-            ),
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: Colors.amber.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text(
-                'PRO',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.amber.shade700,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+      // PopupMenuItem<String>(
+
+      //   value: 'trending',
+      //   child: Row(
+      //     children: [
+      //       Icon(
+      //         Icons.trending_up,
+      //         size: 20,
+      //         color: theme.textTheme.bodyMedium?.color,
+      //       ),
+      //       const SizedBox(width: 12),
+      //       Text(
+      //         'Trending Topics',
+      //         style: theme.textTheme.bodyMedium,
+      //       ),
+      //       const SizedBox(width: 8),
+      //       Container(
+      //         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      //         decoration: BoxDecoration(
+      //           color: Colors.amber.withValues(alpha: 0.2),
+      //           borderRadius: BorderRadius.circular(4),
+      //         ),
+      //         child: Text(
+      //           'PRO',
+      //           style: TextStyle(
+      //             fontSize: 10,
+      //             fontWeight: FontWeight.bold,
+      //             color: Colors.amber.shade700,
+      //           ),
+      //         ),
+      //       ),
+      //     ],
+      //   ),
+      // ),
+    
+    
+    
     ];
 
     // Add additional menu items if provided

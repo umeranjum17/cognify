@@ -9,6 +9,7 @@ import '../utils/logger.dart';
 /// Enhanced Brave Search Tool
 class BraveSearchEnhancedTool extends Tool {
   final BraveSearchService _braveSearchService = BraveSearchService();
+  static final ScopedLogger _logger = Logger.scope('BraveSearchEnhanced');
 
   BraveSearchEnhancedTool() : super(
     name: 'brave_search_enhanced',
@@ -29,13 +30,13 @@ class BraveSearchEnhancedTool extends Tool {
       final query = input['query'] as String;
       final count = input['count'] as int? ?? 5;
       
-      print('🔍 Brave search enhanced tool: Searching for "$query" with count $count');
+      _logger.debug('Searching for "$query" with count $count');
       final results = await _braveSearchService.search(
         query,
         count: count,
         apiKey: (input['apiKey'] as String?) ?? (input['braveApiKey'] as String?),
       );
-      print('🔍 Brave search enhanced tool: Got ${results.length} results');
+      _logger.debug('Got ${results.length} results');
       
       // Return results without content extraction - content will be extracted separately
       final response = {
@@ -47,12 +48,10 @@ class BraveSearchEnhancedTool extends Tool {
         'timestamp': DateTime.now().toIso8601String()
       };
       
-      print('🔍 Brave search enhanced tool: Returning ${results.length} results (no content extraction)');
-      print('🔍 Brave search enhanced tool: Response structure: ${response.keys.toList()}');
-      
+      _logger.trace('Response structure: ${response.keys.toList()}');
       return response;
     } catch (e) {
-      print('Enhanced brave search tool failed: $e');
+      _logger.error('Enhanced brave search failed', e);
       return {
         'error': "Enhanced search failed",
         'message': e.toString(),

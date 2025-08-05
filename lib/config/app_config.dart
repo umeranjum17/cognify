@@ -14,12 +14,14 @@ class AppConfig {
   static const String _defaultModelKey = 'default_model';
   static const String _logLevelKey = 'log_level';
   static const String _autoExecuteAiToolsKey = 'auto_execute_ai_tools';
+  static const String _verboseLoggingKey = 'verbose_logging';
   // Default values
   static const String defaultModel = 'deepseek/deepseek-chat:free';
   static const String fallbackModel = 'mistralai/mistral-7b-instruct:free';
 
   static const String defaultLogLevel = 'info';
   static const bool defaultAutoExecuteAiTools = true;
+  static const bool defaultVerboseLogging = false;
   // API endpoints
   static const String openRouterBaseUrl = 'https://openrouter.ai/api/v1';
   static const String openAiBaseUrl = 'https://api.openai.ai/v1';
@@ -77,6 +79,11 @@ class AppConfig {
   Future<String> get logLevel async {
     await _ensureInitialized();
     return await _db.getSetting<String>(_logLevelKey, defaultValue: defaultLogLevel) ?? defaultLogLevel;
+  }
+
+  Future<bool> get verboseLogging async {
+    await _ensureInitialized();
+    return await _db.getSetting<bool>(_verboseLoggingKey, defaultValue: defaultVerboseLogging) ?? defaultVerboseLogging;
   }
 
   Future<String?> get openAiApiKey async {

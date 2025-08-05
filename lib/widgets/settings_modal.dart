@@ -7,6 +7,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/tools_config.dart';
 import '../theme/app_theme.dart';
 import '../theme/theme_provider.dart';
+import '../utils/logger.dart';
+import '../config/app_config.dart';
 import 'credits_usage_widget.dart';
 
 class SettingsModal extends StatefulWidget {
@@ -47,7 +49,6 @@ class _SettingsModalState extends State<SettingsModal> implements SettingsModalS
   late ToolsConfig _toolsConfig;
   late String _selectedPersonality;
   late String _selectedLanguage;
-
 
   // Available personalities - Human personalities
   final List<String> _availablePersonalities = [

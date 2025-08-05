@@ -26,8 +26,6 @@ class AgentSystem {
     String mode = 'chat',
   }) async {
     try {
-      print('🚀 Initializing Agent System');
-
       // Create agents with initial models
       _plannerAgent = PlannerAgent(modelName: plannerModel, mode: mode);
       _writerAgent = WriterAgent(modelName: writerModel, mode: mode);
@@ -37,9 +35,8 @@ class AgentSystem {
       await _executorEngine.initialize();
 
       _initialized = true;
-      print('✅ Agent System initialized successfully');
     } catch (error) {
-      print('❌ Agent System initialization failed: $error');
+      print('❌ Agent System initialization failed: \$e');
       rethrow;
     }
   }
@@ -63,10 +60,10 @@ class AgentSystem {
     }
 
     try {
-      print('🤖 Processing query: ${query.substring(0, math.min(50, query.length))}... selectedModel: $selectedModel' );
+      
       // Update agents with the selected model if provided
       if (selectedModel != null) {
-        print('🤖 Updating selected model to: $selectedModel');
+        
         updateSelectedModel(selectedModel, mode: mode);
       }
 
@@ -104,7 +101,7 @@ class AgentSystem {
           'outputTokens': plannerUsage?['completion_tokens'] ?? 0,
           'totalTokens': plannerUsage?['total_tokens'] ?? 0,
         });
-        print('🔗 Added planner generation ID: $plannerGenerationId');
+        
       }
 
       yield ChatStreamEvent.milestone(
@@ -171,15 +168,15 @@ class AgentSystem {
             // Yield content chunks as they arrive
             final contentChunk = event.content ?? '';
             fullResponse += contentChunk;
-            print('🤖 Agent System: Added content chunk: ${contentChunk.length} chars, total: ${fullResponse.length} chars');
+            
             if (contentChunk.isNotEmpty) {
-              print('🤖 Agent System: Content chunk preview: ${contentChunk.substring(0, math.min(50, contentChunk.length))}...');
+              
             }
             yield event;
             break;
 
           case StreamEventType.complete:
-            print('🤖 Agent System: Received complete event from writer agent');
+            
 
             // Extract generation data from complete event metadata
             if (event.metadata != null && event.metadata!['generationIds'] != null) {
@@ -196,21 +193,21 @@ class AgentSystem {
             if (fullResponse.isEmpty) {
               if (event.message != null && event.message!.isNotEmpty) {
                 fullResponse = event.message!;
-                print('🤖 Agent System: Using complete event message (no accumulated content): ${fullResponse.length} chars');
+                
               } else if (event.content != null && event.content!.isNotEmpty) {
                 fullResponse = event.content!;
-                print('🤖 Agent System: Using complete event content field (no accumulated content): ${fullResponse.length} chars');
+                
               } else {
-                print('🤖 Agent System: No accumulated content and complete event has no message or content');
+                
               }
             } else {
               // We have accumulated content, prefer it over potentially empty complete event content
-              print('🤖 Agent System: Preserving accumulated streaming content: ${fullResponse.length} chars');
+              
 
               // Optional: Use complete event content if it's significantly longer (indicates it might be more complete)
               final completeEventContent = event.message ?? event.content ?? '';
               if (completeEventContent.length > fullResponse.length * 1.1) {
-                print('🤖 Agent System: Complete event content is significantly longer, using it instead');
+                
                 fullResponse = completeEventContent;
               }
             }
@@ -239,17 +236,17 @@ class AgentSystem {
           'outputTokens': writerUsage?['completion_tokens'] ?? 0,
           'totalTokens': writerUsage?['total_tokens'] ?? 0,
         });
-        print('🔗 Added writer generation ID: $writerGenerationId');
+        
       }
 
-      print('🤖 Final response length: ${fullResponse.length} chars');
+      
       if (fullResponse.isNotEmpty) {
-        print('🤖 Final response preview: ${fullResponse.substring(0, math.min(100, fullResponse.length))}');
+        
       } else {
-        print('🤖 WARNING: Final response is empty!');
+        
       }
       
-      print('🤖 Converted ${sources.length} tool results to sources');
+      
       
       // Add generation IDs to final response for cost tracking
       yield ChatStreamEvent.complete(
@@ -260,7 +257,7 @@ class AgentSystem {
       );
 
     } catch (error) {
-      print('❌ Agent System processing failed: $error');
+      print('❌ Agent System initialization failed: \$e');
       yield ChatStreamEvent.error(
         error: 'An error occurred while processing your request: $error',
       );
@@ -284,11 +281,11 @@ class AgentSystem {
     }
 
     try {
-      print('🔍 Processing source-grounded query: ${query.substring(0, math.min(50, query.length))}... with ${sourceIds.length} sources');
+      
       
       // Update agents with the selected model if provided
       if (selectedModel != null) {
-        print('🔍 Updating selected model to: $selectedModel');
+        
         updateSelectedModel(selectedModel, mode: mode);
       }
 
@@ -315,7 +312,7 @@ class AgentSystem {
           final sourceContent = content['content'] as String;
           sourceContents.add('Source: $sourceTitle\nContent: $sourceContent');
           sourceTitles.add(sourceTitle);
-          print('🔍 Added source content: $sourceTitle (${sourceContent.length} chars)');
+          
         }
       }
 
@@ -381,7 +378,7 @@ class AgentSystem {
       }
 
     } catch (e) {
-      print('🚨 Source-grounded processing error: $e');
+      print('❌ Agent System initialization failed: \$e');
       yield ChatStreamEvent.error(
         error: e.toString(),
       );
@@ -390,10 +387,10 @@ class AgentSystem {
 
   /// Update the selected model for stateless agents
   void updateSelectedModel(String model, {String mode = 'chat'}) {
-    print('🤖 Updating selected model to: $model');
+    
     _plannerAgent = PlannerAgent(modelName: model, mode: mode);
     _writerAgent = WriterAgent(modelName: model, mode: mode);
-    print('🤖 Agents updated with model: $model');
+    
   }
 
   /// Convert tool results to images format
@@ -412,7 +409,7 @@ class AgentSystem {
       // Use pre-extracted images from executor agent (avoid re-processing)
       if (data['extractedImages'] != null && data['extractedImages'] is List) {
         final extractedImages = data['extractedImages'] as List<dynamic>;
-        print('🖼️ Agent System: Using pre-extracted images from executor: ${extractedImages.length} images');
+        
 
         for (final item in extractedImages) {
           if (item is Map<String, dynamic>) {
@@ -420,7 +417,7 @@ class AgentSystem {
 
             // Skip if we've already seen this URL
             if (seenUrls.contains(imageUrl)) {
-              print('🖼️ Agent System: Skipping duplicate image URL: $imageUrl');
+              
               continue;
             }
 
@@ -438,13 +435,13 @@ class AgentSystem {
               'timestamp': item['timestamp'] ?? DateTime.now().toIso8601String(),
               'toolSource': item['toolSource'] ?? result.tool
             });
-            print('🖼️ Agent System: Added unique image: ${item['title'] ?? 'Image'}');
+            
           }
         }
 
         // If we found pre-extracted images, use only those (they're already deduplicated)
         if (images.isNotEmpty) {
-          print('🖼️ Agent System: Final deduplicated images: ${images.length} unique images');
+          
           return images;
         }
       }
@@ -452,7 +449,7 @@ class AgentSystem {
     
     // Only fallback to direct processing if no pre-extracted images found
     if (images.isEmpty) {
-      print('🖼️ Agent System: No pre-extracted images found, falling back to direct processing');
+      
       
       for (final result in toolResults) {
         if (result.failed) continue;
@@ -460,7 +457,7 @@ class AgentSystem {
         final data = result.output as Map<String, dynamic>?;
         if (data == null) continue;
         
-        print('🖼️ Converting tool result to images: ${result.tool}');
+        
         
         // Handle different tool types that can produce images
         switch (result.tool) {
@@ -469,7 +466,7 @@ class AgentSystem {
             List<dynamic>? imageResults;
             if (data['images'] != null && data['images'] is List) {
               imageResults = data['images'] as List<dynamic>;
-              print('🖼️ Found ${imageResults.length} image results');
+              
               
               for (final item in imageResults) {
                 if (item is Map<String, dynamic>) {
@@ -480,7 +477,7 @@ class AgentSystem {
                   
                   // Skip if we've already seen this URL
                   if (seenUrls.contains(url)) {
-                    print('🖼️ Agent System: Skipping duplicate image URL: $url');
+                    
                     continue;
                   }
                   
@@ -498,7 +495,7 @@ class AgentSystem {
                     'timestamp': DateTime.now().toIso8601String(),
                     'toolSource': result.tool
                   });
-                  print('🖼️ Added unique image: $title');
+                  
                 }
               }
             } else if (data['results'] != null && data['results'] is List) {
@@ -513,7 +510,7 @@ class AgentSystem {
                   
                   // Skip if we've already seen this URL
                   if (seenUrls.contains(url)) {
-                    print('🖼️ Agent System: Skipping duplicate image URL: $url');
+                    
                     continue;
                   }
                   
@@ -531,7 +528,7 @@ class AgentSystem {
                     'timestamp': DateTime.now().toIso8601String(),
                     'toolSource': result.tool
                   });
-                  print('🖼️ Added unique image: $title');
+                  
                 }
               }
             }
@@ -551,7 +548,7 @@ class AgentSystem {
                   if (url.isNotEmpty && RegExp(r'\.(jpg|jpeg|png|gif|webp|svg)$', caseSensitive: false).hasMatch(url)) {
                     // Skip if we've already seen this URL
                     if (seenUrls.contains(url)) {
-                      print('🖼️ Agent System: Skipping duplicate image URL: $url');
+                      
                       continue;
                     }
                     
@@ -580,7 +577,7 @@ class AgentSystem {
       }
     }
     
-    print('🖼️ Agent System: Final deduplicated images: ${images.length} unique images');
+    
     return images;
   }
 
@@ -599,26 +596,26 @@ class AgentSystem {
       // Check if this result has pre-extracted sources from executor agent
       if (data['extractedSources'] != null && data['extractedSources'] is List) {
         final extractedSources = data['extractedSources'] as List<dynamic>;
-        print('🤖 Using ${extractedSources.length} pre-extracted sources from executor agent');
+        
 
         for (final item in extractedSources) {
           if (item is Map<String, dynamic>) {
             final source = ChatSource.fromJson(item);
             sources.add(source);
-            print('🤖 Added pre-extracted source: ${source.title}');
+            
           }
         }
 
         // If we found pre-extracted sources, use only those (they're already deduplicated)
         if (sources.isNotEmpty) {
-          print('🤖 Total pre-extracted sources: ${sources.length}');
+          
           return sources;
         }
       }
     }
 
     // Fallback: Process individual tool results (for backward compatibility)
-    print('🤖 No pre-extracted sources found, processing individual tool results');
+    
 
     for (final result in toolResults) {
       if (result.failed) continue;
@@ -626,8 +623,8 @@ class AgentSystem {
       final data = result.output as Map<String, dynamic>?;
       if (data == null) continue;
 
-      print('🤖 Converting tool result: ${result.tool}');
-      print('🤖 Tool output keys: ${data.keys.toList()}');
+      
+      
 
       // Handle different tool types
       switch (result.tool) {
@@ -637,7 +634,7 @@ class AgentSystem {
           List<dynamic>? results;
           if (data['results'] != null && data['results'] is List) {
             results = data['results'] as List<dynamic>;
-            print('🤖 Found ${results.length} search results from ${result.tool}');
+            
 
             for (final item in results) {
               if (item is Map<String, dynamic>) {
@@ -660,8 +657,8 @@ class AgentSystem {
               }
             }
           } else {
-            print('🤖 No results array found in ${result.tool} output');
-            print('🤖 Data structure: ${data.keys.toList()}');
+            
+            
             // Try to create a source from the search terms
             final searchTerms = data['searchTerms'] as String?;
             if (searchTerms != null) {
@@ -690,7 +687,7 @@ class AgentSystem {
               content: content, // ✅ Include the actual scraped content
               hasScrapedContent: content != null && content.isNotEmpty,
             ));
-            print('🤖 Added web_fetch source with content length: ${content?.length ?? 0}');
+            
           }
           break;
 
@@ -740,7 +737,7 @@ class AgentSystem {
       }
     }
 
-    print('🤖 Total sources converted: ${sources.length}');
+    
     return sources;
   }
 } 

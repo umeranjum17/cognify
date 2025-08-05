@@ -54,13 +54,10 @@ class _StreamingMessageContentState extends State<StreamingMessageContent> {
         ? _displayedContent
         : widget.message.textContent;
 
-    print('🎨 StreamingMessageContent: Rendering ${contentToRender.length} chars (isProcessing: ${widget.message.isProcessing})');
-
     // Always use Text widget during streaming for consistent performance
     // Only use MarkdownBody when streaming is completely finished
 
       // Full markdown rendering when streaming is complete
-      print('🎨 Using MARKDOWN rendering (complete)');
       return _buildMarkdownContent(contentToRender);
   }
 
@@ -273,8 +270,6 @@ class _StreamingMessageContentState extends State<StreamingMessageContent> {
   }
 
   void _handleContentUpdate(String content) {
-    print('🎯 StreamingMessageContent: Received stream update: ${content.length} chars');
-
     // Update target content immediately
     _targetContent = content;
     
@@ -286,27 +281,20 @@ class _StreamingMessageContentState extends State<StreamingMessageContent> {
 
   void _initializeController() {
     _controller = StreamingMessageRegistry().getController(widget.message.id);
-    print('🎯 StreamingMessageContent: Initialized controller for ${widget.message.id}, controller exists: ${_controller != null}');
 
     if (_controller != null) {
-      print('🎯 StreamingMessageContent: Controller has content: ${_controller!.content.length} chars');
-
       // Set initial content
       _displayedContent = _controller!.content;
 
       // Set up simple stream subscription
-      print('🔥 WIDGET: Setting up subscription for message ID: ${widget.message.id}');
-
       _streamSubscription = _controller!.contentStream.listen(
         (content) {
-          print('🔥 WIDGET: Received content update: ${content.length} chars');
           _handleContentUpdate(content);
         },
         onError: (error) {
           print('🎯 StreamingMessageContent: Stream error: $error');
         },
         onDone: () {
-          print('🎯 StreamingMessageContent: Stream completed');
           // Ensure final content is displayed
           if (_controller != null) {
             _displayedContent = _controller!.content;

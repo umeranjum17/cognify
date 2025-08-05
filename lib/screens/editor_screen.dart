@@ -263,7 +263,7 @@ class _EditorScreenState extends State<EditorScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final modeConfigProvider = Provider.of<ModeConfigProvider>(context, listen: false);
       modeConfigProvider.addListener(_onModeConfigChanged);
-      print('🤖 EditorScreen: Added listener to ModeConfigProvider');
+      
     });
   }
 
@@ -631,10 +631,10 @@ class _EditorScreenState extends State<EditorScreen> {
             stream: SessionCostService().costUpdates,
             builder: (context, snapshot) {
               final costData = snapshot.data;
-              print('🎯 StreamBuilder rebuild - hasData: ${snapshot.hasData}, data: ${costData?.toString()}');
+              
               final finalSessionCost = costData?.sessionCost ?? _sessionCost;
               final finalLastCost = costData?.lastMessageCost ?? _lastOperationCost;
-              print('🎯 Final costs for UI: sessionCost=$finalSessionCost, lastCost=$finalLastCost');
+              
               
               return Consumer<ModeConfigProvider>(
                 builder: (context, modeConfigProvider, child) {
@@ -1138,10 +1138,10 @@ class _EditorScreenState extends State<EditorScreen> {
     
     // Debug print for assistant messages to track content updates
     if (message.type == 'assistant') {
-      print('🎨 Building message widget for assistant message: ${message.id}');
-      print('🎨 Text content length: ${message.textContent.length}');
-      print('🎨 Text content preview: ${message.textContent.substring(0, math.min(50, message.textContent.length))}');
-      print('🎨 Raw content type: ${message.content.runtimeType}');
+      
+      
+      
+      
     }
 
     if (isSystem) {
@@ -1914,7 +1914,7 @@ class _EditorScreenState extends State<EditorScreen> {
         print('🔍 Using fallback capabilities: supportsImages=$supportsImages, supportsFiles=$supportsFiles');
       }
     } catch (e) {
-      print('Error checking model capabilities: $e');
+      
       setState(() {
         _currentModelCapabilities = const ModelCapabilities(
           inputModalities: ['text'],
@@ -1940,7 +1940,7 @@ class _EditorScreenState extends State<EditorScreen> {
       });
 
       if (!_servicesReady) {
-        print('⚠️ Agent system not ready: ${agentStatus['message']}');
+        
         // Continue retrying if not ready
         Future.delayed(const Duration(milliseconds: 1000), () {
           if (mounted && !_servicesReady) {
@@ -1948,10 +1948,10 @@ class _EditorScreenState extends State<EditorScreen> {
           }
         });
       } else {
-        print('✅ Agent system is ready for use');
+        
       }
     } else {
-      print('⚠️ ServicesManager not initialized yet');
+      
       // Retry after a short delay
       Future.delayed(const Duration(milliseconds: 500), () {
         if (mounted) {
@@ -2010,30 +2010,30 @@ class _EditorScreenState extends State<EditorScreen> {
 
   // Debug function to check current model state
   void _debugModelState() {
-    print('🤖 EditorScreen: Debug Model State:');
-    print('  _modeConfigs: ${_modeConfigs.length} configs');
-    print('  Chat mode config: ${_modeConfigs[ChatMode.chat]?.model}');
-    print('  DeepSearch mode config: ${_modeConfigs[ChatMode.deepsearch]?.model}');
-    print('  _getChatModeModel(): ${_getChatModeModel()}');
-    print('  _getDeepSearchModeModel(): ${_getDeepSearchModeModel()}');
-    print('  _getModelForCurrentMode(): ${_getModelForCurrentMode()}');
-    print('  _isDeepSearchMode: $_isDeepSearchMode');
+    
+    
+    
+    
+    
+    
+    
+    
     
     // Check provider state
     try {
       final provider = Provider.of<ModeConfigProvider>(context, listen: false);
-      print('  Provider configs: ${provider.configs.length} configs');
-      print('  Provider Chat: ${provider.configs[ChatMode.chat]?.model}');
-      print('  Provider DeepSearch: ${provider.configs[ChatMode.deepsearch]?.model}');
+      
+      
+      
     } catch (e) {
-      print('  Provider error: $e');
+      
     }
   }
 
   String _getChatModeModel() {
     final chatConfig = _modeConfigs[ChatMode.chat];
     final model = chatConfig?.model ?? ModeConfigManager.getDefaultConfigForMode(ChatMode.chat).model;
-    print('🤖 EditorScreen: Getting Chat model: $model (from config: ${chatConfig?.model})');
+    
     return model;
   }
 
@@ -2049,7 +2049,7 @@ class _EditorScreenState extends State<EditorScreen> {
   String _getDeepSearchModeModel() {
     final deepsearchConfig = _modeConfigs[ChatMode.deepsearch];
     final model = deepsearchConfig?.model ?? ModeConfigManager.getDefaultConfigForMode(ChatMode.deepsearch).model;
-    print('🤖 EditorScreen: Getting DeepSearch model: $model (from config: ${deepsearchConfig?.model})');
+    
     return model;
   }
 
@@ -2174,7 +2174,7 @@ class _EditorScreenState extends State<EditorScreen> {
         });
       }
     } catch (e) {
-      print('Failed to load available models: $e');
+      
       // Set fallback models if API fails
       setState(() {
         _availableModels = [
@@ -2291,7 +2291,7 @@ class _EditorScreenState extends State<EditorScreen> {
         await prefs.remove('editorInitialData');
       }
     } catch (e) {
-      print('Failed to load initial data: $e');
+      
     }
   }
 
@@ -2305,7 +2305,7 @@ class _EditorScreenState extends State<EditorScreen> {
         _selectedPersonality = savedPersonality;
       });
     } catch (e) {
-      print('Failed to load language settings: $e');
+      
     }
   }
 
@@ -2327,9 +2327,9 @@ class _EditorScreenState extends State<EditorScreen> {
         });
       }
       
-      print('🤖 EditorScreen: Loaded mode configs - Chat: ${_modeConfigs[ChatMode.chat]?.model}, DeepSearch: ${_modeConfigs[ChatMode.deepsearch]?.model}');
+      
     } catch (e) {
-      print('Failed to load mode configs: $e');
+      
       // Fallback to defaults
       setState(() {
         _modeConfigs = {
@@ -2370,7 +2370,7 @@ class _EditorScreenState extends State<EditorScreen> {
         print('🔧 Created default tools configuration to enable agent system');
       }
     } catch (e) {
-      print('Failed to load tools config: $e');
+      
       // Create default tools configuration as fallback
       const defaultConfig = ToolsConfig(
         braveSearch: true,
@@ -2410,7 +2410,7 @@ class _EditorScreenState extends State<EditorScreen> {
 
       await prefs.setString('explored_topics', jsonEncode(exploredTopics));
     } catch (e) {
-      print('Failed to mark topic as explored: $e');
+      
     }
   }
 
@@ -2438,16 +2438,16 @@ class _EditorScreenState extends State<EditorScreen> {
     if (mounted) {
       final provider = Provider.of<ModeConfigProvider>(context, listen: false);
       final newConfigs = provider.configs;
-      print('🤖 EditorScreen: Mode config changed - Chat: ${newConfigs[ChatMode.chat]?.model}, DeepSearch: ${newConfigs[ChatMode.deepsearch]?.model}');
+      
       setState(() {
         _modeConfigs = newConfigs;
       });
       _checkModelCapabilities(); // Check capabilities when mode changes
       
       // Debug: Print current state after update
-      print('🤖 EditorScreen: Current _modeConfigs after update:');
-      print('  Chat mode: ${_modeConfigs[ChatMode.chat]?.model}');
-      print('  DeepSearch mode: ${_modeConfigs[ChatMode.deepsearch]?.model}');
+      
+      
+      
     }
   }
 
@@ -2521,15 +2521,15 @@ class _EditorScreenState extends State<EditorScreen> {
   void _requestInsights(Message message) {
     // Debug logging for quick actions
     print('🔍 Quick Action - Insights:');
-    print('  _selectedSourceIds: $_selectedSourceIds');
-    print('  _selectedSources: ${_selectedSources.map((s) => '${s.id}:${s.title}').toList()}');
+    
+    
 
     // If this was a source-grounded conversation, maintain the source context
     if (_selectedSourceIds.isNotEmpty || _selectedSources.isNotEmpty) {
-      print('  Using source-grounded prompt');
+      
       _sendMessage('What are the main insights and takeaways from the sources you just analyzed?');
     } else {
-      print('  Using regular prompt');
+      
       _sendMessage('What are the main insights and takeaways from your previous response?');
     }
   }
@@ -2537,15 +2537,15 @@ class _EditorScreenState extends State<EditorScreen> {
   void _requestKeyPoints(Message message) {
     // Debug logging for quick actions
     print('🔍 Quick Action - Key Points:');
-    print('  _selectedSourceIds: $_selectedSourceIds');
-    print('  _selectedSources: ${_selectedSources.map((s) => '${s.id}:${s.title}').toList()}');
+    
+    
 
     // If this was a source-grounded conversation, maintain the source context
     if (_selectedSourceIds.isNotEmpty || _selectedSources.isNotEmpty) {
-      print('  Using source-grounded prompt');
+      
       _sendMessage('Extract and list the key points from the sources in bullet format.');
     } else {
-      print('  Using regular prompt');
+      
       _sendMessage('Extract and list the key points from your last answer in bullet format.');
     }
   }
@@ -2553,21 +2553,21 @@ class _EditorScreenState extends State<EditorScreen> {
   void _requestSummary(Message message, String type) {
     // Debug logging for quick actions
     print('🔍 Quick Action - Summary ($type):');
-    print('  _selectedSourceIds: $_selectedSourceIds');
-    print('  _selectedSources: ${_selectedSources.map((s) => '${s.id}:${s.title}').toList()}');
+    
+    
 
     // If this was a source-grounded conversation, maintain the source context
     if (_selectedSourceIds.isNotEmpty || _selectedSources.isNotEmpty) {
       final prompt = type == 'concise'
           ? 'Provide a concise summary of the key points from the sources.'
           : 'Provide a detailed summary with comprehensive analysis of the sources.';
-      print('  Using source-grounded prompt: $prompt');
+      
       _sendMessage(prompt);
     } else {
       final prompt = type == 'concise'
           ? 'Provide a concise summary of the key points from your previous response.'
           : 'Provide a detailed summary with comprehensive analysis of your previous response.';
-      print('  Using regular prompt: $prompt');
+      
       _sendMessage(prompt);
     }
   }
@@ -2709,11 +2709,11 @@ class _EditorScreenState extends State<EditorScreen> {
       timestamp: DateTime.now().toIso8601String(),
       isProcessing: true,
     );
-    print('🆔 Created streaming message with ID: ${streamingMessage.id}');
+    
 
     // Create streaming controller for real-time content updates
     final streamingController = StreamingMessageRegistry().createController(streamingMessage.id);
-    print('🎯 Created streaming controller for message: ${streamingMessage.id}');
+    
 
     try {
       // Prepare files for upload
@@ -2753,22 +2753,22 @@ class _EditorScreenState extends State<EditorScreen> {
 
       // Debug logging for source grounded requests
       print('🔍 Quick Action Debug:');
-      print('  Text: ${textToSend.substring(0, math.min(50, textToSend.length))}...');
-      print('  _selectedSourceIds: $_selectedSourceIds');
-      print('  _selectedSources: ${_selectedSources.map((s) => '${s.id}:${s.title}').toList()}');
-      print('  isSourceGrounded: $isSourceGrounded');
-      print('  sourceIdsToUse: $sourceIdsToUse');
-      print('  Will use: ${isSourceGrounded ? 'sourceGroundedChatStream' : 'chatCompletionStream'}');
+      
+      
+      
+      
+      
+      
       
       // Debug logging for model selection
       final chatModel = _getChatModeModel();
       final deepsearchModel = _getDeepSearchModeModel();
-      print('🤖 Model Selection Debug:');
-      print('  modelToUse: $modelToUse');
-      print('  currentMode: $currentMode');
-      print('  chatModel: $chatModel');
-      print('  deepsearchModel: $deepsearchModel');
-      print('  _isDeepSearchMode: $_isDeepSearchMode');
+      
+      
+      
+      
+      
+      
       
       // Debug current model state
       _debugModelState();
@@ -2807,9 +2807,9 @@ class _EditorScreenState extends State<EditorScreen> {
             );
 
             await for (final event in stream) {
-              print('🤖 Event: $event');
+              
         // Handle both Map<String, dynamic> (legacy) and ChatStreamEvent (unified) formats
-         print('🤖 Event type: ${event.type}');
+         
         // Handle unified ChatStreamEvent
         switch (event.type) {
           case StreamEventType.milestone:
@@ -2821,7 +2821,7 @@ class _EditorScreenState extends State<EditorScreen> {
             });
             // Only log milestone changes, not every event
             if (_currentPhase != event.metadata?['phase']) {
-              print('🎯 Milestone: ${event.metadata?['phase']} - ${event.message}');
+              
             }
             break;
             
@@ -2851,16 +2851,10 @@ class _EditorScreenState extends State<EditorScreen> {
           case StreamEventType.content:
             // Append streaming content
             final newContent = event.content ?? '';
-            print('📝 Received content chunk: ${newContent.length} chars');
-            print('📝 New content: "$newContent"');
 
             // Update streaming controller for real-time UI updates FIRST (no setState needed!)
-            print('🔥 EDITOR: About to add content to controller: "$newContent"');
-            print('🔥 EDITOR: Controller ID: ${streamingController.messageId}');
-            print('🔥 EDITOR: Current accumulated content length: ${streamingController.content.length}');
             streamingController.addContent(newContent);
-            print('🔥 EDITOR: After adding content, total length: ${streamingController.content.length}');
-            print('🎯 Updated streaming controller with new content: ${newContent.length} chars');
+            
 
             // Hide loader as soon as first content chunk arrives
             if (_showLoader) {
@@ -2876,7 +2870,7 @@ class _EditorScreenState extends State<EditorScreen> {
                 unawaited(onSSETextReceived(newContent));
               } catch (e) {
                 // Silently handle vibration errors to prevent crashes
-                debugPrint('Vibration error: $e');
+                
               }
             }
 
@@ -2885,7 +2879,7 @@ class _EditorScreenState extends State<EditorScreen> {
               try {
                 unawaited(onSSESentenceComplete());
               } catch (e) {
-                debugPrint('Sentence vibration error: $e');
+                
               }
             }
 
@@ -2894,7 +2888,7 @@ class _EditorScreenState extends State<EditorScreen> {
               try {
                 unawaited(onSSEParagraphComplete());
               } catch (e) {
-                debugPrint('Paragraph vibration error: $e');
+                
               }
             }
             break;
@@ -2904,7 +2898,7 @@ class _EditorScreenState extends State<EditorScreen> {
             try {
               stopVibration();
             } catch (e) {
-              debugPrint('Stop vibration error: $e');
+              
             }
             // Finalize the message
             finalConversationId = event.conversationId;
@@ -2999,12 +2993,12 @@ class _EditorScreenState extends State<EditorScreen> {
             try {
               stopVibration();
             } catch (e) {
-              debugPrint('Stop vibration on error: $e');
+              
             }
             throw Exception(event.error ?? 'Unknown streaming error');
           default:
             // Handle any other event types
-            print('🤖 Unhandled stream event type: ${event.type}');
+            
             break;
         }
             }
@@ -3022,12 +3016,12 @@ class _EditorScreenState extends State<EditorScreen> {
       try {
         stopVibration();
       } catch (vibrationError) {
-        debugPrint('Stop vibration in catch block error: $vibrationError');
+        
       }
 
       // Clean up streaming controller on error
       StreamingMessageRegistry().removeController(streamingMessage.id);
-      print('🎯 Cleaned up streaming controller on error');
+      
 
       // Remove streaming message on error (no typing effect)
       setState(() {
@@ -3709,7 +3703,7 @@ class _EditorScreenState extends State<EditorScreen> {
           
           // Also update the LLM service's current model to ensure API calls use the selected model
           LLMService().setCurrentModel(model);
-          print('🤖 EditorScreen: Updated model to $model and set as current model');
+          
         },
         onPersonalityChanged: (personality) {
           setState(() {
@@ -3939,15 +3933,15 @@ class _EditorScreenState extends State<EditorScreen> {
 
 // Helper: subscribe to session cost updates (restored if missing)
   void _subscribeToSessionCostUpdates() {
-    print('🎯 Subscribing to session cost updates...');
+    
     _costSubscription = SessionCostService().costUpdates.listen((costData) {
-      print('🎯 Cost update received: sessionCost=${costData.sessionCost}, lastMessageCost=${costData.lastMessageCost}, messageCount=${costData.messageCount}');
+      
       if (mounted) {
         setState(() {
           _sessionCost = costData.sessionCost;
           _lastOperationCost = costData.lastMessageCost;
         });
-        print('🎯 State updated: _sessionCost=$_sessionCost, _lastOperationCost=$_lastOperationCost');
+        
       }
     });
   }
@@ -4004,7 +3998,7 @@ class _EditorScreenState extends State<EditorScreen> {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt('knowledge_graph_last_update', DateTime.now().millisecondsSinceEpoch);
     } catch (e) {
-      print('Failed to update knowledge graph: $e');
+      
     }
   }
 }
