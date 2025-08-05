@@ -1,5 +1,4 @@
-import 'dart:math' as math;
-
+import '../../config/model_registry.dart';
 import '../../database/database_service.dart';
 import '../../models/chat_source.dart';
 import '../../models/chat_stream_event.dart';
@@ -78,12 +77,29 @@ class AgentSystem {
       );
       
       // Create execution plan
-      final planResult = await _plannerAgent.createExecutionPlan(
-        query: query,
-        enabledTools: enabledTools,
-        mode: mode,
-        attachments: attachments,
-      );
+      Map<String, dynamic> planResult;
+      try {
+        planResult = await _plannerAgent.createExecutionPlan(
+          query: query,
+          enabledTools: enabledTools,
+          mode: mode,
+          attachments: attachments,
+        );
+      } catch (e) {
+        final meta = _classifyError(e, stage: 'planning', model: _defaultModel);
+        yield ChatStreamEvent.status(
+          message: 'planning_error',
+          model: _defaultModel,
+          llmUsed: 'planner-agent',
+          metadata: meta,
+        );
+        yield ChatStreamEvent.error(
+          error: 'Planning failed: ${meta['hint']}',
+          model: _defaultModel,
+          llmUsed: 'planner-agent',
+        );
+        return;
+      }
 
       // Extract tool specs and generation info from plan result
       final toolSpecs = planResult['toolSpecs'] as List<ToolSpec>;
@@ -215,8 +231,19 @@ class AgentSystem {
             break;
 
           case StreamEventType.error:
-            // Forward error events
-            yield event;
+            // Classify and emit structured error
+            final meta = _classifyError(event.error, stage: 'writing', model: _defaultModel);
+            yield ChatStreamEvent.status(
+              message: 'writing_error',
+              model: _defaultModel,
+              llmUsed: 'writer-agent',
+              metadata: meta,
+            );
+            yield ChatStreamEvent.error(
+              error: meta['hint'] ?? 'An error occurred while generating the response.',
+              model: _defaultModel,
+              llmUsed: 'writer-agent',
+            );
             return; // Stop processing on error
             
           default:
@@ -257,9 +284,18 @@ class AgentSystem {
       );
 
     } catch (error) {
-      print('❌ Agent System initialization failed: \$e');
+      print('❌ Agent System processing failed: $error');
+      final meta = _classifyError(error, stage: 'unknown', model: _defaultModel);
+      yield ChatStreamEvent.status(
+        message: 'system_error',
+        model: _defaultModel,
+        llmUsed: 'agent-system',
+        metadata: meta,
+      );
       yield ChatStreamEvent.error(
-        error: 'An error occurred while processing your request: $error',
+        error: meta['hint'] ?? 'An error occurred while processing your request.',
+        model: _defaultModel,
+        llmUsed: 'agent-system',
       );
     }
   }
@@ -378,9 +414,18 @@ class AgentSystem {
       }
 
     } catch (e) {
-      print('❌ Agent System initialization failed: \$e');
+      print('❌ Agent System source-grounded processing failed: $e');
+      final meta = _classifyError(e, stage: 'source_grounded', model: _defaultModel);
+      yield ChatStreamEvent.status(
+        message: 'source_grounded_error',
+        model: _defaultModel,
+        llmUsed: 'agent-system',
+        metadata: meta,
+      );
       yield ChatStreamEvent.error(
-        error: e.toString(),
+        error: meta['hint'] ?? 'An error occurred while processing your request.',
+        model: _defaultModel,
+        llmUsed: 'agent-system',
       );
     }
   }
@@ -739,5 +784,75 @@ class AgentSystem {
 
     
     return sources;
+  }
+
+  /// Classify errors into standardized codes with actionable hints
+  Map<String, dynamic> _classifyError(dynamic error, {String? stage, String? model}) {
+    final s = (error?.toString() ?? '').toLowerCase();
+
+    String code = 'unknown';
+    String action = 'suggest_retry';
+    bool nonFatal = true;
+    String hint = 'Unexpected error. Try again or switch models if it persists.';
+
+    if (s.contains('429') || s.contains('rate limit') || s.contains('too many requests') || s.contains('quota')) {
+      code = 'rate_limit'; 
+      action = 'show_model_switch_modal'; 
+      nonFatal = true;
+      hint = 'You\'ve hit provider rate limits. Switching models often resolves this.';
+    } else if (s.contains('401') || s.contains('unauthorized') || s.contains('invalid api key')) {
+      code = 'auth_invalid'; 
+      action = 'check_api_key_modal'; 
+      nonFatal = false;
+      hint = 'API key appears invalid. Re-authenticate to continue.';
+    } else if (s.contains('network') || s.contains('socketexception') || s.contains('failed host')) {
+      code = 'network'; 
+      action = 'suggest_retry'; 
+      nonFatal = true;
+      hint = 'Temporary connectivity issue. Retry may resolve.';
+    } else if (s.contains('overloaded') || s.contains('capacity') || s.contains('503')) {
+      code = 'capacity'; 
+      action = 'suggest_retry'; 
+      nonFatal = true;
+      hint = 'Provider capacity issues. Retry or switch models.';
+    } else if (s.contains('timeout')) {
+      code = 'timeout'; 
+      action = 'suggest_retry'; 
+      nonFatal = true;
+      hint = 'Request timed out. Retry may resolve.';
+    } else if (s.contains('413') || s.contains('context length') || s.contains('too many tokens') || s.contains('max tokens')) {
+      code = 'input_too_large'; 
+      action = 'reduce_input'; 
+      nonFatal = true;
+      hint = 'Input exceeds model context. Reduce attachments or prompt size.';
+    } else if (s.contains('5') && s.contains('error')) {
+      code = 'provider_error'; 
+      action = 'suggest_retry'; 
+      nonFatal = true;
+      hint = 'Upstream error. Retry or switch models.';
+    }
+
+    List<String> suggestionModels = [];
+    if (code == 'rate_limit' || code == 'capacity') {
+      try {
+        final all = ModelRegistry.getAllModels();
+        if (model != null) {
+          suggestionModels = all.where((m) => m != model).take(3).toList();
+        } else {
+          suggestionModels = all.take(3).toList();
+        }
+      } catch (_) {}
+    }
+
+    return {
+      'code': code,
+      'action': action,
+      'nonFatal': nonFatal,
+      'hint': hint,
+      'details': error?.toString() ?? '',
+      'stage': stage,
+      'currentModel': model,
+      if (suggestionModels.isNotEmpty) 'suggestionModels': suggestionModels,
+    };
   }
 } 
