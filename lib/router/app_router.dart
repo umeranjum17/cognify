@@ -17,6 +17,7 @@ import '../screens/trending_topics_screen.dart';
 import '../screens/oauth_onboarding_screen.dart';
 import '../screens/oauth_callback_screen.dart';
 import '../screens/subscription/paywall_screen.dart';
+import '../widgets/auth_guard.dart';
 
 class AppRouter {
   AppRouter._();
@@ -34,7 +35,7 @@ class AppRouter {
           final u = Uri.tryParse(loc);
           debugPrint('🧯 [RouterRedirect] Intercepted location="$loc" parsed="$u"');
           if (u != null && u.scheme == 'cognify') {
-            debugPrint('🧯 [RouterRedirect] Rerouting custom-scheme to /editor');
+            debugPrint('🧯 [RouterRedirect] Rerouting custom-scheme to /editor (will check auth)');
             return '/editor';
           }
           if (u != null && (u.scheme == 'http' || u.scheme == 'https')) {
@@ -165,16 +166,19 @@ class AppRouter {
           },
         ),
 
-        // Home/Dashboard route
+        // Home/Dashboard route - Protected Route
         GoRoute(
           path: '/home',
           pageBuilder: (context, state) => MaterialPage(
             key: state.pageKey,
-            child: const HomeScreen(),
+            child: const AuthGuard(
+              redirectTo: '/',
+              child: HomeScreen(),
+            ),
           ),
         ),
 
-        // Editor (supports prompt and conversationId query params)
+        // Editor (supports prompt and conversationId query params) - Protected Route
         GoRoute(
           path: '/editor',
           pageBuilder: (context, state) {
@@ -182,50 +186,65 @@ class AppRouter {
             final conversationId = state.uri.queryParameters['conversationId'];
             return MaterialPage(
               key: state.pageKey,
-              child: EditorScreen(
-                prompt: prompt,
-                conversationId: conversationId,
+              child: AuthGuard(
+                redirectTo: '/',
+                child: EditorScreen(
+                  prompt: prompt,
+                  conversationId: conversationId,
+                ),
               ),
             );
           },
         ),
 
-        // Sources (supports sharedUrl parameter)
+        // Sources (supports sharedUrl parameter) - Protected Route
         GoRoute(
           path: '/sources',
           pageBuilder: (context, state) {
             final sharedUrl = state.uri.queryParameters['sharedUrl'];
             return MaterialPage(
               key: state.pageKey,
-              child: SourcesScreen(initialUrl: sharedUrl),
+              child: AuthGuard(
+                redirectTo: '/',
+                child: SourcesScreen(initialUrl: sharedUrl),
+              ),
             );
           },
         ),
 
-        // Conversation history
+        // Conversation history - Protected Route
         GoRoute(
           path: '/history',
           pageBuilder: (context, state) => MaterialPage(
             key: state.pageKey,
-            child: const ConversationHistoryScreen(),
+            child: const AuthGuard(
+              redirectTo: '/',
+              child: ConversationHistoryScreen(),
+            ),
           ),
         ),
 
-        // Streaming test
+        // Streaming test - Protected Route
         GoRoute(
           path: '/streaming-test',
           pageBuilder: (context, state) => MaterialPage(
             key: state.pageKey,
-            child: const StreamingTestScreen(),
+            child: const AuthGuard(
+              redirectTo: '/',
+              child: StreamingTestScreen(),
+            ),
           ),
         ),
 
-        // Trending topics (premium feature; guard where used with PremiumGuard widget)
+        // Trending topics (premium feature; guard where used with PremiumGuard widget) - Protected Route
         GoRoute(
           path: '/trending-topics',
           pageBuilder: (context, state) => MaterialPage(
             key: state.pageKey,
-            child: const TrendingTopicsScreen(),
+            child: const AuthGuard(
+              redirectTo: '/',
+              child: TrendingTopicsScreen(),
+            ),
           ),
         ),
 
@@ -264,7 +283,7 @@ class AppRouter {
         debugPrint(
             '🔍 [DL] Parsed incoming => scheme=${u.scheme}, host=${u.host}, path=${u.path}, query=${u.query}');
         if (u.scheme == 'cognify') {
-          debugPrint('🛡️ [DL] Custom scheme detected. Rerouting to /editor');
+          debugPrint('🛡️ [DL] Custom scheme detected. Rerouting to /editor (will check auth)');
           return '/editor';
         } else {
           final normalized =
