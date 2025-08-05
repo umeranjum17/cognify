@@ -21,7 +21,7 @@ class AppConfig {
 
   static const String defaultLogLevel = 'info';
   static const bool defaultAutoExecuteAiTools = true;
-  static const bool defaultVerboseLogging = false;
+  static const bool defaultVerboseLogging = false; // Always disabled for performance
   // API endpoints
   static const String openRouterBaseUrl = 'https://openrouter.ai/api/v1';
   static const String openAiBaseUrl = 'https://api.openai.ai/v1';

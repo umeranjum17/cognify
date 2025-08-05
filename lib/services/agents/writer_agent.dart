@@ -4,6 +4,7 @@ import '../../models/chat_stream_event.dart';
 import '../../models/message.dart';
 import '../../models/tool_result.dart';
 import '../../utils/json_utils.dart';
+import '../../utils/logger.dart';
 import '../openrouter_client.dart';
 
 /// Writer Agent - Creates final responses from tool results
@@ -949,7 +950,7 @@ $context
         
         if (content.isEmpty) continue;
         
-        print('🔍 DEBUG: Processing page $j: "$title" ($url) - ${content.length} chars');
+        Logger.debugOnly('Processing page $j: "$title" ($url) - ${content.length} chars');
         
         sourcesSection += '''
 ${i + 1}.${j + 1}. **$title**
@@ -1029,7 +1030,7 @@ ${i + 1}.${j + 1}. **$title**
       // Use pre-extracted images from executor agent
       if (output['extractedImages'] != null && output['extractedImages'] is List) {
         final extractedImages = output['extractedImages'] as List<dynamic>;
-        print('🖼️ Writer Agent: Using ${extractedImages.length} pre-extracted images from executor');
+        Logger.debugOnly('Writer Agent: Using ${extractedImages.length} pre-extracted images from executor');
 
         for (final item in extractedImages) {
           if (item is Map<String, dynamic>) {
@@ -1040,7 +1041,7 @@ ${i + 1}.${j + 1}. **$title**
       }
     }
 
-    print('🖼️ Writer Agent: Total images available: ${images.length}');
+            Logger.debugOnly('Writer Agent: Total images available: ${images.length}');
     return images;
   }
 
@@ -1121,58 +1122,63 @@ ${i + 1}.${j + 1}. **$title**
     // Sort by length descending
     breakdown.sort((a, b) => (b['length'] as int).compareTo(a['length'] as int));
 
-    // Print fancy table
-    print('\n${'=' * 80}');
-    
-    print('=' * 80);
-    print('${'Section'.padRight(25)} ${'Chars'.padRight(8)} ${'Tokens'.padRight(8)} ${'%'.padRight(6)} ${'Bar'}');
-    print('-' * 80);
-
-    for (final section in breakdown) {
-      final name = section['name'] as String;
-      final length = section['length'] as int;
-      final tokens = section['tokens'] as int;
-      final percentage = section['percentage'] as double;
+          // Log debug information only in verbose mode
+      Logger.debugOnly('Prompt breakdown analysis completed');
+      Logger.debugOnly('Total prompt length: $totalLength chars (${(totalLength / 4).round()} estimated tokens)');
       
-      // Create visual bar (max 30 characters)
-      final barLength = (percentage / 100 * 30).round();
-      final bar = '█' * barLength + '░' * (30 - barLength);
-      
-      print('${name.padRight(25)} ${length.toString().padRight(8)} ${tokens.toString().padRight(8)} ${(percentage).toStringAsFixed(1).padRight(6)} $bar');
-    }
+      if (Logger.shouldShowDebug) {
+        // Only show detailed breakdown in verbose debug mode
+        print('\n${'=' * 80}');
+        print('=' * 80);
+        print('${'Section'.padRight(25)} ${'Chars'.padRight(8)} ${'Tokens'.padRight(8)} ${'%'.padRight(6)} ${'Bar'}');
+        print('-' * 80);
 
-    print('-' * 80);
-    print('${'TOTAL'.padRight(25)} ${totalLength.toString().padRight(8)} ${(totalLength / 4).round().toString().padRight(8)} ${'100.0'.padRight(6)} ${'█' * 30}');
-    print('=' * 80);
+        for (final section in breakdown) {
+          final name = section['name'] as String;
+          final length = section['length'] as int;
+          final tokens = section['tokens'] as int;
+          final percentage = section['percentage'] as double;
+          
+          // Create visual bar (max 30 characters)
+          final barLength = (percentage / 100 * 30).round();
+          final bar = '█' * barLength + '░' * (30 - barLength);
+          
+          print('${name.padRight(25)} ${length.toString().padRight(8)} ${tokens.toString().padRight(8)} ${(percentage).toStringAsFixed(1).padRight(6)} $bar');
+        }
 
-    // Highlight top consumers
-    final topConsumers = breakdown.take(3).toList();
-    print('\n🔥 TOP PROMPT CONSUMERS:');
-    for (int i = 0; i < topConsumers.length; i++) {
-      final consumer = topConsumers[i];
-      final emoji = i == 0 ? '🥇' : i == 1 ? '🥈' : '🥉';
-      print('$emoji ${consumer['name']}: ${consumer['length']} chars (${(consumer['percentage'] as double).toStringAsFixed(1)}%)');
-    }
+        print('-' * 80);
+        print('${'TOTAL'.padRight(25)} ${totalLength.toString().padRight(8)} ${(totalLength / 4).round().toString().padRight(8)} ${'100.0'.padRight(6)} ${'█' * 30}');
+        print('=' * 80);
 
-    // Token estimation
-    final estimatedTokens = (totalLength / 4).round();
-    print('\n💡 TOKEN ESTIMATION:');
-    print('   📝 Estimated tokens: $estimatedTokens');
-    print('   📊 Actual tokens (if available): Will be logged after API call');
-    
-    // Recommendations
-    print('\n💭 OPTIMIZATION RECOMMENDATIONS:');
-    if (estimatedTokens > 8000) {
-      print('   ⚠️  High token usage detected! Consider:');
-      print('      • Reducing conversation history length');
-      print('      • Limiting number of sources processed');
-      print('      • Shortening tool summaries');
-    } else if (estimatedTokens > 4000) {
-      print('   ⚡ Moderate token usage. Monitor for optimization opportunities.');
-    } else {
-      print('   ✅ Token usage is within reasonable limits.');
-    }
-    print('=' * 80 + '\n');
+        // Highlight top consumers
+        final topConsumers = breakdown.take(3).toList();
+        print('\n🔥 TOP PROMPT CONSUMERS:');
+        for (int i = 0; i < topConsumers.length; i++) {
+          final consumer = topConsumers[i];
+          final emoji = i == 0 ? '🥇' : i == 1 ? '🥈' : '🥉';
+          print('$emoji ${consumer['name']}: ${consumer['length']} chars (${(consumer['percentage'] as double).toStringAsFixed(1)}%)');
+        }
+
+        // Token estimation
+        final estimatedTokens = (totalLength / 4).round();
+        print('\n💡 TOKEN ESTIMATION:');
+        print('   📝 Estimated tokens: $estimatedTokens');
+        print('   📊 Actual tokens (if available): Will be logged after API call');
+        
+        // Recommendations
+        print('\n💭 OPTIMIZATION RECOMMENDATIONS:');
+        if (estimatedTokens > 8000) {
+          print('   ⚠️  High token usage detected! Consider:');
+          print('      • Reducing conversation history length');
+          print('      • Limiting number of sources processed');
+          print('      • Shortening tool summaries');
+        } else if (estimatedTokens > 4000) {
+          print('   ⚡ Moderate token usage. Monitor for optimization opportunities.');
+        } else {
+          print('   ✅ Token usage is within reasonable limits.');
+        }
+        print('=' * 80 + '\n');
+      }
   }
 
   /// Randomize content length between 7000-20000 characters and normalize text

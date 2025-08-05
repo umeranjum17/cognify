@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import '../utils/logger.dart';
 import 'cost_service.dart';
 
 /// Data class for session cost updates
@@ -73,20 +74,20 @@ class SessionCostService {
   /// Add generation IDs from a chat response and update session cost
   Future<void> addGenerationIds(List<Map<String, dynamic>>? generationIds, {String? sessionId}) async {
     if (generationIds == null || generationIds.isEmpty) {
-      print('⚠️ No generation IDs to add');
+      Logger.debug('No generation IDs to add');
       return;
     }
 
     // Set or verify session ID
     if (sessionId != null) {
       if (_currentSessionId != null && _currentSessionId != sessionId) {
-        print('🔄 New session detected, resetting cost tracking');
+        Logger.info('New session detected, resetting cost tracking');
         resetSession();
       }
       _currentSessionId = sessionId;
     }
 
-    print('💰 Adding ${generationIds.length} generation IDs to session');
+    Logger.debug('Adding ${generationIds.length} generation IDs to session');
     
     // Filter out already processed generation IDs to prevent duplicates
     final newGenerationIds = generationIds.where((gen) {
@@ -94,7 +95,7 @@ class SessionCostService {
       if (genId == null) return false;
       
       if (_processedGenerationIds.containsKey(genId)) {
-        print('⚠️ Skipping duplicate generation ID: $genId');
+        Logger.debug('Skipping duplicate generation ID: $genId');
         return false;
       }
       
@@ -103,11 +104,11 @@ class SessionCostService {
     }).toList();
 
     if (newGenerationIds.isEmpty) {
-      print('⚠️ All generation IDs were already processed');
+      Logger.debug('All generation IDs were already processed');
       return;
     }
 
-    print('✅ Processing ${newGenerationIds.length} new generation IDs');
+    Logger.debug('Processing ${newGenerationIds.length} new generation IDs');
     
     // Add to session tracking
     _sessionGenerations.addAll(newGenerationIds);
@@ -120,7 +121,7 @@ class SessionCostService {
       final messageCost = (costResult['totalCost'] ?? 0.0).toDouble();
       _sessionCost += messageCost;
       
-      print('✅ Session cost updated: +\$${messageCost.toStringAsFixed(6)} = \$${_sessionCost.toStringAsFixed(6)}');
+      Logger.debug('Session cost updated: +\$${messageCost.toStringAsFixed(6)} = \$${_sessionCost.toStringAsFixed(6)}');
       
       // Emit cost update
       _costController.add(SessionCostData(
@@ -132,7 +133,7 @@ class SessionCostService {
         hasAccurateCosts: true,
       ));
     } else {
-      print('⚠️ Could not calculate accurate costs: ${costResult['error']}');
+      Logger.warn('Could not calculate accurate costs: ${costResult['error']}');
       
       // Track failed generations for retry
       final failedCount = (costResult['failedFetches'] ?? 0) as int;

@@ -1,7 +1,13 @@
 # Debug Logging Guide
 
 ## Overview
-The app has been configured to reduce excessive logging by default. Only warnings and errors are shown in normal operation.
+The app has been optimized to reduce excessive logging by default. Only warnings and errors are shown in normal operation to improve performance.
+
+## Performance Improvements
+- **Default behavior**: Only errors and warnings are logged
+- **Verbose mode**: Must be explicitly enabled for detailed debugging
+- **Reduced log noise**: Eliminated most debug print statements
+- **Better performance**: Less logging overhead during normal operation
 
 ## Enabling Verbose Logging
 
@@ -21,6 +27,11 @@ To disable:
 Logger.disableVerboseDebugging()
 ```
 
+To toggle:
+```dart
+Logger.toggleVerboseDebugging()
+```
+
 ### Method 3: Programmatic Control
 ```dart
 // Enable verbose mode
@@ -37,6 +48,8 @@ When enabled, verbose logging will show:
 - Detailed source processing information
 - Web fetch operations and content extraction
 - Image processing and deduplication
+- Prompt breakdown analysis
+- Cost calculation details
 
 ## Default Behavior
 By default, the app shows:
@@ -52,4 +65,11 @@ Verbose logging can impact performance and create log noise. Only enable when de
 - `warn`: Shown by default
 - `info`: Shown by default
 - `debug`: Only shown in verbose mode
-- `trace`: Only shown in verbose mode 
+- `trace`: Only shown in verbose mode
+- `debugOnly`: Only shown in debug builds with verbose mode
+
+## Recent Changes
+- Reduced default logging verbosity for better performance
+- Replaced direct `print()` statements with proper Logger calls
+- Added `debugOnly()` method for debug-specific output
+- Improved log filtering and control mechanisms 

@@ -35,6 +35,7 @@ import '../config/feature_flags.dart';
 import '../config/model_registry.dart';
 import '../providers/subscription_provider.dart';
 import '../theme/app_theme.dart';
+import '../utils/logger.dart';
 import '../widgets/cost_display_widget.dart';
 import '../widgets/enhanced_loading_indicator.dart';
 import '../widgets/model_switch_recommendation_modal.dart';
@@ -2754,7 +2755,7 @@ class _EditorScreenState extends State<EditorScreen> {
           : _selectedSources.map((s) => s.id).toList();
 
       // Debug logging for source grounded requests
-      print('🔍 Quick Action Debug:');
+              Logger.debugOnly('Quick Action Debug:');
       
       
       

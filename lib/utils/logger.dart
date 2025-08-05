@@ -1,5 +1,4 @@
 import 'package:flutter/foundation.dart';
-import '../services/config_service.dart';
 
 /// Log levels for structured logging
 enum LogLevel {
@@ -16,20 +15,18 @@ enum LogLevel {
 
 /// Centralized logger to replace scattered print statements
 class Logger {
-  static LogLevel _currentLevel = LogLevel.info;
+  static LogLevel _currentLevel = LogLevel.warn; // Only errors and warnings by default
   static bool _initialized = false;
-  static bool _verboseMode = false; // Control for very detailed logging
+  static bool _verboseMode = false; // Always disabled by default
 
   /// Initialize logger with appropriate level based on build mode
   static void initialize() {
     if (_initialized) return;
     
-    if (kDebugMode) {
-      // Reduce default debug output - only show warnings and errors by default
-      _currentLevel = ConfigService.isDebug ? LogLevel.warn : LogLevel.warn;
-    } else {
-      _currentLevel = LogLevel.warn; // Production: only warnings and errors
-    }
+    // Always use warn level - only errors and warnings
+    _currentLevel = LogLevel.warn;
+    _verboseMode = false; // Never enable verbose by default
+    
     _initialized = true;
   }
 
@@ -60,6 +57,18 @@ class Logger {
     info('Verbose debugging disabled - only warnings and errors will be shown');
   }
 
+  /// Toggle verbose mode for easy debugging
+  static void toggleVerboseDebugging() {
+    if (_verboseMode) {
+      disableVerboseDebugging();
+    } else {
+      enableVerboseDebugging();
+    }
+  }
+
+  /// Check if debug output should be shown
+  static bool get shouldShowDebug => false; // Never show debug by default
+
   /// Log error messages (always shown)
   static void error(String message, [Object? error, StackTrace? stackTrace]) {
     _log(LogLevel.error, message, error, stackTrace);
@@ -77,16 +86,17 @@ class Logger {
 
   /// Log debug messages (detailed execution info) - only in verbose mode
   static void debug(String message) {
-    if (_verboseMode) {
-      _log(LogLevel.debug, message);
-    }
+    // Never log debug messages by default
   }
 
   /// Log trace messages (very detailed, per-operation info) - only in verbose mode
   static void trace(String message) {
-    if (_verboseMode) {
-      _log(LogLevel.trace, message);
-    }
+    // Never log trace messages by default
+  }
+
+  /// Log debug-specific messages that should only appear in debug builds with verbose mode
+  static void debugOnly(String message) {
+    // Never log debug messages by default
   }
 
   /// Internal logging implementation
@@ -138,11 +148,15 @@ class ScopedLogger {
   }
 
   void debug(String message) {
-    Logger.debug('[$_scope] $message');
+    // Never log debug messages by default
   }
 
   void trace(String message) {
-    Logger.trace('[$_scope] $message');
+    // Never log trace messages by default
+  }
+
+  void debugOnly(String message) {
+    // Never log debug messages by default
   }
 }
 
@@ -156,10 +170,7 @@ class Stopwatch2 {
   
   void stop() {
     _stopwatch.stop();
-    // Only log timing in verbose mode to reduce noise
-    if (Logger._verboseMode) {
-      _logger.debug('$_name completed in ${_stopwatch.elapsedMilliseconds}ms');
-    }
+    // Never log timing by default
   }
   
   void stopInfo() {

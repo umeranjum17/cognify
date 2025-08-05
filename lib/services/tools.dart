@@ -85,13 +85,13 @@ class BraveSearchTool extends Tool {
       final query = input['query'] as String;
       final count = input['count'] as int? ?? 5;
       
-      print('🔍 Brave search tool: Searching for "$query" with count $count');
+      Logger.debug('Brave search tool: Searching for "$query" with count $count');
       final results = await _braveSearchService.search(
         query,
         count: count,
         apiKey: (input['apiKey'] as String?) ?? (input['braveApiKey'] as String?),
       );
-      print('🔍 Brave search tool: Got ${results.length} results');
+      Logger.debug('Brave search tool: Got ${results.length} results');
       
       final response = {
         'searchTerms': query,
@@ -100,8 +100,8 @@ class BraveSearchTool extends Tool {
         'timestamp': DateTime.now().toIso8601String()
       };
       
-      print('🔍 Brave search tool: Returning ${results.length} results');
-      print('🔍 Brave search tool: Response structure: ${response.keys.toList()}');
+      Logger.debug('Brave search tool: Returning ${results.length} results');
+      Logger.debug('Brave search tool: Response structure: ${response.keys.toList()}');
       
       return response;
     } catch (e) {

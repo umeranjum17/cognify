@@ -36,19 +36,9 @@ void main() async {
   // Initialize logger with appropriate verbosity
   Logger.initialize();
   
-  // Check if verbose logging should be enabled
-  try {
-    final appConfig = AppConfig();
-    await appConfig.initialize();
-    final verboseLogging = await appConfig.verboseLogging;
-    Logger.setVerboseMode(verboseLogging);
-    if (verboseLogging) {
-      Logger.info('Verbose logging enabled');
-    }
-  } catch (e) {
-    // Fallback to default logging if config fails
-    Logger.warn('Failed to initialize logging config: $e');
-  }
+  // Always disable verbose logging for better performance
+  Logger.setVerboseMode(false);
+  Logger.info('Verbose logging disabled for better performance');
 
   // Initialize services
   await ServicesManager().initialize();

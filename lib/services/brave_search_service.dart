@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 
 import '../config/app_config.dart';
+import '../utils/logger.dart';
 
 /// Direct Brave Search API client
 class BraveSearchService {
@@ -27,7 +28,7 @@ class BraveSearchService {
       // Return empty list for now
       return [];
     } catch (e) {
-      print('🔍 Brave suggestions error: $e');
+      Logger.debug('Brave suggestions error: $e');
       return [];
     }
   }
@@ -48,7 +49,7 @@ class BraveSearchService {
     ));
     
     _initialized = true;
-    print('🔍 BraveSearchService initialized');
+    Logger.debug('BraveSearchService initialized');
   }
 
   /// Check if Brave Search API is available
@@ -80,7 +81,7 @@ class BraveSearchService {
         throw Exception('Brave Search API key not configured');
       }
       
-      print('🔍 Brave search service: Making API request for "$query"');
+      Logger.debug('Brave search service: Making API request for "$query"');
       final response = await _dio.get(
         webSearchEndpoint,
         queryParameters: {
@@ -99,8 +100,8 @@ class BraveSearchService {
       
       if (response.statusCode == 200) {
         final data = response.data;
-        print('🔍 Brave search service: API response status: ${response.statusCode}');
-        print('🔍 Brave search service: API response data keys: ${data.keys.toList()}');
+        Logger.debug('Brave search service: API response status: ${response.statusCode}');
+        Logger.debug('Brave search service: API response data keys: ${data.keys.toList()}');
         
         // Handle the complex API response structure
         List<dynamic> results = [];
@@ -108,13 +109,13 @@ class BraveSearchService {
         // Check if there's a 'web' section with results
         if (data['web'] != null && data['web']['results'] != null) {
           results = data['web']['results'] as List<dynamic>;
-          print('🔍 Brave search service: Found ${results.length} web results');
+          Logger.debug('Brave search service: Found ${results.length} web results');
         } else if (data['results'] != null) {
           // Fallback to direct results
           results = data['results'] as List<dynamic>;
-          print('🔍 Brave search service: Found ${results.length} direct results');
-        } else {
-          print('🔍 Brave search service: No results found in API response');
+                      Logger.debug('Brave search service: Found ${results.length} direct results');
+          } else {
+            Logger.debug('Brave search service: No results found in API response');
           return [];
         }
         
@@ -125,14 +126,14 @@ class BraveSearchService {
           'source': result['source'] ?? '',
         }).toList();
         
-        print('🔍 Brave search service: Returning ${processedResults.length} processed results');
+        Logger.debug('Brave search service: Returning ${processedResults.length} processed results');
         return processedResults;
       } else {
-        print('🔍 Brave search service: API error status: ${response.statusCode}');
+        Logger.warn('Brave search service: API error status: ${response.statusCode}');
         throw Exception('Brave Search API error: ${response.statusCode}');
       }
     } catch (e) {
-      print('🔍 Brave search error: $e');
+      Logger.error('Brave search error: $e');
       return [];
     }
   }
