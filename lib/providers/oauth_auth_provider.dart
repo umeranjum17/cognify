@@ -436,22 +436,45 @@ class OAuthAuthProvider extends ChangeNotifier {
   }
 
   /// Validate API key by making a test request to OpenRouter
-  Future<bool> _validateApiKey(String apiKey) async {
+  /// Returns validation result with detailed status information
+  Future<ApiKeyValidationResult> _validateApiKeyDetailed(String apiKey) async {
     try {
+      print('🔑 Validating API key: ${apiKey.substring(0, 10)}...');
+      
       final response = await http.get(
         Uri.parse(_modelsUrl),
         headers: {
           'Authorization': 'Bearer $apiKey',
           'Content-Type': 'application/json',
         },
-      );
+      ).timeout(const Duration(seconds: 10));
 
-      // If we get a 200 response, the API key is valid
-      return response.statusCode == 200;
+      print('🔑 Validation response: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        print('✅ API key validation successful');
+        return ApiKeyValidationResult.valid();
+      } else if (response.statusCode == 401 || response.statusCode == 403) {
+        print('❌ API key is invalid/revoked (${response.statusCode})');
+        return ApiKeyValidationResult.invalid('API key revoked or invalid');
+      } else {
+        print('⚠️ API validation failed with status ${response.statusCode}, assuming key is still valid');
+        // For other status codes (500, 502, etc.), assume key is still valid
+        // The server might be having issues, but the key itself is probably fine
+        return ApiKeyValidationResult.assumeValid('Server error: ${response.statusCode}');
+      }
     } catch (e) {
-      print('Error validating API key: $e');
-      return false;
+      print('⚠️ Error validating API key (network/timeout): $e');
+      // On network errors, timeout, etc., assume the key is still valid
+      // Only clear keys when OpenRouter explicitly says they're invalid
+      return ApiKeyValidationResult.assumeValid('Network error: $e');
     }
+  }
+
+  /// Legacy method for backward compatibility
+  Future<bool> _validateApiKey(String apiKey) async {
+    final result = await _validateApiKeyDetailed(apiKey);
+    return result.isValid;
   }
 
   /// Wait for App Link callback
@@ -587,6 +610,45 @@ class OAuthAuthProvider extends ChangeNotifier {
       print('❌ Error in web callback waiting: $e');
       return OAuthResult.error('callback_error', e.toString());
     }
+  }
+}
+
+/// API key validation result with detailed status information
+class ApiKeyValidationResult {
+  final bool isValid;
+  final bool shouldClearKey;
+  final String? reason;
+
+  const ApiKeyValidationResult({
+    required this.isValid,
+    required this.shouldClearKey,
+    this.reason,
+  });
+
+  /// Key is definitively valid
+  factory ApiKeyValidationResult.valid() {
+    return const ApiKeyValidationResult(
+      isValid: true,
+      shouldClearKey: false,
+    );
+  }
+
+  /// Key is definitively invalid and should be cleared
+  factory ApiKeyValidationResult.invalid(String reason) {
+    return ApiKeyValidationResult(
+      isValid: false,
+      shouldClearKey: true,
+      reason: reason,
+    );
+  }
+
+  /// Key status unknown due to network/server issues, assume valid and don't clear
+  factory ApiKeyValidationResult.assumeValid(String reason) {
+    return ApiKeyValidationResult(
+      isValid: true, // Assume valid to avoid clearing
+      shouldClearKey: false,
+      reason: reason,
+    );
   }
 }
 
