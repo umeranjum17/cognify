@@ -58,29 +58,10 @@ class _StreamingMessageContentState extends State<StreamingMessageContent> {
 
     // Always use Text widget during streaming for consistent performance
     // Only use MarkdownBody when streaming is completely finished
-    if (widget.message.isProcessing == true) {
-      print('🎨 Using TEXT rendering for streaming (fast)');
-      
-      // If there's no content during processing, don't show anything to avoid gaps
-      if (contentToRender.isEmpty) {
-        return const SizedBox.shrink();
-      }
-      
-      return Container(
-        padding: const EdgeInsets.all(4),
-        child: SelectableText(
-          contentToRender,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            height: 1.5,
-            fontFamily: 'monospace', // Use monospace for consistent character width during streaming
-          ),
-        ),
-      );
-    } else {
+
       // Full markdown rendering when streaming is complete
       print('🎨 Using MARKDOWN rendering (complete)');
       return _buildMarkdownContent(contentToRender);
-    }
   }
 
   @override

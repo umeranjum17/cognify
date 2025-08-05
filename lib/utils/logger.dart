@@ -1,213 +1,138 @@
-import 'dart:developer' as developer;
 import 'package:flutter/foundation.dart';
-import 'package:logger/logger.dart' as pkg_logger;
+import '../services/config_service.dart';
 
-/// Log levels enumeration
+/// Log levels for structured logging
 enum LogLevel {
-  debug(0),
-  info(1),
-  warn(2),
-  error(3);
+  error(0, '❌'),
+  warn(1, '⚠️'),
+  info(2, 'ℹ️'),
+  debug(3, '🔍'),
+  trace(4, '🔧');
 
-  const LogLevel(this.value);
+  const LogLevel(this.value, this.emoji);
   final int value;
+  final String emoji;
 }
 
-/// Enhanced logging utility with configurable log levels and file output
-class AppLogger {
-  static final AppLogger _instance = AppLogger._internal();
-  factory AppLogger() => _instance;
-  AppLogger._internal();
+/// Centralized logger to replace scattered print statements
+class Logger {
+  static LogLevel _currentLevel = LogLevel.info;
+  static bool _initialized = false;
 
-  late pkg_logger.Logger _logger;
-  LogLevel _logLevel = LogLevel.info;
-
-  void initialize({LogLevel logLevel = LogLevel.info}) {
-    _logLevel = logLevel;
+  /// Initialize logger with appropriate level based on build mode
+  static void initialize() {
+    if (_initialized) return;
     
-    _logger = pkg_logger.Logger(
-      printer: pkg_logger.PrettyPrinter(
-        methodCount: 2,
-        errorMethodCount: 8,
-        lineLength: 120,
-        colors: true,
-        printEmojis: true,
-        printTime: true,
-      ),
-      level: _mapLogLevel(logLevel),
-    );
-  }
-
-  pkg_logger.Level _mapLogLevel(LogLevel level) {
-    switch (level) {
-      case LogLevel.debug:
-        return pkg_logger.Level.debug;
-      case LogLevel.info:
-        return pkg_logger.Level.info;
-      case LogLevel.warn:
-        return pkg_logger.Level.warning;
-      case LogLevel.error:
-        return pkg_logger.Level.error;
-    }
-  }
-
-  void setLogLevel(LogLevel level) {
-    _logLevel = level;
-  }
-
-  void debug(String message, [dynamic error, StackTrace? stackTrace]) {
-    if (_logLevel.value <= LogLevel.debug.value) {
-      _logger.d(message, error: error, stackTrace: stackTrace);
-      if (kDebugMode) {
-        developer.log('[DEBUG] $message', name: 'Cognify');
-      }
-    }
-  }
-
-  void info(String message, [dynamic error, StackTrace? stackTrace]) {
-    if (_logLevel.value <= LogLevel.info.value) {
-      _logger.i(message, error: error, stackTrace: stackTrace);
-      if (kDebugMode) {
-        developer.log('[INFO] $message', name: 'Cognify');
-      }
-    }
-  }
-
-  void warn(String message, [dynamic error, StackTrace? stackTrace]) {
-    if (_logLevel.value <= LogLevel.warn.value) {
-      _logger.w(message, error: error, stackTrace: stackTrace);
-      if (kDebugMode) {
-        developer.log('[WARN] $message', name: 'Cognify');
-      }
-    }
-  }
-
-  void error(String message, [dynamic error, StackTrace? stackTrace]) {
-    if (_logLevel.value <= LogLevel.error.value) {
-      _logger.e(message, error: error, stackTrace: stackTrace);
-      if (kDebugMode) {
-        developer.log('[ERROR] $message', name: 'Cognify', error: error, stackTrace: stackTrace);
-      }
-    }
-  }
-
-  // Tool-specific logging methods
-  void toolStart(String toolName, String? prompt) {
-    debug('Starting tool execution: $toolName');
-    if (prompt != null && prompt.length > 100) {
-      debug('Prompt: ${prompt.substring(0, 100)}...');
-    } else if (prompt != null) {
-      debug('Prompt: $prompt');
-    }
-  }
-
-  void toolComplete(String toolName, int durationMs) {
-    debug('Tool $toolName completed in ${durationMs}ms');
-  }
-
-  void toolError(String toolName, dynamic error) {
-    this.error('Tool $toolName failed: ${error.toString()}');
-  }
-
-  // LLM decision logging
-  void llmDecisionStart(String prompt, Map<String, bool> enabledTools) {
-    debug('LLM Decision Engine: Starting tool selection');
-    final enabledToolNames = enabledTools.entries
-        .where((entry) => entry.value)
-        .map((entry) => entry.key)
-        .join(', ');
-    debug('Enabled tools: $enabledToolNames');
-  }
-
-  void llmDecisionResult(Map<String, dynamic> decision) {
-    if (_logLevel.value <= LogLevel.debug.value) {
-      debug('LLM Decision Result: ${_prettyPrintJson(decision)}');
+    if (kDebugMode) {
+      _currentLevel = ConfigService.isDebug ? LogLevel.debug : LogLevel.info;
     } else {
-      final tools = decision['tools'] as Map<String, dynamic>?;
-      if (tools != null) {
-        final toolsToUse = tools.entries
-            .where((entry) => (entry.value as Map<String, dynamic>)['use'] == true)
-            .map((entry) => entry.key)
-            .join(', ');
-        info('AI tools selected: ${toolsToUse.isEmpty ? 'none' : toolsToUse}');
-      }
+      _currentLevel = LogLevel.warn; // Production: only warnings and errors
     }
+    _initialized = true;
   }
 
-  void llmDecisionComplete(int iterations, int totalTimeMs, List<String> toolsExecuted) {
-    info('Tool execution completed: ${toolsExecuted.join(', ')} ($iterations iterations, ${totalTimeMs}ms)');
+  /// Set log level programmatically
+  static void setLevel(LogLevel level) {
+    _currentLevel = level;
   }
 
-  // API request logging
-  void apiRequest(String method, String url, {Map<String, dynamic>? data}) {
-    debug('API Request: $method $url');
-    if (data != null && _logLevel.value <= LogLevel.debug.value) {
-      debug('Request data: ${_prettyPrintJson(data)}');
-    }
+  /// Log error messages (always shown)
+  static void error(String message, [Object? error, StackTrace? stackTrace]) {
+    _log(LogLevel.error, message, error, stackTrace);
   }
 
-  void apiResponse(String method, String url, int statusCode, {dynamic data}) {
-    if (statusCode >= 200 && statusCode < 300) {
-      debug('API Response: $method $url - $statusCode');
-    } else {
-      warn('API Response: $method $url - $statusCode');
-    }
+  /// Log warning messages
+  static void warn(String message) {
+    _log(LogLevel.warn, message);
+  }
+
+  /// Log informational messages (key events, phase transitions)
+  static void info(String message) {
+    _log(LogLevel.info, message);
+  }
+
+  /// Log debug messages (detailed execution info)
+  static void debug(String message) {
+    _log(LogLevel.debug, message);
+  }
+
+  /// Log trace messages (very detailed, per-operation info)
+  static void trace(String message) {
+    _log(LogLevel.trace, message);
+  }
+
+  /// Internal logging implementation
+  static void _log(LogLevel level, String message, [Object? error, StackTrace? stackTrace]) {
+    if (!_initialized) initialize();
     
-    if (data != null && _logLevel.value <= LogLevel.debug.value) {
-      debug('Response data: ${_prettyPrintJson(data)}');
-    }
-  }
-
-  void apiError(String method, String url, dynamic error) {
-    this.error('API Error: $method $url - ${error.toString()}');
-  }
-
-  // Database logging
-  void dbOperation(String operation, String table, {String? id}) {
-    debug('DB Operation: $operation on $table${id != null ? ' (id: $id)' : ''}');
-  }
-
-  void dbError(String operation, String table, dynamic error) {
-    this.error('DB Error: $operation on $table - ${error.toString()}');
-  }
-
-  // Background service logging
-  void backgroundService(String message) {
-    info('Background Service: $message');
-  }
-
-  void backgroundServiceError(String message, dynamic error) {
-    this.error('Background Service Error: $message - ${error.toString()}');
-  }
-
-  String _prettyPrintJson(dynamic data) {
-    try {
-      if (data is Map || data is List) {
-        return data.toString();
+    if (level.value <= _currentLevel.value) {
+      final timestamp = DateTime.now().toIso8601String().substring(11, 23); // HH:mm:ss.SSS
+      final prefix = '${level.emoji} [$timestamp]';
+      
+      if (kDebugMode) {
+        // In debug mode, use debugPrint for better IDE integration
+        debugPrint('$prefix $message');
+        if (error != null) {
+          debugPrint('$prefix Error details: $error');
+        }
+        if (stackTrace != null) {
+          debugPrint('$prefix Stack trace: $stackTrace');
+        }
+      } else {
+        // In release mode, use print (but this rarely executes due to level filtering)
+        print('$prefix $message');
       }
-      return data.toString();
-    } catch (e) {
-      return 'Error formatting data: $e';
     }
+  }
+
+  /// Create a scoped logger for specific components
+  static ScopedLogger scope(String scope) {
+    return ScopedLogger(scope);
   }
 }
 
-// Global logger instance
-final logger = AppLogger();
+/// Scoped logger that prefixes all messages with a component name
+class ScopedLogger {
+  final String _scope;
+  
+  ScopedLogger(this._scope);
 
-// Convenience functions for quick access
-void logDebug(String message, [dynamic error, StackTrace? stackTrace]) {
-  logger.debug(message, error, stackTrace);
+  void error(String message, [Object? error, StackTrace? stackTrace]) {
+    Logger.error('[$_scope] $message', error, stackTrace);
+  }
+
+  void warn(String message) {
+    Logger.warn('[$_scope] $message');
+  }
+
+  void info(String message) {
+    Logger.info('[$_scope] $message');
+  }
+
+  void debug(String message) {
+    Logger.debug('[$_scope] $message');
+  }
+
+  void trace(String message) {
+    Logger.trace('[$_scope] $message');
+  }
 }
 
-void logInfo(String message, [dynamic error, StackTrace? stackTrace]) {
-  logger.info(message, error, stackTrace);
-}
-
-void logWarn(String message, [dynamic error, StackTrace? stackTrace]) {
-  logger.warn(message, error, stackTrace);
-}
-
-void logError(String message, [dynamic error, StackTrace? stackTrace]) {
-  logger.error(message, error, stackTrace);
+/// Performance timing utility
+class Stopwatch2 {
+  final String _name;
+  final ScopedLogger _logger;
+  final Stopwatch _stopwatch;
+  
+  Stopwatch2(this._name, this._logger) : _stopwatch = Stopwatch()..start();
+  
+  void stop() {
+    _stopwatch.stop();
+    _logger.debug('$_name completed in ${_stopwatch.elapsedMilliseconds}ms');
+  }
+  
+  void stopInfo() {
+    _stopwatch.stop();
+    _logger.info('$_name completed in ${_stopwatch.elapsedMilliseconds}ms');
+  }
 }

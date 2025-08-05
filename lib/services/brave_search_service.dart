@@ -52,12 +52,12 @@ class BraveSearchService {
   }
 
   /// Check if Brave Search API is available
-  Future<bool> isAvailable() async {
+  Future<bool> isAvailable({String? apiKey}) async {
     await _ensureInitialized();
     
     try {
-      final apiKey = await AppConfig().braveSearchApiKey ?? 'BSA6Crcr3bFuvfEOIgHdL-y7IO_YPqr';
-      return apiKey.isNotEmpty;
+      final key = apiKey ?? await AppConfig().braveSearchApiKey ?? 'BSA6Crcr3bFuvfEOIgHdL-y7IO_YPqr';
+      return key.isNotEmpty;
     } catch (e) {
       return false;
     }
@@ -70,12 +70,13 @@ class BraveSearchService {
     String? country,
     String? language,
     bool safesearch = true,
+    String? apiKey,
   }) async {
     await _ensureInitialized();
     
     try {
-      final apiKey = await AppConfig().braveSearchApiKey ?? 'BSA6Crcr3bFuvfEOIgHdL-y7IO_YPqr';
-      if (apiKey.isEmpty) {
+      final key = apiKey ?? await AppConfig().braveSearchApiKey ?? 'BSA6Crcr3bFuvfEOIgHdL-y7IO_YPqr';
+      if (key.isEmpty) {
         throw Exception('Brave Search API key not configured');
       }
       
@@ -91,7 +92,7 @@ class BraveSearchService {
         },
         options: Options(
           headers: {
-            'X-Subscription-Token': apiKey,
+            'X-Subscription-Token': key,
           },
         ),
       );
@@ -143,12 +144,13 @@ class BraveSearchService {
     String? country,
     String? language,
     bool safesearch = true,
+    String? apiKey,
   }) async {
     await _ensureInitialized();
     
     try {
-      final apiKey = await AppConfig().braveSearchApiKey ?? 'BSA6Crcr3bFuvfEOIgHdL-y7IO_YPqr';
-      if (apiKey.isEmpty) {
+      final key = apiKey ?? await AppConfig().braveSearchApiKey ?? 'BSA6Crcr3bFuvfEOIgHdL-y7IO_YPqr';
+      if (key.isEmpty) {
         throw Exception('Brave Search API key not configured');
       }
       
@@ -163,7 +165,7 @@ class BraveSearchService {
         },
         options: Options(
           headers: {
-            'X-Subscription-Token': apiKey,
+            'X-Subscription-Token': key,
           },
         ),
       );
@@ -222,12 +224,13 @@ class BraveSearchService {
     String? country,
     String? language,
     bool safesearch = true,
+    String? apiKey,
   }) async {
     await _ensureInitialized();
     
     try {
-      final apiKey = await AppConfig().braveSearchApiKey ?? 'BSA6Crcr3bFuvfEOIgHdL-y7IO_YPqr';
-      if (apiKey.isEmpty) {
+      final key = apiKey ?? await AppConfig().braveSearchApiKey ?? 'BSA6Crcr3bFuvfEOIgHdL-y7IO_YPqr';
+      if (key.isEmpty) {
         throw Exception('Brave Search API key not configured');
       }
       
@@ -242,7 +245,7 @@ class BraveSearchService {
         },
         options: Options(
           headers: {
-            'X-Subscription-Token': apiKey,
+            'X-Subscription-Token': key,
           },
         ),
       );

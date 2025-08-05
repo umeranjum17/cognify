@@ -1,11 +1,13 @@
 import 'dart:math' as math;
 
 import '../models/chat_source.dart';
+import '../utils/logger.dart';
 
 /// Centralized tool result processing utility
 /// Handles extraction of sources and images from tool results
 /// Used by Executor Agent to process tool outputs - single source of truth
 class ToolResultProcessor {
+  static final ScopedLogger _logger = Logger.scope('ToolResultProcessor');
   
   /// Clean sources to remove any images that might have been accidentally added
   static List<ChatSource> cleanSources(List<ChatSource> sources) {
@@ -22,12 +24,13 @@ class ToolResultProcessor {
       if (url.isNotEmpty && !seenUrls.contains(url)) {
         seenUrls.add(url);
         uniqueImages.add(image);
-        print('🖼️ Added unique image: ${image['title'] ?? 'Image'} ($url)');
+        _logger.trace('Added unique image: ${image['title'] ?? 'Image'} ($url)');
       } else {
-        print('🖼️ Skipped duplicate image: ${image['title'] ?? 'Image'} ($url)');
+        _logger.trace('Skipped duplicate image: ${image['title'] ?? 'Image'} ($url)');
       }
     }
     
+    _logger.debug('Deduplicated ${images.length} images to ${uniqueImages.length} unique');
     return uniqueImages;
   }
 
@@ -40,12 +43,13 @@ class ToolResultProcessor {
       if (!seenUrls.contains(source.url)) {
         seenUrls.add(source.url);
         uniqueSources.add(source);
-        print('📚 Added unique source: ${source.title} (${source.url})');
+        _logger.trace('Added unique source: ${source.title} (${source.url})');
       } else {
-        print('📚 Skipped duplicate source: ${source.title} (${source.url})');
+        _logger.trace('Skipped duplicate source: ${source.title} (${source.url})');
       }
     }
     
+    _logger.debug('Deduplicated ${sources.length} sources to ${uniqueSources.length} unique');
     return uniqueSources;
   }
 
@@ -55,12 +59,10 @@ class ToolResultProcessor {
     Map<String, dynamic> toolResult,
     String toolName
   ) {
-    final extractionStartTime = DateTime.now();
     final sources = <ChatSource>[];
     final images = <Map<String, dynamic>>[];
 
     try {
-      
       // Handle brave_search tool output format (URLs only, no content extraction)
       if (toolName == 'brave_search' || toolName == 'brave_search_enhanced') {
         if (toolResult['results'] != null && toolResult['results'] is List) {
@@ -81,7 +83,7 @@ class ToolResultProcessor {
           }).where((s) => s != null).cast<ChatSource>().toList();
           
           sources.addAll(braveSearchSources);
-          print('📚 Extracted ${braveSearchSources.length} sources from $toolName tool (URLs only, no content scraping)');
+          _logger.debug('Extracted ${braveSearchSources.length} sources from $toolName (URLs only)');
         }
       }
       // Handle image_search tool output format
@@ -107,7 +109,7 @@ class ToolResultProcessor {
         }).where((i) => i != null).cast<Map<String, dynamic>>().toList();
         
         images.addAll(imageResults);
-        print('🖼️ Extracted ${imageResults.length} images from $toolName tool');
+        _logger.debug('Extracted ${imageResults.length} images from $toolName');
       }
       // Handle web_fetch tool
       else if (toolName == 'web_fetch' && toolResult['url'] != null) {
@@ -124,9 +126,9 @@ class ToolResultProcessor {
             content: content, // Include scraped content
             hasScrapedContent: true,
           ));
-          print('📚 Added web_fetch source with content: $url (${content.toString().length} chars)');
+          _logger.debug('Added web_fetch source with content: $url (${content.toString().length} chars)');
         } else {
-          print('📚 Skipped web_fetch source without content: $url');
+          _logger.debug('Skipped web_fetch source without content: $url');
         }
       }
       // Handle youtube_processor tool
@@ -171,6 +173,7 @@ class ToolResultProcessor {
         }).where((s) => s != null).cast<ChatSource>().toList();
         
         sources.addAll(toolSources);
+        _logger.debug('Extracted ${toolSources.length} sources from $toolName sources array');
       }
       // Handle generic tool results
       else if (toolResult['content'] != null) {
@@ -182,13 +185,11 @@ class ToolResultProcessor {
           content: toolResult['content'].toString(), // Use full content
           hasScrapedContent: true,
         ));
+        _logger.debug('Added generic content from $toolName');
       }
 
-      final extractionTime = DateTime.now().difference(extractionStartTime).inMilliseconds;
-      print('⏱️ [TIMING] Source/image extraction for $toolName took ${extractionTime}ms');
-
     } catch (error) {
-      print('❌ Error extracting sources/images from $toolName: $error');
+      _logger.error('Error extracting sources/images from $toolName', error);
     }
 
     return {
@@ -196,6 +197,4 @@ class ToolResultProcessor {
       'images': images,
     };
   }
-
-
 }

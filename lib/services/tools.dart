@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'brave_search_service.dart';
 import 'content_extractor.dart';
 import 'openrouter_client.dart';
+import '../utils/logger.dart';
 
 /// Enhanced Brave Search Tool
 class BraveSearchEnhancedTool extends Tool {
@@ -29,7 +30,11 @@ class BraveSearchEnhancedTool extends Tool {
       final count = input['count'] as int? ?? 5;
       
       print('🔍 Brave search enhanced tool: Searching for "$query" with count $count');
-      final results = await _braveSearchService.search(query, count: count);
+      final results = await _braveSearchService.search(
+        query,
+        count: count,
+        apiKey: (input['apiKey'] as String?) ?? (input['braveApiKey'] as String?),
+      );
       print('🔍 Brave search enhanced tool: Got ${results.length} results');
       
       // Return results without content extraction - content will be extracted separately
@@ -82,7 +87,11 @@ class BraveSearchTool extends Tool {
       final count = input['count'] as int? ?? 5;
       
       print('🔍 Brave search tool: Searching for "$query" with count $count');
-      final results = await _braveSearchService.search(query, count: count);
+      final results = await _braveSearchService.search(
+        query,
+        count: count,
+        apiKey: (input['apiKey'] as String?) ?? (input['braveApiKey'] as String?),
+      );
       print('🔍 Brave search tool: Got ${results.length} results');
       
       final response = {
@@ -190,7 +199,11 @@ class ImageSearchTool extends Tool {
       final count = input['count'] as int? ?? 5;
       
       print('🖼️ Image search tool: Searching for "$query" with count $count');
-      final results = await _braveSearchService.searchImages(query, count: count);
+      final results = await _braveSearchService.searchImages(
+        query,
+        count: count,
+        apiKey: (input['apiKey'] as String?) ?? (input['braveApiKey'] as String?),
+      );
       print('🖼️ Image search tool: Got ${results['images']?.length ?? 0} image results');
       
       final response = {
