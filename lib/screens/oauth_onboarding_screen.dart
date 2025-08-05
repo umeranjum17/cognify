@@ -57,11 +57,11 @@ class _OAuthOnboardingScreenState extends State<OAuthOnboardingScreen> {
 
                                 const SizedBox(height: 32),
 
-                                // Authentication options - prioritize manual entry
+                                // Authentication options - prioritize OAuth
                                 if (!_showManualEntry) ...[
-                                  _buildManualEntryToggle(context),
-                                  const SizedBox(height: 16),
                                   _buildOAuthButton(context, authProvider),
+                                  const SizedBox(height: 16),
+                                  _buildManualEntryToggle(context),
                                 ] else ...[
                                   _buildManualApiKeyEntry(context, authProvider),
                                   const SizedBox(height: 16),
@@ -237,26 +237,26 @@ class _OAuthOnboardingScreenState extends State<OAuthOnboardingScreen> {
     return SizedBox(
       width: double.infinity,
       height: 56,
-      child: ElevatedButton.icon(
+      child: OutlinedButton.icon(
         onPressed: () {
           setState(() {
             _showManualEntry = true;
             _errorMessage = null;
           });
         },
-        icon: const Icon(Icons.key),
+        icon: const Icon(Icons.key, color: Colors.black),
         label: const Text(
           'Enter OpenRouter API Key',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
+            color: Colors.black,
           ),
         ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: theme.colorScheme.primary,
-          foregroundColor: theme.colorScheme.onPrimary,
-          elevation: 2,
-          shadowColor: theme.colorScheme.primary.withValues(alpha: 0.3),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: Colors.black,
+          side: const BorderSide(color: Colors.black, width: 2),
+          backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -271,7 +271,7 @@ class _OAuthOnboardingScreenState extends State<OAuthOnboardingScreen> {
     return SizedBox(
       width: double.infinity,
       height: 56,
-      child: OutlinedButton.icon(
+      child: ElevatedButton.icon(
         onPressed: authProvider.isLoading ? null : () => _handleOAuthLogin(authProvider),
         icon: authProvider.isLoading
             ? const SizedBox(
@@ -279,7 +279,7 @@ class _OAuthOnboardingScreenState extends State<OAuthOnboardingScreen> {
                 height: 20,
                 child: CircularProgressIndicator(strokeWidth: 2),
               )
-            : const Icon(Icons.open_in_new),
+            : const Icon(Icons.open_in_new, color: Colors.white),
         label: Text(
           authProvider.isLoading
               ? 'Connecting with OpenRouter...'
@@ -287,11 +287,14 @@ class _OAuthOnboardingScreenState extends State<OAuthOnboardingScreen> {
           style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
+            color: Colors.white,
           ),
         ),
-        style: OutlinedButton.styleFrom(
-          foregroundColor: theme.colorScheme.primary,
-          side: BorderSide(color: theme.colorScheme.primary),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: theme.colorScheme.primary,
+          foregroundColor: Colors.white,
+          elevation: 4,
+          shadowColor: theme.colorScheme.primary.withValues(alpha: 0.4),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
