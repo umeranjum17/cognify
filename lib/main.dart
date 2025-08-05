@@ -13,30 +13,17 @@ import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_android/webview_flutter_android.dart';
 
 import 'providers/app_access_provider.dart';
-// New imports
-import 'firebase_options.dart';
 import 'providers/firebase_auth_provider.dart';
 import 'providers/subscription_provider.dart';
-import 'screens/auth/sign_in_screen.dart';
-import 'screens/subscription/paywall_screen.dart';
 import 'services/revenuecat_service.dart';
 
 import 'providers/mode_config_provider.dart';
 import 'providers/oauth_auth_provider.dart';
-import 'screens/conversation_history_screen.dart';
-import 'screens/editor_screen.dart';
-import 'screens/home_screen.dart';
-import 'screens/oauth_callback_screen.dart';
-import 'screens/oauth_onboarding_screen.dart';
-import 'screens/sources_screen.dart';
-import 'screens/streaming_test_screen.dart';
-import 'screens/trending_topics_screen.dart';
 import 'services/services_manager.dart';
 import 'services/sharing_service.dart';
 import 'services/user_service.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_provider.dart';
-import 'widgets/connection_status_indicator.dart';
 import 'utils/logger.dart';
 import 'config/app_config.dart';
 
@@ -250,7 +237,8 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => ModeConfigProvider()),
-        ChangeNotifierProvider(create: (_) => OAuthAuthProvider()),
+        // Initialize OAuth provider immediately and load stored credentials
+        ChangeNotifierProvider(create: (_) => OAuthAuthProvider()..initialize()),
         // New providers
         ChangeNotifierProvider(create: (_) => FirebaseAuthProvider()..initialize()),
         // Subscription must be above AppAccessProvider

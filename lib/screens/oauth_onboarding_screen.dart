@@ -370,8 +370,9 @@ class _OAuthOnboardingScreenState extends State<OAuthOnboardingScreen> {
 
   Future<void> _checkExistingAuthentication() async {
     final authProvider = Provider.of<OAuthAuthProvider>(context, listen: false);
-    await authProvider.initialize();
-
+    
+    // No need to initialize again since it's done at app startup
+    // Just check the current authentication state
     if (authProvider.isAuthenticated && mounted) {
       // Check if we're currently processing an OAuth callback
       final currentLocation = GoRouterState.of(context).uri.toString();

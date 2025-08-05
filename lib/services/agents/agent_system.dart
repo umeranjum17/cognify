@@ -5,6 +5,7 @@ import '../../models/chat_stream_event.dart';
 import '../../models/message.dart';
 import '../../models/tool_result.dart';
 import '../../models/tool_spec.dart';
+import '../../utils/json_utils.dart';
 import 'executor_engine.dart';
 import 'milestone_messages.dart';
 import 'planner_agent.dart';
@@ -635,12 +636,13 @@ class AgentSystem {
     for (final result in toolResults) {
       if (result.failed) continue;
 
-      final data = result.output as Map<String, dynamic>?;
+      final rawData = result.output;
+      final data = JsonUtils.safeStringKeyMap(rawData);
       if (data == null) continue;
 
       // Check if this result has pre-extracted sources from executor agent
-      if (data['extractedSources'] != null && data['extractedSources'] is List) {
-        final extractedSources = data['extractedSources'] as List<dynamic>;
+      final extractedSources = JsonUtils.safeList(data['extractedSources']);
+      if (extractedSources != null) {
         
 
         for (final item in extractedSources) {
@@ -665,7 +667,8 @@ class AgentSystem {
     for (final result in toolResults) {
       if (result.failed) continue;
 
-      final data = result.output as Map<String, dynamic>?;
+      final rawData = result.output;
+      final data = JsonUtils.safeStringKeyMap(rawData);
       if (data == null) continue;
 
       
@@ -676,9 +679,8 @@ class AgentSystem {
         case 'brave_search':
         case 'brave_search_enhanced':
           // Extract actual search results from the tool output
-          List<dynamic>? results;
-          if (data['results'] != null && data['results'] is List) {
-            results = data['results'] as List<dynamic>;
+          final results = JsonUtils.safeList(data['results']);
+          if (results != null) {
             
 
             for (final item in results) {
@@ -794,12 +796,14 @@ class AgentSystem {
     String action = 'suggest_retry';
     bool nonFatal = true;
     String hint = 'Unexpected error. Try again or switch models if it persists.';
+    bool showModal = false;
 
     if (s.contains('429') || s.contains('rate limit') || s.contains('too many requests') || s.contains('quota')) {
       code = 'rate_limit'; 
       action = 'show_model_switch_modal'; 
       nonFatal = true;
       hint = 'You\'ve hit provider rate limits. Switching models often resolves this.';
+      showModal = true;
     } else if (s.contains('401') || s.contains('unauthorized') || s.contains('invalid api key')) {
       code = 'auth_invalid'; 
       action = 'check_api_key_modal'; 
@@ -815,6 +819,7 @@ class AgentSystem {
       action = 'suggest_retry'; 
       nonFatal = true;
       hint = 'Provider capacity issues. Retry or switch models.';
+      showModal = true;
     } else if (s.contains('timeout')) {
       code = 'timeout'; 
       action = 'suggest_retry'; 
@@ -833,15 +838,8 @@ class AgentSystem {
     }
 
     List<String> suggestionModels = [];
-    if (code == 'rate_limit' || code == 'capacity') {
-      try {
-        final all = ModelRegistry.getAllModels();
-        if (model != null) {
-          suggestionModels = all.where((m) => m != model).take(3).toList();
-        } else {
-          suggestionModels = all.take(3).toList();
-        }
-      } catch (_) {}
+    if (showModal) {
+      suggestionModels = _getSuggestedModelsForError(code, model);
     }
 
     return {
@@ -852,7 +850,39 @@ class AgentSystem {
       'details': error?.toString() ?? '',
       'stage': stage,
       'currentModel': model,
+      'showModal': showModal,
       if (suggestionModels.isNotEmpty) 'suggestionModels': suggestionModels,
     };
+  }
+
+  /// Get suggested models for error types
+  List<String> _getSuggestedModelsForError(String errorType, String? currentModel) {
+    try {
+      final allModels = ModelRegistry.getAllModels();
+      final freeModels = ModelRegistry.getFreeModels();
+      
+      // Filter out current model if provided
+      final availableModels = currentModel != null 
+          ? allModels.where((m) => m != currentModel).toList()
+          : allModels;
+      
+      // Prioritize free models for rate limit and quota issues
+      if (errorType == 'rate_limit' || errorType == 'capacity') {
+        final availableFreeModels = freeModels.where((m) => m != currentModel).toList();
+        if (availableFreeModels.isNotEmpty) {
+          return availableFreeModels.take(3).toList();
+        }
+      }
+      
+      // Fallback to any available models
+      return availableModels.take(3).toList();
+    } catch (e) {
+      // Fallback to default models if registry fails
+      return [
+        'google/gemini-2.0-flash-exp:free',
+        'deepseek/deepseek-r1:free',
+        'mistralai/mistral-7b-instruct:free',
+      ];
+    }
   }
 } 

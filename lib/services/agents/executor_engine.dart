@@ -7,6 +7,7 @@ import '../../models/tool_result.dart';
 import '../../models/tool_spec.dart';
 import '../../utils/logger.dart';
 import '../../utils/concurrency_pool.dart';
+import '../../utils/json_utils.dart';
 import '../tool_result_processor.dart';
 import '../tools.dart';
 import '../../config/app_config.dart';
@@ -80,15 +81,18 @@ class ExecutorEngine {
 
       // Execute tool with concurrency control
       final startTime = DateTime.now();
-      final Map<String, dynamic> toolResult;
+      final dynamic rawToolResult;
       
       if (_ioToolTypes.contains(toolSpec.name)) {
         // IO-bound tool: use concurrency pool on main isolate
-        toolResult = await _ioPool.withResource(() => tool.invoke(toolSpec.input));
+        rawToolResult = await _ioPool.withResource(() => tool.invoke(toolSpec.input));
       } else {
         // Light tool: execute directly
-        toolResult = await tool.invoke(toolSpec.input);
+        rawToolResult = await tool.invoke(toolSpec.input);
       }
+      
+      // Normalize the tool result to ensure type safety
+      final Map<String, dynamic> toolResult = JsonUtils.safeStringKeyMap(rawToolResult) ?? {};
       
       final executionTime = DateTime.now().difference(startTime).inMilliseconds;
 

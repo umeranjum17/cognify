@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math' as math;
 
 import '../../models/tool_spec.dart';
+import '../../utils/json_utils.dart';
 import '../openrouter_client.dart';
 import '../tools.dart';
 
@@ -128,7 +129,8 @@ class PlannerAgent {
       jsonContent = jsonContent.trim();
 
       try {
-        final plan = jsonDecode(jsonContent) as Map<String, dynamic>;
+        final rawPlan = jsonDecode(jsonContent);
+        final plan = JsonUtils.safeStringKeyMap(rawPlan) ?? {};
         
         final toolSpecs = _parseExecutionPlan(plan);
 

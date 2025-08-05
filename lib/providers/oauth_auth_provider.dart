@@ -218,7 +218,12 @@ class OAuthAuthProvider extends ChangeNotifier {
       final userInfoJson = await _secureStorage.read(key: _userInfoStorageKey);
 
       if (userInfoJson != null) {
-        _userInfo = jsonDecode(userInfoJson);
+        try {
+          _userInfo = jsonDecode(userInfoJson);
+        } catch (e) {
+          print('Failed to decode user info: $e');
+          _userInfo = null;
+        }
       }
 
       if (_apiKey != null) {
@@ -230,10 +235,15 @@ class OAuthAuthProvider extends ChangeNotifier {
           // Clear invalid credentials
           await clearAuthentication();
         }
+      } else {
+        _isAuthenticated = false;
       }
     } catch (e) {
       print('Error initializing OAuth provider: $e');
-      await clearAuthentication();
+      // Don't clear authentication on general errors, only on validation failures
+      _isAuthenticated = false;
+      _apiKey = null;
+      _userInfo = null;
     } finally {
       // Set loading to false and notify listeners only once at the end
       _isLoading = false;
@@ -398,25 +408,30 @@ class OAuthAuthProvider extends ChangeNotifier {
 
   /// Store credentials securely
   Future<void> _storeCredentials(String apiKey) async {
-    await _secureStorage.write(key: _apiKeyStorageKey, value: apiKey);
-
-    // Fetch and store user info
-    final userInfo = await _fetchUserInfo(apiKey);
-    if (userInfo != null) {
-      await _secureStorage.write(
-        key: _userInfoStorageKey,
-        value: jsonEncode(userInfo),
-      );
-      _userInfo = userInfo;
-    }
-
-    _apiKey = apiKey;
-    _isAuthenticated = true;
-
     try {
-      notifyListeners();
+      await _secureStorage.write(key: _apiKeyStorageKey, value: apiKey);
+
+      // Fetch and store user info
+      final userInfo = await _fetchUserInfo(apiKey);
+      if (userInfo != null) {
+        await _secureStorage.write(
+          key: _userInfoStorageKey,
+          value: jsonEncode(userInfo),
+        );
+        _userInfo = userInfo;
+      }
+
+      _apiKey = apiKey;
+      _isAuthenticated = true;
+
+      try {
+        notifyListeners();
+      } catch (e) {
+        print('Warning: Could not notify listeners in _storeCredentials: $e');
+      }
     } catch (e) {
-      print('Warning: Could not notify listeners in _storeCredentials: $e');
+      print('Error storing credentials: $e');
+      throw e; // Re-throw to handle in calling method
     }
   }
 

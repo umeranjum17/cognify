@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import '../../models/chat_stream_event.dart';
 import '../../models/message.dart';
 import '../../models/tool_result.dart';
+import '../../utils/json_utils.dart';
 import '../openrouter_client.dart';
 
 /// Writer Agent - Creates final responses from tool results
@@ -1021,7 +1022,8 @@ ${i + 1}.${j + 1}. **$title**
     for (final result in toolResults) {
       if (result.failed) continue;
 
-      final output = result.output as Map<String, dynamic>?;
+      final rawOutput = result.output;
+      final output = JsonUtils.safeStringKeyMap(rawOutput);
       if (output == null) continue;
 
       // Use pre-extracted images from executor agent

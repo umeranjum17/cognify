@@ -75,11 +75,28 @@ class AppRouter {
               subs.wireAuth(firebaseAuth);
             }
 
-            // Legacy OpenRouter auth handling: if authenticated, navigate to editor
+            // OpenRouter auth handling: wait for initialization, then check authentication
             return MaterialPage(
               key: state.pageKey,
               child: Consumer<OAuthAuthProvider>(
                 builder: (context, authProvider, child) {
+                  // Show loading while the provider is initializing
+                  if (authProvider.isLoading) {
+                    return const Scaffold(
+                      body: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            CircularProgressIndicator(),
+                            SizedBox(height: 16),
+                            Text('Checking authentication...'),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+                  
+                  // After initialization, check if authenticated
                   if (authProvider.isAuthenticated) {
                     WidgetsBinding.instance.addPostFrameCallback((_) {
                       if (context.mounted) {
@@ -87,9 +104,20 @@ class AppRouter {
                       }
                     });
                     return const Scaffold(
-                      body: Center(child: CircularProgressIndicator()),
+                      body: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            CircularProgressIndicator(),
+                            SizedBox(height: 16),
+                            Text('Redirecting to editor...'),
+                          ],
+                        ),
+                      ),
                     );
                   }
+                  
+                  // Not authenticated, show onboarding
                   return const OAuthOnboardingScreen();
                 },
               ),

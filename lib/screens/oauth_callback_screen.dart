@@ -65,9 +65,6 @@ class _OAuthCallbackScreenState extends State<OAuthCallbackScreen> {
 
       // Wait a bit for the authentication state to be properly updated
       await Future.delayed(const Duration(milliseconds: 100));
-      
-      // Re-initialize to ensure we have the latest state
-      await oauthProvider.initialize();
 
       if (mounted) {
         setState(() {

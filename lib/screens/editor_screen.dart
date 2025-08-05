@@ -32,10 +32,12 @@ import '../services/session_cost_service.dart';
 import '../services/unified_api_service.dart';
 import '../services/environment_service.dart';
 import '../config/feature_flags.dart';
+import '../config/model_registry.dart';
 import '../providers/subscription_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/cost_display_widget.dart';
 import '../widgets/enhanced_loading_indicator.dart';
+import '../widgets/model_switch_recommendation_modal.dart';
 import '../widgets/modern_app_header.dart';
 import '../widgets/organized_post_message_content.dart';
 import '../widgets/session_info_widget.dart';
@@ -2993,9 +2995,19 @@ class _EditorScreenState extends State<EditorScreen> {
             try {
               stopVibration();
             } catch (e) {
-              
+              // Handle vibration error silently
             }
-            throw Exception(event.error ?? 'Unknown streaming error');
+            
+            // Classify the error to determine if modal should be shown
+            final errorClassification = _classifyStreamError(event.error, _selectedModel);
+            
+            if (errorClassification['showModal'] == true) {
+              _showModelSwitchModal(errorClassification);
+            } else {
+              // Show standard error snackbar
+              throw Exception(event.error ?? 'Unknown streaming error');
+            }
+            break;
           default:
             // Handle any other event types
             
@@ -3999,6 +4011,123 @@ class _EditorScreenState extends State<EditorScreen> {
       await prefs.setInt('knowledge_graph_last_update', DateTime.now().millisecondsSinceEpoch);
     } catch (e) {
       
+    }
+  }
+
+  /// Classify stream errors to determine if modal should be shown
+  Map<String, dynamic> _classifyStreamError(String? error, String currentModel) {
+    if (error == null) return {'showModal': false};
+    
+    final errorLower = error.toLowerCase();
+    
+    if (errorLower.contains('429') || errorLower.contains('rate limit')) {
+      return {
+        'type': 'rate_limit',
+        'showModal': true,
+        'title': 'Rate Limit Reached',
+        'message': 'The current model has reached its rate limit. Try switching to a different model to continue.',
+        'suggestedModels': _getSuggestedModelsForError('rate_limit', currentModel),
+      };
+    }
+    
+    if (errorLower.contains('quota') || errorLower.contains('insufficient')) {
+      return {
+        'type': 'quota_exceeded',
+        'showModal': true,
+        'title': 'Usage Quota Exceeded',
+        'message': 'You\'ve reached the usage limit for this model. Switch to a free model or upgrade your plan.',
+        'suggestedModels': _getSuggestedModelsForError('quota', currentModel),
+      };
+    }
+    
+    return {'showModal': false};
+  }
+
+  /// Show model switch recommendation modal
+  void _showModelSwitchModal(Map<String, dynamic> errorClassification) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => ModelSwitchRecommendationModal(
+        errorType: errorClassification['type'],
+        title: errorClassification['title'],
+        message: errorClassification['message'],
+        currentModel: _selectedModel,
+        suggestedModels: errorClassification['suggestedModels'] ?? [],
+        onModelSelected: (modelId) {
+          Navigator.of(context).pop();
+          _switchToModel(modelId);
+          _retryLastMessage();
+        },
+        onDismiss: () {
+          Navigator.of(context).pop();
+        },
+        onTryAgain: () {
+          Navigator.of(context).pop();
+          _retryLastMessage();
+        },
+      ),
+    );
+  }
+
+  /// Get suggested models for error types
+  List<String> _getSuggestedModelsForError(String errorType, String currentModel) {
+    try {
+      // Use ModelRegistry to get intelligent suggestions
+      switch (errorType) {
+        case 'rate_limit':
+          return ModelRegistry.getFreeModels().take(3).toList();
+        case 'quota':
+          return ModelRegistry.getFreeModels().take(3).toList();
+        default:
+          return ModelRegistry.getAllModels().take(3).toList();
+      }
+    } catch (e) {
+      // Fallback to default models if registry fails
+      return [
+        'google/gemini-2.0-flash-exp:free',
+        'deepseek/deepseek-r1:free',
+        'mistralai/mistral-7b-instruct:free',
+      ];
+    }
+  }
+
+  /// Switch to a different model
+  void _switchToModel(String modelId) {
+    setState(() {
+      _selectedModel = modelId;
+    });
+    
+    // Update mode config provider
+    final provider = Provider.of<ModeConfigProvider>(context, listen: false);
+    final currentConfig = provider.getConfigForMode(_currentMode);
+    if (currentConfig != null) {
+      provider.updateConfig(_currentMode, currentConfig.copyWith(model: modelId));
+    }
+    
+    // Update LLM service
+    LLMService().setCurrentModel(modelId);
+    
+    // Check new model capabilities
+    _checkModelCapabilities();
+    
+    // Show success message
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Switched to ${ModelRegistry.formatModelName(modelId)}'),
+        backgroundColor: Theme.of(context).colorScheme.primary,
+      ),
+    );
+  }
+
+  /// Retry the last user message
+  void _retryLastMessage() {
+    if (_messages.isNotEmpty) {
+      final lastUserMessage = _messages.lastWhere(
+        (msg) => msg.type == 'user',
+        orElse: () => _messages.last,
+      );
+      _retryUserMessage(lastUserMessage);
     }
   }
 }
