@@ -3089,6 +3089,9 @@ class _EditorScreenState extends State<EditorScreen> {
                 _currentProgress = null;
               });
 
+              // Clean up streaming controller after finalization (optional)
+              StreamingMessageRegistry().removeController(streamingMessage.id);
+
               // No longer fetch additional follow-up questions here.
               // FollowUpQuestionsWidget will handle async loading and skeleton display.
 

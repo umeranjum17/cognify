@@ -48,6 +48,11 @@ class _StreamingMessageContentState extends State<StreamingMessageContent> {
   bool _isTyping = false;
   bool _isDisposed = false;
 
+  // Retry state for controller lookup
+  int _retryAttempts = 0;
+  static const int _maxRetryAttempts = 5;
+  Duration _retryDelay = const Duration(milliseconds: 100);
+
   @override
   Widget build(BuildContext context) {
     // Use the simple approach that works in the streaming test
@@ -77,6 +82,7 @@ class _StreamingMessageContentState extends State<StreamingMessageContent> {
     _isDisposed = true;
     _disposeSubscription();
     _typingTimer?.cancel();
+    _retryTimer?.cancel();
     _cachedMarkdownWidget = null;
     super.dispose();
   }
@@ -281,9 +287,28 @@ class _StreamingMessageContentState extends State<StreamingMessageContent> {
   }
 
   void _initializeController() {
+    // Gate controller lookup by message processing state
+    if (widget.message.isProcessing != true) {
+      // Historical/complete message - render static content without controller lookup
+      _displayedContent = widget.message.textContent;
+      if (mounted && !_isDisposed) {
+        try {
+          setState(() {});
+        } catch (e) {
+          Logger.warn('⚠️ StreamingMessageContent: setState error for historical message (ignored): $e', tag: 'StreamingMessage');
+        }
+      }
+      return;
+    }
+
+    // Only look for controller for live, processing messages
     _controller = StreamingMessageRegistry().getController(widget.message.id);
 
     if (_controller != null) {
+      // Reset retry state on successful controller retrieval
+      _retryAttempts = 0;
+      _retryDelay = const Duration(milliseconds: 100);
+
       // Set initial content
       _displayedContent = _controller!.content;
 
@@ -319,13 +344,33 @@ class _StreamingMessageContentState extends State<StreamingMessageContent> {
         }
       }
     } else {
-      Logger.warn('⚠️  StreamingMessageContent: No controller found for ${widget.message.id}, will retry...', tag: 'StreamingMessage');
-      // Retry after a short delay in case controller is created shortly after widget
-      _retryTimer = Timer(const Duration(milliseconds: 100), () {
-        if (mounted && _controller == null) {
+      // Controller not found for processing message - implement exponential backoff
+      if (_retryAttempts == 0) {
+        Logger.info('📝 StreamingMessageContent: Pending controller for ${widget.message.id}', tag: 'StreamingMessage');
+      }
+
+      if (_retryAttempts >= _maxRetryAttempts) {
+        Logger.warn('⚠️ StreamingMessageContent: Controller not found after $_maxRetryAttempts retries for ${widget.message.id}', tag: 'StreamingMessage');
+        // Stop retrying and render static fallback
+        _displayedContent = widget.message.textContent;
+        if (mounted && !_isDisposed) {
+          try {
+            setState(() {});
+          } catch (e) {
+            Logger.warn('⚠️ StreamingMessageContent: setState error in fallback (ignored): $e', tag: 'StreamingMessage');
+          }
+        }
+        return;
+      }
+
+      // Schedule retry with exponential backoff
+      _retryAttempts++;
+      _retryTimer = Timer(_retryDelay, () {
+        if (mounted && !_isDisposed && _controller == null) {
           _initializeController();
         }
       });
+      _retryDelay *= 2; // Exponential backoff: 100, 200, 400, 800, 1600ms
     }
   }
 
@@ -346,6 +391,9 @@ class _StreamingMessageContentState extends State<StreamingMessageContent> {
     _lastParsedContent = '';
     _cachedMarkdownWidget = null;
     _isTyping = false;
+    // Reset retry state
+    _retryAttempts = 0;
+    _retryDelay = const Duration(milliseconds: 100);
   }
 
   void _showMarkdownImage(String imageUrl, String? title, String? alt) {
