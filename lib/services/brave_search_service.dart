@@ -207,7 +207,7 @@ class BraveSearchService {
         throw Exception('HTTP ${response.statusCode}: ${response.statusMessage}');
       }
     } catch (e) {
-      print('🔍 Brave image search error: $e');
+      Logger.error('🔍 Brave image search error: $e', tag: 'BraveSearch');
       return {
         'success': false,
         'error': e.toString(),
@@ -270,7 +270,7 @@ class BraveSearchService {
         throw Exception('HTTP ${response.statusCode}: ${response.statusMessage}');
       }
     } catch (e) {
-      print('🔍 Brave web search error: $e');
+      Logger.error('🔍 Brave web search error: $e', tag: 'BraveSearch');
       return {
         'success': false,
         'error': e.toString(),

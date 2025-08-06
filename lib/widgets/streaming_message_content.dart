@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../models/message.dart';
 import '../models/streaming_message.dart';
 import '../theme/app_theme.dart';
+import '../utils/logger.dart';
 import 'safe_mermaid_code_builder.dart';
 
 /// Widget that displays message content with real-time streaming support
@@ -292,7 +293,7 @@ class _StreamingMessageContentState extends State<StreamingMessageContent> {
           _handleContentUpdate(content);
         },
         onError: (error) {
-          print('🎯 StreamingMessageContent: Stream error: $error');
+          Logger.error('🎯 StreamingMessageContent: Stream error: $error', tag: 'StreamingMessage');
         },
         onDone: () {
           // Ensure final content is displayed
@@ -302,7 +303,7 @@ class _StreamingMessageContentState extends State<StreamingMessageContent> {
               try {
                 setState(() {});
               } catch (e) {
-                print('⚠️ StreamingMessageContent: setState error in onDone (ignored): $e');
+                Logger.warn('⚠️ StreamingMessageContent: setState error in onDone (ignored): $e', tag: 'StreamingMessage');
               }
             }
           }
@@ -314,11 +315,11 @@ class _StreamingMessageContentState extends State<StreamingMessageContent> {
         try {
           setState(() {});
         } catch (e) {
-          print('⚠️ StreamingMessageContent: setState error in initial content (ignored): $e');
+          Logger.warn('⚠️ StreamingMessageContent: setState error in initial content (ignored): $e', tag: 'StreamingMessage');
         }
       }
     } else {
-      print('⚠️  StreamingMessageContent: No controller found for ${widget.message.id}, will retry...');
+      Logger.warn('⚠️  StreamingMessageContent: No controller found for ${widget.message.id}, will retry...', tag: 'StreamingMessage');
       // Retry after a short delay in case controller is created shortly after widget
       _retryTimer = Timer(const Duration(milliseconds: 100), () {
         if (mounted && _controller == null) {
@@ -386,7 +387,7 @@ class _StreamingMessageContentState extends State<StreamingMessageContent> {
           try {
             setState(() {});
           } catch (e) {
-            print('⚠️ StreamingMessageContent: setState error in typing effect (ignored): $e');
+            Logger.warn('⚠️ StreamingMessageContent: setState error in typing effect (ignored): $e', tag: 'StreamingMessage');
             timer.cancel();
             _isTyping = false;
           }
@@ -404,7 +405,7 @@ class _StreamingMessageContentState extends State<StreamingMessageContent> {
           try {
             setState(() {});
           } catch (e) {
-            print('⚠️ StreamingMessageContent: setState error in typing complete (ignored): $e');
+            Logger.warn('⚠️ StreamingMessageContent: setState error in typing complete (ignored): $e', tag: 'StreamingMessage');
           }
         }
       }

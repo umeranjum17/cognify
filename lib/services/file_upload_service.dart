@@ -8,6 +8,7 @@ import 'package:uuid/uuid.dart';
 import '../database/database_service.dart';
 import '../models/source.dart';
 import '../utils/helpers.dart';
+import '../utils/logger.dart';
 import 'content_extractor.dart';
 import 'document_processor.dart';
 
@@ -31,10 +32,10 @@ class FileUploadService {
     
     try {
       await _db.deleteSource(sourceId);
-      print('📁 Deleted source: $sourceId');
+      Logger.info('📁 Deleted source: $sourceId', tag: 'FileUpload');
       return true;
     } catch (e) {
-      print('📁 Failed to delete source: $sourceId - $e');
+      Logger.error('📁 Failed to delete source: $sourceId - $e', tag: 'FileUpload');
       return false;
     }
   }
@@ -64,7 +65,7 @@ class FileUploadService {
     await _documentProcessor.initialize();
     _initialized = true;
     
-    print('📁 FileUploadService initialized');
+    Logger.info('📁 FileUploadService initialized', tag: 'FileUpload');
   }
 
   /// Pick and upload files from device storage
@@ -91,13 +92,13 @@ class FileUploadService {
       
       for (final file in result.files) {
         if (file.bytes == null) {
-          print('📁 File ${file.name} has no data, skipping');
+          Logger.warn('📁 File ${file.name} has no data, skipping', tag: 'FileUpload');
           continue;
         }
 
         // Check file size if limit is specified
         if (maxSizeInBytes != null && file.size > maxSizeInBytes) {
-          print('📁 File ${file.name} exceeds size limit (${Helpers.formatFileSize(file.size)}), skipping');
+          Logger.warn('📁 File ${file.name} exceeds size limit (${Helpers.formatFileSize(file.size)}), skipping', tag: 'FileUpload');
           continue;
         }
         
@@ -113,11 +114,11 @@ class FileUploadService {
         }
       }
       
-      print('📁 Successfully uploaded ${sources.length} files');
+      Logger.info('📁 Successfully uploaded ${sources.length} files', tag: 'FileUpload');
       return sources;
 
     } catch (e) {
-      print('📁 Failed to pick and upload files: $e');
+      Logger.error('📁 Failed to pick and upload files: $e', tag: 'FileUpload');
       return [];
     }
   }
@@ -151,13 +152,13 @@ class FileUploadService {
       );
       
       if (uploadedSource != null) {
-        print('📁 Successfully uploaded image: $fileName');
+        Logger.info('📁 Successfully uploaded image: $fileName', tag: 'FileUpload');
       }
 
       return uploadedSource;
 
     } catch (e) {
-      print('📁 Failed to pick and upload image: $e');
+      Logger.error('📁 Failed to pick and upload image: $e', tag: 'FileUpload');
       return null;
     }
   }
@@ -167,7 +168,7 @@ class FileUploadService {
     await _ensureInitialized();
     
     try {
-      print('📁 Downloading file from URL: $url');
+      Logger.info('📁 Downloading file from URL: $url', tag: 'FileUpload');
       
       // Create a source for URL processing
       final sourceId = _uuid.v4();
@@ -192,7 +193,7 @@ class FileUploadService {
       await _db.saveSource(source);
       
       // Actually fetch content using ContentExtractor
-      print('📁 Fetching content from URL: $url');
+      Logger.info('📁 Fetching content from URL: $url', tag: 'FileUpload');
       final contentResult = await _contentExtractor.extractFromUrl(url);
       
       if (contentResult.containsKey('error')) {
@@ -245,11 +246,11 @@ class FileUploadService {
       
       await _db.saveSource(updatedSource);
       
-      print('📁 URL content fetched and stored successfully: $url');
+      Logger.info('📁 URL content fetched and stored successfully: $url', tag: 'FileUpload');
       return updatedSource;
 
     } catch (e) {
-      print('📁 Failed to upload from URL: $url - $e');
+      Logger.error('📁 Failed to upload from URL: $url - $e', tag: 'FileUpload');
       return null;
     }
   }
@@ -399,7 +400,7 @@ class FileUploadService {
       // Save initial source
       await _db.saveSource(source);
       
-      print('📁 Processing file: $fileName (${Helpers.formatFileSize(fileData.length)})');
+      Logger.info('📁 Processing file: $fileName (${Helpers.formatFileSize(fileData.length)})', tag: 'FileUpload');
       
       // Process the document
       final processingResult = await _documentProcessor.processDocument(source, fileData);
@@ -426,11 +427,11 @@ class FileUploadService {
         });
       }
       
-      print('📁 File processing completed: $fileName');
+      Logger.info('📁 File processing completed: $fileName', tag: 'FileUpload');
       return updatedSource;
 
     } catch (e) {
-      print('📁 Failed to process uploaded file: $fileName - $e');
+      Logger.error('📁 Failed to process uploaded file: $fileName - $e', tag: 'FileUpload');
       
       // Update source with error
       try {
@@ -451,7 +452,7 @@ class FileUploadService {
         await _db.saveSource(errorSource);
         return errorSource;
       } catch (saveError) {
-        print('📁 Failed to save error source: $saveError');
+        Logger.error('📁 Failed to save error source: $saveError', tag: 'FileUpload');
         return null;
       }
     }

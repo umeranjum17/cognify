@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
+import '../utils/logger.dart';
+
 class UserService {
   static final UserService _instance = UserService._internal();
   static const String _userIdKey = 'cognify_user_id';
@@ -37,7 +39,7 @@ class UserService {
       }
       return defaultValue;
     } catch (e) {
-      print('❌ [USER] Error getting preference $key: $e');
+      Logger.error('❌ [USER] Error getting preference $key: $e', tag: 'UserService');
       return defaultValue;
     }
   }
@@ -50,7 +52,7 @@ class UserService {
       }
       return defaultValue;
     } catch (e) {
-      print('❌ [USER] Error getting stat $key: $e');
+      Logger.error('❌ [USER] Error getting stat $key: $e', tag: 'UserService');
       return defaultValue;
     }
   }
@@ -71,10 +73,10 @@ class UserService {
         await prefs.setString(_userIdKey, _currentUserId!);
         await _saveUserProfile();
         
-        print('📥 [USER] Imported user data');
+        Logger.info('📥 [USER] Imported user data', tag: 'UserService');
       }
     } catch (e) {
-      print('❌ [USER] Error importing user data: $e');
+      Logger.error('❌ [USER] Error importing user data: $e', tag: 'UserService');
     }
   }
 
@@ -91,12 +93,12 @@ class UserService {
     
     if (existingUserId != null && existingUserId.isNotEmpty) {
       _currentUserId = existingUserId;
-      print('👤 [USER] Retrieved existing user ID: $_currentUserId');
+      Logger.info('👤 [USER] Retrieved existing user ID: $_currentUserId', tag: 'UserService');
     } else {
       // Generate new user ID
       _currentUserId = _uuid.v4();
       await prefs.setString(_userIdKey, _currentUserId!);
-      print('👤 [USER] Generated new user ID: $_currentUserId');
+      Logger.info('👤 [USER] Generated new user ID: $_currentUserId', tag: 'UserService');
     }
 
     // Load user profile
@@ -115,9 +117,9 @@ class UserService {
       _currentUserId = null;
       _userProfile = null;
       
-      print('🔄 [USER] Reset user data');
+      Logger.info('🔄 [USER] Reset user data', tag: 'UserService');
     } catch (e) {
-      print('❌ [USER] Error resetting user data: $e');
+      Logger.error('❌ [USER] Error resetting user data: $e', tag: 'UserService');
     }
   }
 
@@ -129,7 +131,7 @@ class UserService {
         await _saveUserProfile();
       }
     } catch (e) {
-      print('❌ [USER] Error updating last active: $e');
+      Logger.error('❌ [USER] Error updating last active: $e', tag: 'UserService');
     }
   }
 
@@ -143,10 +145,10 @@ class UserService {
         };
         _userProfile!['lastActiveAt'] = DateTime.now().toIso8601String();
         await _saveUserProfile();
-        print('⚙️ [USER] Updated user preferences');
+        Logger.info('⚙️ [USER] Updated user preferences', tag: 'UserService');
       }
     } catch (e) {
-      print('❌ [USER] Error updating preferences: $e');
+      Logger.error('❌ [USER] Error updating preferences: $e', tag: 'UserService');
     }
   }
 
@@ -172,10 +174,10 @@ class UserService {
         
         _userProfile!['lastActiveAt'] = DateTime.now().toIso8601String();
         await _saveUserProfile();
-        print('📊 [USER] Updated user stats');
+        Logger.info('📊 [USER] Updated user stats', tag: 'UserService');
       }
     } catch (e) {
-      print('❌ [USER] Error updating stats: $e');
+      Logger.error('❌ [USER] Error updating stats: $e', tag: 'UserService');
     }
   }
 
@@ -187,7 +189,7 @@ class UserService {
       
       if (profileJson != null) {
         _userProfile = jsonDecode(profileJson);
-        print('👤 [USER] Loaded user profile from storage');
+        Logger.info('👤 [USER] Loaded user profile from storage', tag: 'UserService');
       } else {
         // Create default profile
         _userProfile = {
@@ -206,10 +208,10 @@ class UserService {
           },
         };
         await _saveUserProfile();
-        print('👤 [USER] Created default user profile');
+        Logger.info('👤 [USER] Created default user profile', tag: 'UserService');
       }
     } catch (e) {
-      print('❌ [USER] Error loading user profile: $e');
+      Logger.error('❌ [USER] Error loading user profile: $e', tag: 'UserService');
     }
   }
 
@@ -221,7 +223,7 @@ class UserService {
         await prefs.setString(_userProfileKey, jsonEncode(_userProfile));
       }
     } catch (e) {
-      print('❌ [USER] Error saving user profile: $e');
+      Logger.error('❌ [USER] Error saving user profile: $e', tag: 'UserService');
     }
   }
 }

@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 
 import '../config/app_config.dart';
 import '../models/message.dart';
+import '../utils/logger.dart';
 import 'llm_service.dart';
 import 'openrouter_client.dart';
 import 'trending_service.dart';
@@ -28,7 +29,7 @@ class EnhancedContentProcessor {
     await _ensureInitialized();
     
     try {
-      print('🤖 EnhancedContentProcessor: Chat completions with plugins');
+      Logger.info('🤖 EnhancedContentProcessor: Chat completions with plugins', tag: 'ContentProcessor');
       
       // Convert messages to OpenRouter format
       final openRouterMessages = messages.map((msg) => {
@@ -44,10 +45,10 @@ class EnhancedContentProcessor {
         maxTokens: 2000,
       );
       
-      print('✅ EnhancedContentProcessor: Chat completion response received');
+      Logger.info('✅ EnhancedContentProcessor: Chat completion response received', tag: 'ContentProcessor');
       return response;
     } catch (error) {
-      print('❌ EnhancedContentProcessor: Chat completions error: $error');
+      Logger.error('❌ EnhancedContentProcessor: Chat completions error: $error', tag: 'ContentProcessor');
       return {
         'error': error.toString(),
         'choices': [],
@@ -64,7 +65,7 @@ class EnhancedContentProcessor {
       final apiKey = await AppConfig().openRouterApiKey;
       return apiKey != null && apiKey.isNotEmpty;
     } catch (error) {
-      print('❌ Service health check failed: $error');
+      Logger.error('❌ Service health check failed: $error', tag: 'ContentProcessor');
       return false;
     }
   }
@@ -98,7 +99,7 @@ Keywords:''';
 
       return keywords.take(10).toList();
     } catch (error) {
-      print('❌ Failed to extract keywords: $error');
+      Logger.error('❌ Failed to extract keywords: $error', tag: 'ContentProcessor');
       // Return simple fallback keywords
       return _extractSimpleKeywords(text);
     }
@@ -158,7 +159,7 @@ Format your response as a clear, actionable research prompt.''';
         'generated_at': DateTime.now().toIso8601String(),
       };
     } catch (error) {
-      print('❌ Failed to generate dynamic prompt: $error');
+      Logger.error('❌ Failed to generate dynamic prompt: $error', tag: 'ContentProcessor');
       return {
         'success': false,
         'error': error.toString(),
@@ -182,7 +183,7 @@ Format your response as a clear, actionable research prompt.''';
         throw Exception('Failed to fetch models: ${modelsResponse['error']}');
       }
     } catch (error) {
-      print('❌ Failed to get available models: $error');
+      Logger.error('❌ Failed to get available models: $error', tag: 'ContentProcessor');
       return [
         'mistralai/mistral-7b-instruct:free',
         'deepseek/deepseek-chat:free',
@@ -225,7 +226,7 @@ Format your response as a clear, actionable research prompt.''';
         throw Exception('Failed to fetch pricing: Invalid response structure');
       }
     } catch (error) {
-      print('❌ Failed to get model pricing: $error');
+      Logger.error('❌ Failed to get model pricing: $error', tag: 'ContentProcessor');
       return {}; // Return empty map on error
     }
   }
@@ -253,7 +254,7 @@ Format your response as a clear, actionable research prompt.''';
         'timestamp': DateTime.now().toIso8601String(),
       };
     } catch (error) {
-      print('❌ Failed to get service config: $error');
+      Logger.error('❌ Failed to get service config: $error', tag: 'ContentProcessor');
       return {
         'success': false,
         'error': error.toString(),
@@ -283,7 +284,7 @@ Format your response as a clear, actionable research prompt.''';
         'lastUpdated': DateTime.now().toIso8601String(),
       };
     } catch (e) {
-      print('❌ Error fetching trending topics: $e');
+      Logger.error('❌ Error fetching trending topics: $e', tag: 'ContentProcessor');
       return {
         'success': false,
         'topics': [],
@@ -299,7 +300,7 @@ Format your response as a clear, actionable research prompt.''';
     await _llmService.initialize();
     await _openRouterClient.initialize();
     _initialized = true;
-    print('🚀 EnhancedContentProcessor initialized with direct APIs');
+    Logger.info('🚀 EnhancedContentProcessor initialized with direct APIs', tag: 'ContentProcessor');
   }
 
   /// Enhanced text rewriting using LLM
@@ -326,7 +327,7 @@ Rewritten text:''';
       final content = response['choices']?[0]?['message']?['content'] ?? '';
       return content.isNotEmpty ? content : text;
     } catch (error) {
-      print('❌ Failed to rewrite text: $error');
+      Logger.error('❌ Failed to rewrite text: $error', tag: 'ContentProcessor');
       return text; // Return original text on failure
     }
   }
@@ -344,7 +345,7 @@ Rewritten text:''';
     await _ensureInitialized();
     
     try {
-      print('🤖 EnhancedContentProcessor: Source-grounded chat completions');
+      Logger.info('🤖 EnhancedContentProcessor: Source-grounded chat completions', tag: 'ContentProcessor');
       
       // Convert messages to OpenRouter format
       final openRouterMessages = messages.map((msg) => {
@@ -360,10 +361,10 @@ Rewritten text:''';
         maxTokens: 2000,
       );
       
-      print('✅ EnhancedContentProcessor: Source-grounded chat completion response received');
+      Logger.info('✅ EnhancedContentProcessor: Source-grounded chat completion response received', tag: 'ContentProcessor');
       return response;
     } catch (error) {
-      print('❌ EnhancedContentProcessor: Source-grounded chat error: $error');
+      Logger.error('❌ EnhancedContentProcessor: Source-grounded chat error: $error', tag: 'ContentProcessor');
       return {
         'error': error.toString(),
         'choices': [],
@@ -388,7 +389,7 @@ Rewritten text:''';
         'timestamp': DateTime.now().toIso8601String(),
       };
     } catch (error) {
-      print('❌ Failed to update feature flags: $error');
+      Logger.error('❌ Failed to update feature flags: $error', tag: 'ContentProcessor');
       return {
         'success': false,
         'error': error.toString(),

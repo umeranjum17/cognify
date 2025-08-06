@@ -34,11 +34,7 @@ void main() async {
   WebViewPlatform.instance ??= AndroidWebViewPlatform();
 
   // Initialize logger with appropriate verbosity
-  Logger.initialize();
-  
-  // Always disable verbose logging for better performance
-  Logger.setVerboseMode(false);
-  Logger.info('Verbose logging disabled for better performance');
+  Logger.setLevel(LogLevel.info);
 
   // Initialize services
   await ServicesManager().initialize();
@@ -53,7 +49,7 @@ void main() async {
 // Resilient background service initialization with graceful error handling
 Future<void> initializeServiceSafely() async {
   try {
-    debugPrint('🚀 Initializing background service...');
+    Logger.info('🚀 Initializing background service...', tag: 'BackgroundService');
 
     final service = FlutterBackgroundService();
 
@@ -75,22 +71,22 @@ Future<void> initializeServiceSafely() async {
       ),
     );
 
-    debugPrint('✅ Background service configured successfully');
+    Logger.info('✅ Background service configured successfully', tag: 'BackgroundService');
 
     // Only start service on explicit user action, not automatically
-    debugPrint('📋 Background service ready - will start when needed');
+    Logger.info('📋 Background service ready - will start when needed', tag: 'BackgroundService');
 
   } catch (e, stackTrace) {
-    debugPrint('❌ Failed to initialize background service: $e');
-    debugPrint('📍 Stack trace: $stackTrace');
+    Logger.error('❌ Failed to initialize background service: $e', tag: 'BackgroundService');
+    Logger.error('📍 Stack trace: $stackTrace', tag: 'BackgroundService');
 
     // Log the specific error for debugging
     if (e.toString().contains('permission')) {
-      debugPrint('🔐 Permission-related error - app will continue without background functionality');
+      Logger.warn('🔐 Permission-related error - app will continue without background functionality', tag: 'BackgroundService');
     } else if (e.toString().contains('service')) {
-      debugPrint('⚙️ Service configuration error - app will continue without background functionality');
+      Logger.warn('⚙️ Service configuration error - app will continue without background functionality', tag: 'BackgroundService');
     } else {
-      debugPrint('❓ Unknown error - app will continue without background functionality');
+      Logger.warn('❓ Unknown error - app will continue without background functionality', tag: 'BackgroundService');
     }
 
     // Critical: Don't rethrow - allow app to continue without background service
@@ -100,10 +96,10 @@ Future<void> initializeServiceSafely() async {
 
 @pragma('vm:entry-point')
 void onStart(ServiceInstance service) async {
-  print('🚀 Background service started');
+  Logger.info('🚀 Background service started', tag: 'BackgroundService');
 
   // Background service will maintain network connections
-  print('🔧 Initializing background networking...');
+  Logger.info('🔧 Initializing background networking...', tag: 'BackgroundService');
 
   // WebSocket connection for real-time communication
   WebSocketChannel? channel;
@@ -118,7 +114,7 @@ void onStart(ServiceInstance service) async {
 
   scheduleReconnect = () {
     if (reconnectAttempts >= maxReconnectAttempts) {
-      print('🚨 Max WebSocket reconnect attempts reached in background');
+      Logger.warn('🚨 Max WebSocket reconnect attempts reached in background', tag: 'BackgroundService');
       return;
     }
 
@@ -127,7 +123,7 @@ void onStart(ServiceInstance service) async {
 
     reconnectTimer = Timer(delay, () {
       reconnectAttempts++;
-      print('🔄 Attempting WebSocket reconnect in background (attempt $reconnectAttempts)');
+      Logger.info('🔄 Attempting WebSocket reconnect in background (attempt $reconnectAttempts)', tag: 'BackgroundService');
       connectWebSocket();
     });
   };
@@ -138,12 +134,12 @@ void onStart(ServiceInstance service) async {
       const wsUrl = 'wss://echo.websocket.events'; // or your server's WebSocket URL
       channel = WebSocketChannel.connect(Uri.parse(wsUrl));
 
-      print('📡 WebSocket connected in background');
+      Logger.info('📡 WebSocket connected in background', tag: 'BackgroundService');
       reconnectAttempts = 0;
 
       channel!.stream.listen(
         (message) {
-          print('📨 Background received: $message');
+          Logger.debug('📨 Background received: $message', tag: 'BackgroundService');
 
           // Update notification with latest activity
           if (service is AndroidServiceInstance) {
@@ -154,17 +150,17 @@ void onStart(ServiceInstance service) async {
           }
         },
         onError: (error) {
-          print('❌ Background WebSocket error: $error');
+          Logger.error('❌ Background WebSocket error: $error', tag: 'BackgroundService');
           scheduleReconnect();
         },
         onDone: () {
-          print('🔒 Background WebSocket closed');
+          Logger.info('🔒 Background WebSocket closed', tag: 'BackgroundService');
           scheduleReconnect();
         },
       );
 
     } catch (e) {
-      print('❌ Failed to connect WebSocket in background: $e');
+      Logger.error('❌ Failed to connect WebSocket in background: $e', tag: 'BackgroundService');
       scheduleReconnect();
     }
   };
@@ -186,7 +182,7 @@ void onStart(ServiceInstance service) async {
             'activeStreams': activeStreams,
           }));
         } catch (e) {
-          print('❌ Failed to send heartbeat: $e');
+          Logger.error('❌ Failed to send heartbeat: $e', tag: 'BackgroundService');
         }
 
         // Update notification with simple status
@@ -195,20 +191,20 @@ void onStart(ServiceInstance service) async {
           content: 'Active streams: $activeStreams | ${DateTime.now().toLocal().toString().split('.')[0]}',
         );
 
-        print('💓 Background heartbeat sent - Active streams: $activeStreams');
+        Logger.debug('💓 Background heartbeat sent - Active streams: $activeStreams', tag: 'BackgroundService');
       }
     }
   });
 
   // Handle service stop
   service.on('stopService').listen((event) {
-    print('🛑 Background service stopping...');
+    Logger.info('🛑 Background service stopping...', tag: 'BackgroundService');
     channel?.sink.close();
     reconnectTimer?.cancel();
     service.stopSelf();
   });
 
-  print('✅ Background service fully initialized');
+  Logger.info('✅ Background service fully initialized', tag: 'BackgroundService');
 }
 
 class CognifyApp extends StatefulWidget {
@@ -259,13 +255,13 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
                   final router = GoRouter.of(context);
                   final currentLocation = GoRouterState.of(context).uri.toString();
 
-                  print('🔙 Back button pressed. Current location: $currentLocation');
-                  print('🔙 Can pop: ${router.canPop()}');
+                  Logger.debug('🔙 Back button pressed. Current location: $currentLocation', tag: 'Navigation');
+                  Logger.debug('🔙 Can pop: ${router.canPop()}', tag: 'Navigation');
 
                   // Check if we're on the home screen (root route)
                   if (currentLocation == '/' || currentLocation == '/home') {
                     // If we're on the home screen, show exit confirmation
-                    print('🔙 On home screen, showing exit confirmation...');
+                    Logger.debug('🔙 On home screen, showing exit confirmation...', tag: 'Navigation');
                     final shouldExit = await showDialog<bool>(
                       context: context,
                       builder: (context) => AlertDialog(
@@ -284,16 +280,16 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
                       ),
                     );
                     if (shouldExit == true) {
-                      print('🔙 Exiting app...');
+                      Logger.info('🔙 Exiting app...', tag: 'Navigation');
                       SystemNavigator.pop();
                     }
                   } else if (router.canPop()) {
                     // If we can pop, do it
-                    print('🔙 Popping route...');
+                    Logger.debug('🔙 Popping route...', tag: 'Navigation');
                     router.pop();
                   } else {
                     // Fallback: navigate to home
-                    print('🔙 Navigating to home...');
+                    Logger.debug('🔙 Navigating to home...', tag: 'Navigation');
                     router.go('/');
                   }
                 },
@@ -342,9 +338,9 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
     // Normalize and delegate router construction to AppRouter to keep main.dart lean
     final defaultRouteName = WidgetsBinding.instance.platformDispatcher.defaultRouteName;
     final initialLocation = AppRouter.normalizeInitialLocation(defaultRouteName);
-    print('🚀 Initial location (normalized): $initialLocation');
-    print('🚀 Base URI: ${Uri.base}');
-    print('🚀 defaultRouteName: $defaultRouteName');
+    Logger.debug('🚀 Initial location (normalized): $initialLocation', tag: 'AppInit');
+    Logger.debug('🚀 Base URI: ${Uri.base}', tag: 'AppInit');
+    Logger.debug('🚀 defaultRouteName: $defaultRouteName', tag: 'AppInit');
 
     _router = AppRouter.createRouter(initialLocation: initialLocation);
   }
@@ -355,9 +351,9 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
     // Initialize user service
     try {
       final userId = await UserService().initializeUser();
-      print('👤 [USER] Initialized user with ID: $userId');
+      Logger.info('👤 [USER] Initialized user with ID: $userId', tag: 'UserService');
     } catch (e) {
-      print('❌ [USER] Error initializing user service: $e');
+      Logger.error('❌ [USER] Error initializing user service: $e', tag: 'UserService');
     }
 
     // Feature flag: enable RevenueCat only in non-dev builds
@@ -370,12 +366,12 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
         } else {
           await RevenueCatService.instance.initialize();
         }
-        print('✅ [RevenueCat] Initialized (feature flag enabled)');
+        Logger.info('✅ [RevenueCat] Initialized (feature flag enabled)', tag: 'RevenueCat');
       } else {
-        print('ℹ️ [RevenueCat] Skipped (feature flag disabled for dev)');
+        Logger.info('ℹ️ [RevenueCat] Skipped (feature flag disabled for dev)', tag: 'RevenueCat');
       }
     } catch (e) {
-      print('❌ [RevenueCat] Initialization error: $e');
+      Logger.error('❌ [RevenueCat] Initialization error: $e', tag: 'RevenueCat');
     }
 
     // Check for shared content and redirect if needed

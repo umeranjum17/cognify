@@ -5,6 +5,8 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
+import '../utils/logger.dart';
+
 /// Image-based Mermaid widget that uses server-side generation
 /// Replaces WebView-based implementation for consistent rendering
 class MermaidImageWidget extends StatefulWidget {
@@ -413,10 +415,10 @@ class _MermaidImageWidgetState extends State<MermaidImageWidget> {
       final mermaidTheme = isDarkMode ? 'dark' : 'default';
 
       // Debug logging for theme detection
-      print('🎨 Flutter theme detection:');
-      print('  - Theme brightness: ${theme.brightness}');
-      print('  - isDarkMode: $isDarkMode');
-      print('  - mermaidTheme: $mermaidTheme');
+      Logger.debug('🎨 Flutter theme detection:', tag: 'MermaidWidget');
+      Logger.debug('  - Theme brightness: ${theme.brightness}', tag: 'MermaidWidget');
+      Logger.debug('  - isDarkMode: $isDarkMode', tag: 'MermaidWidget');
+      Logger.debug('  - mermaidTheme: $mermaidTheme', tag: 'MermaidWidget');
 
       // Create the mermaid configuration with theme
       final mermaidConfig = {
@@ -454,7 +456,7 @@ class _MermaidImageWidgetState extends State<MermaidImageWidget> {
         }
       }
 
-      print('🌐 Fetching ${widget.format.toUpperCase()} from mermaid.ink: ${url.substring(0, url.length > 100 ? 100 : url.length)}...');
+      Logger.info('🌐 Fetching ${widget.format.toUpperCase()} from mermaid.ink: ${url.substring(0, url.length > 100 ? 100 : url.length)}...', tag: 'MermaidWidget');
 
       final response = await http.get(
         Uri.parse(url),
@@ -473,11 +475,11 @@ class _MermaidImageWidgetState extends State<MermaidImageWidget> {
           _error = null;
         });
         
-        print('✅ ${widget.format.toUpperCase()} received from mermaid.ink (${response.bodyBytes.length} bytes)');
+        Logger.info('✅ ${widget.format.toUpperCase()} received from mermaid.ink (${response.bodyBytes.length} bytes)', tag: 'MermaidWidget');
       } else {
         // Try fallback without query parameters
         final fallbackUrl = 'https://mermaid.ink/$endpoint/$encodedConfig';
-        print('🔄 Trying fallback URL: ${fallbackUrl.substring(0, fallbackUrl.length > 100 ? 100 : fallbackUrl.length)}...');
+        Logger.info('🔄 Trying fallback URL: ${fallbackUrl.substring(0, fallbackUrl.length > 100 ? 100 : fallbackUrl.length)}...', tag: 'MermaidWidget');
 
         final fallbackResponse = await http.get(
           Uri.parse(fallbackUrl),
@@ -496,7 +498,7 @@ class _MermaidImageWidgetState extends State<MermaidImageWidget> {
             _error = null;
           });
           
-          print('✅ ${widget.format.toUpperCase()} received from mermaid.ink fallback (${fallbackResponse.bodyBytes.length} bytes)');
+          Logger.info('✅ ${widget.format.toUpperCase()} received from mermaid.ink fallback (${fallbackResponse.bodyBytes.length} bytes)', tag: 'MermaidWidget');
         } else {
           throw Exception('Mermaid.ink API error: ${response.statusCode} ${response.reasonPhrase}');
         }

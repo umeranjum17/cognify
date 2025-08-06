@@ -1,6 +1,7 @@
 import 'package:hive_flutter/hive_flutter.dart';
 
 import '../models/source.dart';
+import '../utils/logger.dart';
 
 /// Local database service that replaces the server's JSON file storage
 /// Uses Hive for all storage (web-compatible)
@@ -73,14 +74,14 @@ class DatabaseService {
         } else if (value is Map<String, dynamic>) {
           sourceMap = value;
         } else {
-          print('Error parsing source: unexpected type ${value.runtimeType}');
+          Logger.error('Error parsing source: unexpected type ${value.runtimeType}', tag: 'Database');
           continue;
         }
         
         final source = Source.fromMap(sourceMap);
         sources.add(source);
       } catch (e) {
-        print('Error parsing source: $e');
+        Logger.error('Error parsing source: $e', tag: 'Database');
       }
     }
 
@@ -164,9 +165,9 @@ class DatabaseService {
       _cache = await Hive.openBox(_cacheBox);
 
       _initialized = true;
-      print('✅ [DATABASE] DatabaseService initialized successfully');
+      Logger.info('✅ [DATABASE] DatabaseService initialized successfully', tag: 'Database');
     } catch (e) {
-      print('❌ [DATABASE] Failed to initialize: $e');
+      Logger.error('❌ [DATABASE] Failed to initialize: $e', tag: 'Database');
       rethrow;
     }
   }

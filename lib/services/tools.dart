@@ -9,7 +9,6 @@ import '../utils/logger.dart';
 /// Enhanced Brave Search Tool
 class BraveSearchEnhancedTool extends Tool {
   final BraveSearchService _braveSearchService = BraveSearchService();
-  static final ScopedLogger _logger = Logger.scope('BraveSearchEnhanced');
 
   BraveSearchEnhancedTool() : super(
     name: 'brave_search_enhanced',
@@ -30,13 +29,13 @@ class BraveSearchEnhancedTool extends Tool {
       final query = input['query'] as String;
       final count = input['count'] as int? ?? 5;
       
-      _logger.debug('Searching for "$query" with count $count');
+      Logger.debug('Searching for "$query" with count $count', tag: 'BraveSearchEnhanced');
       final results = await _braveSearchService.search(
         query,
         count: count,
         apiKey: (input['apiKey'] as String?) ?? (input['braveApiKey'] as String?),
       );
-      _logger.debug('Got ${results.length} results');
+      Logger.debug('Got ${results.length} results', tag: 'BraveSearchEnhanced');
       
       // Return results without content extraction - content will be extracted separately
       final response = {
@@ -48,10 +47,10 @@ class BraveSearchEnhancedTool extends Tool {
         'timestamp': DateTime.now().toIso8601String()
       };
       
-      _logger.trace('Response structure: ${response.keys.toList()}');
+      Logger.trace('Response structure: ${response.keys.toList()}', tag: 'BraveSearchEnhanced');
       return response;
     } catch (e) {
-      _logger.error('Enhanced brave search failed', e);
+      Logger.error('Enhanced brave search failed: $e', tag: 'BraveSearchEnhanced');
       return {
         'error': "Enhanced search failed",
         'message': e.toString(),
@@ -105,7 +104,7 @@ class BraveSearchTool extends Tool {
       
       return response;
     } catch (e) {
-      print('Brave search tool failed: $e');
+      Logger.error('Brave search tool failed: $e', tag: 'Tools');
       return {
         'error': "Search failed",
         'message': e.toString(),
@@ -164,7 +163,7 @@ class BrowserRoadmapTool extends Tool {
         'data': roadmap
       };
     } catch (e) {
-      print('Browser roadmap tool failed: $e');
+      Logger.error('Browser roadmap tool failed: $e', tag: 'Tools');
       return {
         'type': 'error',
         'error': e.toString(),
@@ -197,13 +196,13 @@ class ImageSearchTool extends Tool {
       final query = input['query'] as String;
       final count = input['count'] as int? ?? 5;
       
-      print('🖼️ Image search tool: Searching for "$query" with count $count');
+      Logger.debug('🖼️ Image search tool: Searching for "$query" with count $count', tag: 'Tools');
       final results = await _braveSearchService.searchImages(
         query,
         count: count,
         apiKey: (input['apiKey'] as String?) ?? (input['braveApiKey'] as String?),
       );
-      print('🖼️ Image search tool: Got ${results['images']?.length ?? 0} image results');
+      Logger.debug('🖼️ Image search tool: Got ${results['images']?.length ?? 0} image results', tag: 'Tools');
       
       final response = {
         'searchTerms': query,
@@ -212,12 +211,12 @@ class ImageSearchTool extends Tool {
         'timestamp': DateTime.now().toIso8601String()
       };
       
-      print('🖼️ Image search tool: Returning ${response['totalImages']} images');
-      print('🖼️ Image search tool: Response structure: ${response.keys.toList()}');
+      Logger.debug('🖼️ Image search tool: Returning ${response['totalImages']} images', tag: 'Tools');
+      Logger.debug('🖼️ Image search tool: Response structure: ${response.keys.toList()}', tag: 'Tools');
       
       return response;
     } catch (e) {
-      print('Image search tool failed: $e');
+      Logger.error('Image search tool failed: $e', tag: 'Tools');
       return {
         'error': "Image search failed",
         'message': e.toString(),

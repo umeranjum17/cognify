@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../services/cost_service.dart';
 import '../services/session_cost_service.dart';
+import '../utils/logger.dart';
 
 class SessionCostBottomSheet extends StatefulWidget {
   final SessionCostService sessionCostService;
@@ -537,7 +538,7 @@ class _SessionCostBottomSheetState extends State<SessionCostBottomSheet> {
       setState(() {
         isLoading = false;
       });
-      print('Error loading session data: $e');
+      Logger.error('Error loading session data: $e', tag: 'SessionCost');
     }
   }
 }

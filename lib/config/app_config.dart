@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../database/database_service.dart';
 import '../providers/oauth_auth_provider.dart';
+import '../utils/logger.dart';
 
 /// Application configuration management
 class AppConfig {
@@ -102,7 +103,7 @@ class AppConfig {
         return userApiKey;
       }
     } catch (e) {
-      print('Error getting OAuth API key: $e');
+      Logger.error('Error getting OAuth API key: $e', tag: 'AppConfig');
     }
 
     // Fallback to database storage

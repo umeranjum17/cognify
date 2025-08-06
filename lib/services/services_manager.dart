@@ -2,6 +2,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 
 import '../config/app_config.dart';
 import '../database/database_service.dart';
+import '../utils/logger.dart';
 import 'content_extractor.dart';
 import 'cost_calculation_service.dart';
 import 'document_processor.dart';
@@ -35,16 +36,16 @@ class ServicesManager {
   bool get isInitialized => _initialized;
   
   Future<void> dispose() async {
-    print('🧹 Disposing ServicesManager...');
+    Logger.info('🧹 Disposing ServicesManager...', tag: 'ServicesManager');
 
     try {
       await databaseService.dispose();
       await Hive.close();
 
       _initialized = false;
-      print('✅ ServicesManager disposed successfully');
+      Logger.info('✅ ServicesManager disposed successfully', tag: 'ServicesManager');
     } catch (e) {
-      print('❌ Error disposing ServicesManager: $e');
+      Logger.error('❌ Error disposing ServicesManager: $e', tag: 'ServicesManager');
     }
   }
   
@@ -72,62 +73,62 @@ class ServicesManager {
     if (_initialized) return;
     
     try {
-      print('🚀 Initializing ServicesManager...');
+      Logger.info('🚀 Initializing ServicesManager...', tag: 'ServicesManager');
 
       // Initialize Hive first
       await Hive.initFlutter();
-      print('✅ Hive initialized');
+      Logger.info('✅ Hive initialized', tag: 'ServicesManager');
 
       // Initialize core services
       databaseService = DatabaseService();
       await databaseService.initialize();
-      print('✅ DatabaseService initialized');
+      Logger.info('✅ DatabaseService initialized', tag: 'ServicesManager');
 
       appConfig = AppConfig();
       await appConfig.initialize();
-      print('✅ AppConfig initialized');
+      Logger.info('✅ AppConfig initialized', tag: 'ServicesManager');
       
       // Initialize document processing services
       documentProcessor = DocumentProcessor();
       await documentProcessor.initialize();
-      print('✅ DocumentProcessor initialized');
+      Logger.info('✅ DocumentProcessor initialized', tag: 'ServicesManager');
       
       fileUploadService = FileUploadService();
       await fileUploadService.initialize();
-      print('✅ FileUploadService initialized');
+      Logger.info('✅ FileUploadService initialized', tag: 'ServicesManager');
 
       contentExtractor = ContentExtractor();
       await contentExtractor.initialize();
-      print('✅ ContentExtractor initialized');
+      Logger.info('✅ ContentExtractor initialized', tag: 'ServicesManager');
 
       // Initialize user service
       userService = UserService();
       // Note: UserService doesn't have initialize method yet
-      print('✅ UserService initialized');
+      Logger.info('✅ UserService initialized', tag: 'ServicesManager');
 
       // Initialize LLM services
       llmService = LLMService();
       await llmService.initialize();
-      print('✅ LLMService initialized');
+      Logger.info('✅ LLMService initialized', tag: 'ServicesManager');
 
       promptService = PromptService();
       await promptService.initialize();
-      print('✅ PromptService initialized');
+      Logger.info('✅ PromptService initialized', tag: 'ServicesManager');
 
       costCalculationService = CostCalculationService();
       await costCalculationService.initialize();
-      print('✅ CostCalculationService initialized');
+      Logger.info('✅ CostCalculationService initialized', tag: 'ServicesManager');
 
       // Initialize unified API service (includes agent system)
       unifiedApiService = UnifiedApiService();
       await unifiedApiService.initialize();
-      print('✅ UnifiedApiService initialized');
+      Logger.info('✅ UnifiedApiService initialized', tag: 'ServicesManager');
 
       _initialized = true;
-      print('🎉 ServicesManager initialization completed successfully');
+      Logger.info('🎉 ServicesManager initialization completed successfully', tag: 'ServicesManager');
       
     } catch (e) {
-      print('❌ ServicesManager initialization failed: $e');
+      Logger.error('❌ ServicesManager initialization failed: $e', tag: 'ServicesManager');
       rethrow;
     }
   }

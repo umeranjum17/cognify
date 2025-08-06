@@ -994,7 +994,7 @@ class _EditorScreenState extends State<EditorScreen> {
                                   : AppColors.lightText,
                             ),
                             onPressed: () {
-                              print('📎 Attachment button pressed');
+                              Logger.debug('📎 Attachment button pressed', tag: 'EditorScreen');
                               _showAttachmentOptions();
                             },
                             tooltip: 'Attach files',
@@ -1774,11 +1774,11 @@ class _EditorScreenState extends State<EditorScreen> {
         child: InkWell(
           onTap: () async {
             try {
-              print('🔗 Attempting to open source URL from expanded card: ${source.url}');
+              Logger.debug('🔗 Attempting to open source URL from expanded card: ${source.url}', tag: 'EditorScreen');
               final uri = Uri.parse(source.url);
 
               if (await canLaunchUrl(uri)) {
-                print('🔗 URL can be launched, opening in external browser...');
+                Logger.debug('🔗 URL can be launched, opening in external browser...', tag: 'EditorScreen');
                 await launchUrl(
                   uri,
                   mode: LaunchMode.externalApplication,
@@ -1786,9 +1786,9 @@ class _EditorScreenState extends State<EditorScreen> {
                     enableJavaScript: true,
                   ),
                 );
-                print('🔗 URL launched successfully');
+                Logger.debug('🔗 URL launched successfully', tag: 'EditorScreen');
               } else {
-                print('❌ Cannot launch URL: ${source.url}');
+                Logger.warn('❌ Cannot launch URL: ${source.url}', tag: 'EditorScreen');
                 // Show user feedback
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -1800,7 +1800,7 @@ class _EditorScreenState extends State<EditorScreen> {
                 }
               }
             } catch (e) {
-              print('❌ Error launching URL: $e');
+              Logger.error('❌ Error launching URL: $e', tag: 'EditorScreen');
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
@@ -1892,16 +1892,16 @@ class _EditorScreenState extends State<EditorScreen> {
   Future<void> _checkModelCapabilities() async {
     try {
       final currentModel = _getModelForCurrentMode();
-      print('🔍 Checking capabilities for model: $currentModel');
+      Logger.debug('🔍 Checking capabilities for model: $currentModel', tag: 'EditorScreen');
 
       try {
         final capabilities = await ModelService.getModelCapabilities(currentModel);
         setState(() {
           _currentModelCapabilities = capabilities;
         });
-        print('🔍 Model capabilities: supportsImages=${capabilities.supportsImages}, supportsFiles=${capabilities.supportsFiles}, inputModalities=${capabilities.inputModalities}');
+        Logger.debug('🔍 Model capabilities: supportsImages=${capabilities.supportsImages}, supportsFiles=${capabilities.supportsFiles}, inputModalities=${capabilities.inputModalities}', tag: 'EditorScreen');
       } catch (e) {
-        print('🔍 Failed to get capabilities from API: $e');
+        Logger.warn('🔍 Failed to get capabilities from API: $e', tag: 'EditorScreen');
         // Fallback: if it's a Gemini model, assume it supports images and files
         final supportsImages = currentModel.contains('gemini');
         final supportsFiles = currentModel.contains('gemini'); // Gemini models typically support both
@@ -1914,7 +1914,7 @@ class _EditorScreenState extends State<EditorScreen> {
             isMultimodal: supportsImages || supportsFiles,
           );
         });
-        print('🔍 Using fallback capabilities: supportsImages=$supportsImages, supportsFiles=$supportsFiles');
+        Logger.debug('🔍 Using fallback capabilities: supportsImages=$supportsImages, supportsFiles=$supportsFiles', tag: 'EditorScreen');
       }
     } catch (e) {
       
@@ -2218,7 +2218,7 @@ class _EditorScreenState extends State<EditorScreen> {
           }
         });
 
-        print('📖 [CONVERSATION] Loaded conversation: $_currentConversationId (${messages.length} messages)');
+        Logger.info('📖 [CONVERSATION] Loaded conversation: $_currentConversationId (${messages.length} messages)', tag: 'EditorScreen');
       } else {
         // Set up empty conversation
         setState(() {
@@ -2228,7 +2228,7 @@ class _EditorScreenState extends State<EditorScreen> {
         });
       }
     } catch (e) {
-      print('❌ [CONVERSATION] Error loading conversation: $e');
+      Logger.error('❌ [CONVERSATION] Error loading conversation: $e', tag: 'EditorScreen');
       // Set up empty conversation
       setState(() {
         _title = 'New Conversation';
@@ -2370,7 +2370,7 @@ class _EditorScreenState extends State<EditorScreen> {
         setState(() {
           _toolsConfig = defaultConfig;
         });
-        print('🔧 Created default tools configuration to enable agent system');
+        Logger.info('🔧 Created default tools configuration to enable agent system', tag: 'EditorScreen');
       }
     } catch (e) {
       
@@ -2391,7 +2391,7 @@ class _EditorScreenState extends State<EditorScreen> {
       setState(() {
         _toolsConfig = defaultConfig;
       });
-      print('🔧 Created fallback tools configuration to enable agent system');
+      Logger.info('🔧 Created fallback tools configuration to enable agent system', tag: 'EditorScreen');
     }
   }
 
@@ -2523,7 +2523,7 @@ class _EditorScreenState extends State<EditorScreen> {
 
   void _requestInsights(Message message) {
     // Debug logging for quick actions
-    print('🔍 Quick Action - Insights:');
+    Logger.debug('🔍 Quick Action - Insights:', tag: 'EditorScreen');
     
     
 
@@ -2539,7 +2539,7 @@ class _EditorScreenState extends State<EditorScreen> {
 
   void _requestKeyPoints(Message message) {
     // Debug logging for quick actions
-    print('🔍 Quick Action - Key Points:');
+    Logger.debug('🔍 Quick Action - Key Points:', tag: 'EditorScreen');
     
     
 
@@ -2555,7 +2555,7 @@ class _EditorScreenState extends State<EditorScreen> {
 
   void _requestSummary(Message message, String type) {
     // Debug logging for quick actions
-    print('🔍 Quick Action - Summary ($type):');
+    Logger.debug('🔍 Quick Action - Summary ($type):', tag: 'EditorScreen');
     
     
 
@@ -2755,7 +2755,7 @@ class _EditorScreenState extends State<EditorScreen> {
           : _selectedSources.map((s) => s.id).toList();
 
       // Debug logging for source grounded requests
-              Logger.debugOnly('Quick Action Debug:');
+              Logger.debug('Quick Action Debug:', tag: 'EditorScreen');
       
       
       
@@ -2848,7 +2848,7 @@ class _EditorScreenState extends State<EditorScreen> {
                 );
               });
             }
-            debugPrint('📋 Sources ready: ${sources.length} sources, ${images.length} images');
+            Logger.debug('📋 Sources ready: ${sources.length} sources, ${images.length} images', tag: 'EditorScreen');
             break;
             
           case StreamEventType.content:
@@ -2966,7 +2966,7 @@ class _EditorScreenState extends State<EditorScreen> {
               final generationIds = event.metadata?['generationIds'] as List<dynamic>?;
               final sessionId = event.metadata?['sessionId'] as String?;
               if (generationIds != null && generationIds.isNotEmpty) {
-                print('🔗 Fetching accurate costs for ${generationIds.length} generation IDs');
+                Logger.debug('🔗 Fetching accurate costs for ${generationIds.length} generation IDs', tag: 'EditorScreen');
                 final sessionCostService = SessionCostService();
                 await sessionCostService.addGenerationIds(
                   generationIds.map((g) => Map<String, dynamic>.from(g)).toList(),

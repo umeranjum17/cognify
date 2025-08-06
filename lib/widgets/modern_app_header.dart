@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../theme/app_theme.dart';
 import '../theme/theme_provider.dart';
+import '../utils/logger.dart';
 import '../widgets/cognify_logo.dart';
 
 // Modern action button for header
@@ -415,16 +416,16 @@ class ModernAppHeader extends StatelessWidget implements PreferredSizeWidget {
     final router = GoRouter.of(context);
     final currentLocation = GoRouterState.of(context).uri.toString();
 
-    print('🔙 Header back button pressed. Current location: $currentLocation');
-    print('🔙 Can pop: ${router.canPop()}');
+    Logger.debug('🔙 Header back button pressed. Current location: $currentLocation', tag: 'Navigation');
+    Logger.debug('🔙 Can pop: ${router.canPop()}', tag: 'Navigation');
 
     // Check if we can pop the current route
     if (router.canPop()) {
-      print('🔙 Popping route from header...');
+      Logger.debug('🔙 Popping route from header...', tag: 'Navigation');
       router.pop();
     } else {
       // If we can't pop (e.g., we're on the initial route), navigate to home
-      print('🔙 Cannot pop, navigating to home...');
+      Logger.debug('🔙 Cannot pop, navigating to home...', tag: 'Navigation');
       router.go('/');
     }
   }
