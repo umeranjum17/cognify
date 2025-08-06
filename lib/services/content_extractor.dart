@@ -455,39 +455,86 @@ class ContentExtractor {
   /// Extract Reddit post content
   Future<Map<String, dynamic>> _extractRedditContent(String url) async {
     try {
-      // Add .json to Reddit URL for API access
-      final jsonUrl = url.endsWith('/') ? '$url.json' : '$url.json';
+      // Ensure .json endpoint, avoid double-appending
+      final normalized = url.endsWith('.json') ? url : (url.endsWith('/') ? '${url}index.json' : '$url.json');
       
-      final response = await _dio.get(jsonUrl);
+      final response = await _dio.get(normalized);
       
       if (response.statusCode != 200) {
-        throw Exception('Failed to fetch Reddit content');
+        return {
+          'error': 'HTTP ${response.statusCode}: Failed to fetch Reddit content',
+          'url': url,
+          'extractedAt': DateTime.now().toIso8601String(),
+          'contentType': 'reddit_post',
+        };
       }
       
-      final jsonData = response.data;
-      final postData = jsonData[0]['data']['children'][0]['data'];
+      final data = response.data;
+      
+      Map<String, dynamic>? post;
+      // Case 1: Standard comments permalink returns a List [postListing, commentsListing]
+      if (data is List && data.isNotEmpty) {
+        final first = data.first;
+        if (first is Map && first['data'] is Map) {
+          final children = (first['data']['children'] as List?) ?? const [];
+          if (children.isNotEmpty && children.first is Map) {
+            final childData = (children.first as Map)['data'];
+            if (childData is Map) post = Map<String, dynamic>.from(childData);
+          }
+        }
+      }
+      // Case 2: Some endpoints/redirects return a single Listing object
+      if (post == null && data is Map && data['data'] is Map) {
+        final children = (data['data']['children'] as List?) ?? const [];
+        if (children.isNotEmpty && children.first is Map) {
+          final childData = (children.first as Map)['data'];
+          if (childData is Map) post = Map<String, dynamic>.from(childData);
+        }
+      }
+      
+      if (post == null) {
+        return {
+          'error': 'Unexpected Reddit response structure',
+          'url': url,
+          'shape': data.runtimeType.toString(),
+          'extractedAt': DateTime.now().toIso8601String(),
+          'contentType': 'reddit_post',
+        };
+      }
+      
+      final title = (post['title'] ?? '').toString();
+      final selftext = (post['selftext'] ?? '').toString();
+      final author = (post['author'] ?? '').toString();
+      final createdUtc = (post['created_utc'] is num) ? (post['created_utc'] as num).toInt() : null;
+      final publishedIso = createdUtc != null
+          ? DateTime.fromMillisecondsSinceEpoch(createdUtc * 1000).toIso8601String()
+          : null;
       
       return {
         'url': url,
-        'title': postData['title'],
-        'description': postData['selftext'] ?? '',
-        'author': postData['author'],
-        'publishedDate': DateTime.fromMillisecondsSinceEpoch(
-          (postData['created_utc'] as num).toInt() * 1000
-        ).toIso8601String(),
-        'extractedText': '${postData['title']}\n\n${postData['selftext'] ?? ''}',
+        'title': title.isNotEmpty ? title : 'Reddit Post',
+        'description': selftext,
+        'author': author,
+        'publishedDate': publishedIso,
+        'extractedText': [title, selftext].where((s) => s != null && s.toString().trim().isNotEmpty).join('\n\n'),
         'contentType': 'reddit_post',
         'extractedAt': DateTime.now().toIso8601String(),
         'metadata': {
           'platform': 'reddit',
-          'subreddit': postData['subreddit'],
-          'score': postData['score'],
-          'numComments': postData['num_comments'],
+          'subreddit': post['subreddit'],
+          'score': post['score'],
+          'numComments': post['num_comments'],
+          'permalink': post['permalink'],
         }
       };
       
     } catch (e) {
-      throw Exception('Failed to extract Reddit content: $e');
+      return {
+        'error': 'Failed to extract Reddit content: $e',
+        'url': url,
+        'extractedAt': DateTime.now().toIso8601String(),
+        'contentType': 'reddit_post',
+      };
     }
   }
 

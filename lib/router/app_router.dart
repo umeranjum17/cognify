@@ -99,8 +99,12 @@ class AppRouter {
                   
                   // After initialization, check if authenticated
                   if (authProvider.isAuthenticated) {
+                    // Surgical guard: if we're handling a share, don't override it.
+                    final uri = GoRouterState.of(context).uri;
+                    final isShareFlow = uri.path == '/sources' ||
+                        uri.queryParameters.containsKey('sharedUrl');
                     WidgetsBinding.instance.addPostFrameCallback((_) {
-                      if (context.mounted) {
+                      if (context.mounted && !isShareFlow) {
                         context.go('/editor');
                       }
                     });

@@ -27,6 +27,7 @@ class SourcesScreen extends StatefulWidget {
 
 class _SourcesScreenState extends State<SourcesScreen> {
   late final UnifiedApiService _apiService;
+  bool _handledInitialUrl = false;
 
   final TextEditingController _urlController = TextEditingController();
   List<Source> _sources = [];
@@ -326,16 +327,17 @@ class _SourcesScreenState extends State<SourcesScreen> {
     _urlController.dispose();
     _refreshTimer?.cancel();
     super.dispose();
-  @override
-  void didUpdateWidget(SourcesScreen oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.initialUrl != null &&
-        widget.initialUrl != oldWidget.initialUrl &&
-        widget.initialUrl!.isNotEmpty) {
-      debugPrint('🟢 didUpdateWidget: Detected new initialUrl: ${widget.initialUrl}');
-      _handleInitialUrl(autoAdd: true);
-    }
   }
+  @override
+  void didUpdateWidget(covariant SourcesScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!_handledInitialUrl &&
+        widget.initialUrl != null &&
+        widget.initialUrl!.isNotEmpty &&
+        widget.initialUrl != oldWidget.initialUrl) {
+      debugPrint('🟢 didUpdateWidget: new initialUrl: ${widget.initialUrl}');
+      _handleInitialUrl(autoAdd: false);
+    }
   }
 
   void handleNavigateToEntities() {
@@ -357,9 +359,9 @@ class _SourcesScreenState extends State<SourcesScreen> {
     _startPeriodicRefresh();
     _urlController.addListener(_onUrlChanged);
     
-    // Handle initial URL if provided, and trigger add
+    // Handle initial URL once (populate only)
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _handleInitialUrl(autoAdd: true);
+      _handleInitialUrl(autoAdd: false);
     });
   }
 
@@ -1109,34 +1111,30 @@ class _SourcesScreenState extends State<SourcesScreen> {
   }
 
   void _handleInitialUrl({bool autoAdd = false}) {
+    if (_handledInitialUrl) return;
     debugPrint('🟢 _handleInitialUrl called with sharedUrl: ${widget.initialUrl}, autoAdd: $autoAdd');
-    // Check for shared URL from route parameters
     String? sharedUrl = widget.initialUrl;
-
-    // If no URL from route, check sharing service
     if (sharedUrl == null || sharedUrl.isEmpty) {
       sharedUrl = SharingService().getPendingSharedUrl();
     }
-
-    // Decode URL if it was encoded
     if (sharedUrl != null && sharedUrl.isNotEmpty) {
       try {
-        sharedUrl = Uri.decodeQueryComponent(sharedUrl);
+        sharedUrl = Uri.decodeFull(sharedUrl!);
       } catch (e) {
+        try { sharedUrl = Uri.decodeQueryComponent(sharedUrl!); } catch (_) {}
         debugPrint('Error decoding URL: $e');
       }
     }
-
     if (sharedUrl != null && sharedUrl.isNotEmpty && mounted) {
+      final decodedUrl = sharedUrl;
+      final trimmedUrl = decodedUrl.trim();
+      if (!_isValidUrl(trimmedUrl)) return;
       setState(() {
-        _urlController.text = sharedUrl!;
-        _selectedSourceType = SourceType.detectSourceType(sharedUrl);
+        _urlController.text = trimmedUrl;
+        _selectedSourceType = SourceType.detectSourceType(trimmedUrl);
+        _handledInitialUrl = true;
       });
-
-      if (autoAdd) {
-        _addUrl();
-      } else {
-        // Show a snackbar to indicate the URL was auto-filled
+      if (!autoAdd) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
@@ -1145,7 +1143,7 @@ class _SourcesScreenState extends State<SourcesScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Shared URL added: ${sharedUrl.length > 40 ? '${sharedUrl.substring(0, 40)}...' : sharedUrl}',
+                    'Shared URL added: ${trimmedUrl.length > 40 ? '${trimmedUrl.substring(0, 40)}...' : trimmedUrl}',
                   ),
                 ),
               ],
