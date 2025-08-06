@@ -280,7 +280,7 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
 
   Widget _buildFeatureChip(String label, {Color? bgColor, Color? textColor}) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
       margin: const EdgeInsets.only(right: 6, bottom: 4),
       decoration: BoxDecoration(
         color: bgColor ?? AppColors.lightBackgroundLight,
@@ -292,9 +292,11 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
           fontSize: 10,
           fontWeight: FontWeight.w500,
           color: textColor ?? AppColors.lightTextSecondary,
+          height: 1.1,
         ),
-        maxLines: 2,
+        maxLines: 3,
         overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.center,
       ),
     );
   }
@@ -848,11 +850,11 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
 
       // If both are the same, show single price
       if (inputPerMillion == outputPerMillion) {
-        return '\$$inputPerMillion/M tokens';
+        return '\$$inputPerMillion/M';
       }
 
       // Show input/output prices in a clearer format
-      return 'In: \$$inputPerMillion Out: \$$outputPerMillion/M';
+      return 'In: \$$inputPerMillion/M\nOut: \$$outputPerMillion/M';
     }
 
     // Handle string values (some APIs return strings)
@@ -871,10 +873,10 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
       print('💰 String pricing calculated - input: $inputPerMillion, output: $outputPerMillion');
       
       if (inputPerMillion == outputPerMillion) {
-        return '\$$inputPerMillion/M tokens';
+        return '\$$inputPerMillion/M';
       }
       
-      return 'In: \$$inputPerMillion Out: \$$outputPerMillion/M';
+      return 'In: \$$inputPerMillion/M\nOut: \$$outputPerMillion/M';
     }
 
     // Handle mixed types
@@ -893,10 +895,10 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
       print('💰 Mixed type pricing calculated - input: $inputPerMillion, output: $outputPerMillion');
       
       if (inputPerMillion == outputPerMillion) {
-        return '\$$inputPerMillion/M tokens';
+        return '\$$inputPerMillion/M';
       }
       
-      return 'In: \$$inputPerMillion Out: \$$outputPerMillion/M';
+      return 'In: \$$inputPerMillion/M\nOut: \$$outputPerMillion/M';
     }
 
     print('💰 Unknown pricing format: input=$input (${input.runtimeType}), output=$output (${output.runtimeType})');

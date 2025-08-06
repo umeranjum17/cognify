@@ -194,9 +194,43 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
     final outputPerMillion = outputNum.toStringAsFixed(2);
     
     if (inputPerMillion == outputPerMillion) {
-      return '\$$inputPerMillion/M tokens';
+      return '\$$inputPerMillion/M';
     }
-    return 'In: \$$inputPerMillion Out: \$$outputPerMillion/M';
+    return 'In: \$$inputPerMillion/M\nOut: \$$outputPerMillion/M';
+  }
+
+  String _getInputPrice(Map<String, dynamic>? pricing) {
+    if (pricing == null) return '0.00';
+    final input = pricing['input'] ?? pricing['prompt'];
+    
+    if (input == 0 || input == 0.0 || input == '0') return '0.00';
+    if (input == -1) return '0.00';
+    
+    double inputNum = 0.0;
+    if (input is num) {
+      inputNum = input.toDouble();
+    } else if (input is String) {
+      inputNum = double.tryParse(input) ?? 0.0;
+    }
+    
+    return inputNum.toStringAsFixed(2);
+  }
+
+  String _getOutputPrice(Map<String, dynamic>? pricing) {
+    if (pricing == null) return '0.00';
+    final output = pricing['output'] ?? pricing['completion'];
+    
+    if (output == 0 || output == 0.0 || output == '0') return '0.00';
+    if (output == -1) return '0.00';
+    
+    double outputNum = 0.0;
+    if (output is num) {
+      outputNum = output.toDouble();
+    } else if (output is String) {
+      outputNum = double.tryParse(output) ?? 0.0;
+    }
+    
+    return outputNum.toStringAsFixed(2);
   }
 
   List<String> _getModalities(Map<String, dynamic> model) {
@@ -241,7 +275,7 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
         children: [
           // Header
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             decoration: BoxDecoration(
               border: Border(
                 bottom: BorderSide(
@@ -256,6 +290,7 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
                   'Switch Model',
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
+                    fontSize: 20,
                   ),
                 ),
                 const Spacer(),
@@ -264,10 +299,16 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
                   icon: Icon(
                     Icons.close,
                     color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                    size: 20,
                   ),
                   tooltip: 'Close',
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
+                  padding: const EdgeInsets.all(6),
+                  style: IconButton.styleFrom(
+                    backgroundColor: isDark ? AppColors.darkBackgroundLight : AppColors.lightBackgroundLight,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -355,7 +396,7 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
 
   Widget _buildLeftRail(ThemeData theme, bool isDark) {
     return Container(
-      width: 96,
+      width: 100,
       decoration: BoxDecoration(
         border: Border(
           right: BorderSide(
@@ -365,6 +406,7 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
         ),
       ),
       child: ListView.builder(
+        padding: const EdgeInsets.symmetric(vertical: 12),
         itemCount: _providersIndexed.length,
         itemBuilder: (context, index) {
           final provider = _providersIndexed.keys.elementAt(index);
@@ -378,18 +420,18 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
               });
             },
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
               decoration: BoxDecoration(
                 color: isSelected
                     ? (isDark ? AppColors.darkAccent.withValues(alpha: 0.12) : AppColors.lightAccent.withValues(alpha: 0.08))
                     : Colors.transparent,
-                border: Border(
-                  left: BorderSide(
-                    color: isSelected
-                        ? (isDark ? AppColors.darkAccent : AppColors.lightAccent)
-                        : Colors.transparent,
-                    width: 2,
-                  ),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isSelected
+                      ? (isDark ? AppColors.darkAccent : AppColors.lightAccent)
+                      : Colors.transparent,
+                  width: 1,
                 ),
               ),
               child: Column(
@@ -398,11 +440,11 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
                     _getProviderIcon(provider),
                     style: const TextStyle(fontSize: 18),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 6),
                   Text(
                     provider,
                     style: theme.textTheme.bodySmall?.copyWith(
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                       color: isSelected
                           ? (isDark ? AppColors.darkAccent : AppColors.lightAccent)
                           : (isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary),
@@ -412,12 +454,20 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 1),
-                  Text(
-                    '${models.length}',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
-                      fontSize: 9,
+                  const SizedBox(height: 3),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: isDark ? AppColors.darkBackgroundLight : AppColors.lightBackgroundLight,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      '${models.length}',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ],
@@ -434,14 +484,14 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          padding: const EdgeInsets.all(16),
           child: TextField(
             onChanged: (value) {
               setState(() {
                 _searchQuery = value;
               });
             },
-            style: theme.textTheme.bodySmall?.copyWith(fontSize: 13),
+            style: theme.textTheme.bodyMedium?.copyWith(fontSize: 14),
             decoration: InputDecoration(
               hintText: 'Search models...',
               prefixIcon: Icon(
@@ -450,13 +500,14 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
                 size: 18,
               ),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(
                   color: isDark ? AppColors.darkInputBorder : AppColors.lightInputBorder,
+                  width: 1,
                 ),
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(
                   color: isDark ? AppColors.darkAccent : AppColors.lightAccent,
                   width: 1.5,
@@ -464,27 +515,50 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
               ),
               filled: true,
               fillColor: isDark ? AppColors.darkInput : AppColors.lightInput,
-              contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 8),
-              isDense: true,
+              contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              isDense: false,
             ),
           ),
         ),
         Expanded(
           child: filteredModels.isEmpty
               ? Center(
-                  child: Text(
-                    _searchQuery.isEmpty ? 'No models available' : 'No models found',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
-                      fontSize: 13,
-                    ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        _searchQuery.isEmpty ? Icons.model_training : Icons.search_off,
+                        size: 36,
+                        color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        _searchQuery.isEmpty ? 'No models available' : 'No models found',
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        _searchQuery.isEmpty 
+                            ? 'Try selecting a different provider'
+                            : 'Try adjusting your search terms',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
+                          fontSize: 13,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
                   ),
                 )
               : ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   itemCount: filteredModels.length,
                   itemBuilder: (context, index) {
                     final model = filteredModels[index];
-                    return _buildModelRow(model, theme, isDark);
+                    return _buildModelCard(model, theme, isDark);
                   },
                 ),
         ),
@@ -492,144 +566,277 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
     );
   }
 
-  Widget _buildModelRow(Map<String, dynamic> model, ThemeData theme, bool isDark) {
+
+
+  Widget _buildModelCard(Map<String, dynamic> model, ThemeData theme, bool isDark) {
     final modelId = model['id'] ?? model['canonical_slug'] ?? model['name'] ?? 'unknown';
     final isSelected = modelId == widget.selectedModel;
     final modalities = _getModalities(model);
     final pricing = model['pricing'] as Map<String, dynamic>?;
+    final contextLength = model['contextLength'] ?? model['context_length'];
 
     return GestureDetector(
       onTap: () => _selectModel(modelId),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? (isDark ? AppColors.darkAccent.withValues(alpha: 0.08) : AppColors.lightAccent.withValues(alpha: 0.04))
-              : Colors.transparent,
-          border: Border(
-            bottom: BorderSide(
-              color: isDark ? AppColors.darkDivider : AppColors.lightDivider,
-              width: 0.5,
+      child: Stack(
+        children: [
+          Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? (isDark ? AppColors.darkAccent.withValues(alpha: 0.08) : AppColors.lightAccent.withValues(alpha: 0.05))
+                  : (isDark ? AppColors.darkBackgroundLight : AppColors.lightBackgroundLight),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isSelected
+                    ? (isDark ? AppColors.darkAccent : AppColors.lightAccent)
+                    : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
+                width: isSelected ? 1.5 : 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                // Model info
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        model['name']?.toString() ?? modelId,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                          color: isSelected
+                              ? (isDark ? AppColors.darkAccent : AppColors.lightAccent)
+                              : (isDark ? AppColors.darkText : AppColors.lightText),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      
+                      // Description if available
+                      if (model['description'] != null) ...[
+                        const SizedBox(height: 3),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                model['description'],
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                                  fontSize: 11,
+                                  height: 1.2,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            GestureDetector(
+                              onTap: () => _showDescriptionDialog(context, model['description'], model['name']?.toString() ?? modelId, theme, isDark),
+                              child: Icon(
+                                Icons.info_outline,
+                                size: 14,
+                                color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                      
+                      const SizedBox(height: 6),
+                      
+                      // Features row
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 4,
+                        children: [
+                          // Text modality (always present)
+                          _buildCompactFeatureChip(
+                            Icons.text_fields,
+                            isDark ? AppColors.darkBackground : AppColors.lightBackground,
+                            isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                          ),
+                          // Images if supported
+                          if (modalities.contains('image'))
+                            _buildCompactFeatureChip(
+                              Icons.image,
+                              isDark ? AppColors.darkInfo.withValues(alpha: 0.2) : AppColors.lightInfo.withValues(alpha: 0.15),
+                              isDark ? AppColors.darkInfo : AppColors.lightInfo,
+                            ),
+                          // Files if supported
+                          if (modalities.contains('file'))
+                            _buildCompactFeatureChip(
+                              Icons.attach_file,
+                              isDark ? AppColors.darkAccentSecondary.withValues(alpha: 0.2) : AppColors.lightAccentSecondary.withValues(alpha: 0.15),
+                              isDark ? AppColors.darkAccentSecondary : AppColors.lightAccentSecondary,
+                            ),
+                          // Context length if available
+                          if (contextLength != null)
+                            _buildCompactFeatureChip(
+                              Icons.memory,
+                              isDark ? AppColors.darkAccentTertiary.withValues(alpha: 0.2) : AppColors.lightAccentTertiary.withValues(alpha: 0.15),
+                              isDark ? AppColors.darkAccentTertiary : AppColors.lightAccentTertiary,
+                              label: '${(contextLength / 1000).round()}K',
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                
+                const SizedBox(width: 12),
+                
+                // Price chip
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: _isFree(model)
+                        ? (isDark ? AppColors.darkSuccess.withValues(alpha: 0.2) : AppColors.lightSuccess.withValues(alpha: 0.15))
+                        : (isDark ? AppColors.darkAccent.withValues(alpha: 0.2) : AppColors.lightAccent.withValues(alpha: 0.15)),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: _isFree(model)
+                          ? (isDark ? AppColors.darkSuccess : AppColors.lightSuccess)
+                          : (isDark ? AppColors.darkAccent : AppColors.lightAccent),
+                      width: 0.5,
+                    ),
+                  ),
+                  child: _isFree(model)
+                      ? Text(
+                          'Free',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? AppColors.darkSuccess : AppColors.lightSuccess,
+                          ),
+                          textAlign: TextAlign.center,
+                        )
+                      : Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'In: \$${_getInputPrice(pricing)}/M',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w600,
+                                color: isDark ? AppColors.darkAccent : AppColors.lightAccent,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            Text(
+                              'Out: \$${_getOutputPrice(pricing)}/M',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w600,
+                                color: isDark ? AppColors.darkAccent : AppColors.lightAccent,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                ),
+              ],
             ),
           ),
-        ),
-        child: Row(
-          children: [
-            // Model info
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          model['name']?.toString() ?? modelId,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: isSelected
-                                ? (isDark ? AppColors.darkAccent : AppColors.lightAccent)
-                                : (isDark ? AppColors.darkText : AppColors.lightText),
-                            fontSize: 13,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      if (isSelected)
-                        Icon(
-                          Icons.check_circle,
-                          size: 14,
-                          color: isDark ? AppColors.darkAccent : AppColors.lightAccent,
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  Row(
-                    children: [
-                      if (modalities.contains('image'))
-                        Container(
-                          margin: const EdgeInsets.only(right: 2),
-                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                          decoration: BoxDecoration(
-                            color: isDark ? AppColors.darkAccentSecondary.withValues(alpha: 0.18) : AppColors.lightAccentSecondary.withValues(alpha: 0.08),
-                            borderRadius: BorderRadius.circular(3),
-                          ),
-                          child: Text(
-                            '👁',
-                            style: const TextStyle(fontSize: 9),
-                          ),
-                        ),
-                      if (modalities.contains('file'))
-                        Container(
-                          margin: const EdgeInsets.only(right: 2),
-                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                          decoration: BoxDecoration(
-                            color: isDark ? AppColors.darkAccentSecondary.withValues(alpha: 0.18) : AppColors.lightAccentSecondary.withValues(alpha: 0.08),
-                            borderRadius: BorderRadius.circular(3),
-                          ),
-                          child: Text(
-                            '🧩',
-                            style: const TextStyle(fontSize: 9),
-                          ),
-                        ),
-                      if (model['contextLength'] != null || model['context_length'] != null)
-                        Container(
-                          margin: const EdgeInsets.only(right: 2),
-                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                          decoration: BoxDecoration(
-                            color: isDark ? AppColors.darkTextMuted.withValues(alpha: 0.15) : AppColors.lightTextMuted.withValues(alpha: 0.07),
-                            borderRadius: BorderRadius.circular(3),
-                          ),
-                          child: Text(
-                            '${(model['contextLength'] ?? model['context_length'] ?? 0) ~/ 1000}k',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              fontSize: 9,
-                              color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ],
+          
+          // Selection indicator in top-right corner
+          if (isSelected)
+            Positioned(
+              top: 8,
+              right: 8,
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.darkAccent : AppColors.lightAccent,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.check,
+                  color: Colors.white,
+                  size: 12,
+                ),
               ),
             ),
-            // Price chip
-            Container(
-              margin: const EdgeInsets.only(left: 6),
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.darkAccent.withValues(alpha: 0.18) : AppColors.lightAccent.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    _getPriceDisplay(pricing),
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      fontSize: 9,
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? AppColors.darkAccent : AppColors.lightAccent,
-                    ),
-                    textAlign: TextAlign.right,
-                  ),
-                  if (_getPriceDisplay(pricing).contains('/M tokens'))
-                    Text(
-                      'per 1M',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        fontSize: 7,
-                        color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
-                      ),
-                      textAlign: TextAlign.right,
-                    ),
-                ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCompactFeatureChip(IconData icon, Color bgColor, Color textColor, {String? label}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(
+          color: textColor.withValues(alpha: 0.3),
+          width: 0.5,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 10,
+            color: textColor,
+          ),
+          if (label != null) ...[
+            const SizedBox(width: 2),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 8,
+                fontWeight: FontWeight.w600,
+                color: textColor,
               ),
             ),
           ],
-        ),
+        ],
       ),
+    );
+  }
+
+  void _showDescriptionDialog(BuildContext context, String? description, String modelName, ThemeData theme, bool isDark) {
+    if (description == null || description.isEmpty) {
+      return;
+    }
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            modelName,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+              fontSize: 20,
+            ),
+          ),
+          content: SingleChildScrollView(
+            child: Text(
+              description,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: isDark ? AppColors.darkText : AppColors.lightText,
+                fontSize: 14,
+              ),
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text(
+                'Close',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: isDark ? AppColors.darkAccent : AppColors.lightAccent,
+                ),
+              ),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }
