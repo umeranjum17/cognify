@@ -109,6 +109,13 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
     if (_freeModels.isNotEmpty) {
       _providersIndexed['Free'] = _freeModels;
     }
+    
+    // Sort providers by number of models in descending order
+    final sortedProviders = _providersIndexed.entries.toList()
+      ..sort((a, b) => b.value.length.compareTo(a.value.length));
+    
+    // Create a new map with sorted order
+    _providersIndexed = Map.fromEntries(sortedProviders);
   }
 
   String _normalizeProvider(Map<String, dynamic> model) {
@@ -160,28 +167,36 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
     if (pricing == null) return 'Free';
     final input = pricing['input'] ?? pricing['prompt'];
     final output = pricing['output'] ?? pricing['completion'];
+    
     if ((input == 0 || input == 0.0) && (output == 0 || output == 0.0)) return 'Free';
     if (input == -1 || output == -1) return 'Paid';
-    if (input is num && output is num) {
-      final inputPerMillion = (input * 1000000).toStringAsFixed(2);
-      final outputPerMillion = (output * 1000000).toStringAsFixed(2);
-      if (inputPerMillion == outputPerMillion) {
-        return '\$$inputPerMillion/1M';
-      }
-      return '\$$inputPerMillion/\$$outputPerMillion';
+    
+    // Convert to numbers for calculation
+    double inputNum = 0.0;
+    double outputNum = 0.0;
+    
+    if (input is num) {
+      inputNum = input.toDouble();
+    } else if (input is String) {
+      inputNum = double.tryParse(input) ?? 0.0;
     }
-    if (input is String || output is String) {
-      final inputNum = input is num ? input.toDouble() : double.tryParse(input.toString()) ?? 0.0;
-      final outputNum = output is num ? output.toDouble() : double.tryParse(output.toString()) ?? 0.0;
-      if (inputNum == 0.0 && outputNum == 0.0) return 'Free';
-      final inputPerMillion = (inputNum * 1000000).toStringAsFixed(2);
-      final outputPerMillion = (outputNum * 1000000).toStringAsFixed(2);
-      if (inputPerMillion == outputPerMillion) {
-        return '\$$inputPerMillion/1M';
-      }
-      return '\$$inputPerMillion/\$$outputPerMillion';
+    
+    if (output is num) {
+      outputNum = output.toDouble();
+    } else if (output is String) {
+      outputNum = double.tryParse(output) ?? 0.0;
     }
-    return 'Paid';
+    
+    if (inputNum == 0.0 && outputNum == 0.0) return 'Free';
+    
+    // The pricing values are now per million tokens from the API processing
+    final inputPerMillion = inputNum.toStringAsFixed(2);
+    final outputPerMillion = outputNum.toStringAsFixed(2);
+    
+    if (inputPerMillion == outputPerMillion) {
+      return '\$$inputPerMillion/M tokens';
+    }
+    return 'In: \$$inputPerMillion Out: \$$outputPerMillion/M';
   }
 
   List<String> _getModalities(Map<String, dynamic> model) {
@@ -582,31 +597,32 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
             // Price chip
             Container(
               margin: const EdgeInsets.only(left: 6),
-              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
               decoration: BoxDecoration(
                 color: isDark ? AppColors.darkAccent.withValues(alpha: 0.18) : AppColors.lightAccent.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(8),
               ),
-              child: Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     _getPriceDisplay(pricing),
                     style: theme.textTheme.bodySmall?.copyWith(
-                      fontSize: 10,
+                      fontSize: 9,
                       fontWeight: FontWeight.w600,
                       color: isDark ? AppColors.darkAccent : AppColors.lightAccent,
                     ),
+                    textAlign: TextAlign.right,
                   ),
-                  if (_getPriceDisplay(pricing).contains('/1M'))
-                    Padding(
-                      padding: const EdgeInsets.only(left: 2),
-                      child: Text(
-                        'per 1M',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          fontSize: 8,
-                          color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
-                        ),
+                  if (_getPriceDisplay(pricing).contains('/M tokens'))
+                    Text(
+                      'per 1M',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        fontSize: 7,
+                        color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
                       ),
+                      textAlign: TextAlign.right,
                     ),
                 ],
               ),

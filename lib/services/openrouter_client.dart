@@ -658,7 +658,7 @@ class OpenRouterClient {
               }
 
               _modelPricing[modelId] = {
-                'input': (promptPrice * 1000000).toDouble(), // Convert to per million tokens
+                'input': (promptPrice * 1000000).toDouble(), // Convert per-token to per-million tokens
                 'output': (completionPrice * 1000000).toDouble(),
               };
 

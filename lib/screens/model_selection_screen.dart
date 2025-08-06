@@ -280,19 +280,21 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
 
   Widget _buildFeatureChip(String label, {Color? bgColor, Color? textColor}) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       margin: const EdgeInsets.only(right: 6, bottom: 4),
       decoration: BoxDecoration(
         color: bgColor ?? AppColors.lightBackgroundLight,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Text(
         label,
         style: TextStyle(
-          fontSize: 12,
+          fontSize: 10,
           fontWeight: FontWeight.w500,
           color: textColor ?? AppColors.lightTextSecondary,
         ),
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
       ),
     );
   }
@@ -838,19 +840,19 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
 
     // Convert to per-million tokens for better readability
     if (input is num && output is num) {
-      // The values are already per token, so multiply by 1M to get per-million
-      final inputPerMillion = (input * 1000000).toStringAsFixed(2);
-      final outputPerMillion = (output * 1000000).toStringAsFixed(2);
+      // The pricing values are now per million tokens from the API processing
+      final inputPerMillion = input.toStringAsFixed(2);
+      final outputPerMillion = output.toStringAsFixed(2);
 
       print('💰 Calculated per-million - input: $inputPerMillion, output: $outputPerMillion');
 
       // If both are the same, show single price
       if (inputPerMillion == outputPerMillion) {
-        return '\$$inputPerMillion/1M';
+        return '\$$inputPerMillion/M tokens';
       }
 
       // Show input/output prices in a clearer format
-      return '\$$inputPerMillion/\$$outputPerMillion';
+      return 'In: \$$inputPerMillion Out: \$$outputPerMillion/M';
     }
 
     // Handle string values (some APIs return strings)
@@ -862,16 +864,17 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
         return 'Free';
       }
       
-      final inputPerMillion = (inputNum * 1000000).toStringAsFixed(2);
-      final outputPerMillion = (outputNum * 1000000).toStringAsFixed(2);
+      // The pricing values are now per million tokens from the API processing
+      final inputPerMillion = inputNum.toStringAsFixed(2);
+      final outputPerMillion = outputNum.toStringAsFixed(2);
       
       print('💰 String pricing calculated - input: $inputPerMillion, output: $outputPerMillion');
       
       if (inputPerMillion == outputPerMillion) {
-        return '\$$inputPerMillion/1M';
+        return '\$$inputPerMillion/M tokens';
       }
       
-      return '\$$inputPerMillion/\$$outputPerMillion';
+      return 'In: \$$inputPerMillion Out: \$$outputPerMillion/M';
     }
 
     // Handle mixed types
@@ -883,16 +886,17 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
         return 'Free';
       }
       
-      final inputPerMillion = (inputNum * 1000000).toStringAsFixed(2);
-      final outputPerMillion = (outputNum * 1000000).toStringAsFixed(2);
+      // The pricing values are now per million tokens from the API processing
+      final inputPerMillion = inputNum.toStringAsFixed(2);
+      final outputPerMillion = outputNum.toStringAsFixed(2);
       
       print('💰 Mixed type pricing calculated - input: $inputPerMillion, output: $outputPerMillion');
       
       if (inputPerMillion == outputPerMillion) {
-        return '\$$inputPerMillion/1M';
+        return '\$$inputPerMillion/M tokens';
       }
       
-      return '\$$inputPerMillion/\$$outputPerMillion';
+      return 'In: \$$inputPerMillion Out: \$$outputPerMillion/M';
     }
 
     print('💰 Unknown pricing format: input=$input (${input.runtimeType}), output=$output (${output.runtimeType})');
