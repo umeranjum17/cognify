@@ -45,6 +45,7 @@ import '../widgets/session_info_widget.dart';
 import '../widgets/stacked_media_bubbles.dart';
 import '../widgets/streaming_message_content.dart';
 import '../widgets/unified_settings_modal.dart';
+import '../widgets/model_quick_switcher_modal.dart';
 import 'model_selection_screen.dart';
 import 'vibration_stub.dart'
     if (dart.library.io) 'vibration_impl.dart';
@@ -463,6 +464,100 @@ class _EditorScreenState extends State<EditorScreen> {
     return _title.isNotEmpty ? _title : 'Chat';
   }
 
+  Widget _buildModelChip(ThemeData theme) {
+    final isDark = theme.brightness == Brightness.dark;
+    final modelName = _formatModelName(_selectedModel);
+    final isFree = _isModelFree(_selectedModel);
+    
+    return GestureDetector(
+      onTap: () => _showModelQuickSwitcher(),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.darkCard : AppColors.lightCard,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isDark ? AppColors.darkDivider : AppColors.lightDivider,
+            width: 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: isFree
+                    ? (isDark ? AppColors.darkSuccess.withValues(alpha: 0.2) : AppColors.lightSuccess.withValues(alpha: 0.15))
+                    : (isDark ? AppColors.darkWarning.withValues(alpha: 0.2) : AppColors.lightWarning.withValues(alpha: 0.15)),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                isFree ? 'Free' : 'Paid',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w500,
+                  color: isFree
+                      ? (isDark ? AppColors.darkSuccess : AppColors.lightSuccess)
+                      : (isDark ? AppColors.darkWarning : AppColors.lightWarning),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              modelName,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: isDark ? AppColors.darkText : AppColors.lightText,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Icon(
+              Icons.keyboard_arrow_down,
+              size: 16,
+              color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatModelName(String modelId) {
+    // Extract the model name from the ID
+    final parts = modelId.split('/');
+    if (parts.length > 1) {
+      final modelName = parts.last;
+      // Remove :free suffix if present
+      return modelName.replaceAll(':free', '');
+    }
+    return modelId;
+  }
+
+  bool _isModelFree(String modelId) {
+    return modelId.endsWith(':free') || 
+           modelId.contains('gpt-3.5-turbo') ||
+           modelId.contains('claude-3-haiku') ||
+           modelId.contains('gemini-pro') ||
+           modelId.contains('llama-2-7b') ||
+           modelId.contains('mistral-7b');
+  }
+
+  void _showModelQuickSwitcher() {
+    showModelQuickSwitcher(
+      context: context,
+      mode: _currentMode,
+      selectedModel: _selectedModel,
+      onModelSelected: (modelId) {
+        setState(() {
+          _selectedModel = modelId;
+        });
+        _checkModelCapabilities();
+      },
+    );
+  }
+
   Widget _buildImageCard(Map<String, dynamic> image, int index, ThemeData theme) {
     return Container(
       width: 140,
@@ -879,6 +974,9 @@ class _EditorScreenState extends State<EditorScreen> {
             ),
             child: Column(
               children: [
+                // Model chip
+                _buildModelChip(theme),
+                const SizedBox(height: 8),
                 // Unified input container with separated text and controls
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 1, vertical: 1),
