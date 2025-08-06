@@ -269,6 +269,25 @@ class _EditorScreenState extends State<EditorScreen> {
       modeConfigProvider.addListener(_onModeConfigChanged);
       
     });
+
+    // Load conversation if conversationId is provided via route
+    if (widget.conversationId != null && widget.conversationId!.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        await _loadConversation();
+      });
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant EditorScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final newId = widget.conversationId;
+    if (newId != null && newId.isNotEmpty && newId != oldWidget.conversationId) {
+      setState(() {
+        _currentConversationId = newId;
+      });
+      _loadConversation();
+    }
   }
 
   Widget _buildCompactModeButton({
@@ -2381,8 +2400,14 @@ class _EditorScreenState extends State<EditorScreen> {
         }
 
         if (initialData['conversationId'] != null) {
-          _currentConversationId = initialData['conversationId'];
-          await _loadConversation();
+          final prefsConvId = initialData['conversationId'] as String;
+          // If a route provided the same id, skip duplicate load
+          if (_currentConversationId != null && _currentConversationId == prefsConvId) {
+            // No-op
+          } else {
+            _currentConversationId = prefsConvId;
+            await _loadConversation();
+          }
         } else if (initialData['content'] != null) {
           if (initialData['isNewConversation'] == true) {
             _messageController.text = initialData['content'];
