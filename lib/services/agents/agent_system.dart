@@ -1,3 +1,4 @@
+import '../../config/feature_flags.dart';
 import '../../config/model_registry.dart';
 import '../../database/database_service.dart';
 import '../../models/chat_source.dart';
@@ -8,12 +9,12 @@ import '../../models/tool_spec.dart';
 import '../../utils/json_utils.dart';
 import 'executor_engine.dart';
 import 'milestone_messages.dart';
-import 'planner_agent.dart';
+import 'search_agent.dart';
 import 'writer_agent.dart';
 
 /// Unified Agent System - Coordinates all agents
 class AgentSystem {
-  late PlannerAgent _plannerAgent;
+  late SearchAgent _searchAgent;
   late ExecutorEngine _executorEngine;
   late WriterAgent _writerAgent;
   
@@ -27,7 +28,7 @@ class AgentSystem {
   }) async {
     try {
       // Create agents with initial models
-      _plannerAgent = PlannerAgent(modelName: plannerModel, mode: mode);
+      _searchAgent = SearchAgent(modelName: plannerModel, mode: mode);
       _writerAgent = WriterAgent(modelName: writerModel, mode: mode);
       
       // Only initialize the executor engine since it manages tools
@@ -80,7 +81,7 @@ class AgentSystem {
       // Create execution plan
       Map<String, dynamic> planResult;
       try {
-        planResult = await _plannerAgent.createExecutionPlan(
+        planResult = await _searchAgent.createExecutionPlan(
           query: query,
           enabledTools: enabledTools,
           mode: mode,
@@ -107,6 +108,7 @@ class AgentSystem {
       final plannerGenerationId = planResult['generationId'] as String?;
       final plannerUsage = planResult['usage'] as Map<String, dynamic>?;
       final plannerModel = planResult['model'] as String? ?? _defaultModel;
+      final isBasicMode = planResult['basicMode'] as bool? ?? false;
 
       // Add planner generation ID to collection
       if (plannerGenerationId != null) {
@@ -122,15 +124,19 @@ class AgentSystem {
       }
 
       yield ChatStreamEvent.milestone(
-        message: '✅ Execution plan created with ${toolSpecs.length} tools',
+        message: isBasicMode 
+          ? '✅ Basic analysis plan created with ${toolSpecs.length} tools'
+          : '✅ Execution plan created with ${toolSpecs.length} tools',
         phase: 'planning',
         progress: 0.3,
       );
 
-      // Step 2: Execute tools
+      // Step 2: Execute tools (basic or full mode)
       yield ChatStreamEvent.milestone(
-        message: MilestoneMessages.getRandomExecutionMessage(),
-        phase: 'execution',
+        message: isBasicMode 
+          ? '🔍 Running basic analysis...'
+          : MilestoneMessages.getRandomExecutionMessage(),
+        phase: isBasicMode ? 'analysis' : 'execution',
         progress: 0.4,
       );
       
@@ -434,7 +440,7 @@ class AgentSystem {
   /// Update the selected model for stateless agents
   void updateSelectedModel(String model, {String mode = 'chat'}) {
     
-    _plannerAgent = PlannerAgent(modelName: model, mode: mode);
+    _searchAgent = SearchAgent(modelName: model, mode: mode);
     _writerAgent = WriterAgent(modelName: model, mode: mode);
     
   }

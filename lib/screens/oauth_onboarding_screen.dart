@@ -164,7 +164,7 @@ class _OAuthOnboardingScreenState extends State<OAuthOnboardingScreen> {
         ),
         const SizedBox(height: 8),
         Text(
-          FeatureFlags.FREE_FEATURES_DESCRIPTION,
+          '• Unlimited chat\n• Multiple free models\n• Attach files & images\n• Save conversations\n• Learning roadmaps\n• No login required',
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.8),
             height: 1.3,

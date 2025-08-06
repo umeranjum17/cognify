@@ -1,13 +1,14 @@
 import 'dart:convert';
 import 'dart:math' as math;
 
+import '../../config/feature_flags.dart';
 import '../../models/tool_spec.dart';
 import '../../utils/json_utils.dart';
 import '../openrouter_client.dart';
 import '../tools.dart';
 
-/// Planner Agent - Analyzes queries and creates tool execution plans
-class PlannerAgent {
+/// Search Agent - Analyzes queries and creates tool execution plans
+class SearchAgent {
   // Static caches for performance optimization
   static String? _toolDescriptionsCache;
   static final Map<String, dynamic> _modelCapabilitiesCache = {};
@@ -16,7 +17,7 @@ class PlannerAgent {
   final String mode;
   late OpenRouterClient _openRouterClient;
 
-  PlannerAgent({
+  SearchAgent({
     required this.modelName,
     this.mode = 'chat',
   }) {
@@ -32,7 +33,10 @@ class PlannerAgent {
     Map<String, dynamic>? options,
   }) async {
     try {
-      
+      // Check if search agents are enabled - if not, return basic plan
+      if (!FeatureFlags.SEARCH_AGENTS_ENABLED) {
+        return _createBasicPlan(query, enabledTools, mode);
+      }
 
       // Step 1: Perform sequential thinking analysis (only for DeepSearch mode)
       Map<String, dynamic>? thinkingResult;
@@ -433,6 +437,37 @@ ${mode.toLowerCase() == 'deepsearch'
     }
   }
 
+  /// Create basic plan when search agents are disabled
+  Map<String, dynamic> _createBasicPlan(String query, List<String> enabledTools, String mode) {
+    // When feature flag is disabled, return a basic plan with only non-search tools
+    final basicSpecs = <ToolSpec>[];
+    
+    // Filter out search-related tools
+    final allowedTools = enabledTools.where((tool) => !_isSearchTool(tool)).toList();
+    
+    return {
+      'toolSpecs': basicSpecs,
+      'generationId': null,
+      'usage': null,
+      'model': modelName,
+      'stage': 'planning',
+      'basicMode': true, // Flag to indicate this is a basic plan
+    };
+  }
+
+  /// Check if a tool is search-related (to be filtered out when feature flag is disabled)
+  bool _isSearchTool(String toolName) {
+    const searchTools = {
+      'brave_search',
+      'brave_search_enhanced', 
+      'web_fetch',
+      'image_search',
+      'youtube_processor',
+      'sequential_thinking', // Also disable advanced thinking
+    };
+    return searchTools.contains(toolName);
+  }
+
   /// Create fallback plan when planning fails
   List<ToolSpec> _createFallbackPlan(String query, List<String> enabledTools, [String mode = 'chat']) {
     
@@ -658,4 +693,3 @@ Return your analysis as JSON with this structure:
     }
   }
 }
-

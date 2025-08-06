@@ -22,7 +22,7 @@ class SubscriptionStatus {
     return const SubscriptionStatus(
       isActive: false,
       isPremium: false,
-      features: FeatureFlags.FREE_FEATURES,
+      features: [],
       plan: 'free',
     );
   }
@@ -32,7 +32,7 @@ class SubscriptionStatus {
       isActive: true,
       isPremium: true,
       expiryDate: expiryDate,
-      features: [...FeatureFlags.FREE_FEATURES, ...FeatureFlags.PREMIUM_FEATURES],
+      features: [],
       plan: 'premium',
     );
   }
@@ -54,7 +54,7 @@ class SubscriptionStatus {
       expiryDate: json['expiryDate'] != null 
           ? DateTime.parse(json['expiryDate']) 
           : null,
-      features: List<String>.from(json['features'] ?? FeatureFlags.FREE_FEATURES),
+      features: List<String>.from(json['features'] ?? []),
       plan: json['plan'] ?? 'free',
     );
   }
@@ -111,17 +111,7 @@ class SubscriptionManager {
 
   /// Check if specific feature is available
   Future<bool> canAccessFeature(String featureName) async {
-    // Free features are always available
-    if (FeatureFlags.FREE_FEATURES.contains(featureName)) {
-      return true;
-    }
-
-    // Premium features require active subscription
-    if (FeatureFlags.PREMIUM_FEATURES.contains(featureName)) {
-      return await hasActiveSubscription();
-    }
-
-    // Unknown feature defaults to free
+    // All features are available (legacy logic removed)
     return true;
   }
 
@@ -157,11 +147,8 @@ class SubscriptionManager {
 
   /// Get locked features for current user
   Future<List<String>> getLockedFeatures() async {
-    final hasSubscription = await hasActiveSubscription();
-    if (hasSubscription) {
-      return [];
-    }
-    return FeatureFlags.PREMIUM_FEATURES;
+    // No locked features (legacy logic removed)
+    return [];
   }
 
   /// Check if subscription is still valid (not expired)
@@ -197,8 +184,8 @@ class SubscriptionManager {
       'lockedFeatures': lockedFeatures,
       'availableFeatures': status.features,
       'isFreeTrial': !status.isPremium,
-      'subscriptionPrice': FeatureFlags.MONTHLY_SUBSCRIPTION_PRICE,
-      'benefits': FeatureFlags.SUBSCRIPTION_BENEFITS,
+      'subscriptionPrice': 0.0, // Placeholder
+      'benefits': '', // Placeholder
     };
   }
 }

@@ -1014,7 +1014,7 @@ class _EditorScreenState extends State<EditorScreen> {
                             ),
 
                           // Globe toggle (only in normal chat mode) - PREMIUM FEATURE
-                          if (_selectedSourceIds.isEmpty)
+                          if (_selectedSourceIds.isEmpty && FeatureFlags.SEARCH_AGENTS_ENABLED)
                             FutureBuilder<bool>(
                               future: _checkWebSearchAccess(),
                               builder: (context, snapshot) {
@@ -1968,10 +1968,6 @@ class _EditorScreenState extends State<EditorScreen> {
   Future<bool> _checkWebSearchAccess() async {
     try {
       // Dev override: allow internet globe in development when the explicit dev flag is enabled.
-      if (EnvironmentService.isDevelopment() && FeatureFlags.DEV_UNLOCK_INTERNET_GLOBE) {
-        return true;
-      }
-
       // Production or dev without override: require active subscription entitlement.
       try {
         final sub = Provider.of<SubscriptionProvider>(context, listen: false);
