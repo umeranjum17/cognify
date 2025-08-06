@@ -744,6 +744,21 @@ class _EditorScreenState extends State<EditorScreen> {
                     toolResults: _lastToolResults,
                     messageCount: costData?.messageCount ?? SessionCostService().messageCount,
                     modelCapabilities: _currentModelCapabilities,
+                    mode: _currentMode,
+                    onModelSwitched: (modelId) {
+                      setState(() {
+                        _selectedModel = modelId;
+                      });
+                      // Update provider for the current mode
+                      final provider = Provider.of<ModeConfigProvider>(context, listen: false);
+                      final currentConfig = provider.getConfigForMode(_currentMode);
+                      if (currentConfig != null) {
+                        provider.updateConfig(_currentMode, currentConfig.copyWith(model: modelId));
+                      }
+                      // Update LLM service
+                      LLMService().setCurrentModel(modelId);
+                      _checkModelCapabilities();
+                    },
                   );
                 },
               );
@@ -973,11 +988,7 @@ class _EditorScreenState extends State<EditorScreen> {
               ),
             ),
             child: Column(
-              children: [
-                // Model chip
-                _buildModelChip(theme),
-                const SizedBox(height: 8),
-                // Unified input container with separated text and controls
+              children: [                // Unified input container with separated text and controls
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 1, vertical: 1),
                   decoration: BoxDecoration(

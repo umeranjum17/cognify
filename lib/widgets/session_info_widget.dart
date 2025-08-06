@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../services/session_cost_service.dart';
+import '../models/mode_config.dart';
 import '../theme/app_theme.dart';
+import '../services/session_cost_service.dart';
 import 'model_capabilities_bottom_sheet.dart';
 import 'session_cost_bottom_sheet.dart';
+import '../widgets/model_quick_switcher_modal.dart';
 
 class SessionInfoWidget extends StatelessWidget {
   final String? llmUsed;
@@ -14,6 +16,8 @@ class SessionInfoWidget extends StatelessWidget {
   final Map<String, dynamic>? costBreakdown;
   final int messageCount;
   final dynamic modelCapabilities; // ModelCapabilities? - using dynamic to avoid import issues
+  final ChatMode? mode; // NEW: Pass current mode for quick switcher
+  final Function(String)? onModelSwitched; // NEW: Callback for model switch
 
   const SessionInfoWidget({
     super.key,
@@ -25,6 +29,8 @@ class SessionInfoWidget extends StatelessWidget {
     this.costBreakdown,
     this.messageCount = 0,
     this.modelCapabilities,
+    this.mode,
+    this.onModelSwitched,
   });
 
   @override
@@ -54,12 +60,44 @@ class SessionInfoWidget extends StatelessWidget {
               ),
               const SizedBox(width: 4),
               Expanded(
-                child: GestureDetector(
-                  onTap: () => _showModelCapabilitiesBottomSheet(context),
-                  child: Text(
-                    _getModelDisplayText(),
-                    style: theme.textTheme.bodySmall?.copyWith(fontSize: 10),
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    GestureDetector(
+                      onTap: () => _showModelCapabilitiesBottomSheet(context),
+                      child: Text(
+                        _getModelDisplayText(),
+                        style: theme.textTheme.bodySmall?.copyWith(fontSize: 10),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 2),
+                    GestureDetector(
+                      onTap: () {
+                        if (mode != null && modelName != null) {
+                          showModelQuickSwitcher(
+                            context: context,
+                            mode: mode!,
+                            selectedModel: modelName!,
+                            onModelSelected: (modelId) {
+                              if (onModelSwitched != null) {
+                                onModelSwitched!(modelId);
+                              }
+                            },
+                          );
+                        }
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 2),
+                        child: Icon(
+                          Icons.edit,
+                          size: 13,
+                          color: theme.colorScheme.primary.withOpacity(0.75),
+                          semanticLabel: 'Switch Model',
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               GestureDetector(
@@ -143,10 +181,6 @@ class SessionInfoWidget extends StatelessWidget {
       ),
     );
   }
-
-
-
-
 
   String _getCostDisplayText() {
     if (llmUsed == 'local-ollama') {
