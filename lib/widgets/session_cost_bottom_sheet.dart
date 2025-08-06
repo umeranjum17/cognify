@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../services/cost_service.dart';
 import '../services/session_cost_service.dart';
+import '../services/openrouter_client.dart';
+import '../services/cost_calculation_service.dart';
 import '../utils/logger.dart';
 
 class SessionCostBottomSheet extends StatefulWidget {
@@ -22,6 +24,8 @@ class SessionCostBottomSheet extends StatefulWidget {
 
 class _SessionCostBottomSheetState extends State<SessionCostBottomSheet> {
   Map<String, dynamic>? sessionSummary;
+  Map<String, dynamic>? platformCredits;
+  Map<String, dynamic>? platformStats;
   bool isLoading = true;
 
   @override
@@ -76,7 +80,7 @@ class _SessionCostBottomSheetState extends State<SessionCostBottomSheet> {
                       isLoading = true;
                     });
                     await widget.sessionCostService.recalculateSessionCosts();
-                    await _loadSessionData();
+                    await _loadData();
                   },
                   icon: Icon(Icons.refresh, color: theme.colorScheme.onSurface),
                   tooltip: 'Refresh costs',
@@ -108,7 +112,7 @@ class _SessionCostBottomSheetState extends State<SessionCostBottomSheet> {
   @override
   void initState() {
     super.initState();
-    _loadSessionData();
+    _loadData();
   }
 
   Widget _buildContent(ThemeData theme, bool isDark) {
@@ -126,313 +130,89 @@ class _SessionCostBottomSheetState extends State<SessionCostBottomSheet> {
     final sessionCost = sessionSummary!['sessionCost'] as double? ?? 0.0;
     final messageCount = sessionSummary!['messageCount'] as int? ?? 0;
     final totalGenerations = sessionSummary!['totalGenerations'] as int? ?? 0;
-    final hasAccurateCosts = sessionSummary!['hasAccurateCosts'] as bool? ?? false;
-    final accuracy = sessionSummary!['accuracy'] as double? ?? 0.0;
-    final successfulFetches = sessionSummary!['successfulFetches'] as int? ?? 0;
-    final failedFetches = sessionSummary!['failedFetches'] as int? ?? 0;
+    
+    // Platform credits data (OpenRouter account) - Fix type casting
+    final totalCreditsRaw = platformCredits?['total_credits'];
+    final totalUsageRaw = platformCredits?['total_usage'];
+    final remainingCreditsRaw = platformCredits?['remaining_credits'];
+    
+    // Safe type conversion
+    final totalCredits = _safeToDouble(totalCreditsRaw);
+    final totalUsage = _safeToDouble(totalUsageRaw);
+    final remainingCredits = _safeToDouble(remainingCreditsRaw);
+    final creditsFetchedAt = platformCredits?['fetched_at'] as String?;
+    
+    // Platform stats data (local tracking)
+    final platformTotalCost = platformStats?['totalCost'] as double? ?? 0.0;
+    final platformTotalRequests = platformStats?['modelCount'] as int? ?? 0;
 
     return ListView(
       controller: widget.scrollController,
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
       children: [
-          // Session Overview
-          _buildSectionCard(
-            theme,
-            'Session Overview',
-            Icons.assessment,
-            [
-              _buildInfoRow(
-                'Total Cost',
-                sessionCost == 0.0 ? '\$0' : CostService.formatCost(sessionCost),
-                sessionCost == 0.0 ? Colors.green : Colors.orange
-              ),
-              _buildInfoRow('Messages', messageCount.toString(), Colors.blue),
-              _buildInfoRow('Generations', totalGenerations.toString(), Colors.orange),
-              _buildInfoRow('Accuracy', '${(accuracy * 100).toStringAsFixed(1)}%', 
-                hasAccurateCosts ? Colors.green : Colors.orange),
-            ],
-          ),
-
-          const SizedBox(height: 16),
-
-          // Generation Details
-          _buildSectionCard(
-            theme,
-            'Generation Details',
-            Icons.data_usage,
-            [
-              _buildInfoRow('Successful Fetches', successfulFetches.toString(), Colors.green),
-              _buildInfoRow('Failed Fetches', failedFetches.toString(), 
-                failedFetches > 0 ? Colors.red : Colors.grey),
-              _buildInfoRow('Total Requests', (successfulFetches + failedFetches).toString(), Colors.blue),
-            ],
-          ),
-
-          const SizedBox(height: 16),
-
-          // Individual Generation IDs
-          if (sessionSummary!['enhancedGenerations'] != null && 
-              (sessionSummary!['enhancedGenerations'] as List).isNotEmpty) ...[
-            _buildGenerationsList(theme, sessionSummary!['enhancedGenerations'] as List<Map<String, dynamic>>),
-            const SizedBox(height: 16),
-          ],
-
-          // Session ID Info
-          if (widget.additionalCostData != null || widget.sessionCostService.currentSessionId != null) ...[
-            _buildSectionCard(
-              theme,
-              'Session Information',
-              Icons.fingerprint,
-              [
-                if (widget.sessionCostService.currentSessionId != null)
-                  _buildInfoRow('Session ID', 
-                    widget.sessionCostService.currentSessionId!.length > 12 
-                        ? '${widget.sessionCostService.currentSessionId!.substring(0, 12)}...'
-                        : widget.sessionCostService.currentSessionId!, 
-                    Colors.grey),
-                if (widget.additionalCostData?['timestamp'] != null)
-                  _buildInfoRow('Last Updated', 
-                    DateTime.tryParse(widget.additionalCostData!['timestamp'].toString())
-                        ?.toLocal().toString().substring(0, 19) ?? 'Unknown',
-                    Colors.grey),
-              ],
+        // Current Session
+        _buildSectionCard(
+          theme,
+          'Current Session',
+          Icons.assessment,
+          [
+            _buildInfoRow(
+              'Session Cost',
+              sessionCost == 0.0 ? '\$0' : CostService.formatCost(sessionCost),
+              sessionCost == 0.0 ? Colors.green : Colors.orange
             ),
+            _buildInfoRow('Requests', totalGenerations.toString(), Colors.blue),
+            _buildInfoRow('Messages', messageCount.toString(), Colors.grey),
           ],
-      ],
-    );
-  }
-
-  Widget _buildGenerationItem(ThemeData theme, Map<String, dynamic> generation, int index) {
-    final stage = generation['stage']?.toString() ?? 'Unknown';
-    final model = generation['model']?.toString() ?? 'Unknown';
-    final totalTokens = generation['totalTokens'] as int? ?? 0;
-    final cost = generation['cost'] as double? ?? 0.0;
-    final inputTokens = generation['inputTokens'] as int? ?? 0;
-    final outputTokens = generation['outputTokens'] as int? ?? 0;
-    final success = generation['success'] as bool? ?? false;
-    
-    // Extract additional data from costData if available
-    final costData = generation['costData'] as Map<String, dynamic>?;
-    final latency = costData?['latency'] as int?;
-    final generationTime = costData?['generation_time'] as int?;
-    final providerName = costData?['provider_name'] as String?;
-    final finishReason = costData?['finish_reason'] as String?;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 6),
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.1)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header row with generation number and status
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  '#$index',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.primary,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 10,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  '$stage - ${model.split('/').last.replaceAll(':free', '')}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 11,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              if (providerName != null) ...[
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                  decoration: BoxDecoration(
-                    color: _getProviderColor(providerName).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(3),
-                  ),
-                  child: Text(
-                    providerName,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: _getProviderColor(providerName),
-                      fontSize: 8,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ),
-          
-          const SizedBox(height: 6),
-          
-          // Tokens and cost row
-          Row(
-            children: [
-              if (totalTokens > 0) ...[
-                Icon(
-                  Icons.token,
-                  size: 10,
-                  color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.6),
-                ),
-                const SizedBox(width: 3),
-                Text(
-                  '$totalTokens',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.6),
-                    fontSize: 9,
-                  ),
-                ),
-                if (inputTokens > 0 && outputTokens > 0) ...[
-                  Text(
-                    ' ($inputTokens+$outputTokens)',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.4),
-                      fontSize: 8,
-                    ),
-                  ),
-                ],
-                const SizedBox(width: 12),
-              ],
-              
-              // Cost display
-              Icon(
-                Icons.monetization_on,
-                size: 10,
-                color: success ? Colors.green.withValues(alpha: 0.7) : Colors.orange.withValues(alpha: 0.7),
-              ),
-              const SizedBox(width: 3),
-              if (success && cost > 0) ...[
-                Text(
-                  '\$${cost.toStringAsFixed(6)}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: Colors.green,
-                    fontSize: 9,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ] else if (success && cost == 0.0) ...[
-                Text(
-                  '\$0',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: Colors.green,
-                    fontSize: 9,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ] else ...[
-                Text(
-                  'Cost not yet available',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: Colors.orange,
-                    fontSize: 9,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ],
-          ),
-          
-          // Performance metrics row (if available)
-          if (latency != null || generationTime != null) ...[
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                if (latency != null) ...[
-                  Icon(
-                    Icons.network_check,
-                    size: 9,
-                    color: _getLatencyColor(latency),
-                  ),
-                  const SizedBox(width: 2),
-                  Text(
-                    '${latency}ms',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: _getLatencyColor(latency),
-                      fontSize: 8,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  if (generationTime != null) ...[
-                    const SizedBox(width: 8),
-                  ],
-                ],
-                if (generationTime != null) ...[
-                  Icon(
-                    Icons.timer,
-                    size: 9,
-                    color: _getGenerationTimeColor(generationTime),
-                  ),
-                  const SizedBox(width: 2),
-                  Text(
-                    '${generationTime}ms gen',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: _getGenerationTimeColor(generationTime),
-                      fontSize: 8,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-                if (finishReason != null && finishReason != 'stop') ...[
-                  const SizedBox(width: 8),
-                  const Icon(
-                    Icons.info_outline,
-                    size: 9,
-                    color: Colors.amber,
-                  ),
-                  const SizedBox(width: 2),
-                  Text(
-                    finishReason,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: Colors.amber,
-                      fontSize: 8,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildGenerationsList(ThemeData theme, List<Map<String, dynamic>> generations) {
-    return _buildSectionCard(
-      theme,
-      'Generation History (${generations.length})',
-      Icons.history,
-      [
-        Container(
-          height: 160, // Increased height to accommodate more info
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface.withValues(alpha: 0.2),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: ListView.builder(
-            padding: const EdgeInsets.all(4),
-            itemCount: generations.length,
-            itemBuilder: (context, index) {
-              final generation = generations[index];
-              return _buildGenerationItem(theme, generation, index + 1);
-            },
-          ),
         ),
+
+        const SizedBox(height: 16),
+
+        // Platform Usage (OpenRouter Account)
+        _buildSectionCard(
+          theme,
+          'OpenRouter Account',
+          Icons.account_balance,
+          [
+            _buildInfoRow('Total Spent', '\$${totalUsage.toStringAsFixed(2)}', Colors.red),
+            _buildInfoRow('Remaining', '\$${remainingCredits.toStringAsFixed(2)}', Colors.green),
+            _buildInfoRow('Total Credits', '\$${totalCredits.toStringAsFixed(2)}', Colors.blue),
+          ],
+        ),
+
+        const SizedBox(height: 16),
+
+        // Platform Stats (Local Tracking)
+        _buildSectionCard(
+          theme,
+          'Platform Stats',
+          Icons.analytics,
+          [
+            _buildInfoRow('Total Tracked Cost', '\$${platformTotalCost.toStringAsFixed(6)}', Colors.orange),
+            _buildInfoRow('Total Requests', platformTotalRequests.toString(), Colors.purple),
+          ],
+        ),
+
+        const SizedBox(height: 16),
+
+        // Last Updated
+        if (creditsFetchedAt != null || widget.additionalCostData?['timestamp'] != null) ...[
+          _buildSectionCard(
+            theme,
+            'Last Updated',
+            Icons.access_time,
+            [
+              if (creditsFetchedAt != null)
+                _buildInfoRow('OpenRouter Data', 
+                  _formatTimestamp(creditsFetchedAt),
+                  Colors.grey),
+              if (widget.additionalCostData?['timestamp'] != null)
+                _buildInfoRow('Session Data', 
+                  _formatTimestamp(widget.additionalCostData!['timestamp'].toString()),
+                  Colors.grey),
+            ],
+          ),
+        ],
       ],
     );
   }
@@ -495,43 +275,49 @@ class _SessionCostBottomSheetState extends State<SessionCostBottomSheet> {
     );
   }
 
-  /// Get color based on generation time performance
-  Color _getGenerationTimeColor(int generationTime) {
-    if (generationTime < 500) return Colors.green; // Fast
-    if (generationTime < 1500) return Colors.orange; // Moderate
-    return Colors.red; // Slow
-  }
-
-  /// Get color based on latency performance
-  Color _getLatencyColor(int latency) {
-    if (latency < 1000) return Colors.green; // Good
-    if (latency < 3000) return Colors.orange; // Fair
-    return Colors.red; // Poor
-  }
-
-  /// Get color for provider badges
-  Color _getProviderColor(String provider) {
-    switch (provider.toLowerCase()) {
-      case 'google':
-        return Colors.blue;
-      case 'openai':
-        return Colors.green;
-      case 'anthropic':
-        return Colors.purple;
-      case 'deepseek':
-        return Colors.teal;
-      case 'mistral':
-        return Colors.orange;
-      default:
-        return Colors.grey;
+  String _formatTimestamp(String timestamp) {
+    try {
+      final dateTime = DateTime.parse(timestamp);
+      return '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')} '
+             '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}:${dateTime.second.toString().padLeft(2, '0')}';
+    } catch (e) {
+      return 'Unknown';
     }
   }
 
-  Future<void> _loadSessionData() async {
+  /// Safe conversion from dynamic to double
+  double _safeToDouble(dynamic value) {
+    if (value == null) return 0.0;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is String) {
+      try {
+        return double.parse(value);
+      } catch (e) {
+        return 0.0;
+      }
+    }
+    return 0.0;
+  }
+
+  Future<void> _loadData() async {
     try {
+      // Load session data
       final summary = await widget.sessionCostService.getSessionSummary();
+      
+      // Load platform credits data (OpenRouter account)
+      final openRouterClient = OpenRouterClient();
+      final credits = await openRouterClient.getCredits();
+      
+      // Load platform stats data (local tracking)
+      final costCalculationService = CostCalculationService();
+      await costCalculationService.initialize();
+      final stats = costCalculationService.getTotalStats();
+      
       setState(() {
         sessionSummary = summary;
+        platformCredits = credits;
+        platformStats = stats;
         isLoading = false;
       });
     } catch (e) {
