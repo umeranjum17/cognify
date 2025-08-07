@@ -3,9 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/mode_config.dart';
 import '../theme/app_theme.dart';
 import '../services/session_cost_service.dart';
-import 'model_capabilities_bottom_sheet.dart';
 import 'session_cost_bottom_sheet.dart';
-import '../widgets/model_quick_switcher_modal.dart';
 
 class SessionInfoWidget extends StatelessWidget {
   final String? llmUsed;
@@ -48,135 +46,59 @@ class SessionInfoWidget extends StatelessWidget {
           bottom: BorderSide(color: theme.dividerColor),
         ),
       ),
-      child: Column(
+      child: Row(
         children: [
-          // Main info row
-          Row(
-            children: [
-              Icon(
-                Icons.memory,
-                size: 14,
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-              ),
-              const SizedBox(width: 4),
-              Expanded(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    GestureDetector(
-                      onTap: () => _showModelCapabilitiesBottomSheet(context),
-                      child: Text(
-                        _getModelDisplayText(),
-                        style: theme.textTheme.bodySmall?.copyWith(fontSize: 10),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(width: 2),
-                    GestureDetector(
-                      onTap: () {
-                        if (mode != null && modelName != null) {
-                          showModelQuickSwitcher(
-                            context: context,
-                            mode: mode!,
-                            selectedModel: modelName!,
-                            onModelSelected: (modelId) {
-                              if (onModelSwitched != null) {
-                                onModelSwitched!(modelId);
-                              }
-                            },
-                          );
-                        }
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 2),
-                        child: Icon(
-                          Icons.edit,
-                          size: 13,
-                          color: theme.colorScheme.primary.withOpacity(0.75),
-                          semanticLabel: 'Switch Model',
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              GestureDetector(
-                onTap: () => _showSessionCostPopup(context),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surface.withValues(alpha: 0.5),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: theme.dividerColor.withValues(alpha: 0.3)),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.account_balance_wallet,
-                        size: 14,
-                        color: llmUsed == 'local-ollama' ? Colors.green : theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        _getCostDisplayText(),
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          fontSize: 10,
-                          color: llmUsed == 'local-ollama' ? Colors.green : null,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-
-          // Tool execution info
-          if (toolResults != null && toolResults!.isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Row(
+          // Model info (simplified)
+          Expanded(
+            child: Row(
               children: [
-                const Icon(
-                  Icons.build,
-                  size: 12,
-                  color: Colors.orange,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  'Tools:',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                  ),
+                Icon(
+                  Icons.memory,
+                  size: 14,
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
                 const SizedBox(width: 4),
                 Expanded(
-                  child: Wrap(
-                    spacing: 4,
-                    children: toolResults!.entries.map((entry) {
-                      final hasError = entry.value is Map &&
-                          (entry.value as Map).containsKey('error');
-                      return Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                        decoration: BoxDecoration(
-                          color: hasError ? Colors.red.withValues(alpha: 0.2) : Colors.green.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(3),
-                        ),
-                        child: Text(
-                          entry.key,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            fontSize: 9,
-                            color: hasError ? Colors.red : Colors.green,
-                          ),
-                        ),
-                      );
-                    }).toList(),
+                  child: Text(
+                    _getModelDisplayText(),
+                    style: theme.textTheme.bodySmall?.copyWith(fontSize: 10),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
             ),
-          ],
+          ),
+          
+          // Cost info (simplified)
+          GestureDetector(
+            onTap: () => _showSessionCostPopup(context),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(color: theme.dividerColor.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.account_balance_wallet,
+                    size: 12,
+                    color: llmUsed == 'local-ollama' ? Colors.green : theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    _getCostDisplayText(),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontSize: 9,
+                      color: llmUsed == 'local-ollama' ? Colors.green : null,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -201,18 +123,6 @@ class SessionInfoWidget extends StatelessWidget {
       ? actualModelName.split('/').last.replaceAll(':free', '')
       : actualModelName;
     return 'Model: $displayName';
-  }
-
-  void _showModelCapabilitiesBottomSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => ModelCapabilitiesBottomSheet(
-        modelCapabilities: modelCapabilities,
-        modelName: modelName,
-      ),
-    );
   }
 
   void _showSessionCostPopup(BuildContext context) {

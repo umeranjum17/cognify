@@ -49,6 +49,7 @@ import '../widgets/stacked_media_bubbles.dart';
 import '../widgets/streaming_message_content.dart';
 import '../widgets/unified_settings_modal.dart';
 import '../widgets/model_quick_switcher_modal.dart';
+import '../widgets/model_capabilities_bottom_sheet.dart';
 import 'model_selection_screen.dart';
 import 'vibration_stub.dart'
     if (dart.library.io) 'vibration_impl.dart';
@@ -998,16 +999,104 @@ class _EditorScreenState extends State<EditorScreen> {
               ),
             ),
 
+          // Model selector layer (NEW)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: theme.brightness == Brightness.dark ? AppColors.darkBackgroundAlt : AppColors.lightBackgroundAlt,
+              border: Border(
+                bottom: BorderSide(
+                  color: theme.brightness == Brightness.dark ? AppColors.darkBorder : AppColors.lightBorder,
+                  width: 0.5,
+                ),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.memory,
+                  size: 14,
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => _showModelCapabilitiesBottomSheet(context),
+                    child: MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: Text(
+                        _getModelDisplayTextForSelector(),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          fontSize: 11,
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () {
+                    showModelQuickSwitcher(
+                      context: context,
+                      mode: _currentMode,
+                      selectedModel: _selectedModel,
+                      onModelSelected: (modelId) {
+                        setState(() {
+                          _selectedModel = modelId;
+                        });
+                        // Update provider for the current mode
+                        final provider = Provider.of<ModeConfigProvider>(context, listen: false);
+                        final currentConfig = provider.getConfigForMode(_currentMode);
+                        if (currentConfig != null) {
+                          provider.updateConfig(_currentMode, currentConfig.copyWith(model: modelId));
+                        }
+                        // Update LLM service
+                        LLMService().setCurrentModel(modelId);
+                        _checkModelCapabilities();
+                      },
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                        width: 0.5,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.swap_horiz,
+                          size: 12,
+                          color: theme.colorScheme.primary,
+                        ),
+                        const SizedBox(width: 3),
+                        Text(
+                          'Switch',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w600,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
           // Input Section
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: AppColors.spacingSm),
             decoration: BoxDecoration(
               color: theme.brightness == Brightness.dark ? AppColors.darkBackgroundAlt : AppColors.lightBackgroundAlt,
-              border: Border(
-                top: BorderSide(
-                  color: theme.brightness == Brightness.dark ? AppColors.darkBorder : AppColors.lightBorder,
-                ),
-              ),
             ),
             child: Column(
               children: [                // Unified input container with separated text and controls
@@ -1114,8 +1203,7 @@ class _EditorScreenState extends State<EditorScreen> {
                         ),
                       Row(
                         children: [
-                          // Left side controls: single attachment icon, mode dropdown, and globe toggle
-                          // Single attachment button (always visible)
+                          // Left side controls: attachment and mode dropdown
                           IconButton(
                             icon: Icon(
                               Icons.attach_file,
@@ -1134,8 +1222,6 @@ class _EditorScreenState extends State<EditorScreen> {
                               minimumSize: const Size(28, 28),
                             ),
                           ),
-
-
 
                           // Mode dropdown
                           if (_selectedSourceIds.isEmpty)
@@ -4295,6 +4381,43 @@ class _EditorScreenState extends State<EditorScreen> {
       _retryUserMessage(lastUserMessage);
     }
   }
+
+  /// Get model display text for the model selector layer
+  String _getModelDisplayText() {
+    // Get the actual model name, not the default fallback
+    final actualModelName = _selectedModel ?? 'Unknown';
+
+    final displayName = actualModelName.contains('/')
+      ? actualModelName.split('/').last.replaceAll(':free', '')
+      : actualModelName;
+    return 'Model: $displayName';
+  }
+
+  /// Get model display text for the model selector layer (syncs with session info)
+  String _getModelDisplayTextForSelector() {
+    // Use the selected model for immediate feedback, but fall back to last used model
+    final actualModelName = _selectedModel ?? _lastUsedModel ?? _getModelForCurrentMode() ?? 'Unknown';
+
+    final displayName = actualModelName.contains('/')
+      ? actualModelName.split('/').last.replaceAll(':free', '')
+      : actualModelName;
+    
+
+    return 'Model: $displayName';
+  }
+
+  /// Show model capabilities bottom sheet
+  void _showModelCapabilitiesBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => ModelCapabilitiesBottomSheet(
+        modelCapabilities: _currentModelCapabilities,
+        modelName: _selectedModel ?? _lastUsedModel ?? _getModelForCurrentMode(),
+      ),
+    );
+  }
 }
 
 // A compact benefit row used in the premium modal.
@@ -4331,4 +4454,23 @@ class _BenefitRow extends StatelessWidget {
       ),
     );
   }
+}
+
+String _getModelShortName(String? modelName) {
+  if (modelName == null) return 'Model';
+  
+  // Extract short name from full model name
+  final parts = modelName.split('/');
+  final lastPart = parts.last;
+  
+  // Handle common model name patterns
+  if (lastPart.contains('mistral')) return 'Mistral';
+  if (lastPart.contains('llama')) return 'Llama';
+  if (lastPart.contains('gpt')) return 'GPT';
+  if (lastPart.contains('claude')) return 'Claude';
+  if (lastPart.contains('gemini')) return 'Gemini';
+  
+  // Fallback: take first word or first 8 characters
+  final shortName = lastPart.split('-').first;
+  return shortName.length > 8 ? shortName.substring(0, 8) : shortName;
 }
