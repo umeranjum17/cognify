@@ -34,6 +34,11 @@ class SearchAgent {
     bool isEntitled = false,
   }) async {
     try {
+      // Check if forceBasicPlan option is set - if so, return basic plan
+      if (options != null && options['forceBasicPlan'] == true) {
+        return _createBasicPlan(query, enabledTools, mode);
+      }
+      
       // Check if search agents are enabled - if not, return basic plan
       if (!FeatureAccess.isEnabled(isEntitled, 'search_agents')) {
         return _createBasicPlan(query, enabledTools, mode);

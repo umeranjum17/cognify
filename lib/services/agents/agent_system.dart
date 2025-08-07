@@ -55,6 +55,7 @@ class AgentSystem {
     Function(Map<String, dynamic>)? onToolProgress,
     Function(ToolResult)? onToolResult,
     bool isEntitled = false,
+    Map<String, dynamic>? options,
   }) async* {
     if (!_initialized) {
       throw Exception('Agent System not initialized');
@@ -86,6 +87,7 @@ class AgentSystem {
           enabledTools: enabledTools,
           mode: mode,
           attachments: attachments,
+          options: options,
           isEntitled: isEntitled,
         );
       } catch (e) {

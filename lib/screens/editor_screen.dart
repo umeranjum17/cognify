@@ -107,7 +107,7 @@ class _EditorScreenState extends State<EditorScreen> {
   String _selectedLanguage = 'English';
 
   bool _isDeepSearchMode = false;
-  bool _isOfflineMode = false;
+  bool _isOfflineMode = true;
   String? _currentMilestone;
   String? _currentPhase;
   double? _currentProgress;

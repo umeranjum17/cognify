@@ -744,7 +744,7 @@ Return only the questions, one per line, without numbering.''';
           'size': f.size,
           'bytes': f.bytes,
         }).toList(),
-        isIncognitoMode: false,
+        isIncognitoMode: isOfflineMode,
         personality: personality ?? 'Default',
         language: language ?? 'English',
         conversationHistory: messages,
@@ -819,6 +819,20 @@ Return only the questions, one per line, without numbering.''';
           if (enabledTools.sourceContent == true) enabledToolNames.add('source_content');
           if (enabledTools.timeTool == true) enabledToolNames.add('time_tool');
           
+          // Filter out search tools when offline mode is enabled
+          if (isOfflineMode) {
+            const searchTools = {
+              'brave_search',
+              'brave_search_enhanced', 
+              'web_fetch',
+              'image_search',
+              'youtube_processor',
+              'sequential_thinking',
+            };
+            enabledToolNames.removeWhere((tool) => searchTools.contains(tool));
+            print('🔍 [Offline Mode] Filtered out search tools: ${enabledToolNames.join(', ')}');
+          }
+          
           // Convert attachments to the format expected by AgentSystem
           final agentAttachments = attachments?.map((file) => {
             'name': file.name,
@@ -826,6 +840,13 @@ Return only the questions, one per line, without numbering.''';
             'bytes': file.bytes,
             'type': 'file',
           }).toList();
+          
+          // Prepare options for offline mode
+          Map<String, dynamic>? options;
+          if (isOfflineMode) {
+            options = {'forceBasicPlan': true};
+            print('🔍 [Offline Mode] Forcing basic plan');
+          }
           
           // Pass through AgentSystem stream - NO YIELDING HERE
           yield* _agentSystem.processQuery(
@@ -839,6 +860,7 @@ Return only the questions, one per line, without numbering.''';
             conversationHistory: messages,
             selectedModel: model, // Pass the selected model to agent system
             isEntitled: isEntitled,
+            options: options,
           );
           return;
         }
