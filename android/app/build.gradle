@@ -96,6 +96,16 @@ android {
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.release
+            
+            // Add these lines to fix debug symbols issue
+            ndk {
+                debugSymbolLevel 'NONE'
+            }
+            
+            // Alternative approach - disable debug symbol stripping
+            // ndk {
+            //     debugSymbolLevel 'FULL'
+            // }
         }
     }
 }

@@ -38,14 +38,17 @@ class RevenueCatService {
 
     try {
       // Configure SDK with platform-specific public SDK key
-      final configuration = PurchasesConfiguration(
-        defaultTargetPlatform == TargetPlatform.iOS
-            ? SubscriptionsConfig.rcPublicKeyIOS
-            : SubscriptionsConfig.rcPublicKeyAndroid,
-      );
+      final apiKey = defaultTargetPlatform == TargetPlatform.iOS
+          ? SubscriptionsConfig.rcPublicKeyIOS
+          : SubscriptionsConfig.rcPublicKeyAndroid;
 
+      
+      debugPrint('🔧 [RevenueCat] Configuring with key: ${apiKey.substring(0, 10)}...');
+      
+      final configuration = PurchasesConfiguration(apiKey);
       await _withTimeout(() => Purchases.configure(configuration), timeout);
       _configured = true;
+      debugPrint('✅ [RevenueCat] Configuration successful');
     } catch (e, st) {
       debugPrint('❌ [RevenueCat] configure failed, continuing without RC: $e');
       debugPrint('$st');
@@ -121,11 +124,19 @@ class RevenueCatService {
     bool forceRefresh = false,
     Duration timeout = const Duration(seconds: 8),
   }) async {
-    if (!_configured) return null;
+    if (!_configured) {
+      debugPrint('⚠️ [RevenueCat] getOfferings: RC not configured');
+      return null;
+    }
     if (!forceRefresh && _offeringsCache != null) return _offeringsCache;
     try {
       _offeringsCache =
           await _withTimeout(() => Purchases.getOfferings(), timeout);
+      if (_offeringsCache == null) {
+        debugPrint('⚠️ [RevenueCat] getOfferings: No offerings returned');
+      } else {
+        debugPrint('✅ [RevenueCat] getOfferings: Found ${_offeringsCache!.all.length} offerings');
+      }
     } catch (e) {
       debugPrint('⚠️ [RevenueCat] getOfferings error: $e');
       // Keep previous cache or null

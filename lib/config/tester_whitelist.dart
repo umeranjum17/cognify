@@ -6,7 +6,6 @@ class TesterWhitelistConfig {
   // Use exact emails only. Always lowercase them when comparing.
   static const List<String> testerEmails = <String>[
     // Initial tester
-    'umeranjum17@gmail.com',
   ];
 }
 

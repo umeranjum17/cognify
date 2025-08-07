@@ -141,17 +141,69 @@ class _PaywallScreenState extends State<PaywallScreen> {
                         color: Theme.of(context).colorScheme.errorContainer,
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: Text(
-                        _error!,
-                        style: TextStyle(
-                            color: Theme.of(context).colorScheme.error),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.error_outline,
+                                color: Theme.of(context).colorScheme.error,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Subscription Service Unavailable',
+                                  style: TextStyle(
+                                    color: Theme.of(context).colorScheme.error,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            _error!,
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.error,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Please try again later or contact support if the issue persists.',
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.error,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   const SizedBox(height: 12),
                   if (packages.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.all(24.0),
-                      child: Center(child: CircularProgressIndicator()),
+                    Padding(
+                      padding: const EdgeInsets.all(24.0),
+                      child: Column(
+                        children: [
+                          const CircularProgressIndicator(),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Loading subscription options...',
+                            style: Theme.of(context).textTheme.bodySmall,
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'If this takes too long, please check your internet connection.',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
                     )
                   else
                     // Sign-in gate: if user is not signed in, show rationale + Google sign-in and return early UI
