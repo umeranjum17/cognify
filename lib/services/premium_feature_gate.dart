@@ -6,7 +6,49 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../config/feature_flags.dart';
 import '../providers/app_access_provider.dart';
+
+/// FeatureAccess - Unified feature access control
+/// Centralized logic to answer "can show?" and "can execute?" for a feature name
+/// Provides both context-aware (UI) and context-free (backend) variants
+class FeatureAccess {
+  /// Check if a feature should be discoverable/visible in UI
+  /// Uses FeatureFlags to determine kill switch (discoverability)
+  static bool canShow(String featureName) {
+    return FeatureFlags.canShowFeature(featureName);
+  }
+
+  /// Check if a feature is enabled for the current user (UI context)
+  /// Returns true if canShow(featureName) is true AND the user is entitled
+  static bool isEnabledForUser(BuildContext context, String featureName) {
+    if (!canShow(featureName)) return false;
+    
+    final appAccess = context.read<AppAccessProvider>();
+    return appAccess.hasPremiumAccess;
+  }
+
+  /// Check if a feature is enabled (backend context-free)
+  /// Same as isEnabledForUser but accepts entitlement boolean directly
+  static bool isEnabled(bool isEntitled, String featureName) {
+    if (!canShow(featureName)) return false;
+    return isEntitled;
+  }
+
+  /// Guard an action with feature access control
+  /// Executes action if isEnabledForUser is true
+  /// Otherwise triggers paywall flow, returns false
+  static Future<bool> guardAction(BuildContext context, String featureName, VoidCallback action) async {
+    if (isEnabledForUser(context, featureName)) {
+      action();
+      return true;
+    }
+    
+    // Trigger paywall flow
+    Navigator.of(context).pushNamed('/paywall');
+    return false;
+  }
+}
 
 /// isPremiumUnlocked()
 /// Tiny helper for widgets/viewmodels to gate UI or actions.

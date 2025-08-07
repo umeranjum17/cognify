@@ -1,4 +1,3 @@
-import '../../config/feature_flags.dart';
 import '../../config/model_registry.dart';
 import '../../database/database_service.dart';
 import '../../models/chat_source.dart';
@@ -55,6 +54,7 @@ class AgentSystem {
     String? selectedModel,
     Function(Map<String, dynamic>)? onToolProgress,
     Function(ToolResult)? onToolResult,
+    bool isEntitled = false,
   }) async* {
     if (!_initialized) {
       throw Exception('Agent System not initialized');
@@ -86,6 +86,7 @@ class AgentSystem {
           enabledTools: enabledTools,
           mode: mode,
           attachments: attachments,
+          isEntitled: isEntitled,
         );
       } catch (e) {
         final meta = _classifyError(e, stage: 'planning', model: _defaultModel);

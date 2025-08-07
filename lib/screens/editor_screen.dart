@@ -33,7 +33,9 @@ import '../services/unified_api_service.dart';
 import '../services/environment_service.dart';
 import '../config/feature_flags.dart';
 import '../config/model_registry.dart';
+import '../services/premium_feature_gate.dart';
 import '../providers/subscription_provider.dart';
+import '../providers/app_access_provider.dart';
 import '../theme/app_theme.dart';
 import '../utils/logger.dart';
 import '../widgets/cost_display_widget.dart';
@@ -1142,11 +1144,10 @@ class _EditorScreenState extends State<EditorScreen> {
                             ),
 
                           // Globe toggle (only in normal chat mode) - PREMIUM FEATURE
-                          if (_selectedSourceIds.isEmpty && FeatureFlags.SEARCH_AGENTS_ENABLED)
-                            FutureBuilder<bool>(
-                              future: _checkWebSearchAccess(),
-                              builder: (context, snapshot) {
-                                final hasAccess = snapshot.data ?? false;
+                          if (_selectedSourceIds.isEmpty && FeatureAccess.canShow('search_agents'))
+                            Builder(
+                              builder: (context) {
+                                final hasAccess = FeatureAccess.isEnabledForUser(context, 'search_agents');
 
                                 return GestureDetector(
                                   onTap: () {
@@ -2937,6 +2938,7 @@ class _EditorScreenState extends State<EditorScreen> {
               mode: currentMode,
               chatModel: chatModel,
               deepsearchModel: deepsearchModel,
+              isEntitled: context.read<AppAccessProvider>().hasPremiumAccess,
             );
 
             await for (final event in stream) {

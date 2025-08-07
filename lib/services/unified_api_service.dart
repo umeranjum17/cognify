@@ -79,6 +79,7 @@ class UnifiedApiService {
     String? mode,
     String? chatModel,
     String? deepsearchModel,
+    bool isEntitled = false,
   }) {
     return streamChat(
       model: model,
@@ -95,6 +96,7 @@ class UnifiedApiService {
       mode: mode,
       chatModel: chatModel,
       deepsearchModel: deepsearchModel,
+      isEntitled: isEntitled,
     );
   }
 
@@ -775,6 +777,7 @@ Return only the questions, one per line, without numbering.''';
     String? mode,
     String? chatModel,
     String? deepsearchModel,
+    bool isEntitled = false,
   }) async* {
     await _ensureInitialized();
     
@@ -835,6 +838,7 @@ Return only the questions, one per line, without numbering.''';
             language: language ?? 'English',
             conversationHistory: messages,
             selectedModel: model, // Pass the selected model to agent system
+            isEntitled: isEntitled,
           );
           return;
         }

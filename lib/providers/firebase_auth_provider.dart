@@ -9,6 +9,8 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import '../firebase_options.dart';
 
 /// FirebaseAuthProvider()
+/// Implements zero-friction start with anonymous auth by default.
+/// Users can optionally sign in with Apple/Google/Email for cross-device sync.
 class FirebaseAuthProvider extends ChangeNotifier {
   bool _initialized = false;
   bool _initializing = false;
@@ -48,9 +50,22 @@ class FirebaseAuthProvider extends ChangeNotifier {
         notifyListeners();
       });
 
+      // Zero-friction start: sign in anonymously if no user
+      if (_user == null) {
+        try {
+          await _auth.signInAnonymously();
+          _user = _auth.currentUser;
+          debugPrint('✅ [FirebaseAuth] Anonymous sign-in successful');
+        } catch (e) {
+          debugPrint('⚠️ [FirebaseAuth] Anonymous sign-in failed: $e');
+          // Continue without anonymous auth - user can still use the app
+        }
+      }
+
       _initialized = true;
     } catch (e) {
       _lastError = e;
+      debugPrint('❌ [FirebaseAuth] Initialization error: $e');
     } finally {
       _initializing = false;
       notifyListeners();
@@ -93,9 +108,11 @@ class FirebaseAuthProvider extends ChangeNotifier {
         final cred = await _auth.signInWithCredential(credential);
         _user = cred.user;
       }
+      debugPrint('✅ [FirebaseAuth] Google sign-in successful');
       notifyListeners();
     } catch (e) {
       _lastError = e;
+      debugPrint('❌ [FirebaseAuth] Google sign-in error: $e');
       notifyListeners();
       rethrow;
     }
@@ -134,9 +151,47 @@ class FirebaseAuthProvider extends ChangeNotifier {
 
       final cred = await _auth.signInWithCredential(oauthCred);
       _user = cred.user;
+      debugPrint('✅ [FirebaseAuth] Apple sign-in successful');
       notifyListeners();
     } catch (e) {
       _lastError = e;
+      debugPrint('❌ [FirebaseAuth] Apple sign-in error: $e');
+      notifyListeners();
+      rethrow;
+    }
+  }
+
+  Future<void> signInWithEmail(String email, String password) async {
+    _lastError = null;
+    try {
+      final cred = await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      _user = cred.user;
+      debugPrint('✅ [FirebaseAuth] Email sign-in successful');
+      notifyListeners();
+    } catch (e) {
+      _lastError = e;
+      debugPrint('❌ [FirebaseAuth] Email sign-in error: $e');
+      notifyListeners();
+      rethrow;
+    }
+  }
+
+  Future<void> createAccountWithEmail(String email, String password) async {
+    _lastError = null;
+    try {
+      final cred = await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      _user = cred.user;
+      debugPrint('✅ [FirebaseAuth] Account creation successful');
+      notifyListeners();
+    } catch (e) {
+      _lastError = e;
+      debugPrint('❌ [FirebaseAuth] Account creation error: $e');
       notifyListeners();
       rethrow;
     }
@@ -147,11 +202,25 @@ class FirebaseAuthProvider extends ChangeNotifier {
     try {
       await _auth.signOut();
       _user = null;
+      debugPrint('✅ [FirebaseAuth] Sign-out successful');
       notifyListeners();
     } catch (e) {
       _lastError = e;
+      debugPrint('❌ [FirebaseAuth] Sign-out error: $e');
       notifyListeners();
       rethrow;
     }
   }
+
+  /// Check if current user is anonymous
+  bool get isAnonymous => _user?.isAnonymous ?? true;
+
+  /// Get user's email (null for anonymous users)
+  String? get userEmail => _user?.email;
+
+  /// Get user's display name
+  String? get displayName => _user?.displayName;
+
+  /// Get user's photo URL
+  String? get photoURL => _user?.photoURL;
 }

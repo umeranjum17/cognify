@@ -356,20 +356,19 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
       Logger.error('❌ [USER] Error initializing user service: $e', tag: 'UserService');
     }
 
-    // Feature flag: enable RevenueCat only in non-dev builds
+    // Initialize RevenueCat with Firebase auth
     try {
-      const bool enableRevenueCat = bool.fromEnvironment('ENABLE_REVENUECAT', defaultValue: false);
-      if (enableRevenueCat) {
-        final firebaseAuth = context.read<FirebaseAuthProvider>();
-        if (firebaseAuth.isSignedIn && firebaseAuth.uid != null) {
-          await RevenueCatService.instance.initialize(appUserId: firebaseAuth.uid);
-        } else {
-          await RevenueCatService.instance.initialize();
-        }
-        Logger.info('✅ [RevenueCat] Initialized (feature flag enabled)', tag: 'RevenueCat');
-      } else {
-        Logger.info('ℹ️ [RevenueCat] Skipped (feature flag disabled for dev)', tag: 'RevenueCat');
+      final firebaseAuth = context.read<FirebaseAuthProvider>();
+      final subs = context.read<SubscriptionProvider>();
+      
+      // Initialize subscription provider with Firebase UID
+      if (!subs.initialized) {
+        await subs.initialize(appUserId: firebaseAuth.uid);
+        // Wire auth to sync identity changes
+        subs.wireAuth(firebaseAuth);
       }
+      
+      Logger.info('✅ [RevenueCat] Initialized with Firebase auth', tag: 'RevenueCat');
     } catch (e) {
       Logger.error('❌ [RevenueCat] Initialization error: $e', tag: 'RevenueCat');
     }

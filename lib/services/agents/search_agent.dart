@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'dart:math' as math;
 
-import '../../config/feature_flags.dart';
 import '../../models/tool_spec.dart';
+import '../../services/premium_feature_gate.dart';
 import '../../utils/json_utils.dart';
 import '../openrouter_client.dart';
 import '../tools.dart';
@@ -31,10 +31,11 @@ class SearchAgent {
     required String mode,
     List<Map<String, dynamic>>? attachments,
     Map<String, dynamic>? options,
+    bool isEntitled = false,
   }) async {
     try {
       // Check if search agents are enabled - if not, return basic plan
-      if (!FeatureFlags.SEARCH_AGENTS_ENABLED) {
+      if (!FeatureAccess.isEnabled(isEntitled, 'search_agents')) {
         return _createBasicPlan(query, enabledTools, mode);
       }
 
