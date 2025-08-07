@@ -265,7 +265,11 @@ class _EditorScreenState extends State<EditorScreen> {
     _loadToolsConfig();
     _loadModeConfigs();
     _subscribeToSessionCostUpdates();
-    _checkModelCapabilities();
+    // Load saved model after mode configs are loaded
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _loadSavedModel();
+      _checkModelCapabilities();
+    });
 
     // Listen to mode config changes for real-time updates
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -772,6 +776,8 @@ class _EditorScreenState extends State<EditorScreen> {
                       setState(() {
                         _selectedModel = modelId;
                       });
+                      // Save the selected model
+                      _saveSelectedModel(modelId);
                       // Update provider for the current mode
                       final provider = Provider.of<ModeConfigProvider>(context, listen: false);
                       final currentConfig = provider.getConfigForMode(_currentMode);
@@ -1045,6 +1051,8 @@ class _EditorScreenState extends State<EditorScreen> {
                         setState(() {
                           _selectedModel = modelId;
                         });
+                        // Save the selected model
+                        _saveSelectedModel(modelId);
                         // Update provider for the current mode
                         final provider = Provider.of<ModeConfigProvider>(context, listen: false);
                         final currentConfig = provider.getConfigForMode(_currentMode);
@@ -1904,6 +1912,8 @@ class _EditorScreenState extends State<EditorScreen> {
                     _isDeepSearchMode = false;
                     _showModeDropdown = false;
                   });
+                  // Load the appropriate model for the new mode
+                  _loadModelForCurrentMode();
                   // Update model capabilities when mode changes
                   _checkModelCapabilities();
                 },
@@ -1924,6 +1934,8 @@ class _EditorScreenState extends State<EditorScreen> {
                     _isDeepSearchMode = true;
                     _showModeDropdown = false;
                   });
+                  // Load the appropriate model for the new mode
+                  _loadModelForCurrentMode();
                   // Update model capabilities when mode changes
                   _checkModelCapabilities();
                 },
@@ -2397,14 +2409,8 @@ class _EditorScreenState extends State<EditorScreen> {
         throw Exception('Failed to fetch models: ${modelsResponse['error'] ?? 'Unknown error'}');
       }
 
-      // Load saved model preference
-      final prefs = await SharedPreferences.getInstance();
-      final savedModel = prefs.getString('selectedModel');
-      if (savedModel != null && _availableModels.contains(savedModel)) {
-        setState(() {
-          _selectedModel = savedModel;
-        });
-      }
+      // Load saved model preference with better fallback logic
+      await _loadSavedModel();
     } catch (e) {
       
       // Set fallback models if API fails
@@ -2417,6 +2423,104 @@ class _EditorScreenState extends State<EditorScreen> {
           'google/gemini-2.0-flash-exp:free',
         ];
       });
+      
+      // Try to load saved model even with fallback models
+      await _loadSavedModel();
+    }
+  }
+
+  Future<void> _loadSavedModel() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedModel = prefs.getString('selectedModel');
+      
+      if (savedModel != null) {
+        // Check if saved model is available in current models list
+        if (_availableModels.contains(savedModel)) {
+          setState(() {
+            _selectedModel = savedModel;
+          });
+          Logger.info('🤖 Loaded saved model: $savedModel', tag: 'EditorScreen');
+        } else {
+          // If saved model is not available, try to get it from mode config
+          final modeConfigProvider = Provider.of<ModeConfigProvider>(context, listen: false);
+          final currentConfig = modeConfigProvider.getConfigForMode(_currentMode);
+          if (currentConfig != null && currentConfig.model.isNotEmpty) {
+            setState(() {
+              _selectedModel = currentConfig.model;
+            });
+            Logger.info('🤖 Loaded model from mode config: ${currentConfig.model}', tag: 'EditorScreen');
+          } else {
+            // Fallback to default model
+            final defaultModel = ModeConfigManager.getDefaultConfigForMode(_currentMode).model;
+            setState(() {
+              _selectedModel = defaultModel;
+            });
+            Logger.info('🤖 Using default model: $defaultModel', tag: 'EditorScreen');
+          }
+        }
+      } else {
+        // No saved model, try to get from mode config
+        final modeConfigProvider = Provider.of<ModeConfigProvider>(context, listen: false);
+        final currentConfig = modeConfigProvider.getConfigForMode(_currentMode);
+        if (currentConfig != null && currentConfig.model.isNotEmpty) {
+          setState(() {
+            _selectedModel = currentConfig.model;
+          });
+          Logger.info('🤖 Loaded model from mode config: ${currentConfig.model}', tag: 'EditorScreen');
+        } else {
+          // Fallback to default model
+          final defaultModel = ModeConfigManager.getDefaultConfigForMode(_currentMode).model;
+          setState(() {
+            _selectedModel = defaultModel;
+          });
+          Logger.info('🤖 Using default model: $defaultModel', tag: 'EditorScreen');
+        }
+      }
+      
+      // Also update the LLM service with the selected model
+      LLMService().setCurrentModel(_selectedModel);
+    } catch (e) {
+      Logger.error('❌ Error loading saved model: $e', tag: 'EditorScreen');
+      // Keep the current _selectedModel value
+    }
+  }
+
+  Future<void> _saveSelectedModel(String modelId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('selectedModel', modelId);
+      Logger.info('🤖 Saved selected model: $modelId', tag: 'EditorScreen');
+    } catch (e) {
+      Logger.error('❌ Error saving selected model: $e', tag: 'EditorScreen');
+    }
+  }
+
+  Future<void> _loadModelForCurrentMode() async {
+    try {
+      // Get the model for the current mode from the provider
+      final modeConfigProvider = Provider.of<ModeConfigProvider>(context, listen: false);
+      final currentConfig = modeConfigProvider.getConfigForMode(_currentMode);
+      
+      if (currentConfig != null && currentConfig.model.isNotEmpty) {
+        setState(() {
+          _selectedModel = currentConfig.model;
+        });
+        Logger.info('🤖 Loaded model for current mode: ${currentConfig.model}', tag: 'EditorScreen');
+      } else {
+        // Fallback to default model for the mode
+        final defaultModel = ModeConfigManager.getDefaultConfigForMode(_currentMode).model;
+        setState(() {
+          _selectedModel = defaultModel;
+        });
+        Logger.info('🤖 Using default model for current mode: $defaultModel', tag: 'EditorScreen');
+      }
+      
+      // Save the selected model and update LLM service
+      await _saveSelectedModel(_selectedModel);
+      LLMService().setCurrentModel(_selectedModel);
+    } catch (e) {
+      Logger.error('❌ Error loading model for current mode: $e', tag: 'EditorScreen');
     }
   }
 
@@ -2680,6 +2784,9 @@ class _EditorScreenState extends State<EditorScreen> {
       setState(() {
         _modeConfigs = newConfigs;
       });
+      
+      // Load the appropriate model for the current mode
+      _loadModelForCurrentMode();
       _checkModelCapabilities(); // Check capabilities when mode changes
       
       // Debug: Print current state after update
@@ -3932,6 +4039,8 @@ class _EditorScreenState extends State<EditorScreen> {
             setState(() {
               _selectedModel = modelId;
             });
+            // Save the selected model
+            _saveSelectedModel(modelId);
             _checkModelCapabilities();
           },
         ),
@@ -3952,6 +4061,9 @@ class _EditorScreenState extends State<EditorScreen> {
           setState(() {
             _selectedModel = model;
           });
+          
+          // Save the selected model
+          _saveSelectedModel(model);
           
           // Also update the LLM service's current model to ensure API calls use the selected model
           LLMService().setCurrentModel(model);
@@ -4348,6 +4460,9 @@ class _EditorScreenState extends State<EditorScreen> {
     setState(() {
       _selectedModel = modelId;
     });
+    
+    // Save the selected model
+    _saveSelectedModel(modelId);
     
     // Update mode config provider
     final provider = Provider.of<ModeConfigProvider>(context, listen: false);
