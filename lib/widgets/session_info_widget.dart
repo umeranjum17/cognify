@@ -92,9 +92,9 @@ class _SessionInfoWidgetState extends State<SessionInfoWidget> {
       child: Row(
         children: [
           // OpenRouter credits info (replacing model info)
-          GestureDetector(
-            onTap: () => _showSessionCostPopup(context),
-            child: Expanded(
+          Expanded(
+            child: GestureDetector(
+              onTap: () => _showSessionCostPopup(context),
               child: Row(
                 children: [
                   Icon(

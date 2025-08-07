@@ -1,7 +1,7 @@
 name: cognify_flutter
 description: Cognify Flutter App
 
-version: 1.0.0+8
+version: 1.0.0+9
 
 environment:
   sdk: '^3.8.0'
