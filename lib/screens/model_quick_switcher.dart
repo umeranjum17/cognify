@@ -275,39 +275,16 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
         children: [
           // Header
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-            decoration: BoxDecoration(
-              border: Border(
-                bottom: BorderSide(
-                  color: isDark ? AppColors.darkDivider : AppColors.lightDivider,
-                  width: 1,
-                ),
-              ),
-            ),
-            child: Row(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                _buildHandle(theme),
+                const SizedBox(height: 24),
                 Text(
                   'Switch Model',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 20,
-                  ),
-                ),
-                const Spacer(),
-                IconButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  icon: Icon(
-                    Icons.close,
-                    color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
-                    size: 20,
-                  ),
-                  tooltip: 'Close',
-                  padding: const EdgeInsets.all(6),
-                  style: IconButton.styleFrom(
-                    backgroundColor: isDark ? AppColors.darkBackgroundLight : AppColors.lightBackgroundLight,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
@@ -329,6 +306,19 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
                       ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildHandle(ThemeData theme) {
+    return Center(
+      child: Container(
+        width: 40,
+        height: 4,
+        decoration: BoxDecoration(
+          color: theme.dividerColor,
+          borderRadius: BorderRadius.circular(2),
+        ),
       ),
     );
   }
@@ -397,14 +387,6 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
   Widget _buildLeftRail(ThemeData theme, bool isDark) {
     return Container(
       width: 100,
-      decoration: BoxDecoration(
-        border: Border(
-          right: BorderSide(
-            color: isDark ? AppColors.darkDivider : AppColors.lightDivider,
-            width: 1,
-          ),
-        ),
-      ),
       child: ListView.builder(
         padding: const EdgeInsets.symmetric(vertical: 12),
         itemCount: _providersIndexed.length,
@@ -424,23 +406,17 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
               decoration: BoxDecoration(
                 color: isSelected
-                    ? (isDark ? AppColors.darkAccent.withValues(alpha: 0.12) : AppColors.lightAccent.withValues(alpha: 0.08))
+                    ? (isDark ? AppColors.darkAccent.withValues(alpha: 0.08) : AppColors.lightAccent.withValues(alpha: 0.05))
                     : Colors.transparent,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: isSelected
-                      ? (isDark ? AppColors.darkAccent : AppColors.lightAccent)
-                      : Colors.transparent,
-                  width: 1,
-                ),
+                borderRadius: BorderRadius.circular(8),
               ),
               child: Column(
                 children: [
                   Text(
                     _getProviderIcon(provider),
-                    style: const TextStyle(fontSize: 18),
+                    style: const TextStyle(fontSize: 16),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 4),
                   Text(
                     provider,
                     style: theme.textTheme.bodySmall?.copyWith(
@@ -448,24 +424,24 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
                       color: isSelected
                           ? (isDark ? AppColors.darkAccent : AppColors.lightAccent)
                           : (isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary),
-                      fontSize: 11,
+                      fontSize: 10,
                     ),
                     textAlign: TextAlign.center,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 3),
+                  const SizedBox(height: 2),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                     decoration: BoxDecoration(
-                      color: isDark ? AppColors.darkBackgroundLight : AppColors.lightBackgroundLight,
-                      borderRadius: BorderRadius.circular(6),
+                      color: isDark ? AppColors.darkBackground.withValues(alpha: 0.6) : AppColors.lightBackground.withValues(alpha: 0.6),
+                      borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
                       '${models.length}',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
-                        fontSize: 9,
+                        fontSize: 8,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -500,23 +476,20 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
                 size: 18,
               ),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide.none,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
                 borderSide: BorderSide(
-                  color: isDark ? AppColors.darkInputBorder : AppColors.lightInputBorder,
+                  color: isDark ? AppColors.darkAccent : AppColors.lightAccent,
                   width: 1,
                 ),
               ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(
-                  color: isDark ? AppColors.darkAccent : AppColors.lightAccent,
-                  width: 1.5,
-                ),
-              ),
               filled: true,
-              fillColor: isDark ? AppColors.darkInput : AppColors.lightInput,
-              contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-              isDense: false,
+              fillColor: isDark ? AppColors.darkBackground.withValues(alpha: 0.4) : AppColors.lightBackground.withValues(alpha: 0.4),
+              contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+              isDense: true,
             ),
           ),
         ),
@@ -580,19 +553,13 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
       child: Stack(
         children: [
           Container(
-            margin: const EdgeInsets.only(bottom: 8),
-            padding: const EdgeInsets.all(16),
+            margin: const EdgeInsets.only(bottom: 6),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: isSelected
-                  ? (isDark ? AppColors.darkAccent.withValues(alpha: 0.08) : AppColors.lightAccent.withValues(alpha: 0.05))
-                  : (isDark ? AppColors.darkBackgroundLight : AppColors.lightBackgroundLight),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: isSelected
-                    ? (isDark ? AppColors.darkAccent : AppColors.lightAccent)
-                    : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
-                width: isSelected ? 1.5 : 1,
-              ),
+                  ? (isDark ? AppColors.darkAccent.withValues(alpha: 0.06) : AppColors.lightAccent.withValues(alpha: 0.04))
+                  : (isDark ? AppColors.darkBackground.withValues(alpha: 0.3) : AppColors.lightBackground.withValues(alpha: 0.3)),
+              borderRadius: BorderRadius.circular(8),
             ),
             child: Row(
               children: [
@@ -685,7 +652,7 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
                   ),
                 ),
                 
-                const SizedBox(width: 12),
+                const SizedBox(width: 24),
                 
                 // Price chip
                 Container(
@@ -743,18 +710,18 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
           // Selection indicator in top-right corner
           if (isSelected)
             Positioned(
-              top: 8,
-              right: 8,
+              top: 4,
+              right: 4,
               child: Container(
-                padding: const EdgeInsets.all(4),
+                padding: const EdgeInsets.all(2),
                 decoration: BoxDecoration(
                   color: isDark ? AppColors.darkAccent : AppColors.lightAccent,
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(4),
                 ),
                 child: const Icon(
                   Icons.check,
                   color: Colors.white,
-                  size: 12,
+                  size: 8,
                 ),
               ),
             ),
@@ -765,21 +732,17 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
 
   Widget _buildCompactFeatureChip(IconData icon, Color bgColor, Color textColor, {String? label}) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
       decoration: BoxDecoration(
         color: bgColor,
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(
-          color: textColor.withValues(alpha: 0.3),
-          width: 0.5,
-        ),
+        borderRadius: BorderRadius.circular(3),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
             icon,
-            size: 10,
+            size: 9,
             color: textColor,
           ),
           if (label != null) ...[
@@ -787,7 +750,7 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
             Text(
               label,
               style: TextStyle(
-                fontSize: 8,
+                fontSize: 7,
                 fontWeight: FontWeight.w600,
                 color: textColor,
               ),
