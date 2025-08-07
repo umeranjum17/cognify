@@ -6,8 +6,6 @@ import '../../config/subscriptions_config.dart';
 import '../../providers/subscription_provider.dart';
 import '../../providers/firebase_auth_provider.dart';
 import '../../services/revenuecat_service.dart';
-import 'package:provider/provider.dart';
-import '../../providers/firebase_auth_provider.dart';
 
 /// PaywallScreen()
 class PaywallScreen extends StatefulWidget {
@@ -45,6 +43,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
 
   Future<void> _purchase() async {
     final subs = context.read<SubscriptionProvider>();
+    final auth = context.read<FirebaseAuthProvider>();
     final selected = _selected;
     if (selected == null) return;
 
@@ -53,17 +52,37 @@ class _PaywallScreenState extends State<PaywallScreen> {
       _error = null;
     });
 
-    final result = await RevenueCatService.instance.purchasePackage(selected);
-
-    setState(() {
-      _busy = false;
-      if (!result.success) {
-        _error = result.errorMessage ?? 'Purchase failed';
+    try {
+      // Step 1: If user is not signed in, trigger Google Sign-In first
+      if (auth.uid == null || auth.uid!.isEmpty) {
+        await auth.signInWithGoogle();
+        // After sign-in, identify with RevenueCat using the UID
+        if (auth.uid != null && auth.uid!.isNotEmpty) {
+          await RevenueCatService.instance.identify(auth.uid!);
+          // Refresh offerings to show correct packages
+          await subs.refreshOfferings();
+          await _loadOfferings();
+        }
       }
-    });
 
-    if (result.success && mounted) {
-      Navigator.of(context).maybePop(); // return to previous screen
+      // Step 2: Proceed with purchase
+      final result = await RevenueCatService.instance.purchasePackage(selected);
+
+      setState(() {
+        _busy = false;
+        if (!result.success) {
+          _error = result.errorMessage ?? 'Purchase failed';
+        }
+      });
+
+      if (result.success && mounted) {
+        Navigator.of(context).maybePop(); // return to previous screen
+      }
+    } catch (e) {
+      setState(() {
+        _busy = false;
+        _error = e.toString();
+      });
     }
   }
 
@@ -178,10 +197,15 @@ class _PaywallScreenState extends State<PaywallScreen> {
                                           _error = null;
                                         });
                                         try {
-                                          await context.read<FirebaseAuthProvider>().signInWithGoogle();
-                                          // After sign-in, refresh offerings to show purchase options.
-                                          await context.read<SubscriptionProvider>().refreshOfferings();
-                                          await _loadOfferings();
+                                          final auth = context.read<FirebaseAuthProvider>();
+                                          await auth.signInWithGoogle();
+                                          // After sign-in, identify with RevenueCat using the UID
+                                          if (auth.uid != null && auth.uid!.isNotEmpty) {
+                                            await RevenueCatService.instance.identify(auth.uid!);
+                                            // Refresh offerings to show correct packages
+                                            await context.read<SubscriptionProvider>().refreshOfferings();
+                                            await _loadOfferings();
+                                          }
                                         } catch (e) {
                                           setState(() {
                                             _error = e.toString();

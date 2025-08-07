@@ -34,6 +34,7 @@ import '../services/environment_service.dart';
 import '../config/feature_flags.dart';
 import '../config/model_registry.dart';
 import '../services/premium_feature_gate.dart';
+import '../services/paywall_coordinator.dart';
 import '../providers/subscription_provider.dart';
 import '../providers/app_access_provider.dart';
 import '../theme/app_theme.dart';
@@ -1150,13 +1151,30 @@ class _EditorScreenState extends State<EditorScreen> {
                                 final hasAccess = FeatureAccess.isEnabledForUser(context, 'search_agents');
 
                                 return GestureDetector(
-                                  onTap: () {
+                                  onTap: () async {
                                     if (hasAccess) {
                                       setState(() {
                                         _isOfflineMode = !_isOfflineMode;
                                       });
                                     } else {
-                                      _showWebSearchUpgrade();
+                                      // Direct RevenueCat purchase flow
+                                      try {
+                                        final ok = await PaywallCoordinator.showNativePurchaseFlow(context);
+                                        if (ok) {
+                                          // Flip the globe or refresh UI as premium is now active
+                                          setState(() {
+                                            _isOfflineMode = false; // enable online tools
+                                          });
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(content: Text('Premium unlocked')),
+                                          );
+                                        }
+                                      } catch (e) {
+                                        // Optional: show a small toast/snackbar on fail
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(content: Text('Purchase failed: $e')),
+                                        );
+                                      }
                                     }
                                   },
                                   child: Tooltip(
@@ -4050,9 +4068,20 @@ class _EditorScreenState extends State<EditorScreen> {
                                   const SizedBox(width: 10),
                                   Expanded(
                                     child: ElevatedButton.icon(
-                                      onPressed: () {
+                                      onPressed: () async {
                                         Navigator.of(context).pop();
-                                        context.push('/subscription');
+                                        try {
+                                          final ok = await PaywallCoordinator.showNativePurchaseFlow(context);
+                                          if (ok) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(content: Text('Premium unlocked')),
+                                            );
+                                          }
+                                        } catch (e) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(content: Text('Purchase failed: $e')),
+                                          );
+                                        }
                                       },
                                       style: ElevatedButton.styleFrom(
                                         padding: const EdgeInsets.symmetric(vertical: 14),

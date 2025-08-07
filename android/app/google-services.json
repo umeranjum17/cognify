@@ -1,29 +1,55 @@
 {
-    "project_info": {
-      "project_number": "702035468371",
-      "project_id": "cognify-eb0a2",
-      "storage_bucket": "cognify-eb0a2.firebasestorage.app"
-    },
-    "client": [
-      {
-        "client_info": {
-          "mobilesdk_app_id": "1:702035468371:android:1b52df4446f2404791e6a6",
-          "android_client_info": {
-            "package_name": "com.umerfarooq1995.cognify_flutter"
+  "project_info": {
+    "project_number": "702035468371",
+    "project_id": "cognify-eb0a2",
+    "storage_bucket": "cognify-eb0a2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:702035468371:android:1b52df4446f2404791e6a6",
+        "android_client_info": {
+          "package_name": "com.umerfarooq1995.cognify_flutter"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "702035468371-631rie04aumlld25mu9ol8e4fpb51ach.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.umerfarooq1995.cognify_flutter",
+            "certificate_hash": "0b998194bd1394fd5c0d623dbbd7fc46d26a6260"
           }
         },
-        "oauth_client": [],
-        "api_key": [
-          {
-            "current_key": "AIzaSyDQZw5pKiJ4XTK0sQxNcYW1Fe0hZI2yIwM"
+        {
+          "client_id": "702035468371-nhmberc5s05ooqp216luc5nbc3eoqtg0.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.umerfarooq1995.cognify_flutter",
+            "certificate_hash": "b81ba8e1b9a8f407b2d143a1fe68ea687bbdf967"
           }
-        ],
-        "services": {
-          "appinvite_service": {
-            "other_platform_oauth_client": []
-          }
+        },
+        {
+          "client_id": "702035468371-vslhss1u3t5cv907av88eei95v02jkhv.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDQZw5pKiJ4XTK0sQxNcYW1Fe0hZI2yIwM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "702035468371-vslhss1u3t5cv907av88eei95v02jkhv.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
-    ],
-    "configuration_version": "1"
-  }
+    }
+  ],
+  "configuration_version": "1"
+}

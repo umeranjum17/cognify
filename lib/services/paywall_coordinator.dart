@@ -80,4 +80,51 @@ class PaywallCoordinator {
       debugPrint('Failed to refresh entitlements: $e');
     }
   }
+
+  /// Direct native purchase flow for globe tap and modal upgrade
+  /// Returns true if purchase was successful, false if cancelled/failed
+  static Future<bool> showNativePurchaseFlow(BuildContext context) async {
+    final auth = context.read<FirebaseAuthProvider>();
+    final subs = context.read<SubscriptionProvider>();
+
+    // Ensure SubscriptionProvider is initialized (fetches offerings)
+    if (!subs.initialized) {
+      await subs.initialize(appUserId: auth.uid);
+    } else {
+      await subs.refreshOfferings();
+    }
+
+    // Sign-in gate: enforce sign-in before purchase (as per approved flow)
+    if (!auth.isSignedIn) {
+      await auth.signInWithGoogle();
+    }
+    final uid = auth.uid;
+    if (uid == null || uid.isEmpty) {
+      throw Exception('Sign-in failed: missing UID');
+    }
+
+    // Link RC to UID
+    await RevenueCatService.instance.identify(uid);
+
+    // Refresh offerings to ensure eligibility/pricing correctness
+    await subs.refreshOfferings();
+
+    // Choose a default package (first available)
+    final offerings = subs.offerings;
+    final pkg = offerings?.current?.availablePackages.isNotEmpty == true
+        ? offerings!.current!.availablePackages.first
+        : null;
+    if (pkg == null) {
+      throw Exception('No packages available');
+    }
+
+    // Purchase
+    final result = await RevenueCatService.instance.purchasePackage(pkg);
+    if (!result.success) {
+      throw Exception(result.errorMessage ?? 'Purchase failed');
+    }
+
+    // Success
+    return true;
+  }
 }

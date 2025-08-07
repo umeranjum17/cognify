@@ -121,8 +121,9 @@ class SubscriptionProvider extends ChangeNotifier {
         notifyListeners();
       });
     } else {
-      // On sign out: log out from RevenueCat and refresh state
-      RevenueCatService.instance.logOut().then((_) async {
+      // On sign out: refresh state without logging out (prevents "anonymous logout" errors)
+      // Only refresh offerings and customer info; state will remain consistent
+      Future(() async {
         try {
           _offerings = await RevenueCatService.instance.getOfferings(forceRefresh: true);
         } catch (_) {}
