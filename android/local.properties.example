@@ -21,7 +21,7 @@ keyAlias=YOUR_KEY_ALIAS
 keyPassword=YOUR_KEY_PASSWORD
 
 # Example:
-# storeFile=/Users/umerfaroq/cognify-release-key.jks
+ mdfind "kMDItemFSName == '.jks'" mdfind "kMDItemFSName == '.keystore'"# storeFile=/Users/umerfaroq/cognify-release-key.jks
 # storePassword=mySecurePassword123
 # keyAlias=cognify-key
 # keyPassword=mySecurePassword123
