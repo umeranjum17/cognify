@@ -3,9 +3,10 @@ import 'package:flutter/material.dart';
 import '../models/mode_config.dart';
 import '../theme/app_theme.dart';
 import '../services/session_cost_service.dart';
+import '../services/unified_api_service.dart';
 import 'session_cost_bottom_sheet.dart';
 
-class SessionInfoWidget extends StatelessWidget {
+class SessionInfoWidget extends StatefulWidget {
   final String? llmUsed;
   final String? modelName;
   final double cost;
@@ -16,6 +17,7 @@ class SessionInfoWidget extends StatelessWidget {
   final dynamic modelCapabilities; // ModelCapabilities? - using dynamic to avoid import issues
   final ChatMode? mode; // NEW: Pass current mode for quick switcher
   final Function(String)? onModelSwitched; // NEW: Callback for model switch
+  final Map<String, dynamic>? openRouterCredits; // NEW: OpenRouter credits data
 
   const SessionInfoWidget({
     super.key,
@@ -29,7 +31,48 @@ class SessionInfoWidget extends StatelessWidget {
     this.modelCapabilities,
     this.mode,
     this.onModelSwitched,
+    this.openRouterCredits,
   });
+
+  @override
+  State<SessionInfoWidget> createState() => _SessionInfoWidgetState();
+}
+
+class _SessionInfoWidgetState extends State<SessionInfoWidget> {
+  Map<String, dynamic>? _creditsData;
+  bool _isLoadingCredits = false;
+  String? _creditsError;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCreditsIfNeeded();
+  }
+
+  Future<void> _loadCreditsIfNeeded() async {
+    if (widget.openRouterCredits != null) {
+      _creditsData = widget.openRouterCredits;
+      return;
+    }
+
+    setState(() {
+      _isLoadingCredits = true;
+      _creditsError = null;
+    });
+
+    try {
+      final data = await UnifiedApiService().getCredits();
+      setState(() {
+        _creditsData = data;
+        _isLoadingCredits = false;
+      });
+    } catch (e) {
+      setState(() {
+        _creditsError = e.toString();
+        _isLoadingCredits = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -48,24 +91,23 @@ class SessionInfoWidget extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Model info (simplified)
-          Expanded(
-            child: Row(
-              children: [
-                Icon(
-                  Icons.memory,
-                  size: 14,
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                ),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    _getModelDisplayText(),
-                    style: theme.textTheme.bodySmall?.copyWith(fontSize: 10),
-                    overflow: TextOverflow.ellipsis,
+          // OpenRouter credits info (replacing model info)
+          GestureDetector(
+            onTap: () => _showSessionCostPopup(context),
+            child: Expanded(
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.account_balance,
+                    size: 14,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
-                ),
-              ],
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: _buildCreditsDisplay(theme),
+                  ),
+                ],
+              ),
             ),
           ),
           
@@ -85,14 +127,14 @@ class SessionInfoWidget extends StatelessWidget {
                   Icon(
                     Icons.account_balance_wallet,
                     size: 12,
-                    color: llmUsed == 'local-ollama' ? Colors.green : theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                    color: widget.llmUsed == 'local-ollama' ? Colors.green : theme.colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
                   const SizedBox(width: 4),
                   Text(
                     _getCostDisplayText(),
                     style: theme.textTheme.bodySmall?.copyWith(
                       fontSize: 9,
-                      color: llmUsed == 'local-ollama' ? Colors.green : null,
+                      color: widget.llmUsed == 'local-ollama' ? Colors.green : null,
                     ),
                   ),
                 ],
@@ -104,25 +146,67 @@ class SessionInfoWidget extends StatelessWidget {
     );
   }
 
+  Widget _buildCreditsDisplay(ThemeData theme) {
+    if (_isLoadingCredits) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: 12,
+            height: 12,
+            child: CircularProgressIndicator(
+              strokeWidth: 1.5,
+              valueColor: AlwaysStoppedAnimation<Color>(
+                theme.colorScheme.onSurface.withValues(alpha: 0.6),
+              ),
+            ),
+          ),
+          const SizedBox(width: 4),
+          Text(
+            'Loading credits...',
+            style: theme.textTheme.bodySmall?.copyWith(fontSize: 10),
+          ),
+        ],
+      );
+    }
+
+    if (_creditsError != null || _creditsData == null || _creditsData!['success'] != true) {
+      return Text(
+        'Credits unavailable',
+        style: theme.textTheme.bodySmall?.copyWith(
+          fontSize: 10,
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+        ),
+      );
+    }
+
+    final credits = _creditsData!['credits'] as Map<String, dynamic>;
+    final remainingCredits = (credits['remaining_credits'] as num?)?.toDouble() ?? 0.0;
+    
+    final color = remainingCredits > 0 
+        ? theme.colorScheme.onSurface.withValues(alpha: 0.8)
+        : Colors.red;
+    
+    return Text(
+      'Balance: \$${remainingCredits.toStringAsFixed(2)}',
+      style: theme.textTheme.bodySmall?.copyWith(
+        fontSize: 10,
+        color: color,
+        fontWeight: FontWeight.w500,
+      ),
+      overflow: TextOverflow.ellipsis,
+    );
+  }
+
   String _getCostDisplayText() {
-    if (llmUsed == 'local-ollama') {
+    if (widget.llmUsed == 'local-ollama') {
       return 'Free (Local)';
     }
 
-    String sessionText = sessionCost == 0.0 ? '\$0' : '\$${sessionCost.toStringAsFixed(3)}';
-    String lastText = cost == 0.0 ? '\$0' : '\$${cost.toStringAsFixed(3)}';
+    String sessionText = widget.sessionCost == 0.0 ? '\$0' : '\$${widget.sessionCost.toStringAsFixed(3)}';
+    String lastText = widget.cost == 0.0 ? '\$0' : '\$${widget.cost.toStringAsFixed(3)}';
 
     return 'Session: $sessionText • Last: $lastText';
-  }
-
-  String _getModelDisplayText() {
-    // Get the actual model name, not the default fallback
-    final actualModelName = modelName ?? llmUsed ?? 'Unknown';
-
-    final displayName = actualModelName.contains('/')
-      ? actualModelName.split('/').last.replaceAll(':free', '')
-      : actualModelName;
-    return 'Model: $displayName';
   }
 
   void _showSessionCostPopup(BuildContext context) {
@@ -138,10 +222,10 @@ class SessionInfoWidget extends StatelessWidget {
           sessionCostService: SessionCostService(),
           scrollController: scrollController,
           additionalCostData: {
-            'costBreakdown': costBreakdown,
-            'sessionCost': sessionCost,
-            'messageCost': cost,
-            'messageCount': messageCount,
+            'costBreakdown': widget.costBreakdown,
+            'sessionCost': widget.sessionCost,
+            'messageCost': widget.cost,
+            'messageCount': widget.messageCount,
             'timestamp': DateTime.now().toIso8601String(),
           },
         ),
