@@ -28,16 +28,36 @@ class _PaywallScreenState extends State<PaywallScreen> {
 
   Future<void> _loadOfferings() async {
     final subs = context.read<SubscriptionProvider>();
+    
+    setState(() {
+      _error = 'Initializing subscription provider...';
+    });
+    
     if (!subs.initialized) {
+      setState(() {
+        _error = 'Initializing RevenueCat service...';
+      });
       await subs.initialize();
     } else {
+      setState(() {
+        _error = 'Refreshing subscription offerings...';
+      });
       await subs.refreshOfferings();
     }
+    
     final offerings = subs.offerings;
+    
     setState(() {
-      _selected = offerings?.current?.availablePackages.isNotEmpty == true
-          ? offerings!.current!.availablePackages.first
-          : null;
+      if (offerings == null) {
+        _error = 'No offerings available. RevenueCat may not be configured properly.\n\nDebug info:\n- RevenueCat configured: ${RevenueCatService.instance.isConfigured}\n- Subscription provider initialized: ${subs.initialized}\n- API Key: ${SubscriptionsConfig.rcPublicKeyAndroid.substring(0, 10)}...';
+      } else if (offerings.current == null) {
+        _error = 'No current offering found. Check RevenueCat dashboard configuration.\n\nDebug info:\n- Total offerings: ${offerings.all.length}';
+      } else if (offerings.current!.availablePackages.isEmpty) {
+        _error = 'No packages available in current offering. Check product configuration.\n\nDebug info:\n- Offering ID: ${offerings.current!.identifier}\n- Packages: ${offerings.current!.availablePackages.map((p) => p.identifier).join(', ')}\n- Lifetime packages: ${offerings.current!.lifetime?.identifier ?? 'none'}\n- Annual packages: ${offerings.current!.annual?.identifier ?? 'none'}\n- Monthly packages: ${offerings.current!.monthly?.identifier ?? 'none'}';
+      } else {
+        _error = null; // Clear error if everything is working
+        _selected = offerings.current!.availablePackages.first;
+      }
     });
   }
 
@@ -45,7 +65,12 @@ class _PaywallScreenState extends State<PaywallScreen> {
     final subs = context.read<SubscriptionProvider>();
     final auth = context.read<FirebaseAuthProvider>();
     final selected = _selected;
-    if (selected == null) return;
+    if (selected == null) {
+      setState(() {
+        _error = 'No package selected. Available packages: ${subs.offerings?.current?.availablePackages.length ?? 0}';
+      });
+      return;
+    }
 
     setState(() {
       _busy = true;
@@ -55,23 +80,47 @@ class _PaywallScreenState extends State<PaywallScreen> {
     try {
       // Step 1: If user is not signed in, trigger Google Sign-In first
       if (auth.uid == null || auth.uid!.isEmpty) {
+        setState(() {
+          _error = 'Starting Google Sign-In...';
+        });
+        
         await auth.signInWithGoogle();
+        
         // After sign-in, identify with RevenueCat using the UID
         if (auth.uid != null && auth.uid!.isNotEmpty) {
+          setState(() {
+            _error = 'Identifying user with RevenueCat...';
+          });
+          
           await RevenueCatService.instance.identify(auth.uid!);
+          
           // Refresh offerings to show correct packages
+          setState(() {
+            _error = 'Refreshing subscription offerings...';
+          });
+          
           await subs.refreshOfferings();
           await _loadOfferings();
+        } else {
+          setState(() {
+            _busy = false;
+            _error = 'Google Sign-In failed: No UID received. Auth state: ${auth.isSignedIn}, UID: ${auth.uid}';
+          });
+          return;
         }
       }
 
       // Step 2: Proceed with purchase
+      setState(() {
+        _error = 'Initiating purchase for package: ${selected.identifier}';
+      });
+      
       final result = await RevenueCatService.instance.purchasePackage(selected);
 
       setState(() {
         _busy = false;
         if (!result.success) {
-          _error = result.errorMessage ?? 'Purchase failed';
+          _error = 'Purchase failed: ${result.errorMessage ?? 'Unknown error'}\n\nPackage: ${selected.identifier}\nUser: ${auth.uid}\nRevenueCat configured: ${RevenueCatService.instance.isConfigured}';
         }
       });
 
@@ -81,7 +130,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
     } catch (e) {
       setState(() {
         _busy = false;
-        _error = e.toString();
+        _error = 'Purchase error: ${e.toString()}\n\nDebug info:\n- User signed in: ${auth.isSignedIn}\n- UID: ${auth.uid}\n- Selected package: ${selected?.identifier}\n- RevenueCat configured: ${RevenueCatService.instance.isConfigured}\n- Offerings available: ${subs.offerings?.current?.availablePackages.length ?? 0}';
       });
     }
   }
@@ -92,10 +141,18 @@ class _PaywallScreenState extends State<PaywallScreen> {
       _error = null;
     });
     try {
+      setState(() {
+        _error = 'Restoring purchases...';
+      });
+      
       await RevenueCatService.instance.restorePurchases();
+      
+      setState(() {
+        _error = null;
+      });
     } catch (e) {
       setState(() {
-        _error = e.toString();
+        _error = 'Restore failed: ${e.toString()}\n\nDebug info:\n- RevenueCat configured: ${RevenueCatService.instance.isConfigured}\n- User: ${context.read<FirebaseAuthProvider>().uid}';
       });
     } finally {
       setState(() {
@@ -136,10 +193,14 @@ class _PaywallScreenState extends State<PaywallScreen> {
                   if (_error != null)
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: Theme.of(context).colorScheme.errorContainer,
                         borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: Theme.of(context).colorScheme.error,
+                          width: 1,
+                        ),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -149,34 +210,61 @@ class _PaywallScreenState extends State<PaywallScreen> {
                               Icon(
                                 Icons.error_outline,
                                 color: Theme.of(context).colorScheme.error,
-                                size: 20,
+                                size: 24,
                               ),
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
-                                  'Subscription Service Unavailable',
+                                  'Debug Information',
                                   style: TextStyle(
                                     color: Theme.of(context).colorScheme.error,
                                     fontWeight: FontWeight.bold,
+                                    fontSize: 16,
                                   ),
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            _error!,
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.error,
+                          const SizedBox(height: 12),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.surface,
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(
+                                color: Theme.of(context).colorScheme.outline,
+                                width: 0.5,
+                              ),
+                            ),
+                            child: SelectableText(
+                              _error!,
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.onSurface,
+                                fontSize: 12,
+                                fontFamily: 'monospace',
+                              ),
                             ),
                           ),
                           const SizedBox(height: 8),
-                          Text(
-                            'Please try again later or contact support if the issue persists.',
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.error,
-                              fontSize: 12,
-                            ),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.info_outline,
+                                color: Theme.of(context).colorScheme.error,
+                                size: 16,
+                              ),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  'This detailed error helps diagnose subscription issues. Copy the text above for support.',
+                                  style: TextStyle(
+                                    color: Theme.of(context).colorScheme.error,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -201,6 +289,11 @@ class _PaywallScreenState extends State<PaywallScreen> {
                               color: Theme.of(context).colorScheme.onSurfaceVariant,
                             ),
                             textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed: _busy ? null : () => _loadOfferings(),
+                            child: const Text('Retry Loading'),
                           ),
                         ],
                       ),

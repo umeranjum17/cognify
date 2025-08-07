@@ -1,7 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- Background Service Permissions - Now with graceful handling -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     
     <!-- Network Permissions -->
@@ -117,7 +116,6 @@
             android:value="2" />
         <!-- Flutter Background Service registration -->
         <service
-            android:name="id.flutter.flutter_background_service.BackgroundService"
-            android:foregroundServiceType="dataSync" />
+            android:name="id.flutter.flutter_background_service.BackgroundService" />
     </application>
 </manifest>

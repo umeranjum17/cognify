@@ -97,15 +97,11 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.release
             
-            // Add these lines to fix debug symbols issue
-            ndk {
-                debugSymbolLevel 'NONE'
+            // Ensure proper handling of native libraries
+            packagingOptions {
+                pickFirst '**/libc++_shared.so'
+                pickFirst '**/libjsc.so'
             }
-            
-            // Alternative approach - disable debug symbol stripping
-            // ndk {
-            //     debugSymbolLevel 'FULL'
-            // }
         }
     }
 }

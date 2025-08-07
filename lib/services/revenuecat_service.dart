@@ -29,6 +29,9 @@ class RevenueCatService {
   Stream<CustomerInfo> get customerInfoStream => _customerInfoController.stream;
 
   bool _configured = false;
+  
+  // Public getter to check if RevenueCat is configured
+  bool get isConfigured => _configured;
 
   Future<void> initialize({
     String? appUserId,
