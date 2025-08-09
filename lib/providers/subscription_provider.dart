@@ -106,34 +106,98 @@ class SubscriptionProvider extends ChangeNotifier {
     _auth!.addListener(_handleAuthChange);
   }
 
+  String? _lastKnownUid;
+
   void _handleAuthChange() {
     final uid = _auth?.uid;
+    
+    // Check if the user has changed (different UID)
+    final userChanged = _lastKnownUid != uid;
+    
+    debugPrint('🔄 [SubscriptionProvider] Auth change detected - Old: $_lastKnownUid, New: $uid, Changed: $userChanged');
+    
     // When user signs in: identify with RevenueCat
     if (uid != null && uid.isNotEmpty) {
-      RevenueCatService.instance.identify(uid).then((_) async {
+      Future<void> handleUserLogin() async {
         try {
-          _offerings = await RevenueCatService.instance.getOfferings(forceRefresh: true);
-        } catch (_) {}
-        try {
-          _customerInfo = await Purchases.getCustomerInfo();
-        } catch (_) {}
-        _updateEntitlementFromCache();
-        notifyListeners();
-      });
+          // If user changed, reset RevenueCat completely and reinitialize
+          if (userChanged && _lastKnownUid != null) {
+            debugPrint('🔄 [SubscriptionProvider] User changed - resetting RevenueCat...');
+            await RevenueCatService.instance.reset();
+            
+            // Add a small delay to ensure proper cleanup
+            await Future.delayed(const Duration(milliseconds: 500));
+            
+            await RevenueCatService.instance.initialize(appUserId: uid);
+            
+            // Force refresh customer info to ensure we get fresh data
+            await RevenueCatService.instance.forceRefreshCustomerInfo();
+          } else {
+            debugPrint('🔄 [SubscriptionProvider] Same user - identifying with RevenueCat...');
+            await RevenueCatService.instance.identify(uid);
+          }
+          
+          // Refresh offerings and customer info
+          debugPrint('🔄 [SubscriptionProvider] Refreshing RevenueCat data...');
+          try {
+            _offerings = await RevenueCatService.instance.getOfferings(forceRefresh: true);
+            debugPrint('✅ [SubscriptionProvider] Offerings refreshed');
+          } catch (e) {
+            debugPrint('⚠️ [SubscriptionProvider] Failed to refresh offerings: $e');
+          }
+          
+          try {
+            _customerInfo = await Purchases.getCustomerInfo();
+            debugPrint('✅ [SubscriptionProvider] Customer info refreshed for user: $uid');
+          } catch (e) {
+            debugPrint('⚠️ [SubscriptionProvider] Failed to refresh customer info: $e');
+          }
+          
+          _updateEntitlementFromCache();
+          notifyListeners();
+          debugPrint('✅ [SubscriptionProvider] User login handling completed');
+        } catch (e) {
+          debugPrint('❌ [SubscriptionProvider] Error handling user login: $e');
+          _setState(SubscriptionState.unknown);
+          notifyListeners();
+        }
+      }
+      
+      handleUserLogin();
     } else {
-      // On sign out: refresh state without logging out (prevents "anonymous logout" errors)
-      // Only refresh offerings and customer info; state will remain consistent
-      Future(() async {
+      // On sign out: reset RevenueCat completely
+      debugPrint('🔄 [SubscriptionProvider] User signed out - resetting RevenueCat...');
+      Future<void> handleUserLogout() async {
         try {
-          _offerings = await RevenueCatService.instance.getOfferings(forceRefresh: true);
-        } catch (_) {}
-        try {
-          _customerInfo = await Purchases.getCustomerInfo();
-        } catch (_) {}
-        _updateEntitlementFromCache();
-        notifyListeners();
-      });
+          await RevenueCatService.instance.reset();
+          await RevenueCatService.instance.initialize(); // Initialize without user ID (anonymous)
+          
+          try {
+            _offerings = await RevenueCatService.instance.getOfferings(forceRefresh: true);
+          } catch (e) {
+            debugPrint('⚠️ [SubscriptionProvider] Failed to refresh offerings after logout: $e');
+          }
+          
+          try {
+            _customerInfo = await Purchases.getCustomerInfo();
+          } catch (e) {
+            debugPrint('⚠️ [SubscriptionProvider] Failed to refresh customer info after logout: $e');
+          }
+          
+          _updateEntitlementFromCache();
+          notifyListeners();
+          debugPrint('✅ [SubscriptionProvider] User logout handling completed');
+        } catch (e) {
+          debugPrint('❌ [SubscriptionProvider] Error handling user logout: $e');
+          _setState(SubscriptionState.unknown);
+          notifyListeners();
+        }
+      }
+      
+      handleUserLogout();
     }
+    
+    _lastKnownUid = uid;
   }
 
   void _updateEntitlementFromCache() {

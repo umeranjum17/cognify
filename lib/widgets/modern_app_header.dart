@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
 import '../theme/theme_provider.dart';
 import '../utils/logger.dart';
-import '../widgets/cognify_logo.dart';
+import '../widgets/cognify_logo.dart';\nimport '../widgets/unified_settings_modal.dart';
 
 // Modern action button for header
 class HeaderActionButton extends StatelessWidget {
@@ -304,6 +304,13 @@ class ModernAppHeader extends StatelessWidget implements PreferredSizeWidget {
                       ),
                       onSelected: (value) => _handleMenuSelection(context, value),
                       itemBuilder: (context) => _buildMenuItems(context),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      elevation: 8,
+                      shadowColor: isDark ? Colors.black.withValues(alpha: 0.3) : Colors.black.withValues(alpha: 0.1),
+                      color: isDark ? AppColors.darkCard : AppColors.lightCard,
+                      offset: const Offset(0, 8),
                     ),
                   ),
 
@@ -331,34 +338,85 @@ class ModernAppHeader extends StatelessWidget implements PreferredSizeWidget {
     final List<PopupMenuEntry<String>> items = [
       PopupMenuItem<String>(
         value: 'history',
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: Row(
           children: [
-            Icon(
-              Icons.history,
-              size: 20,
-              color: theme.textTheme.bodyMedium?.color,
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.darkTextSecondary.withValues(alpha: 0.1) : AppColors.lightTextSecondary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                Icons.history,
+                size: 18,
+                color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+              ),
             ),
             const SizedBox(width: 12),
             Text(
               'History',
-              style: theme.textTheme.bodyMedium,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w500,
+                fontSize: 15,
+              ),
             ),
           ],
         ),
       ),
       PopupMenuItem<String>(
         value: 'sources',
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: Row(
           children: [
-            Icon(
-              Icons.folder_outlined,
-              size: 20,
-              color: theme.textTheme.bodyMedium?.color,
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.darkTextSecondary.withValues(alpha: 0.1) : AppColors.lightTextSecondary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                Icons.folder_outlined,
+                size: 18,
+                color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+              ),
             ),
             const SizedBox(width: 12),
             Text(
               'Sources',
-              style: theme.textTheme.bodyMedium,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w500,
+                fontSize: 15,
+              ),
+            ),
+          ],
+        ),
+      ),
+      const PopupMenuDivider(height: 16),
+      PopupMenuItem<String>(
+        value: 'settings',
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.darkTextSecondary.withValues(alpha: 0.1) : AppColors.lightTextSecondary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                Icons.settings,
+                size: 18,
+                color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              'Settings',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w500,
+                fontSize: 15,
+              ),
             ),
           ],
         ),
@@ -440,6 +498,10 @@ class ModernAppHeader extends StatelessWidget implements PreferredSizeWidget {
       case 'sources':
         router.push('/sources');
         break;
+      case 'settings':
+        // Show settings modal
+        _showSettingsModal(context);
+        break;
       case 'trending':
         // Navigate to trending topics screen (which has built-in premium gating)
         router.push('/trending-topics');
@@ -451,6 +513,18 @@ class ModernAppHeader extends StatelessWidget implements PreferredSizeWidget {
         }
         break;
     }
+  }
+
+  void _showSettingsModal(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => const Dialog.fullscreen(
+        child: UnifiedSettingsModal(
+          selectedModel: '', // This will be handled by the modal
+          onModelChanged: (_) {}, // This will be handled internally
+        ),
+      ),
+    );
   }
 
 }

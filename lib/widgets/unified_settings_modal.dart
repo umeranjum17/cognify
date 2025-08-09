@@ -7,30 +7,16 @@ import '../providers/mode_config_provider.dart';
 import '../screens/model_selection_screen.dart';
 import '../services/llm_service.dart'; // Added import for LLMService
 import '../theme/app_theme.dart';
-import 'settings_modal.dart';
+import 'general_settings_tab.dart';
 
 class UnifiedSettingsModal extends StatefulWidget {
   final String selectedModel;
-  final ToolsConfig toolsConfig;
-  final List<String> availableModels;
-  final String selectedPersonality;
-  final String selectedLanguage;
   final Function(String) onModelChanged;
-  final Function(ToolsConfig) onToolsConfigChanged;
-  final Function(String) onPersonalityChanged;
-  final Function(String) onLanguageChanged;
 
   const UnifiedSettingsModal({
     super.key,
     required this.selectedModel,
-    required this.toolsConfig,
-    required this.availableModels,
-    required this.selectedPersonality,
-    required this.selectedLanguage,
     required this.onModelChanged,
-    required this.onToolsConfigChanged,
-    required this.onPersonalityChanged,
-    required this.onLanguageChanged,
   });
 
   @override
@@ -39,7 +25,6 @@ class UnifiedSettingsModal extends StatefulWidget {
 
 class _UnifiedSettingsModalState extends State<UnifiedSettingsModal>
     with SingleTickerProviderStateMixin {
-  final GlobalKey _settingsModalKey = GlobalKey();
   late TabController _tabController;
   
   String _selectedChatModel = '';
@@ -129,89 +114,81 @@ class _UnifiedSettingsModalState extends State<UnifiedSettingsModal>
               child: TabBarView(
                 controller: _tabController,
                 children: [
-                  // General tab: reuse SettingsModal content
-                  SettingsModal(
-                    key: _settingsModalKey,
-                    toolsConfig: widget.toolsConfig,
-                    selectedPersonality: widget.selectedPersonality,
-                    selectedLanguage: widget.selectedLanguage,
-                    onToolsConfigChanged: widget.onToolsConfigChanged,
-                    onPersonalityChanged: widget.onPersonalityChanged,
-                    onLanguageChanged: widget.onLanguageChanged,
-                    onSave: () {}, // Dummy onSave, actual save handled by parent
-                  ),
+                  // General tab: new simplified settings
+                  const GeneralSettingsTab(),
                   // Enhanced Models tab with mode-aware selection
                   _buildEnhancedModelsTab(),
                 ],
               ),
             ),
-            // Bottom action buttons
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.darkBackground : AppColors.lightBackground,
-                border: Border(
-                  top: BorderSide(
-                    color: isDark ? AppColors.darkDivider.withValues(alpha: 0.1) : AppColors.lightDivider.withValues(alpha: 0.1),
-                    width: 1,
+            // Bottom action buttons - only show for Models tab
+            if (_tabController.index == 1) // Models tab
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.darkBackground : AppColors.lightBackground,
+                  border: Border(
+                    top: BorderSide(
+                      color: isDark ? AppColors.darkDivider.withValues(alpha: 0.1) : AppColors.lightDivider.withValues(alpha: 0.1),
+                      width: 1,
+                    ),
+                  ),
+                ),
+                child: SafeArea(
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            side: BorderSide(
+                              color: isDark ? AppColors.darkTextMuted.withValues(alpha: 0.3) : AppColors.lightTextMuted.withValues(alpha: 0.3),
+                              width: 1,
+                            ),
+                            backgroundColor: Colors.transparent,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: Text(
+                            'Cancel',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                              color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: _handleSave,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: isDark ? AppColors.darkAccent : AppColors.lightAccent,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            elevation: 2,
+                            shadowColor: (isDark ? AppColors.darkAccent : AppColors.lightAccent).withValues(alpha: 0.3),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: const Text(
+                            'Save Settings',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-              child: SafeArea(
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          side: BorderSide(
-                            color: isDark ? AppColors.darkTextMuted.withValues(alpha: 0.3) : AppColors.lightTextMuted.withValues(alpha: 0.3),
-                            width: 1,
-                          ),
-                          backgroundColor: Colors.transparent,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: Text(
-                          'Cancel',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
-                            color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: _handleSave,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: isDark ? AppColors.darkAccent : AppColors.lightAccent,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          elevation: 2,
-                          shadowColor: (isDark ? AppColors.darkAccent : AppColors.lightAccent).withValues(alpha: 0.3),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: const Text(
-                          'Save Settings',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
           ],
         ),
       ),
@@ -228,6 +205,9 @@ class _UnifiedSettingsModalState extends State<UnifiedSettingsModal>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(() {
+      setState(() {}); // Rebuild when tab changes
+    });
     _loadModeModels();
   }
 

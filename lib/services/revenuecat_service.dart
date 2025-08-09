@@ -33,6 +33,30 @@ class RevenueCatService {
   // Public getter to check if RevenueCat is configured
   bool get isConfigured => _configured;
 
+  /// Reset RevenueCat configuration to allow reinitialization with a different user
+  Future<void> reset({Duration timeout = const Duration(seconds: 6)}) async {
+    debugPrint('🔄 [RevenueCat] Resetting configuration...');
+    
+    // First, try to logout from RevenueCat if configured
+    if (_configured) {
+      try {
+        await _withTimeout(() => Purchases.logOut(), timeout);
+        debugPrint('✅ [RevenueCat] Logged out from previous user');
+      } catch (e) {
+        debugPrint('⚠️ [RevenueCat] Error logging out during reset: $e');
+      }
+    }
+    
+    // Clear cached data
+    _offeringsCache = null;
+    _customerInfoCache = null;
+    
+    // Reset configured flag to allow reinitialization
+    _configured = false;
+    
+    debugPrint('✅ [RevenueCat] Reset completed');
+  }
+
   Future<void> initialize({
     String? appUserId,
     Duration timeout = const Duration(seconds: 6),
@@ -100,13 +124,33 @@ class RevenueCatService {
       {Duration timeout = const Duration(seconds: 6)}) async {
     if (!_configured) return; // silently no-op if RC unavailable
     try {
+      debugPrint('🔄 [RevenueCat] Identifying user: $appUserId');
       await _withTimeout(() => Purchases.logIn(appUserId), timeout);
-      final info =
-          await _withTimeout(() => Purchases.getCustomerInfo(), timeout);
+      
+      // Force refresh customer info to ensure we get the latest data
+      final info = await _withTimeout(() => Purchases.getCustomerInfo(), timeout);
       _customerInfoCache = info;
       _customerInfoController.add(info);
+      
+      debugPrint('✅ [RevenueCat] User identified successfully: $appUserId');
     } catch (e) {
       debugPrint('⚠️ [RevenueCat] identify error: $e');
+    }
+  }
+
+  /// Force refresh customer info from RevenueCat servers (bypassing cache)
+  Future<CustomerInfo?> forceRefreshCustomerInfo({Duration timeout = const Duration(seconds: 6)}) async {
+    if (!_configured) return _customerInfoCache;
+    try {
+      debugPrint('🔄 [RevenueCat] Force refreshing customer info...');
+      final info = await _withTimeout(() => Purchases.getCustomerInfo(), timeout);
+      _customerInfoCache = info;
+      _customerInfoController.add(info);
+      debugPrint('✅ [RevenueCat] Customer info force refreshed');
+      return info;
+    } catch (e) {
+      debugPrint('⚠️ [RevenueCat] force refresh error: $e');
+      return _customerInfoCache;
     }
   }
 
@@ -139,6 +183,14 @@ class RevenueCatService {
         debugPrint('⚠️ [RevenueCat] getOfferings: No offerings returned');
       } else {
         debugPrint('✅ [RevenueCat] getOfferings: Found ${_offeringsCache!.all.length} offerings');
+        
+        // Debug: List all available products
+        _offeringsCache!.all.forEach((key, offering) {
+          debugPrint('📦 [RevenueCat] Offering "$key": ${offering.availablePackages.length} packages');
+          offering.availablePackages.forEach((package) {
+            debugPrint('  📦 Package: ${package.identifier} - Product: ${package.storeProduct.identifier}');
+          });
+        });
       }
     } catch (e) {
       debugPrint('⚠️ [RevenueCat] getOfferings error: $e');
@@ -179,6 +231,12 @@ class RevenueCatService {
         errorMessage: 'Purchasing unavailable',
       );
     }
+    debugPrint('🛒 [RevenueCat] Attempting purchase:');
+    debugPrint('  Package ID: ${pkg.identifier}');
+    debugPrint('  Product ID: ${pkg.storeProduct.identifier}');
+    debugPrint('  Price: ${pkg.storeProduct.priceString}');
+    debugPrint('  Product type: ${pkg.packageType}');
+    
     try {
       final customerInfo =
           await _withTimeout(() => Purchases.purchasePackage(pkg), timeout);
@@ -187,13 +245,17 @@ class RevenueCatService {
       final entitled = customerInfo.entitlements.active.containsKey(
         SubscriptionsConfig.entitlementPremium,
       );
+      
+      debugPrint('✅ [RevenueCat] Purchase successful - Entitled: $entitled');
       return PurchaseResult(success: entitled, customerInfo: customerInfo);
     } on PurchasesErrorCode catch (e) {
+      debugPrint('❌ [RevenueCat] PurchasesErrorCode: ${e.toString()}');
       return PurchaseResult(
         success: false,
         errorMessage: 'Purchases error: $e',
       );
     } catch (e) {
+      debugPrint('❌ [RevenueCat] General purchase error: ${e.toString()}');
       return PurchaseResult(success: false, errorMessage: e.toString());
     }
   }

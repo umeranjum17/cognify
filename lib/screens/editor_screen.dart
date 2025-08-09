@@ -4053,10 +4053,6 @@ class _EditorScreenState extends State<EditorScreen> {
       context: context,
       builder: (context) => UnifiedSettingsModal(
         selectedModel: _selectedModel,
-        toolsConfig: _toolsConfig ?? const ToolsConfig(),
-        availableModels: _availableModels,
-        selectedPersonality: _selectedPersonality,
-        selectedLanguage: _selectedLanguage,
         onModelChanged: (model) {
           setState(() {
             _selectedModel = model;
@@ -4067,22 +4063,6 @@ class _EditorScreenState extends State<EditorScreen> {
           
           // Also update the LLM service's current model to ensure API calls use the selected model
           LLMService().setCurrentModel(model);
-          
-        },
-        onPersonalityChanged: (personality) {
-          setState(() {
-            _selectedPersonality = personality;
-          });
-        },
-        onLanguageChanged: (language) {
-          setState(() {
-            _selectedLanguage = language;
-          });
-        },
-        onToolsConfigChanged: (config) {
-          setState(() {
-            _toolsConfig = config;
-          });
         },
       ),
     ).then((_) async {
