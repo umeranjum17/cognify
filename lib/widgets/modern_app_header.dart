@@ -5,7 +5,8 @@ import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
 import '../theme/theme_provider.dart';
 import '../utils/logger.dart';
-import '../widgets/cognify_logo.dart';\nimport '../widgets/unified_settings_modal.dart';
+import '../widgets/cognify_logo.dart';
+import '../widgets/unified_settings_modal.dart';
 
 // Modern action button for header
 class HeaderActionButton extends StatelessWidget {
@@ -518,7 +519,7 @@ class ModernAppHeader extends StatelessWidget implements PreferredSizeWidget {
   void _showSettingsModal(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => const Dialog.fullscreen(
+      builder: (context) => Dialog.fullscreen(
         child: UnifiedSettingsModal(
           selectedModel: '', // This will be handled by the modal
           onModelChanged: (_) {}, // This will be handled internally

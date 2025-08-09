@@ -141,25 +141,6 @@ class _EditorScreenState extends State<EditorScreen> {
         centerTitle: false,
         title: _buildHeaderTitle(),
         showNewChatButton: true,
-        additionalMenuItems: [
-          PopupMenuItem<String>(
-            value: 'settings',
-            child: Row(
-              children: [
-                Icon(
-                  Icons.settings_outlined,
-                  size: 20,
-                  color: Theme.of(context).textTheme.bodyMedium?.color,
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  'Settings',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-              ],
-            ),
-          ),
-        ],
         onMenuItemSelected: (value) {
           if (value == 'settings') {
             _showSettings();
@@ -4502,14 +4483,20 @@ class _EditorScreenState extends State<EditorScreen> {
   }
 
   /// Show model capabilities bottom sheet
-  void _showModelCapabilitiesBottomSheet(BuildContext context) {
+  void _showModelCapabilitiesBottomSheet(BuildContext context) async {
+    final currentModel = _selectedModel ?? _lastUsedModel ?? _getModelForCurrentMode();
+    
+    // Fetch the full model data including pricing
+    final modelData = await ModelService.getModelData(currentModel);
+    
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => ModelCapabilitiesBottomSheet(
         modelCapabilities: _currentModelCapabilities,
-        modelName: _selectedModel ?? _lastUsedModel ?? _getModelForCurrentMode(),
+        modelName: currentModel,
+        modelData: modelData,
       ),
     );
   }

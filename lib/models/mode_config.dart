@@ -72,10 +72,10 @@ class ModeConfigManager {
   static final Map<ChatMode, ModeConfig> _defaultConfigs = {
     ChatMode.chat: const ModeConfig(
       mode: ChatMode.chat,
-      model: 'google/gemini-2.0-flash-exp:free',
+      model: 'google/gemini-2.5-flash-lite',
       displayName: 'Chat',
       description: 'Lightning fast responses with minimal search',
-      defaultModel: 'google/gemini-2.0-flash-exp:free',
+      defaultModel: 'google/gemini-2.5-flash-lite',
     ),
     ChatMode.deepsearch: const ModeConfig(
       mode: ChatMode.deepsearch,
@@ -119,13 +119,13 @@ class ModeConfigManager {
           return [
             'mistralai/mistral-7b-instruct:free',
             'deepseek/deepseek-chat:free',
-            'google/gemini-2.0-flash-exp:free',
+            'google/gemini-2.5-flash-lite',
           ];
         case ChatMode.deepsearch:
           return [
             'deepseek/deepseek-r1:free',
             'deepseek/deepseek-chat-v3-0324:free',
-            'google/gemini-2.0-flash-exp:free',
+            'google/gemini-2.5-flash-lite',
           ];
       }
     }

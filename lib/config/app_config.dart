@@ -17,7 +17,7 @@ class AppConfig {
   static const String _autoExecuteAiToolsKey = 'auto_execute_ai_tools';
   static const String _verboseLoggingKey = 'verbose_logging';
   // Default values
-  static const String defaultModel = 'deepseek/deepseek-chat:free';
+  static const String defaultModel = 'google/gemini-2.5-flash-lite';
   static const String fallbackModel = 'mistralai/mistral-7b-instruct:free';
 
   static const String defaultLogLevel = 'info';

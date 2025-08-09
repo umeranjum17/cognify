@@ -154,6 +154,56 @@ class ModelService {
     }
   }
 
+  /// Get full model data including pricing from OpenRouter API
+  static Future<Map<String, dynamic>?> getModelData(String modelId) async {
+    try {
+      print('🔍 ModelService: Getting data for model: $modelId');
+      await _openRouterClient.initialize();
+      final modelsResponse = await _openRouterClient.getModels();
+      
+      if (modelsResponse['success'] == true) {
+        final models = modelsResponse['data'] as List?;
+        if (models != null) {
+          // Try exact match first
+          var model = models.cast<Map<String, dynamic>>().firstWhere(
+            (m) => m['id'] == modelId,
+            orElse: () => <String, dynamic>{},
+          );
+          
+          // If not found, try matching without the :free suffix
+          if (model.isEmpty && modelId.contains(':free')) {
+            final baseModelId = modelId.replaceAll(':free', '');
+            print('🔍 ModelService: Trying base model ID: $baseModelId');
+            model = models.cast<Map<String, dynamic>>().firstWhere(
+              (m) => m['id'] == baseModelId,
+              orElse: () => <String, dynamic>{},
+            );
+          }
+          
+          // If still not found, try partial matching
+          if (model.isEmpty) {
+            print('🔍 ModelService: Trying partial match for: $modelId');
+            model = models.cast<Map<String, dynamic>>().firstWhere(
+              (m) => m['id'].toString().contains(modelId.split('/').last),
+              orElse: () => <String, dynamic>{},
+            );
+          }
+
+          if (model.isNotEmpty) {
+            print('🔍 ModelService: Found model data for $modelId');
+            return model;
+          }
+        }
+      }
+      
+      print('🔍 ModelService: Model data not found for $modelId');
+      return null;
+    } catch (e) {
+      print('❌ ModelService: Error getting model data for $modelId: $e');
+      return null;
+    }
+  }
+
   /// Get model capabilities
   static Future<ModelCapabilities> getModelCapabilities(String modelId) async {
     try {
@@ -207,6 +257,7 @@ class ModelService {
               isMultimodal: supportsImages || supportsFiles,
               contextLength: model['context_length'] ?? 4096,
               maxCompletionTokens: model['context_length'] ?? 4096,
+              pricing: model['pricing'] as Map<String, dynamic>?,
             );
           } else {
             print('🔍 ModelService: Model not found in API response');

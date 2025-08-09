@@ -5,13 +5,13 @@ import '../models/file_attachment.dart';
 class ModelRegistry {
   // Default models for different purposes
   static const Map<String, String> defaults = {
-    'CHAT_MODE': 'google/gemini-2.0-flash-exp:free',
+    'CHAT_MODE': 'google/gemini-2.5-flash-lite',
     'DEEPSEARCH_MODE': 'deepseek/deepseek-r1:free',
-    'PLANNER_AGENT': 'google/gemini-2.0-flash-exp:free',
-    'WRITER_AGENT': 'google/gemini-2.0-flash-exp:free',
+    'PLANNER_AGENT': 'google/gemini-2.5-flash-lite',
+    'WRITER_AGENT': 'google/gemini-2.5-flash-lite',
     'CLOUD_FALLBACK': 'google/gemini-flash-1.5',
     'BUDGET_MODEL': 'deepseek/deepseek-chat:free',
-    'FOLLOWUP_QUESTIONS': 'google/gemini-2.0-flash-exp:free',
+    'FOLLOWUP_QUESTIONS': 'google/gemini-2.5-flash-lite',
   };
 
   // Static model information for fallback

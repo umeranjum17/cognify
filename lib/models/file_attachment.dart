@@ -185,6 +185,7 @@ class ModelCapabilities {
   final bool isMultimodal;
   final int? contextLength;
   final int? maxCompletionTokens;
+  final Map<String, dynamic>? pricing;
 
   const ModelCapabilities({
     required this.inputModalities,
@@ -194,6 +195,7 @@ class ModelCapabilities {
     required this.isMultimodal,
     this.contextLength,
     this.maxCompletionTokens,
+    this.pricing,
   });
 
   factory ModelCapabilities.fromJson(Map<String, dynamic> json) {
@@ -206,6 +208,7 @@ class ModelCapabilities {
       isMultimodal: json['isMultimodal'] ?? inputModalities.length > 1,
       contextLength: json['contextLength'],
       maxCompletionTokens: json['maxCompletionTokens'],
+      pricing: json['pricing'] as Map<String, dynamic>?,
     );
   }
 
@@ -232,6 +235,7 @@ class ModelCapabilities {
       'isMultimodal': isMultimodal,
       'contextLength': contextLength,
       'maxCompletionTokens': maxCompletionTokens,
+      'pricing': pricing,
     };
   }
 }
