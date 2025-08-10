@@ -310,6 +310,7 @@ extension ChatModeExtension on ChatMode {
     }
   }
   bool get isReasoningMode => this == ChatMode.deepsearch;
+  bool get requiresPremium => this == ChatMode.deepsearch;
   
   bool get requiresSpecialHandling => isReasoningMode;
 }

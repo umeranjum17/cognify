@@ -1228,6 +1228,19 @@ class _EditorScreenState extends State<EditorScreen> {
                                 return GestureDetector(
                                   onTap: () async {
                                     if (hasAccess) {
+                                      // Check if trying to turn off globe in DeepSearch mode
+                                      if (!_isOfflineMode && _isDeepSearchMode) {
+                                        // Show warning toast when turning off globe in DeepSearch mode
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text('DeepSearch requires globe search to be enabled'),
+                                            backgroundColor: Colors.orange,
+                                            behavior: SnackBarBehavior.floating,
+                                          ),
+                                        );
+                                        return;
+                                      }
+                                      
                                       setState(() {
                                         _isOfflineMode = !_isOfflineMode;
                                       });
@@ -1776,6 +1789,7 @@ class _EditorScreenState extends State<EditorScreen> {
     required String description,
     required bool isSelected,
     required VoidCallback onTap,
+    bool requiresPremium = false,
   }) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
@@ -1828,7 +1842,7 @@ class _EditorScreenState extends State<EditorScreen> {
                   ],
                 ),
               ),
-              // Right checkmark - only shows when selected
+              // Right indicator - checkmark when selected, lock when premium required and no access
               if (isSelected)
                 Container(
                   padding: const EdgeInsets.all(2),
@@ -1840,6 +1854,15 @@ class _EditorScreenState extends State<EditorScreen> {
                     Icons.check,
                     size: 12,
                     color: isDark ? AppColors.darkButtonText : AppColors.lightButtonText,
+                  ),
+                )
+              else if (requiresPremium && !isPremiumUnlocked(context, listen: false))
+                Container(
+                  padding: const EdgeInsets.all(3),
+                  child: Icon(
+                    Icons.lock_outline,
+                    size: 14,
+                    color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
                   ),
                 ),
             ],
@@ -1908,12 +1931,51 @@ class _EditorScreenState extends State<EditorScreen> {
               _buildModeDropdownItem(
                 icon: Icons.manage_search,
                 title: 'DeepSearch',
-                description: 'Advanced search and reasoning',
+                description: 'Advanced search and reasoning (Premium)',
                 isSelected: _isDeepSearchMode,
-                onTap: () {
+                requiresPremium: true,
+                onTap: () async {
+                  // Check if user has premium access for DeepSearch
+                  if (!isPremiumUnlocked(context, listen: false)) {
+                    // Direct RevenueCat purchase flow (same as globe toggle)
+                    try {
+                      final ok = await PaywallCoordinator.showNativePurchaseFlow(context);
+                      if (ok) {
+                        // Enable DeepSearch and globe as premium is now active
+                        setState(() {
+                          _isDeepSearchMode = true;
+                          _showModeDropdown = false;
+                          _isOfflineMode = false; // enable online tools
+                        });
+                        // Load the appropriate model for the new mode
+                        _loadModelForCurrentMode();
+                        // Update model capabilities when mode changes
+                        _checkModelCapabilities();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Premium unlocked - DeepSearch enabled')),
+                        );
+                      } else {
+                        setState(() {
+                          _showModeDropdown = false;
+                        });
+                      }
+                    } catch (e) {
+                      // Optional: show a small toast/snackbar on fail
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Purchase failed: $e')),
+                      );
+                      setState(() {
+                        _showModeDropdown = false;
+                      });
+                    }
+                    return;
+                  }
+
                   setState(() {
                     _isDeepSearchMode = true;
                     _showModeDropdown = false;
+                    // Auto-enable globe for DeepSearch mode (premium users only)
+                    _isOfflineMode = false;
                   });
                   // Load the appropriate model for the new mode
                   _loadModelForCurrentMode();
@@ -2126,6 +2188,9 @@ class _EditorScreenState extends State<EditorScreen> {
           _currentModelCapabilities = capabilities;
         });
         Logger.debug('🔍 Model capabilities: supportsImages=${capabilities.supportsImages}, supportsFiles=${capabilities.supportsFiles}, inputModalities=${capabilities.inputModalities}', tag: 'EditorScreen');
+        
+        // Check context size for DeepSearch mode
+        _checkContextSizeForDeepSearch(capabilities);
       } catch (e) {
         Logger.warn('🔍 Failed to get capabilities from API: $e', tag: 'EditorScreen');
         // Fallback: if it's a Gemini model, assume it supports images and files
@@ -2152,6 +2217,29 @@ class _EditorScreenState extends State<EditorScreen> {
           supportsFiles: false,
           isMultimodal: false,
         );
+      });
+    }
+  }
+
+  /// Check context size for DeepSearch mode and show warning if needed
+  void _checkContextSizeForDeepSearch(ModelCapabilities capabilities) {
+    // Only check if we're in DeepSearch mode
+    if (!_isDeepSearchMode) return;
+    
+    final contextLength = capabilities.contextLength;
+    if (contextLength != null && contextLength < 150000) {
+      // Show warning toast for low context size
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('DeepSearch works best with models having 160k+ context. Current model: ${(contextLength / 1000).round()}k context'),
+              backgroundColor: Colors.orange,
+              behavior: SnackBarBehavior.floating,
+              duration: Duration(seconds: 4),
+            ),
+          );
+        }
       });
     }
   }

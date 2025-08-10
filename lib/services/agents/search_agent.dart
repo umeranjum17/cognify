@@ -576,10 +576,10 @@ ${mode.toLowerCase() == 'deepsearch'
   Map<String, int> _getModeSearchLimits(String mode) {
     switch (mode.toLowerCase()) {
       case 'deepsearch':
-        return {'maxResults': 20, 'maxScrape': 20};
+        return {'maxResults': 45, 'maxScrape': 45};
       case 'chat':
       default:
-        return {'maxResults': 5, 'maxScrape': 3};
+        return {'maxResults': 10, 'maxScrape': 10};
     }
   }
 

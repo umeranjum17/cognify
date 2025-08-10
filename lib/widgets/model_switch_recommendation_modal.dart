@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../config/model_registry.dart';
+import '../models/mode_config.dart';
 import '../providers/mode_config_provider.dart';
 import '../services/llm_service.dart';
 import '../theme/app_theme.dart';
@@ -52,19 +53,19 @@ class ModelSwitchRecommendationModal extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: _getErrorColor(errorType).withOpacity(0.1),
+                    color: colorScheme.errorContainer,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
-                    _getErrorIcon(errorType),
-                    color: _getErrorColor(errorType),
+                    Icons.warning_amber_rounded,
+                    color: colorScheme.onErrorContainer,
                     size: 24,
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    title,
+                    'Model Unavailable',
                     style: theme.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
@@ -87,17 +88,17 @@ class ModelSwitchRecommendationModal extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: colorScheme.surfaceVariant.withOpacity(0.3),
+                color: colorScheme.surfaceVariant.withOpacity(0.5),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: _getErrorColor(errorType).withOpacity(0.3),
+                  color: colorScheme.outline.withOpacity(0.2),
                 ),
               ),
               child: Row(
                 children: [
                   Icon(
-                    Icons.warning_amber_rounded,
-                    color: _getErrorColor(errorType),
+                    Icons.error_outline,
+                    color: colorScheme.onSurfaceVariant,
                     size: 20,
                   ),
                   const SizedBox(width: 8),
@@ -153,7 +154,7 @@ class ModelSwitchRecommendationModal extends StatelessWidget {
                 ),
               ),
             ] else if (errorType == 'model_unavailable') ...[
-              // For model unavailable, show switch model button
+              // Simple, clean buttons
               const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
@@ -163,8 +164,8 @@ class ModelSwitchRecommendationModal extends StatelessWidget {
                     // Open the model quick switcher
                     _openModelSwitcher(context);
                   },
-                  icon: const Icon(Icons.swap_horiz),
-                  label: const Text('Switch Model'),
+                  icon: const Icon(Icons.swap_horiz, color: Colors.white),
+                  label: const Text('Switch Model', style: TextStyle(color: Colors.white)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: colorScheme.primary,
                     foregroundColor: colorScheme.onPrimary,
@@ -421,5 +422,38 @@ class ModelSwitchRecommendationModal extends StatelessWidget {
     if (modelId.contains('deepseek')) return Icons.search;
     if (modelId.contains('mistral')) return Icons.cloud;
     return Icons.smart_toy;
+  }
+
+  void _openModelSwitcher(BuildContext context) {
+    final modeConfigProvider = Provider.of<ModeConfigProvider>(context, listen: false);
+    
+    // For now, we'll default to chat mode. In a full implementation, 
+    // the modal would need to receive the current mode as a parameter.
+    // Since this is called from EditorScreen where the mode is available,
+    // it would be better to pass it as a parameter to the modal.
+    final ChatMode mode = ChatMode.chat;
+    
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext bottomSheetContext) => ModelQuickSwitcher(
+        mode: mode,
+        selectedModel: currentModel,
+        onModelSelected: (String modelId) {
+          // Close the bottom sheet first
+          Navigator.of(bottomSheetContext).pop();
+          
+          // Update the model through the provider
+          final config = modeConfigProvider.getConfigForMode(mode);
+          if (config != null) {
+            modeConfigProvider.updateConfig(mode, config.copyWith(model: modelId));
+          }
+          
+          // Call the callback to update the parent
+          onModelSelected(modelId);
+        },
+      ),
+    );
   }
 } 
