@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math' as math;
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../config/app_config.dart';
-import '../providers/oauth_auth_provider.dart';
 
 
 
@@ -25,6 +25,11 @@ class OpenRouterClient {
   static const String fallbackModel = 'mistralai/mistral-7b-instruct:free';
   late final Dio _dio;
   bool _initialized = false;
+
+  // Retry logic for 401 errors
+  static int _consecutive401Errors = 0;
+  static DateTime? _lastSuccessfulCall;
+  static const int _maxRetries = 3; // Total attempts: initial + 2 retries
 
   // Model pricing cache
   Map<String, Map<String, double>> _modelPricing = {};
@@ -54,94 +59,89 @@ class OpenRouterClient {
   }) async {
     await _ensureInitialized();
 
-    try {
-      final apiKey = await AppConfig().openRouterApiKey;
-      if (apiKey == null || apiKey.isEmpty) {
-        throw Exception('OpenRouter API key not configured');
-      }
-
-      final requestData = {
-        'model': model,
-        'messages': messages,
-        'temperature': temperature,
-        'stream': stream,
-      };
-
-      if (maxTokens != null) {
-        requestData['max_tokens'] = maxTokens;
-      }
-
-      if (tools != null) {
-        requestData['tools'] = tools;
-      }
-
-      if (toolChoice != null) {
-        requestData['tool_choice'] = toolChoice;
-      }
-
-      final response = await _dio.post(
-        chatEndpoint,
-        data: requestData,
-        options: Options(
-          headers: {'Authorization': 'Bearer $apiKey'},
-          responseType: stream ? ResponseType.stream : ResponseType.json,
-        ),
-      );
-
-      if (response.statusCode == 200) {
-        if (stream) {
-          return {
-            'stream': response.data,
-            'model': model,
-            'streaming': true,
-          };
-        } else {
-          // Extract generation ID and usage information from response
-          final responseData = response.data as Map<String, dynamic>;
-          String? generationId;
-          Map<String, dynamic>? usage;
-
-          // Extract generation ID from response (aligned with server-side extractUsageFromResponse)
-          if (responseData.containsKey('id')) {
-            generationId = responseData['id'] as String?;
-          } else if (responseData.containsKey('generation_id')) {
-            generationId = responseData['generation_id'] as String?;
-          }
-
-          // Extract usage information (aligned with server-side)
-          if (responseData.containsKey('usage')) {
-            usage = responseData['usage'] as Map<String, dynamic>?;
-          } else if (responseData.containsKey('response_metadata') && responseData['response_metadata'] is Map<String, dynamic>) {
-            final metadata = responseData['response_metadata'] as Map<String, dynamic>;
-            if (metadata.containsKey('usage')) {
-              usage = metadata['usage'] as Map<String, dynamic>?;
-            }
-            // Also check for generation ID in response_metadata
-            if (generationId == null && metadata.containsKey('id')) {
-              generationId = metadata['id'] as String?;
-            }
-          }
-
-          return {
-            'response': responseData,
-            'model': model,
-            'streaming': false,
-            'generationId': generationId,
-            'usage': usage,
-          };
+    return _retryOn401(
+      context: context,
+      apiCall: () async {
+        final apiKey = await AppConfig().openRouterApiKey;
+        if (apiKey == null || apiKey.isEmpty) {
+          throw Exception('OpenRouter API key not configured');
         }
-      } else {
-        throw Exception('Chat completion failed: ${response.statusCode}');
-      }
 
-    } on DioException catch (e) {
-      print('🤖 Chat completion failed: $e');
-      _handleHttpError(e, context);
-      rethrow;
-    } catch (e) {
-      print('🤖 Chat completion failed: $e');
-      rethrow;
-    }
+        final requestData = {
+          'model': model,
+          'messages': messages,
+          'temperature': temperature,
+          'stream': stream,
+        };
+
+        if (maxTokens != null) {
+          requestData['max_tokens'] = maxTokens;
+        }
+
+        if (tools != null) {
+          requestData['tools'] = tools;
+        }
+
+        if (toolChoice != null) {
+          requestData['tool_choice'] = toolChoice;
+        }
+
+        final response = await _dio.post(
+          chatEndpoint,
+          data: requestData,
+          options: Options(
+            headers: {'Authorization': 'Bearer $apiKey'},
+            responseType: stream ? ResponseType.stream : ResponseType.json,
+          ),
+        );
+
+        if (response.statusCode == 200) {
+          if (stream) {
+            return {
+              'stream': response.data,
+              'model': model,
+              'streaming': true,
+            };
+          } else {
+            // Extract generation ID and usage information from response
+            final responseData = response.data as Map<String, dynamic>;
+            String? generationId;
+            Map<String, dynamic>? usage;
+
+            // Extract generation ID from response (aligned with server-side extractUsageFromResponse)
+            if (responseData.containsKey('id')) {
+              generationId = responseData['id'] as String?;
+            } else if (responseData.containsKey('generation_id')) {
+              generationId = responseData['generation_id'] as String?;
+            }
+
+            // Extract usage information (aligned with server-side)
+            if (responseData.containsKey('usage')) {
+              usage = responseData['usage'] as Map<String, dynamic>?;
+            } else if (responseData.containsKey('response_metadata') && responseData['response_metadata'] is Map<String, dynamic>) {
+              final metadata = responseData['response_metadata'] as Map<String, dynamic>;
+              if (metadata.containsKey('usage')) {
+                usage = metadata['usage'] as Map<String, dynamic>?;
+              }
+              // Also check for generation ID in response_metadata
+              if (generationId == null && metadata.containsKey('id')) {
+                generationId = metadata['id'] as String?;
+              }
+            }
+
+            return {
+              'response': responseData,
+              'model': model,
+              'streaming': false,
+              'generationId': generationId,
+              'usage': usage,
+            };
+          }
+        } else {
+          throw Exception('Chat completion failed: ${response.statusCode}');
+        }
+      },
+    );
   }
 
   /// Send a streaming chat completion request
@@ -227,16 +227,20 @@ class OpenRouterClient {
       print('🤖 Streaming chat completion failed: $e');
       _handleHttpError(e, context);
       yield {
+        'type': 'error',
         'error': e.toString(),
         'model': model,
         'streaming': true,
+        'done': true,
       };
     } catch (e) {
       print('🤖 Streaming chat completion failed: $e');
       yield {
+        'type': 'error',
         'error': e.toString(),
         'model': model,
         'streaming': true,
+        'done': true,
       };
     }
   }
@@ -406,11 +410,13 @@ class OpenRouterClient {
       }
     } on DioException catch (e) {
       print('🚨 Streaming chat completion error: $e');
+      print('🐛 DEBUG: OpenRouterClient.chatCompletionStream about to yield error event with type=error');
       _handleHttpError(e, context);
-      yield {'error': e.toString(), 'done': true};
+      yield {'type': 'error', 'error': e.toString(), 'done': true};
     } catch (e) {
       print('🚨 Streaming chat completion error: $e');
-      yield {'error': e.toString(), 'done': true};
+      print('🐛 DEBUG: OpenRouterClient.chatCompletionStream about to yield error event with type=error');
+      yield {'type': 'error', 'error': e.toString(), 'done': true};
     }
   }
 
@@ -459,44 +465,44 @@ class OpenRouterClient {
     await _ensureInitialized();
 
     try {
-      final apiKey = await AppConfig().openRouterApiKey;
-      if (apiKey == null || apiKey.isEmpty) {
-        throw Exception('OpenRouter API key not configured');
-      }
+      return await _retryOn401(
+        context: context,
+        apiCall: () async {
+          final apiKey = await AppConfig().openRouterApiKey;
+          if (apiKey == null || apiKey.isEmpty) {
+            throw Exception('OpenRouter API key not configured');
+          }
 
-      final response = await _dio.get(
-        '/credits',
-        options: Options(
-          headers: {'Authorization': 'Bearer $apiKey'},
-        ),
+          final response = await _dio.get(
+            '/credits',
+            options: Options(
+              headers: {'Authorization': 'Bearer $apiKey'},
+            ),
+          );
+
+          if (response.statusCode == 200) {
+            final data = response.data as Map<String, dynamic>;
+            print('🤖 Credits API Response: $data');
+
+            if (data['data'] != null) {
+              final creditsData = data['data'] as Map<String, dynamic>;
+              return {
+                'total_credits': creditsData['total_credits'] ?? 0.0,
+                'total_usage': creditsData['total_usage'] ?? 0.0,
+                'remaining_credits': (creditsData['total_credits'] ?? 0.0) - (creditsData['total_usage'] ?? 0.0),
+                'fetched_at': DateTime.now().toIso8601String(),
+              };
+            }
+          } else {
+            throw Exception('Failed to fetch credits: ${response.statusCode}');
+          }
+          return null;
+        },
       );
-
-      if (response.statusCode == 200) {
-        final data = response.data as Map<String, dynamic>;
-        print('🤖 Credits API Response: $data');
-
-        if (data['data'] != null) {
-          final creditsData = data['data'] as Map<String, dynamic>;
-          return {
-            'total_credits': creditsData['total_credits'] ?? 0.0,
-            'total_usage': creditsData['total_usage'] ?? 0.0,
-            'remaining_credits': (creditsData['total_credits'] ?? 0.0) - (creditsData['total_usage'] ?? 0.0),
-            'fetched_at': DateTime.now().toIso8601String(),
-          };
-        }
-      } else {
-        throw Exception('Failed to fetch credits: ${response.statusCode}');
-      }
-    } on DioException catch (e) {
-      print('🤖 Failed to fetch credits from OpenRouter: $e');
-      _handleHttpError(e, context);
-      return null;
     } catch (e) {
       print('🤖 Failed to fetch credits from OpenRouter: $e');
       return null;
     }
-
-    return null;
   }
 
   /// Get cost data for a specific generation ID
@@ -583,42 +589,45 @@ class OpenRouterClient {
     }
 
     try {
-      final apiKey = await AppConfig().openRouterApiKey;
-      if (apiKey == null || apiKey.isEmpty) {
-        throw Exception('OpenRouter API key not configured');
-      }
+      return await _retryOn401(
+        context: context,
+        apiCall: () async {
+          final apiKey = await AppConfig().openRouterApiKey;
+          if (apiKey == null || apiKey.isEmpty) {
+            throw Exception('OpenRouter API key not configured');
+          }
 
-      final response = await _dio.get(
-        modelsEndpoint,
-        options: Options(
-          headers: {'Authorization': 'Bearer $apiKey'},
-        ),
-      );
+          final response = await _dio.get(
+            modelsEndpoint,
+            options: Options(
+              headers: {'Authorization': 'Bearer $apiKey'},
+            ),
+          );
 
-      if (response.statusCode == 200) {
-        final data = response.data as Map<String, dynamic>;
-        print('🤖 OpenRouter API Response structure: ${data.runtimeType}');
+          if (response.statusCode == 200) {
+            final data = response.data as Map<String, dynamic>;
+            print('🤖 OpenRouter API Response structure: ${data.runtimeType}');
 
-        if (data['data'] == null) {
-          throw Exception('Invalid response structure from OpenRouter API');
-        }
+            if (data['data'] == null) {
+              throw Exception('Invalid response structure from OpenRouter API');
+            }
 
-        final models = data['data'] as List;
-        print('🤖 Found ${models.length} models in API response');
+            final models = data['data'] as List;
+            print('🤖 Found ${models.length} models in API response');
 
-        _availableModels.clear();
-        _modelPricing.clear();
-        _cachedModelData.clear();
+            _availableModels.clear();
+            _modelPricing.clear();
+            _cachedModelData.clear();
 
-        for (final model in models) {
-          try {
-            final modelId = model['id'] as String;
-            _availableModels.add(modelId);
+            for (final model in models) {
+              try {
+                final modelId = model['id'] as String;
+                _availableModels.add(modelId);
 
-            // Handle pricing data with better error handling
-            final pricing = model['pricing'];
-            if (pricing != null) {
-              print('🤖 Processing pricing for model $modelId: ${pricing.runtimeType} - $pricing');
+                // Handle pricing data with better error handling
+                final pricing = model['pricing'];
+                if (pricing != null) {
+                  print('🤖 Processing pricing for model $modelId: ${pricing.runtimeType} - $pricing');
 
               // Handle different pricing structures
               double promptPrice = 0.0;
@@ -683,47 +692,31 @@ class OpenRouterClient {
               'architecture': model['architecture'] ?? {},
             };
 
-            _cachedModelData.add(modelData);
-          } catch (e) {
-            print('🤖 Error processing model ${model['id'] ?? 'unknown'}: $e');
-            // Continue processing other models
-            continue;
+                _cachedModelData.add(modelData);
+              } catch (e) {
+                print('🤖 Error processing model ${model['id'] ?? 'unknown'}: $e');
+                // Continue processing other models
+                continue;
+              }
+            }
+
+            _lastModelsFetch = DateTime.now();
+
+            print('🤖 Fetched ${_availableModels.length} models from OpenRouter');
+
+            return {
+              'success': true,
+              'data': _cachedModelData,
+              'models': _availableModels,
+              'pricing': _modelPricing,
+              'cached': false,
+            };
+          } else {
+            throw Exception('Failed to fetch models: ${response.statusCode}');
           }
-        }
+        },
+      );
 
-        _lastModelsFetch = DateTime.now();
-
-        print('🤖 Fetched ${_availableModels.length} models from OpenRouter');
-
-        return {
-          'success': true,
-          'data': _cachedModelData,
-          'models': _availableModels,
-          'pricing': _modelPricing,
-          'cached': false,
-        };
-      } else {
-        throw Exception('Failed to fetch models: ${response.statusCode}');
-      }
-
-    } on DioException catch (e) {
-      print('🤖 Failed to fetch models from OpenRouter: $e');
-      _handleHttpError(e, context);
-
-      // Return fallback models
-      _availableModels = [defaultModel, fallbackModel];
-      _modelPricing = {
-        defaultModel: {'input': 0.0, 'output': 0.0},
-        fallbackModel: {'input': 0.0, 'output': 0.0},
-      };
-
-      return {
-        'success': false,
-        'models': _availableModels,
-        'pricing': _modelPricing,
-        'cached': false,
-        'error': e.toString(),
-      };
     } catch (e) {
       print('🤖 Failed to fetch models from OpenRouter: $e');
 
@@ -763,27 +756,74 @@ class OpenRouterClient {
     print('🤖 OpenRouterClient initialized');
   }
 
-  /// Clear invalid API key asynchronously
-  Future<void> _clearInvalidApiKey() async {
-    try {
-      // Clear the invalid API key from OAuth provider
-      final oauthProvider = OAuthAuthProvider();
-      await oauthProvider.clearAuthentication();
-
-      // Also clear from app config
-      final appConfig = AppConfig();
-      await appConfig.setOpenRouterApiKey(null);
-
-      print('✅ Invalid API key cleared, app will handle authentication flow');
-    } catch (e) {
-      print('❌ Error clearing API key: $e');
-    }
-  }
 
   Future<void> _ensureInitialized() async {
     if (!_initialized) {
       await initialize();
     }
+  }
+
+  /// Retry wrapper for API calls with 401 error handling
+  Future<T> _retryOn401<T>({
+    required Future<T> Function() apiCall,
+    required BuildContext? context,
+  }) async {
+    int attemptCount = 0;
+    
+    while (attemptCount < _maxRetries) {
+      try {
+        // Make the API call
+        final result = await apiCall();
+        
+        // Success! Reset the error counter
+        if (_consecutive401Errors > 0) {
+          print('✅ API call succeeded, resetting 401 error counter');
+          _consecutive401Errors = 0;
+        }
+        _lastSuccessfulCall = DateTime.now();
+        
+        return result;
+      } on DioException catch (e) {
+        if (e.response?.statusCode == 401) {
+          attemptCount++;
+          _consecutive401Errors++;
+          
+          print('🔄 401 Error (attempt $attemptCount/$_maxRetries, total consecutive: $_consecutive401Errors)');
+          
+          if (attemptCount < _maxRetries) {
+            // Still have retries left, wait with exponential backoff
+            final delayMs = 500 * attemptCount; // 500ms, 1000ms, 1500ms
+            print('⏳ Waiting ${delayMs}ms before retry...');
+            await Future.delayed(Duration(milliseconds: delayMs));
+            continue; // Retry
+          } else {
+            // Out of retries for this call
+            print('❌ 401 Error persisted after $_maxRetries attempts');
+            
+            // Don't auto-clear the key, instead show popup for user to reconfigure
+            print('⚠️ 401 error - prompting user to reconfigure OpenRouter');
+            _show401ErrorDialog(context);
+            rethrow;
+          }
+        } else {
+          // Not a 401 error, reset the 401 counter and rethrow
+          if (_consecutive401Errors > 0) {
+            print('📊 Non-401 error occurred, resetting 401 counter');
+            _consecutive401Errors = 0;
+          }
+          rethrow;
+        }
+      } catch (e) {
+        // Non-DioException error, reset counter
+        if (_consecutive401Errors > 0) {
+          print('📊 Non-network error occurred, resetting 401 counter');
+          _consecutive401Errors = 0;
+        }
+        rethrow;
+      }
+    }
+    
+    throw Exception('Retry logic failed - should not reach here');
   }
 
   /// Format model name from ID
@@ -833,85 +873,119 @@ class OpenRouterClient {
     };
   }
 
-  /// Handle 401 Unauthorized error - clear invalid API key and redirect to onboarding
-  void _handle401Error(BuildContext? context) {
-    print('🚨 401 Unauthorized: API key invalid or expired, clearing key');
+  /// Show dialog for 401 errors prompting user to reconfigure OpenRouter
+  void _show401ErrorDialog(BuildContext? context) {
+    if (context == null || !context.mounted) return;
 
-    // Clear the invalid API key asynchronously without blocking
-    _clearInvalidApiKey();
-
-    // Show toast message and redirect to onboarding
-    if (context != null && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Row(
-            children: [
-              Icon(Icons.error, color: Colors.white),
-              SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'API key invalid or expired. Please reconfigure your API key.',
-                ),
-              ),
-            ],
-          ),
-          backgroundColor: Colors.red,
-          duration: Duration(seconds: 4),
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.error, color: Colors.red),
+            SizedBox(width: 8),
+            Text('OpenRouter Authorization Error'),
+          ],
         ),
-      );
-
-      // Navigate to onboarding screen after a short delay
-      Future.delayed(const Duration(milliseconds: 500), () {
-        if (context.mounted) {
-          // Use GoRouter to navigate to onboarding
-          try {
-            final router = GoRouter.of(context);
-            router.go('/oauth-onboarding');
-          } catch (e) {
-            print('❌ Error navigating to onboarding: $e');
-            // Fallback navigation
-            Navigator.of(context).pushNamedAndRemoveUntil(
-              '/oauth-onboarding',
-              (route) => false,
-            );
-          }
-        }
-      });
-    }
+        content: const Text(
+          'We\'ve been receiving unauthorized errors from OpenRouter. This usually means:\n\n'
+          '• Your API key has expired or been revoked\n'
+          '• Your account credits have been exhausted\n'
+          '• The key was deactivated externally\n\n'
+          'Please reconfigure your OpenRouter API key to continue.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              // Navigate to onboarding to reconfigure
+              try {
+                final router = GoRouter.of(context);
+                router.go('/oauth-onboarding');
+              } catch (e) {
+                print('❌ Error navigating to onboarding: $e');
+                // Fallback navigation
+                Navigator.of(context).pushNamedAndRemoveUntil(
+                  '/oauth-onboarding',
+                  (route) => false,
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Reconfigure OpenRouter'),
+          ),
+        ],
+      ),
+    );
   }
 
-  /// Handle 429 Rate Limit error - show toast about rate limiting
-  void _handle429Error(BuildContext? context) {
-    print('🚨 429 Rate Limited: Too many requests');
+  /// Show dialog for 429 rate limit errors suggesting model switch
+  void _show429ErrorDialog(BuildContext? context) {
+    if (context == null || !context.mounted) return;
 
-    if (context != null && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Row(
-            children: [
-              Icon(Icons.warning, color: Colors.white),
-              SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Rate limiting error. Please switch to a different model or try again later.',
-                ),
-              ),
-            ],
-          ),
-          backgroundColor: Colors.orange,
-          duration: Duration(seconds: 5),
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.warning, color: Colors.orange),
+            SizedBox(width: 8),
+            Text('Rate Limited'),
+          ],
         ),
-      );
-    }
+        content: const Text(
+          'The current model is being rate limited by OpenRouter. This usually happens when:\n\n'
+          '• The model is experiencing high demand\n'
+          '• You\'ve exceeded the request quota for this model\n'
+          '• The provider has temporary restrictions\n\n'
+          'Try switching to a different model or wait a few minutes before retrying.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: const Text('Try Again Later'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              // User can manually switch model using the model selector in the UI
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Use the model selector at the bottom to switch models'),
+                  duration: Duration(seconds: 3),
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.orange,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Switch Model'),
+          ),
+        ],
+      ),
+    );
   }
 
   /// Handle HTTP errors and navigate/show appropriate messages
+  /// Note: 401 errors are now handled by _retryOn401 wrapper
   void _handleHttpError(DioException error, BuildContext? context) {
-    if (error.response?.statusCode == 401) {
-      _handle401Error(context);
-    } else if (error.response?.statusCode == 429) {
-      _handle429Error(context);
+    if (error.response?.statusCode == 429) {
+      _show429ErrorDialog(context);
     }
+    // 401 errors are handled by the retry logic
   }
 
 }

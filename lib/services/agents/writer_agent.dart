@@ -568,6 +568,7 @@ $responseGuidelines''';
     List<Message> conversationHistory = const [],
     List<Map<String, dynamic>> attachments = const [],
   }) async* {
+    print('🐛 DEBUG: WriterAgent.writeResponseStream starting');
     try {
       
 
@@ -616,6 +617,7 @@ $responseGuidelines''';
       bool foundChunkUsage = false;
       int chunkCount = 0;
       
+      print('🐛 DEBUG: WriterAgent about to start streaming from OpenRouter with model: $modelName');
       await for (final chunk in _openRouterClient.createChatCompletionStream(
         model: modelName,
         messages: [messageInput],
@@ -623,6 +625,7 @@ $responseGuidelines''';
         maxTokens: maxTokens,
       )) {
         chunkCount++;
+        print('🐛 DEBUG: WriterAgent received chunk #$chunkCount: ${chunk.keys.toList()}');
         
         // Extract generation ID and usage from streaming response (aligned with server-side)
         if (!foundChunkUsage && chunk.containsKey('generationId')) {
@@ -631,8 +634,19 @@ $responseGuidelines''';
           foundChunkUsage = true;
         }
         
+        // Check for errors FIRST before checking done status
+        if (chunk.containsKey('error')) {
+          print('❌ Streaming error: ${chunk['error']}');
+          print('🐛 DEBUG: WriterAgent detected error chunk, about to yield ChatStreamEvent.error');
+          yield ChatStreamEvent.error(
+            error: chunk['error'] as String? ?? 'Unknown streaming error',
+            model: modelName,
+            llmUsed: 'writer-agent',
+          );
+          break;
+        }
         // Handle content chunks
-        if (chunk.containsKey('content') && chunk['content'].isNotEmpty) {
+        else if (chunk.containsKey('content') && chunk['content'].isNotEmpty) {
           final content = chunk['content'] as String;
           fullResponse += content;
           
@@ -669,14 +683,6 @@ $responseGuidelines''';
             );
           }
           break;
-        } else if (chunk.containsKey('error')) {
-          print('❌ Streaming error: ${chunk['error']}');
-          yield ChatStreamEvent.error(
-            error: chunk['error'] as String? ?? 'Unknown streaming error',
-            model: modelName,
-            llmUsed: 'writer-agent',
-          );
-          break;
         }
       }
 
@@ -690,6 +696,7 @@ $responseGuidelines''';
 
     } catch (error) {
       print('❌ Writer Agent failed: $error');
+      print('🐛 DEBUG: WriterAgent catch block, about to yield ChatStreamEvent.error');
       yield ChatStreamEvent.error(
         error: 'I apologize, but I encountered an error while generating the response. Please try again.',
         model: modelName,

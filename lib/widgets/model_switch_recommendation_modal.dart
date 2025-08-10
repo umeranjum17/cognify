@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import '../config/model_registry.dart';
 import '../providers/mode_config_provider.dart';
 import '../services/llm_service.dart';
 import '../theme/app_theme.dart';
+import '../screens/model_quick_switcher.dart';
 
 class ModelSwitchRecommendationModal extends StatelessWidget {
   final String errorType;
@@ -112,57 +114,134 @@ class ModelSwitchRecommendationModal extends StatelessWidget {
             ),
             const SizedBox(height: 20),
 
-            // Suggested models section
-            Text(
-              'Suggested Alternatives',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
+            // Show different content based on error type
+            if (errorType == 'unauthorized') ...[
+              // For unauthorized errors, show reconfigure button instead of model suggestions
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    onDismiss(); // Close this dialog
+                    // Navigate to OAuth onboarding using GoRouter
+                    context.go('/oauth-onboarding');
+                  },
+                  icon: const Icon(Icons.settings),
+                  label: const Text('Reconfigure OpenRouter'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-
-            // Suggested models list
-            ...suggestedModels.take(3).map((modelId) => _buildModelCard(
-              context,
-              modelId,
-              theme,
-              colorScheme,
-            )),
-
-            const SizedBox(height: 24),
-
-            // Action buttons
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: onDismiss,
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: onDismiss,
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Text('Cancel'),
+                  ),
+                  child: const Text('Cancel'),
+                ),
+              ),
+            ] else if (errorType == 'model_unavailable') ...[
+              // For model unavailable, show switch model button
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    onDismiss(); // Close this dialog
+                    // Open the model quick switcher
+                    _openModelSwitcher(context);
+                  },
+                  icon: const Icon(Icons.swap_horiz),
+                  label: const Text('Switch Model'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: colorScheme.primary,
+                    foregroundColor: colorScheme.onPrimary,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: onTryAgain,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: colorScheme.primary,
-                      foregroundColor: colorScheme.onPrimary,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: onDismiss,
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Text('Try Again'),
                   ),
+                  child: const Text('Cancel'),
                 ),
-              ],
-            ),
+              ),
+            ] else ...[
+              // For other errors, show model suggestions
+              Text(
+                'Suggested Alternatives',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // Suggested models list
+              ...suggestedModels.take(3).map((modelId) => _buildModelCard(
+                context,
+                modelId,
+                theme,
+                colorScheme,
+              )),
+
+              const SizedBox(height: 24),
+
+              // Action buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: onDismiss,
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: const Text('Cancel'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: onTryAgain,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: colorScheme.primary,
+                        foregroundColor: colorScheme.onPrimary,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: const Text('Try Again'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ],
         ),
       ),
@@ -304,6 +383,8 @@ class ModelSwitchRecommendationModal extends StatelessWidget {
         return Colors.red;
       case 'model_unavailable':
         return Colors.purple;
+      case 'unauthorized':
+        return Colors.red;
       default:
         return Colors.grey;
     }
@@ -317,6 +398,8 @@ class ModelSwitchRecommendationModal extends StatelessWidget {
         return Icons.account_balance_wallet;
       case 'model_unavailable':
         return Icons.error_outline;
+      case 'unauthorized':
+        return Icons.lock;
       default:
         return Icons.warning_amber_rounded;
     }

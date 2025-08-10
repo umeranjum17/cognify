@@ -82,6 +82,7 @@ class AgentSystem {
       // Create execution plan
       Map<String, dynamic> planResult;
       try {
+        print('🐛 DEBUG: AgentSystem about to call createExecutionPlan');
         planResult = await _searchAgent.createExecutionPlan(
           query: query,
           enabledTools: enabledTools,
@@ -91,6 +92,7 @@ class AgentSystem {
           isEntitled: isEntitled,
         );
       } catch (e) {
+        print('🐛 DEBUG: AgentSystem planning stage caught error: $e');
         final meta = _classifyError(e, stage: 'planning', model: _defaultModel);
         yield ChatStreamEvent.status(
           message: 'planning_error',
@@ -242,7 +244,9 @@ class AgentSystem {
 
           case StreamEventType.error:
             // Classify and emit structured error
+            print('🐛 DEBUG: AgentSystem received StreamEventType.error: ${event.error}');
             final meta = _classifyError(event.error, stage: 'writing', model: _defaultModel);
+            print('🐛 DEBUG: AgentSystem _classifyError result: $meta');
             yield ChatStreamEvent.status(
               message: 'writing_error',
               model: _defaultModel,
@@ -800,6 +804,7 @@ class AgentSystem {
   /// Classify errors into standardized codes with actionable hints
   Map<String, dynamic> _classifyError(dynamic error, {String? stage, String? model}) {
     final s = (error?.toString() ?? '').toLowerCase();
+    print('🐛 DEBUG: AgentSystem._classifyError processing: $s');
 
     String code = 'unknown';
     String action = 'suggest_retry';
@@ -815,9 +820,17 @@ class AgentSystem {
       showModal = true;
     } else if (s.contains('401') || s.contains('unauthorized') || s.contains('invalid api key')) {
       code = 'auth_invalid'; 
-      action = 'check_api_key_modal'; 
+      action = 'show_auth_error_modal'; 
       nonFatal = false;
-      hint = 'API key appears invalid. Re-authenticate to continue.';
+      hint = 'We\'ve been receiving unauthorized errors from OpenRouter. Your API key may be expired, revoked, or your credits exhausted. Please reconfigure your OpenRouter account.';
+      showModal = true;
+    } else if (s.contains('404') || s.contains('model not found') || (s.contains('not found') && s.contains('model'))) {
+      print('🐛 DEBUG: AgentSystem._classifyError matched 404 pattern for: $s');
+      code = 'model_unavailable';
+      action = 'show_model_switch_modal';
+      nonFatal = true;
+      hint = 'Selected model is unavailable. Switch to another model.';
+      showModal = true;
     } else if (s.contains('network') || s.contains('socketexception') || s.contains('failed host')) {
       code = 'network'; 
       action = 'suggest_retry'; 

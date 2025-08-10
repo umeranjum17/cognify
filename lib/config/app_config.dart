@@ -55,6 +55,11 @@ class AppConfig {
   bool _initialized = false;
   final DatabaseService _db = DatabaseService();
 
+  // Cache for API key to avoid repeated OAuth provider initialization
+  String? _cachedOpenRouterKey;
+  DateTime? _cacheTimestamp;
+  static const Duration _cacheExpiry = Duration(seconds: 30); // Cache for 30 seconds
+
   factory AppConfig() => _instance;
   AppConfig._internal();
   // AI Tools Configuration
@@ -94,12 +99,24 @@ class AppConfig {
 
   // API Keys
   Future<String?> get openRouterApiKey async {
+    // Check cache first
+    if (_cachedOpenRouterKey != null && 
+        _cacheTimestamp != null && 
+        DateTime.now().difference(_cacheTimestamp!) < _cacheExpiry) {
+      Logger.info('🔑 AppConfig: Using cached API key: ${_cachedOpenRouterKey!.substring(0, 10)}...', tag: 'AppConfig');
+      return _cachedOpenRouterKey;
+    }
+
     // First try to get from OAuth provider (user's own key)
     try {
       final oauthProvider = OAuthAuthProvider();
       await oauthProvider.initialize();
       final userApiKey = oauthProvider.apiKey;
       if (userApiKey != null && userApiKey.isNotEmpty) {
+        // Cache the key
+        _cachedOpenRouterKey = userApiKey;
+        _cacheTimestamp = DateTime.now();
+        Logger.info('🔑 AppConfig: Got API key from OAuth provider: ${userApiKey.substring(0, 10)}...', tag: 'AppConfig');
         return userApiKey;
       }
     } catch (e) {
@@ -108,7 +125,19 @@ class AppConfig {
 
     // Fallback to database storage
     await _ensureInitialized();
-    return await _db.getSetting<String>(_openRouterApiKeyKey);
+    final dbKey = await _db.getSetting<String>(_openRouterApiKeyKey);
+    
+    // Cache the result
+    _cachedOpenRouterKey = dbKey;
+    _cacheTimestamp = DateTime.now();
+    
+    if (dbKey != null) {
+      Logger.info('🔑 AppConfig: Got API key from database: ${dbKey.substring(0, 10)}...', tag: 'AppConfig');
+    } else {
+      Logger.info('🔑 AppConfig: No API key found in any source', tag: 'AppConfig');
+    }
+    
+    return dbKey;
   }
 
   Future<void> initialize() async {
@@ -163,6 +192,16 @@ class AppConfig {
   Future<void> setOpenRouterApiKey(String? apiKey) async {
     await _ensureInitialized();
     await _db.saveSetting(_openRouterApiKeyKey, apiKey);
+    
+    // Clear cache when API key is updated
+    clearApiKeyCache();
+  }
+
+  /// Clear the API key cache to force fresh retrieval
+  void clearApiKeyCache() {
+    Logger.info('🔑 AppConfig: Clearing API key cache', tag: 'AppConfig');
+    _cachedOpenRouterKey = null;
+    _cacheTimestamp = null;
   }
 
   Future<void> _ensureInitialized() async {

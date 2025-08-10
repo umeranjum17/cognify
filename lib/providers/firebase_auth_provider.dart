@@ -202,13 +202,12 @@ class FirebaseAuthProvider extends ChangeNotifier {
     try {
       await _auth.signOut();
       _user = null;
-      debugPrint('✅ [FirebaseAuth] Sign-out successful');
+      debugPrint('✅ [FirebaseAuth] Sign out successful');
       notifyListeners();
     } catch (e) {
       _lastError = e;
-      debugPrint('❌ [FirebaseAuth] Sign-out error: $e');
+      debugPrint('❌ [FirebaseAuth] Sign out error: $e');
       notifyListeners();
-      rethrow;
     }
   }
 

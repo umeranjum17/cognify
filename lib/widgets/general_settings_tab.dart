@@ -9,6 +9,7 @@ import '../providers/firebase_auth_provider.dart';
 import '../providers/subscription_provider.dart';
 import '../providers/oauth_auth_provider.dart';
 import '../services/secure_storage.dart';
+import '../services/data_deletion_service.dart';
 import '../theme/app_theme.dart';
 
 class GeneralSettingsTab extends StatefulWidget {
@@ -66,6 +67,9 @@ class _GeneralSettingsTabState extends State<GeneralSettingsTab> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('OpenRouter key cleared')),
         );
+        // Navigate to onboarding screen after clearing key
+        Navigator.of(context).pop(); // Close settings modal
+        context.go('/oauth-onboarding'); // Navigate to onboarding
       }
     }
   }
@@ -139,6 +143,215 @@ class _GeneralSettingsTabState extends State<GeneralSettingsTab> {
         }
       }
     }
+  }
+
+  Future<void> _deleteAllData() async {
+    // Show detailed information dialog first
+    final proceed = await _showDataDeletionInfoDialog();
+    if (!proceed) return;
+
+    // Final confirmation
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.warning, color: Colors.red),
+            SizedBox(width: 8),
+            Text('Delete All Data'),
+          ],
+        ),
+        content: const Text(
+          'This action is PERMANENT and cannot be undone. All your data will be deleted immediately.\n\nAre you absolutely sure you want to proceed?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete Everything'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      // Show loading dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const AlertDialog(
+          content: Row(
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(width: 16),
+              Text('Deleting all data...'),
+            ],
+          ),
+        ),
+      );
+
+      try {
+        final authProvider = Provider.of<FirebaseAuthProvider>(context, listen: false);
+        final deletionService = DataDeletionService();
+        
+        final success = await deletionService.requestDataDeletion(
+          firebaseAuth: authProvider,
+          includeFirebaseAccount: true,
+        );
+
+        if (mounted) {
+          Navigator.of(context).pop(); // Close loading dialog
+          
+          if (success) {
+            // Show success and redirect
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (context) => AlertDialog(
+                title: const Row(
+                  children: [
+                    Icon(Icons.check_circle, color: Colors.green),
+                    SizedBox(width: 8),
+                    Text('Data Deleted'),
+                  ],
+                ),
+                content: const Text('All your data has been successfully deleted.'),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      context.go('/oauth-onboarding');
+                    },
+                    child: const Text('OK'),
+                  ),
+                ],
+              ),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Error deleting data. Please try again.'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+          Navigator.of(context).pop(); // Close loading dialog
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error deleting data: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  Future<bool> _showDataDeletionInfoDialog() async {
+    final deletionService = DataDeletionService();
+    final dataTypes = deletionService.getDataTypesToDelete();
+    final retentionInfo = deletionService.getDataRetentionInfo();
+
+    return await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Data Deletion Information'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'The following data types will be permanently deleted:',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 8),
+                ...dataTypes.map((type) => Padding(
+                  padding: const EdgeInsets.only(left: 8, bottom: 4),
+                  child: Row(
+                    children: [
+                      const Text('• ', style: TextStyle(fontWeight: FontWeight.bold)),
+                      Expanded(child: Text(type, style: const TextStyle(fontSize: 13))),
+                    ],
+                  ),
+                )),
+                const SizedBox(height: 16),
+                const Text(
+                  'Data Retention Policy:',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 8),
+                ...retentionInfo.entries.map((entry) => Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(
+                        width: 100,
+                        child: Text(
+                          '${entry.key}:',
+                          style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
+                        ),
+                      ),
+                      Expanded(
+                        child: Text(
+                          entry.value,
+                          style: const TextStyle(fontSize: 13),
+                        ),
+                      ),
+                    ],
+                  ),
+                )),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.shade50,
+                    border: Border.all(color: Colors.amber),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.warning, color: Colors.amber, size: 20),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'This action is permanent and cannot be undone.',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Continue'),
+          ),
+        ],
+      ),
+    ) ?? false;
   }
 
   @override
@@ -283,29 +496,56 @@ class _GeneralSettingsTabState extends State<GeneralSettingsTab> {
 
           const SizedBox(height: 32),
 
-          // Logout Button
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: ElevatedButton(
-              onPressed: _logout,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+          // Data Management Section
+          _buildSection(
+            theme,
+            isDark,
+            'Data Management',
+            [
+              // Delete All Data Button
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: OutlinedButton.icon(
+                  onPressed: _deleteAllData,
+                  icon: const Icon(Icons.delete_forever),
+                  label: const Text('Delete All My Data'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.red,
+                    side: const BorderSide(color: Colors.red),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
                 ),
-                elevation: 0,
               ),
-              child: const Text(
-                'Logout & Clear All Data',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
+              const SizedBox(height: 12),
+              // Logout Button
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: ElevatedButton(
+                  onPressed: _logout,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: const Text(
+                    'Logout (Keep Data)',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
               ),
-            ),
+            ],
           ),
         ],
       ),

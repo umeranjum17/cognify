@@ -3318,7 +3318,40 @@ class _EditorScreenState extends State<EditorScreen> {
             });
             break;
             
+          case StreamEventType.status:
+            print('🐛 DEBUG: EditorScreen received StreamEventType.status: ${event.message}');
+            // Check if this is an error status with classification metadata
+            if (event.message == 'writing_error' && event.metadata != null && event.metadata!['showModal'] == true) {
+              print('🐛 DEBUG: EditorScreen found error classification in status metadata, showing modal');
+              
+              // Clean up UI state
+              setState(() {
+                _messages.removeWhere((m) => m.id == streamingMessage.id);
+                _isProcessing = false;
+                _showLoader = false;
+                _currentMilestone = null;
+                _currentPhase = null;
+                _currentProgress = null;
+              });
+              StreamingMessageRegistry().removeController(streamingMessage.id);
+              
+              // Use the classification from AgentSystem
+              final errorClassification = {
+                'type': event.metadata!['code'],
+                'showModal': true,
+                'title': 'Model Unavailable',
+                'message': 'The selected model is not available. Please choose a different model to continue.',
+                'suggestedModels': <String>[], // Don't show suggestions, use switcher instead
+              };
+              
+              _showModelSwitchModal(errorClassification);
+              break;
+            }
+            break;
+            
           case StreamEventType.error:
+            print('🐛 DEBUG: EditorScreen received StreamEventType.error: ${event.error}');
+            
             // Stop vibration on error
             try {
               stopVibration();
@@ -3326,11 +3359,26 @@ class _EditorScreenState extends State<EditorScreen> {
               // Handle vibration error silently
             }
             
+            // ALWAYS clean up UI state first, regardless of error type
+            setState(() {
+              _messages.removeWhere((m) => m.id == streamingMessage.id);
+              _isProcessing = false;
+              _showLoader = false;
+              _currentMilestone = null;
+              _currentPhase = null;
+              _currentProgress = null;
+            });
+            StreamingMessageRegistry().removeController(streamingMessage.id);
+            
             // Classify the error to determine if modal should be shown
+            print('🐛 DEBUG: EditorScreen calling _classifyStreamError with: ${event.error}');
             final errorClassification = _classifyStreamError(event.error, _selectedModel);
+            print('🐛 DEBUG: EditorScreen _classifyStreamError result: $errorClassification');
             
             if (errorClassification['showModal'] == true) {
+              print('🐛 DEBUG: EditorScreen about to show modal for error classification: $errorClassification');
               _showModelSwitchModal(errorClassification);
+              break; // Don't rethrow - UI already cleaned up
             } else {
               // Show standard error snackbar
               throw Exception(event.error ?? 'Unknown streaming error');
@@ -3345,6 +3393,7 @@ class _EditorScreenState extends State<EditorScreen> {
 
       setState(() {
         _isProcessing = false;
+        _showLoader = false; // Always reset loader on completion
       });
 
       // Update knowledge graph with new conversation data
@@ -3363,17 +3412,122 @@ class _EditorScreenState extends State<EditorScreen> {
       StreamingMessageRegistry().removeController(streamingMessage.id);
       
 
-      // Remove streaming message on error (no typing effect)
+      // Remove streaming message on error (no typing effect) and reset all UI state
       setState(() {
         _messages.removeWhere((m) => m.id == streamingMessage.id);
         _isProcessing = false;
+        _showLoader = false; // Ensure loader is hidden
+        _currentMilestone = null; // Clear milestone state
+        _currentPhase = null; // Clear phase state  
+        _currentProgress = null; // Clear progress state
       });
 
+      // Show user-friendly error messages
       if (mounted) {
+        String errorMessage;
+        String actionMessage = '';
+        Color backgroundColor = Theme.of(context).colorScheme.error;
+        
+        final errorString = e.toString().toLowerCase();
+        
+        if (errorString.contains('openrouter api key not configured') || 
+            errorString.contains('api key not configured')) {
+          errorMessage = 'API key not configured';
+          actionMessage = 'Please configure your OpenRouter API key in settings to continue.';
+          
+          // Show dialog to guide user
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Row(
+                children: [
+                  Icon(Icons.key_off, color: Colors.orange),
+                  SizedBox(width: 8),
+                  Text('API Key Required'),
+                ],
+              ),
+              content: const Text(
+                'Your OpenRouter API key is not configured. Would you like to set it up now?',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Later'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    context.go('/oauth-onboarding'); // Navigate to onboarding
+                  },
+                  child: const Text('Setup Now'),
+                ),
+              ],
+            ),
+          );
+        } else if (errorString.contains('rate limit') || errorString.contains('429')) {
+          errorMessage = 'Rate limit exceeded';
+          actionMessage = 'Please wait a moment before trying again.';
+          backgroundColor = Colors.orange;
+        } else if (errorString.contains('network') || errorString.contains('connection')) {
+          errorMessage = 'Network error';
+          actionMessage = 'Please check your internet connection and try again.';
+          backgroundColor = Colors.orange;
+        } else if (errorString.contains('401') || errorString.contains('unauthorized')) {
+          errorMessage = 'Authentication failed';
+          actionMessage = 'Your API key may be invalid. Please check your settings.';
+        } else if (errorString.contains('insufficient') || errorString.contains('credits')) {
+          errorMessage = 'Insufficient credits';
+          actionMessage = 'You may have run out of API credits. Please check your OpenRouter account.';
+          backgroundColor = Colors.orange;
+        } else if (errorString.contains('404') || 
+                   errorString.contains('model not found') ||
+                   (errorString.contains('not found') && errorString.contains('model'))) {
+          errorMessage = 'Model Unavailable';
+          actionMessage = 'The selected model is unavailable. Try switching to another model.';
+          backgroundColor = Colors.orange;
+          
+          // Show model switch modal for 404 errors
+          if (mounted) {
+            _showModelSwitchModal({
+              'type': 'model_unavailable',
+              'showModal': true,
+              'title': 'Model Unavailable',
+              'message': 'The selected model is unavailable or not found. Try switching to another model.',
+              'suggestedModels': _getSuggestedModelsForError('model_unavailable', _selectedModel),
+            });
+          }
+        } else {
+          // Generic error
+          errorMessage = 'Something went wrong';
+          actionMessage = 'Please try again. If the problem persists, check your settings.';
+        }
+        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: ${e.toString()}'),
-            backgroundColor: Theme.of(context).colorScheme.error,
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  errorMessage,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                if (actionMessage.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    actionMessage,
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                ],
+              ],
+            ),
+            backgroundColor: backgroundColor,
+            duration: const Duration(seconds: 5),
+            action: SnackBarAction(
+              label: 'Settings',
+              textColor: Colors.white,
+              onPressed: () => _showSettings(),
+            ),
           ),
         );
       }
@@ -4047,7 +4201,12 @@ class _EditorScreenState extends State<EditorScreen> {
         },
       ),
     ).then((_) async {
-
+      // Ensure services are still ready after settings close
+      // This prevents race conditions where the API key might be cleared
+      _checkServicesReady();
+      
+      // Reload the API key from storage to ensure it's still available
+      await _apiService.initialize();
     });
   }
 
@@ -4343,6 +4502,7 @@ class _EditorScreenState extends State<EditorScreen> {
     if (error == null) return {'showModal': false};
     
     final errorLower = error.toLowerCase();
+    print('🐛 DEBUG: EditorScreen._classifyStreamError processing: $errorLower');
     
     if (errorLower.contains('429') || errorLower.contains('rate limit')) {
       return {
@@ -4361,6 +4521,30 @@ class _EditorScreenState extends State<EditorScreen> {
         'title': 'Usage Quota Exceeded',
         'message': 'You\'ve reached the usage limit for this model. Switch to a free model or upgrade your plan.',
         'suggestedModels': _getSuggestedModelsForError('quota', currentModel),
+      };
+    }
+    
+    if (errorLower.contains('401') || errorLower.contains('unauthorized')) {
+      return {
+        'type': 'unauthorized',
+        'showModal': true,
+        'title': 'OpenRouter Authorization Error',
+        'message': 'We\'ve been receiving unauthorized errors from OpenRouter. Your API key may be expired, revoked, or your credits exhausted. Please reconfigure your OpenRouter account.',
+        'suggestedModels': [], // No model suggestions for auth errors
+      };
+    }
+    
+    // Model unavailable / invalid endpoint
+    if (errorLower.contains('404') ||
+        errorLower.contains('model not found') ||
+        (errorLower.contains('not found') && errorLower.contains('model'))) {
+      print('🐛 DEBUG: EditorScreen._classifyStreamError matched 404 pattern for: $errorLower');
+      return {
+        'type': 'model_unavailable',
+        'showModal': true,
+        'title': 'Model Unavailable',
+        'message': 'The selected model is unavailable or not found. Try switching to another model.',
+        'suggestedModels': _getSuggestedModelsForError('model_unavailable', currentModel),
       };
     }
     
@@ -4402,6 +4586,8 @@ class _EditorScreenState extends State<EditorScreen> {
         case 'rate_limit':
           return ModelRegistry.getFreeModels().take(3).toList();
         case 'quota':
+          return ModelRegistry.getFreeModels().take(3).toList();
+        case 'model_unavailable':
           return ModelRegistry.getFreeModels().take(3).toList();
         default:
           return ModelRegistry.getAllModels().take(3).toList();

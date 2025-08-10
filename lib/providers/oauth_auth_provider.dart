@@ -12,6 +12,7 @@ import 'package:url_launcher/url_launcher.dart';
 // Enhanced state/origin handling for dynamic callback
 import '../services/environment_service.dart';
 import '../models/oauth_state.dart';
+import '../config/app_config.dart';
 
 /// OAuth authentication provider for OpenRouter
 class OAuthAuthProvider extends ChangeNotifier {
@@ -20,8 +21,8 @@ class OAuthAuthProvider extends ChangeNotifier {
   static const String _oauthStateStorageKey = 'oauth_state';
   static const String _oauthCodeVerifierStorageKey = 'oauth_code_verifier';
 
-  // OpenRouter API endpoint for validation
-  static const String _modelsUrl = 'https://openrouter.ai/api/v1/models';
+  // OpenRouter API endpoint for validation (using authenticated endpoint)
+  static const String _creditsUrl = 'https://openrouter.ai/api/v1/credits';
 
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
 
@@ -227,13 +228,21 @@ class OAuthAuthProvider extends ChangeNotifier {
       }
 
       if (_apiKey != null) {
-        // Validate the stored API key
-        final isValid = await _validateApiKey(_apiKey!);
-        _isAuthenticated = isValid;
+        // Validate the stored API key directly during initialization
+        // (avoid circular dependency with AppConfig during init)
+        try {
+          final isValid = await _validateApiKey(_apiKey);
+          _isAuthenticated = isValid;
 
-        if (!isValid) {
-          // Clear invalid credentials
-          await clearAuthentication();
+          if (!isValid) {
+            // Clear invalid credentials
+            await clearAuthentication();
+          }
+        } catch (e) {
+          print('⚠️ Validation failed during initialization: $e');
+          // On validation errors during init, assume key is invalid and clear
+          _isAuthenticated = false;
+          _apiKey = null;
         }
       } else {
         _isAuthenticated = false;
@@ -256,7 +265,7 @@ class OAuthAuthProvider extends ChangeNotifier {
     _setLoading(true);
 
     try {
-      final isValid = await _validateApiKey(apiKey);
+      final isValid = await _validateApiKey(apiKey);  // Keep using provided key for validation
 
       if (isValid) {
         await _storeCredentials(apiKey);
@@ -423,6 +432,9 @@ class OAuthAuthProvider extends ChangeNotifier {
 
       _apiKey = apiKey;
       _isAuthenticated = true;
+      
+      // Clear AppConfig cache so it picks up the new key immediately
+      AppConfig().clearApiKeyCache();
 
       try {
         notifyListeners();
@@ -437,17 +449,23 @@ class OAuthAuthProvider extends ChangeNotifier {
 
   /// Validate API key by making a test request to OpenRouter
   /// Returns validation result with detailed status information
-  Future<ApiKeyValidationResult> _validateApiKeyDetailed(String apiKey) async {
+  Future<ApiKeyValidationResult> _validateApiKeyDetailed(String? providedApiKey) async {
     try {
-      print('🔑 Validating API key: ${apiKey.substring(0, 10)}...');
+      // Use AppConfig as the single source of truth for API key
+      final apiKey = providedApiKey ?? await AppConfig().openRouterApiKey;
+      if (apiKey == null || apiKey.isEmpty) {
+        return ApiKeyValidationResult.invalid('No API key configured');
+      }
+      
+      print('🔑 Validating API key: ${apiKey.substring(0, 10)}... [source: ${providedApiKey != null ? 'direct' : 'AppConfig'}]');
       
       final response = await http.get(
-        Uri.parse(_modelsUrl),
+        Uri.parse(_creditsUrl),
         headers: {
           'Authorization': 'Bearer $apiKey',
           'Content-Type': 'application/json',
         },
-      ).timeout(const Duration(seconds: 10));
+      ).timeout(const Duration(seconds: 5)); // Shorter timeout for faster initialization
 
       print('🔑 Validation response: ${response.statusCode}');
 
@@ -457,6 +475,9 @@ class OAuthAuthProvider extends ChangeNotifier {
       } else if (response.statusCode == 401 || response.statusCode == 403) {
         print('❌ API key is invalid/revoked (${response.statusCode})');
         return ApiKeyValidationResult.invalid('API key revoked or invalid');
+      } else if (response.statusCode == 429) {
+        print('⚠️ Rate limited during validation, assuming key is valid');
+        return ApiKeyValidationResult.assumeValid('Rate limited');
       } else {
         print('⚠️ API validation failed with status ${response.statusCode}, assuming key is still valid');
         // For other status codes (500, 502, etc.), assume key is still valid
@@ -472,7 +493,7 @@ class OAuthAuthProvider extends ChangeNotifier {
   }
 
   /// Legacy method for backward compatibility
-  Future<bool> _validateApiKey(String apiKey) async {
+  Future<bool> _validateApiKey(String? apiKey) async {
     final result = await _validateApiKeyDetailed(apiKey);
     return result.isValid;
   }
