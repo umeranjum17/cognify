@@ -671,7 +671,6 @@ class OpenRouterClient {
                 'output': (completionPrice * 1000000).toDouble(),
               };
 
-              print('🤖 Processed pricing for $modelId: input=${promptPrice * 1000000}, output=${completionPrice * 1000000}');
             } else {
               // No pricing data available
               _modelPricing[modelId] = {

@@ -828,7 +828,6 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
     final output = pricing['output'] ?? pricing['completion'];
 
     // Debug logging for pricing calculation
-    print('💰 Pricing calculation - input: $input (${input.runtimeType}), output: $output (${output.runtimeType})');
 
     // Check if it's free (both input and output are 0)
     if ((input == 0 || input == 0.0) && (output == 0 || output == 0.0)) {
@@ -870,7 +869,6 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
       final inputPerMillion = inputNum.toStringAsFixed(2);
       final outputPerMillion = outputNum.toStringAsFixed(2);
       
-      print('💰 String pricing calculated - input: $inputPerMillion, output: $outputPerMillion');
       
       if (inputPerMillion == outputPerMillion) {
         return '\$$inputPerMillion/M';
@@ -892,7 +890,6 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
       final inputPerMillion = inputNum.toStringAsFixed(2);
       final outputPerMillion = outputNum.toStringAsFixed(2);
       
-      print('💰 Mixed type pricing calculated - input: $inputPerMillion, output: $outputPerMillion');
       
       if (inputPerMillion == outputPerMillion) {
         return '\$$inputPerMillion/M';

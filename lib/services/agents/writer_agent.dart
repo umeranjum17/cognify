@@ -25,7 +25,24 @@ class WriterAgent {
     String prompt,
     List<Map<String, dynamic>> attachments,
   ) async {
+    print('🔍 DEBUG: createMessageInput called with ${attachments.length} attachments');
+    if (attachments.isNotEmpty) {
+      for (int i = 0; i < attachments.length; i++) {
+        final att = attachments[i];
+        print('🔍 DEBUG: Attachment $i:');
+        print('  - type: ${att['type']}');
+        print('  - name: ${att['name']}');
+        print('  - mimeType: ${att['mimeType']}');
+        print('  - has base64Data: ${att['base64Data'] != null}');
+        if (att['base64Data'] != null) {
+          final base64 = att['base64Data'] as String;
+          print('  - base64 length: ${base64.length}');
+        }
+      }
+    }
+    
     if (attachments.isEmpty) {
+      print('🔍 DEBUG: No attachments, returning simple text message');
       return {'role': 'user', 'content': prompt};
     }
 
@@ -59,6 +76,7 @@ class WriterAgent {
     String personality,
     String language,
     List<Message> conversationHistory,
+    List<Map<String, dynamic>> attachments,
   ) {
     // Get pre-extracted images from executor agent
     final images = _getPreExtractedImages(toolResults);
@@ -155,6 +173,47 @@ Before writing your response, engage in systematic chain-of-thought reasoning:
     final personalityInstruction = _getPersonalityInstructions(personality);
     final languageInstruction = _getLanguageInstructions(language);
 
+    // Process user attachments (images, files)
+    String attachmentContext = '';
+    if (attachments.isNotEmpty) {
+      attachmentContext = '''\n\n**USER ATTACHMENTS:**\n''';
+      
+      int imageCount = 0;
+      int fileCount = 0;
+      
+      for (final attachment in attachments) {
+        final type = attachment['type'] as String?;
+        final name = attachment['name'] as String?;
+        final mimeType = attachment['mimeType'] as String?;
+        
+        if (type == 'image') {
+          imageCount++;
+          attachmentContext += '''\n🖼️ **Image ${imageCount}: $name**
+   - Type: $mimeType
+   - Description: User has provided an image for analysis
+   - IMPORTANT: This image is directly visible to you. Analyze and describe what you see in detail.
+''';
+        } else if (type == 'text' || type == 'file') {
+          fileCount++;
+          attachmentContext += '''\n📄 **File ${fileCount}: $name**
+   - Type: $mimeType
+   - Description: User has provided a file attachment
+''';
+        }
+      }
+      
+      if (imageCount > 0) {
+        attachmentContext += '''\n\n⚠️ **IMPORTANT INSTRUCTIONS FOR ATTACHED IMAGES:**
+1. You can see the user's attached images directly in this conversation
+2. Analyze each image thoroughly and describe what you observe
+3. Reference specific details, colors, text, objects, people, or any visual elements you see
+4. If the user asks about the image(s), provide detailed analysis based on what you can see
+5. Do NOT say you cannot see images - you have vision capabilities
+6. Integrate your image analysis naturally into your response
+''';
+      }
+    }
+
     // Create conversation context section (aligned with server-side)
     String conversationContext = '';
     if (conversationHistory.isNotEmpty) {
@@ -243,6 +302,7 @@ Write your response now:''';
       personality: personality,
       language: language,
       languageInstruction: languageInstruction,
+      attachmentContext: attachmentContext,
       conversationContext: conversationContext,
       toolSummary: toolSummary,
       sourcesSection: sourcesSection,
@@ -257,7 +317,7 @@ Write your response now:''';
 **MODE:** $mode${isDeepSearchMode ? ' (ULTRA-COMPREHENSIVE ANALYSIS)' : ''}
 **INCOGNITO:** ${isIncognitoMode ? 'ON' : 'OFF'}
 ${personality != 'Default' ? '**PERSONALITY:** $personality' : ''}
-${language != 'English' ? '**LANGUAGE:** $language - $languageInstruction' : ''}$conversationContext
+${language != 'English' ? '**LANGUAGE:** $language - $languageInstruction' : ''}$attachmentContext$conversationContext
 
 **TOOL RESULTS:**
 $toolSummary
@@ -324,6 +384,7 @@ $responseGuidelines''';
         personality,
         language,
         conversationHistory,
+        attachments,
       );
 
       final estimatedTokens = (writingPrompt.length / 4).round();
@@ -331,6 +392,32 @@ $responseGuidelines''';
       
 
       final messageInput = await createMessageInput(writingPrompt, attachments);
+      
+      // Debug: Log the message structure being sent
+      print('🐛 DEBUG: Message being sent to API:');
+      print('🐛 DEBUG: Message role: ${messageInput['role']}');
+      if (messageInput['content'] is String) {
+        print('🐛 DEBUG: Content is String, length: ${(messageInput['content'] as String).length}');
+      } else if (messageInput['content'] is List) {
+        final contentList = messageInput['content'] as List;
+        print('🐛 DEBUG: Content is List with ${contentList.length} items:');
+        for (int i = 0; i < contentList.length; i++) {
+          final item = contentList[i] as Map<String, dynamic>;
+          print('🐛 DEBUG:   Item $i type: ${item['type']}');
+          if (item['type'] == 'text') {
+            final text = item['text'] as String?;
+            print('🐛 DEBUG:     Text length: ${text?.length ?? 0}');
+          } else if (item['type'] == 'image_url') {
+            final imageUrl = item['image_url'] as Map<String, dynamic>?;
+            final url = imageUrl?['url'] as String?;
+            if (url != null && url.startsWith('data:')) {
+              final mimeType = url.substring(5, url.indexOf(';'));
+              print('🐛 DEBUG:     Image MIME type: $mimeType');
+              print('🐛 DEBUG:     Base64 data present: YES');
+            }
+          }
+        }
+      }
 
       
       
@@ -453,6 +540,7 @@ $responseGuidelines''';
         personality,
         language,
         conversationHistory,
+        attachments,
       );
 
       final estimatedTokens = (writingPrompt.length / 4).round();
@@ -460,6 +548,32 @@ $responseGuidelines''';
       
 
       final messageInput = await createMessageInput(writingPrompt, attachments);
+      
+      // Debug: Log the message structure being sent
+      print('🐛 DEBUG: Message being sent to API:');
+      print('🐛 DEBUG: Message role: ${messageInput['role']}');
+      if (messageInput['content'] is String) {
+        print('🐛 DEBUG: Content is String, length: ${(messageInput['content'] as String).length}');
+      } else if (messageInput['content'] is List) {
+        final contentList = messageInput['content'] as List;
+        print('🐛 DEBUG: Content is List with ${contentList.length} items:');
+        for (int i = 0; i < contentList.length; i++) {
+          final item = contentList[i] as Map<String, dynamic>;
+          print('🐛 DEBUG:   Item $i type: ${item['type']}');
+          if (item['type'] == 'text') {
+            final text = item['text'] as String?;
+            print('🐛 DEBUG:     Text length: ${text?.length ?? 0}');
+          } else if (item['type'] == 'image_url') {
+            final imageUrl = item['image_url'] as Map<String, dynamic>?;
+            final url = imageUrl?['url'] as String?;
+            if (url != null && url.startsWith('data:')) {
+              final mimeType = url.substring(5, url.indexOf(';'));
+              print('🐛 DEBUG:     Image MIME type: $mimeType');
+              print('🐛 DEBUG:     Base64 data present: YES');
+            }
+          }
+        }
+      }
 
       // Calculate max tokens based on mode
       int maxTokens;
@@ -569,6 +683,11 @@ $responseGuidelines''';
     List<Map<String, dynamic>> attachments = const [],
   }) async* {
     print('🐛 DEBUG: WriterAgent.writeResponseStream starting');
+    print('🔍 DEBUG: Received ${attachments.length} attachments in writeResponseStream');
+    for (int i = 0; i < attachments.length; i++) {
+      final att = attachments[i];
+      print('🔍 DEBUG: writeResponseStream Attachment $i: type=${att['type']}, name=${att['name']}');
+    }
     try {
       
 
@@ -587,6 +706,7 @@ $responseGuidelines''';
         personality,
         language,
         conversationHistory,
+        attachments,
       );
 
       final estimatedTokens = (writingPrompt.length / 4).round();
@@ -594,6 +714,32 @@ $responseGuidelines''';
       
 
       final messageInput = await createMessageInput(writingPrompt, attachments);
+      
+      // Debug: Log the message structure being sent
+      print('🐛 DEBUG: Message being sent to API:');
+      print('🐛 DEBUG: Message role: ${messageInput['role']}');
+      if (messageInput['content'] is String) {
+        print('🐛 DEBUG: Content is String, length: ${(messageInput['content'] as String).length}');
+      } else if (messageInput['content'] is List) {
+        final contentList = messageInput['content'] as List;
+        print('🐛 DEBUG: Content is List with ${contentList.length} items:');
+        for (int i = 0; i < contentList.length; i++) {
+          final item = contentList[i] as Map<String, dynamic>;
+          print('🐛 DEBUG:   Item $i type: ${item['type']}');
+          if (item['type'] == 'text') {
+            final text = item['text'] as String?;
+            print('🐛 DEBUG:     Text length: ${text?.length ?? 0}');
+          } else if (item['type'] == 'image_url') {
+            final imageUrl = item['image_url'] as Map<String, dynamic>?;
+            final url = imageUrl?['url'] as String?;
+            if (url != null && url.startsWith('data:')) {
+              final mimeType = url.substring(5, url.indexOf(';'));
+              print('🐛 DEBUG:     Image MIME type: $mimeType');
+              print('🐛 DEBUG:     Base64 data present: YES');
+            }
+          }
+        }
+      }
 
       // Stream the response
       String fullResponse = '';
@@ -1093,6 +1239,7 @@ ${i + 1}.${j + 1}. **$title**
     required String personality,
     required String language,
     required String languageInstruction,
+    required String attachmentContext,
     required String conversationContext,
     required String toolSummary,
     required String sourcesSection,
@@ -1105,6 +1252,7 @@ ${i + 1}.${j + 1}. **$title**
       {'name': 'User Query', 'content': originalQuery},
       {'name': 'Mode & Settings', 'content': 'MODE: $mode, INCOGNITO: ${isIncognitoMode ? 'ON' : 'OFF'}, PERSONALITY: $personality'},
       {'name': 'Language Instruction', 'content': languageInstruction},
+      {'name': 'Attachment Context', 'content': attachmentContext},
       {'name': 'Conversation Context', 'content': conversationContext},
       {'name': 'Tool Summary', 'content': toolSummary},
       {'name': 'Sources Section', 'content': sourcesSection}, // From web_fetch tool results

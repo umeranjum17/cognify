@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math' as math;
 
 import 'package:file_picker/file_picker.dart';
@@ -838,7 +839,9 @@ Return only the questions, one per line, without numbering.''';
             'name': file.name,
             'size': file.size,
             'bytes': file.bytes,
-            'type': 'file',
+            'base64Data': file.bytes != null ? base64Encode(file.bytes!) : null,
+            'type': _determineFileType(file),
+            'mimeType': _determineMimeType(file),
           }).toList();
           
           // Prepare options for offline mode
@@ -975,5 +978,75 @@ Return only the questions, one per line, without numbering.''';
     if (!_initialized) {
       await initialize();
     }
+  }
+  
+  /// Determine file type from PlatformFile
+  String _determineFileType(PlatformFile file) {
+    final extension = file.extension?.toLowerCase();
+    final name = file.name.toLowerCase();
+    
+    // Check for image files
+    if (extension != null && ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'tiff'].contains(extension)) {
+      return 'image';
+    }
+    
+    // Check for PDF files
+    if (extension == 'pdf') {
+      return 'pdf';
+    }
+    
+    // Check for text files
+    if (extension != null && ['txt', 'md', 'json', 'csv', 'xml', 'yaml', 'yml'].contains(extension)) {
+      return 'text';
+    }
+    
+    // Check by file name patterns
+    if (name.contains('.jpg') || name.contains('.jpeg') || name.contains('.png') || 
+        name.contains('.gif') || name.contains('.webp')) {
+      return 'image';
+    }
+    
+    return 'file';
+  }
+  
+  /// Determine MIME type from PlatformFile
+  String _determineMimeType(PlatformFile file) {
+    final extension = file.extension?.toLowerCase();
+    
+    if (extension != null) {
+      switch (extension) {
+        case 'jpg':
+        case 'jpeg':
+          return 'image/jpeg';
+        case 'png':
+          return 'image/png';
+        case 'gif':
+          return 'image/gif';
+        case 'webp':
+          return 'image/webp';
+        case 'svg':
+          return 'image/svg+xml';
+        case 'bmp':
+          return 'image/bmp';
+        case 'tiff':
+          return 'image/tiff';
+        case 'pdf':
+          return 'application/pdf';
+        case 'txt':
+          return 'text/plain';
+        case 'md':
+          return 'text/markdown';
+        case 'json':
+          return 'application/json';
+        case 'csv':
+          return 'text/csv';
+        case 'xml':
+          return 'application/xml';
+        default:
+          return 'application/octet-stream';
+      }
+    }
+    
+    return 'application/octet-stream';
   }
 }
