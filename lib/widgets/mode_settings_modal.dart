@@ -374,6 +374,5 @@ class _ModeSettingsModalState extends State<ModeSettingsModal> implements ModeSe
     
     // Also update the LLM service's current model to ensure API calls use the selected model
     LLMService().setCurrentModel(model);
-    print('🤖 ModeSettingsModal: Updated model for $mode to $model and set as current model');
   }
 }

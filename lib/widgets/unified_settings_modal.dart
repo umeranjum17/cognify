@@ -549,7 +549,6 @@ class _UnifiedSettingsModalState extends State<UnifiedSettingsModal>
   }
 
   void _handleChatModelChanged(String model) {
-    print('🤖 UnifiedSettingsModal: Chat model changed to: $model');
     setState(() {
       _selectedChatModel = model;
     });
@@ -558,11 +557,9 @@ class _UnifiedSettingsModalState extends State<UnifiedSettingsModal>
     
     // Also update the LLM service's current model to ensure API calls use the selected model
     LLMService().setCurrentModel(model);
-    print('🤖 UnifiedSettingsModal: Updated Chat model and set as current model');
   }
 
   void _handleDeepSearchModelChanged(String model) {
-    print('🤖 UnifiedSettingsModal: DeepSearch model changed to: $model');
     setState(() {
       _selectedDeepSearchModel = model;
     });
@@ -570,7 +567,6 @@ class _UnifiedSettingsModalState extends State<UnifiedSettingsModal>
     
     // Also update the LLM service's current model to ensure API calls use the selected model
     LLMService().setCurrentModel(model);
-    print('🤖 UnifiedSettingsModal: Updated DeepSearch model and set as current model');
   }
 
 
@@ -628,7 +624,6 @@ class _UnifiedSettingsModalState extends State<UnifiedSettingsModal>
   }
 
   Future<void> _updateModeConfig(ChatMode mode, String model) async {
-    print('🤖 UnifiedSettingsModal: Updating mode config for $mode with model: $model');
     try {
       final modeConfigProvider = Provider.of<ModeConfigProvider>(context, listen: false);
       final currentConfig = modeConfigProvider.getConfigForMode(mode) ?? 
@@ -636,7 +631,6 @@ class _UnifiedSettingsModalState extends State<UnifiedSettingsModal>
       
       final updatedConfig = currentConfig.copyWith(model: model);
       await modeConfigProvider.updateConfig(mode, updatedConfig);
-      print('🤖 UnifiedSettingsModal: Successfully updated mode config for $mode');
     } catch (e) {
       print('Error updating mode config: $e');
     }

@@ -27,14 +27,11 @@ class ModeConfigProvider extends ChangeNotifier {
   }
 
   Future<void> updateConfig(ChatMode mode, ModeConfig config) async {
-    print('🤖 ModeConfigProvider: Updating config for mode: $mode with model: ${config.model}');
     _configs[mode] = config;
     notifyListeners();
-    print('🤖 ModeConfigProvider: Notified listeners for mode: $mode');
 
     try {
       await ModeConfigManager.saveConfigs(_configs);
-      print('🤖 ModeConfigProvider: Saved configs successfully');
     } catch (e) {
       print('Error saving mode config: $e');
     }
