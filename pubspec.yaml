@@ -89,10 +89,10 @@ dependencies:
 
   purchases_flutter: ^8.8.0
 
-  # Firebase (conservative stable pins for Dart 3.8)
-  firebase_core: ^2.27.2
-  firebase_auth: ^4.17.8
-  google_sign_in: ^6.2.1
+  # Firebase (align to latest majors compatible with Dart 3.8)
+  firebase_core: ^4.0.0
+  firebase_auth: ^6.0.1
+  google_sign_in: ^6.3.0
   sign_in_with_apple: ^6.1.1
 
 dev_dependencies:

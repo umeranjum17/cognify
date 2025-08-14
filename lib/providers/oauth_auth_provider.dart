@@ -358,7 +358,18 @@ class OAuthAuthProvider extends ChangeNotifier {
       final redirectUri = 'https://oauth-callback-deploy.vercel.app/callback';
 
       // Build enhanced state that captures the initiator's origin (and platform)
-      final enhancedState = OAuthState.fromCurrentEnvironment(randomState: randomState).copyWith(platform: 'android');
+      // Detect the current platform
+      String platform;
+      if (kIsWeb) {
+        platform = 'web';
+      } else if (Platform.isIOS) {
+        platform = 'ios';
+      } else if (Platform.isAndroid) {
+        platform = 'android';
+      } else {
+        platform = 'web';
+      }
+      final enhancedState = OAuthState.fromCurrentEnvironment(randomState: randomState).copyWith(platform: platform);
       final encodedState = enhancedState.encode();
 
       print('🔄 Using OAuth redirect URI: $redirectUri');

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import '../services/revenuecat_service.dart';
 import 'firebase_auth_provider.dart';
@@ -36,61 +37,99 @@ class SubscriptionProvider extends ChangeNotifier {
 
     // Default fail-closed state
     _setState(SubscriptionState.unknown);
-    notifyListeners();
+    // Don't call notifyListeners() here to avoid setState during build
 
     try {
       await RevenueCatService.instance.initialize(appUserId: appUserId);
 
-      // Attempt to hydrate customer info (safe even if RC not configured; service is defensive)
-      try {
-        _customerInfo = await Purchases.getCustomerInfo();
-        _updateEntitlementFromCache();
-      } catch (e) {
-        // Keep unknown (gated)
-        debugPrint('⚠️ [SubscriptionProvider] getCustomerInfo error: $e');
-      }
+      // Attempt to hydrate customer info only if RevenueCat is configured
+      if (RevenueCatService.instance.isConfigured) {
+        try {
+          _customerInfo = await RevenueCatService.instance.forceRefreshCustomerInfo();
+          _updateEntitlementFromCache();
+        } catch (e) {
+          // Keep unknown (gated)
+          debugPrint('⚠️ [SubscriptionProvider] getCustomerInfo error: $e');
+        }
 
-      try {
-        _offerings = await RevenueCatService.instance.getOfferings();
-      } catch (e) {
-        debugPrint('⚠️ [SubscriptionProvider] getOfferings error: $e');
+        try {
+          _offerings = await RevenueCatService.instance.getOfferings();
+        } catch (e) {
+          debugPrint('⚠️ [SubscriptionProvider] getOfferings error: $e');
+        }
+      } else {
+        debugPrint('⚠️ [SubscriptionProvider] RevenueCat not configured, skipping initialization');
       }
 
       _sub = RevenueCatService.instance.customerInfoStream.listen((info) {
         _customerInfo = info;
         _updateEntitlementFromCache();
-        notifyListeners();
+        if (_initialized) notifyListeners(); // Only notify after initialization complete
       }, onError: (e) {
         debugPrint('⚠️ [SubscriptionProvider] stream error: $e');
       });
 
       _initialized = true;
-      notifyListeners();
+      // Use post-frame callback to avoid setState during build
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        notifyListeners();
+      });
     } catch (e) {
       _error = e.toString();
       // Stay fail-closed as unknown (gated)
-      notifyListeners();
+      _initialized = true; // Mark as initialized even with error
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        notifyListeners();
+      });
     }
   }
 
   Future<void> refreshOfferings() async {
     try {
+      // Only attempt to get offerings if RevenueCat is properly configured
+      if (!RevenueCatService.instance.isConfigured) {
+        debugPrint('⚠️ [SubscriptionProvider] RevenueCat not configured, skipping offerings refresh');
+        return;
+      }
       _offerings = await RevenueCatService.instance.getOfferings(forceRefresh: true);
-      notifyListeners();
+      if (_initialized) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          notifyListeners();
+        });
+      }
     } catch (e) {
       _error = e.toString();
-      notifyListeners();
+      debugPrint('⚠️ [SubscriptionProvider] refreshOfferings error: $e');
+      if (_initialized) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          notifyListeners();
+        });
+      }
     }
   }
 
   Future<void> restore() async {
     try {
+      // Only attempt to restore if RevenueCat is properly configured
+      if (!RevenueCatService.instance.isConfigured) {
+        debugPrint('⚠️ [SubscriptionProvider] RevenueCat not configured, skipping restore');
+        return;
+      }
       _customerInfo = await RevenueCatService.instance.restorePurchases();
       _updateEntitlementFromCache();
-      notifyListeners();
+      if (_initialized) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          notifyListeners();
+        });
+      }
     } catch (e) {
       _error = e.toString();
-      notifyListeners();
+      debugPrint('⚠️ [SubscriptionProvider] restore error: $e');
+      if (_initialized) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          notifyListeners();
+        });
+      }
     }
   }
 
@@ -137,20 +176,26 @@ class SubscriptionProvider extends ChangeNotifier {
             await RevenueCatService.instance.identify(uid);
           }
           
-          // Refresh offerings and customer info
+          // Refresh offerings and customer info only if RevenueCat is configured
           debugPrint('🔄 [SubscriptionProvider] Refreshing RevenueCat data...');
-          try {
-            _offerings = await RevenueCatService.instance.getOfferings(forceRefresh: true);
-            debugPrint('✅ [SubscriptionProvider] Offerings refreshed');
-          } catch (e) {
-            debugPrint('⚠️ [SubscriptionProvider] Failed to refresh offerings: $e');
+          if (RevenueCatService.instance.isConfigured) {
+            try {
+              _offerings = await RevenueCatService.instance.getOfferings(forceRefresh: true);
+              debugPrint('✅ [SubscriptionProvider] Offerings refreshed');
+            } catch (e) {
+              debugPrint('⚠️ [SubscriptionProvider] Failed to refresh offerings: $e');
+            }
+          } else {
+            debugPrint('⚠️ [SubscriptionProvider] RevenueCat not configured, skipping offerings refresh');
           }
           
-          try {
-            _customerInfo = await Purchases.getCustomerInfo();
-            debugPrint('✅ [SubscriptionProvider] Customer info refreshed for user: $uid');
-          } catch (e) {
-            debugPrint('⚠️ [SubscriptionProvider] Failed to refresh customer info: $e');
+          if (RevenueCatService.instance.isConfigured) {
+            try {
+              _customerInfo = await RevenueCatService.instance.forceRefreshCustomerInfo();
+              debugPrint('✅ [SubscriptionProvider] Customer info refreshed for user: $uid');
+            } catch (e) {
+              debugPrint('⚠️ [SubscriptionProvider] Failed to refresh customer info: $e');
+            }
           }
           
           _updateEntitlementFromCache();
@@ -172,16 +217,18 @@ class SubscriptionProvider extends ChangeNotifier {
           await RevenueCatService.instance.reset();
           await RevenueCatService.instance.initialize(); // Initialize without user ID (anonymous)
           
-          try {
-            _offerings = await RevenueCatService.instance.getOfferings(forceRefresh: true);
-          } catch (e) {
-            debugPrint('⚠️ [SubscriptionProvider] Failed to refresh offerings after logout: $e');
-          }
-          
-          try {
-            _customerInfo = await Purchases.getCustomerInfo();
-          } catch (e) {
-            debugPrint('⚠️ [SubscriptionProvider] Failed to refresh customer info after logout: $e');
+          if (RevenueCatService.instance.isConfigured) {
+            try {
+              _offerings = await RevenueCatService.instance.getOfferings(forceRefresh: true);
+            } catch (e) {
+              debugPrint('⚠️ [SubscriptionProvider] Failed to refresh offerings after logout: $e');
+            }
+            
+            try {
+              _customerInfo = await RevenueCatService.instance.forceRefreshCustomerInfo();
+            } catch (e) {
+              debugPrint('⚠️ [SubscriptionProvider] Failed to refresh customer info after logout: $e');
+            }
           }
           
           _updateEntitlementFromCache();

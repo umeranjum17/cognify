@@ -391,15 +391,19 @@ class _OAuthOnboardingScreenState extends State<OAuthOnboardingScreen> {
   }
 
   Future<void> _handleManualLogin(OAuthAuthProvider authProvider) async {
-    setState(() {
-      _errorMessage = null;
-    });
+    if (mounted) {
+      setState(() {
+        _errorMessage = null;
+      });
+    }
 
     final apiKey = _apiKeyController.text.trim();
     if (apiKey.isEmpty) {
-      setState(() {
-        _errorMessage = 'Please enter your OpenRouter API key.';
-      });
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Please enter your OpenRouter API key.';
+        });
+      }
       return;
     }
 
@@ -410,17 +414,21 @@ class _OAuthOnboardingScreenState extends State<OAuthOnboardingScreen> {
         context.go('/editor');
       }
     } else {
-      setState(() {
-        _errorMessage =
-            'Invalid API key. Please verify your key is correct and has proper permissions. Get your API key from https://openrouter.ai/keys';
-      });
+      if (mounted) {
+        setState(() {
+          _errorMessage =
+              'Invalid API key. Please verify your key is correct and has proper permissions. Get your API key from https://openrouter.ai/keys';
+        });
+      }
     }
   }
 
   Future<void> _handleOAuthLogin(OAuthAuthProvider authProvider) async {
-    setState(() {
-      _errorMessage = null;
-    });
+    if (mounted) {
+      setState(() {
+        _errorMessage = null;
+      });
+    }
 
     final success = await authProvider.authenticateWithOpenRouter();
 
@@ -429,11 +437,13 @@ class _OAuthOnboardingScreenState extends State<OAuthOnboardingScreen> {
         context.go('/editor');
       }
     } else {
-      setState(() {
-        _errorMessage =
-            'OAuth authentication failed. Please try again or enter your API key manually.';
-        _showManualEntry = true; // Automatically show manual entry
-      });
+      if (mounted) {
+        setState(() {
+          _errorMessage =
+              'OAuth authentication failed. Please try again or enter your API key manually.';
+          _showManualEntry = true; // Automatically show manual entry
+        });
+      }
     }
   }
 }

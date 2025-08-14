@@ -1,6 +1,7 @@
 import 'dart:io' show Platform;
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:google_sign_in/google_sign_in.dart';
@@ -28,15 +29,31 @@ class FirebaseAuthProvider extends ChangeNotifier {
   Future<void> initialize() async {
     if (_initialized || _initializing) return;
     _initializing = true;
-    notifyListeners();
+    
+    // Use post-frame callback to avoid setState during build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      notifyListeners();
+    });
 
     try {
       // Initialize Firebase if not already
       if (Firebase.apps.isEmpty) {
-        // If using placeholder, this still compiles; you must replace with real firebase_options.dart later
-        await Firebase.initializeApp(
-          options: _resolveOptions(),
-        );
+        try {
+          // Use the real Firebase options from firebase_options.dart
+          await Firebase.initializeApp(
+            options: DefaultFirebaseOptions.currentPlatform,
+          );
+        } catch (e) {
+          debugPrint('❌ [FirebaseAuth] Firebase initialization failed: $e');
+          debugPrint('⚠️ [FirebaseAuth] App will continue without Firebase - some features may be limited');
+          _lastError = e;
+          _initialized = true; // Mark as initialized to prevent retry loops
+          _initializing = false;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            notifyListeners();
+          });
+          return; // Exit early if Firebase can't be initialized
+        }
       }
 
       _auth = fb.FirebaseAuth.instance;
@@ -47,7 +64,11 @@ class FirebaseAuthProvider extends ChangeNotifier {
       // Listen to auth state changes
       _auth.authStateChanges().listen((user) {
         _user = user;
-        notifyListeners();
+        if (_initialized) { // Only notify if initialization is complete
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            notifyListeners();
+          });
+        }
       });
 
       // Zero-friction start: sign in anonymously if no user
@@ -66,24 +87,15 @@ class FirebaseAuthProvider extends ChangeNotifier {
     } catch (e) {
       _lastError = e;
       debugPrint('❌ [FirebaseAuth] Initialization error: $e');
+      _initialized = true; // Mark as initialized even with error to prevent retry loops
     } finally {
       _initializing = false;
-      notifyListeners();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        notifyListeners();
+      });
     }
   }
 
-  FirebaseOptions? _resolveOptions() {
-    // If using flutterfire configured file, it will provide the correct options.
-    // Our placeholder returns null/empty values, which is acceptable for compilation but you must replace it.
-    // In real setup, DefaultFirebaseOptions.currentPlatform should be of type FirebaseOptions.
-    try {
-      // Attempt to reflectively cast if available at runtime
-      // ignore: dead_code
-      return null; // We rely on platform files (GoogleService-Info.plist/google-services.json) and default initialization on mobile.
-    } catch (_) {
-      return null;
-    }
-  }
 
   Future<void> signInWithGoogle() async {
     _lastError = null;

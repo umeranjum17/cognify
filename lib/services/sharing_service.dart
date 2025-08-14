@@ -1,3 +1,4 @@
+import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -96,6 +97,18 @@ class SharingService {
     debugPrint('📱 Sharing service initializing...');
     
     try {
+      // Skip platform channel calls on web or if platform doesn't support it
+      if (kIsWeb) {
+        debugPrint('📱 Web platform - skipping sharing service initialization');
+        _initialized = true;
+        return;
+      }
+
+      // For iOS, check if sharing is supported
+      if (!kIsWeb && Platform.isIOS) {
+        debugPrint('📱 iOS platform - checking for sharing support...');
+      }
+      
       // Check for shared content from platform channel
       final sharedText = await _channel.invokeMethod<String?>('getSharedText');
       
@@ -114,7 +127,12 @@ class SharingService {
         debugPrint('📱 No shared text received from platform');
       }
     } catch (e) {
-      debugPrint('📱 Error initializing sharing service: $e');
+      // Handle MissingPluginException and other errors gracefully
+      if (e.toString().contains('MissingPluginException')) {
+        debugPrint('📱 Sharing plugin not implemented for this platform - continuing without sharing features');
+      } else {
+        debugPrint('📱 Error initializing sharing service: $e');
+      }
     }
     
     _initialized = true;

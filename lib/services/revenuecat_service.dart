@@ -69,7 +69,14 @@ class RevenueCatService {
           ? SubscriptionsConfig.rcPublicKeyIOS
           : SubscriptionsConfig.rcPublicKeyAndroid;
 
-      
+      // Check for placeholder keys and skip initialization
+      if (apiKey.contains('TODO_') || apiKey.contains('placeholder') || apiKey.length < 10) {
+        debugPrint('⚠️ [RevenueCat] Placeholder API key detected, skipping initialization');
+        debugPrint('ℹ️ [RevenueCat] App will continue without subscription functionality');
+        _configured = false;
+        return;
+      }
+
       debugPrint('🔧 [RevenueCat] Configuring with key: ${apiKey.substring(0, 10)}...');
       
       final configuration = PurchasesConfiguration(apiKey);
@@ -78,6 +85,9 @@ class RevenueCatService {
       debugPrint('✅ [RevenueCat] Configuration successful');
     } catch (e, st) {
       debugPrint('❌ [RevenueCat] configure failed, continuing without RC: $e');
+      if (e.toString().contains('Invalid API Key') || e.toString().contains('credentials')) {
+        debugPrint('🔑 [RevenueCat] Invalid credentials - check your API keys');
+      }
       debugPrint('$st');
       // Do not rethrow; fail closed and allow app to continue.
       _configured = false;
@@ -172,7 +182,7 @@ class RevenueCatService {
     Duration timeout = const Duration(seconds: 8),
   }) async {
     if (!_configured) {
-      debugPrint('⚠️ [RevenueCat] getOfferings: RC not configured');
+      debugPrint('⚠️ [RevenueCat] getOfferings: RC not configured - returning null');
       return null;
     }
     if (!forceRefresh && _offeringsCache != null) return _offeringsCache;
@@ -194,14 +204,18 @@ class RevenueCatService {
       }
     } catch (e) {
       debugPrint('⚠️ [RevenueCat] getOfferings error: $e');
-      // Keep previous cache or null
+      // Return null for unconfigured RevenueCat to prevent fatal errors
+      return null;
     }
     return _offeringsCache;
   }
 
   Future<CustomerInfo?> restorePurchases(
       {Duration timeout = const Duration(seconds: 10)}) async {
-    if (!_configured) return _customerInfoCache; // no-op if RC down
+    if (!_configured) {
+      debugPrint('⚠️ [RevenueCat] restorePurchases: RC not configured');
+      return null;
+    }
     try {
       final info =
           await _withTimeout(() => Purchases.restorePurchases(), timeout);
@@ -210,7 +224,7 @@ class RevenueCatService {
       return info;
     } catch (e) {
       debugPrint('⚠️ [RevenueCat] restorePurchases error: $e');
-      return _customerInfoCache;
+      return null;
     }
   }
 

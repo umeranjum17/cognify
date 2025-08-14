@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:app_links/app_links.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -31,7 +32,9 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize WebView platform implementation
-  WebViewPlatform.instance ??= AndroidWebViewPlatform();
+  if (defaultTargetPlatform == TargetPlatform.android) {
+    WebViewPlatform.instance ??= AndroidWebViewPlatform();
+  }
 
   // Initialize logger with appropriate verbosity
   Logger.setLevel(LogLevel.info);
@@ -216,6 +219,8 @@ class CognifyApp extends StatefulWidget {
 
 class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
   late final GoRouter _router;
+  late AppLinks _appLinks;
+  StreamSubscription? _linkSubscription;
 
   @override
   Widget build(BuildContext context) {
@@ -223,18 +228,36 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => ModeConfigProvider()),
-        // Initialize OAuth provider immediately and load stored credentials
-        ChangeNotifierProvider(create: (_) => OAuthAuthProvider()..initialize()),
-        // New providers
-        ChangeNotifierProvider(create: (_) => FirebaseAuthProvider()..initialize()),
-        // Subscription must be above AppAccessProvider
+        // Initialize OAuth provider with post-frame initialization
+        ChangeNotifierProvider(
+          create: (_) {
+            final provider = OAuthAuthProvider();
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              provider.initialize();
+            });
+            return provider;
+          },
+        ),
+        // Firebase provider with post-frame initialization
+        ChangeNotifierProvider(
+          create: (_) {
+            final provider = FirebaseAuthProvider();
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              provider.initialize();
+            });
+            return provider;
+          },
+        ),
+        // Subscription provider without immediate initialization
         ChangeNotifierProvider(create: (_) => SubscriptionProvider()),
         // Access gating provider (tester whitelist + RevenueCat entitlement)
-        ChangeNotifierProvider(
-          create: (context) => AppAccessProvider(
-            authProvider: context.read<FirebaseAuthProvider>(),
-            subscriptionProvider: context.read<SubscriptionProvider>(),
-          ),
+        ProxyProvider2<FirebaseAuthProvider, SubscriptionProvider, AppAccessProvider>(
+          update: (context, firebaseAuth, subscription, previous) {
+            return AppAccessProvider(
+              authProvider: firebaseAuth,
+              subscriptionProvider: subscription,
+            );
+          },
         ),
       ],
       child: Consumer<ThemeProvider>(
@@ -321,6 +344,7 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _linkSubscription?.cancel();
     SharingService().dispose();
     super.dispose();
   }
@@ -329,6 +353,9 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+
+    // Initialize app links for deep linking
+    _initializeAppLinks();
 
     // Initialize sharing service after the first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -345,6 +372,44 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
     _router = AppRouter.createRouter(initialLocation: initialLocation);
   }
 
+  void _initializeAppLinks() {
+    if (!kIsWeb) {
+      _appLinks = AppLinks();
+      
+      // Handle links when app is already running
+      _linkSubscription = _appLinks.uriLinkStream.listen((uri) {
+        Logger.info('🔗 Deep link received: $uri', tag: 'DeepLink');
+        _handleDeepLink(uri);
+      }, onError: (err) {
+        Logger.error('🔗 Deep link error: $err', tag: 'DeepLink');
+      });
+
+      // Handle initial link if app was launched from a link
+      _appLinks.getInitialLink().then((uri) {
+        if (uri != null) {
+          Logger.info('🔗 Initial deep link: $uri', tag: 'DeepLink');
+          _handleDeepLink(uri);
+        }
+      }).catchError((err) {
+        Logger.error('🔗 Initial deep link error: $err', tag: 'DeepLink');
+      });
+    }
+  }
+
+  void _handleDeepLink(Uri uri) {
+    // Check if this is an OAuth callback
+    if (uri.scheme == 'cognify' && uri.host == 'oauth' && uri.path == '/callback') {
+      final code = uri.queryParameters['code'];
+      final state = uri.queryParameters['state'];
+      final error = uri.queryParameters['error'];
+      
+      Logger.info('🔗 OAuth callback received - code: ${code != null}, state: ${state != null}, error: $error', tag: 'DeepLink');
+      
+      // Let the OAuth provider handle it through its own listener
+      // The provider is already listening to app links
+    }
+  }
+
   Future<void> _initializeApp() async {
     await SharingService().initialize(context);
 
@@ -356,14 +421,24 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
       Logger.error('❌ [USER] Error initializing user service: $e', tag: 'UserService');
     }
 
-    // Initialize RevenueCat with Firebase auth
+    // Initialize RevenueCat with Firebase auth (if available)
     try {
       final firebaseAuth = context.read<FirebaseAuthProvider>();
       final subs = context.read<SubscriptionProvider>();
       
-      // Initialize subscription provider with Firebase UID
+      // Initialize subscription provider with Firebase UID only if Firebase is initialized
       if (!subs.initialized) {
-        await subs.initialize(appUserId: firebaseAuth.uid);
+        String? appUserId;
+        
+        // Only try to get UID if Firebase is initialized to avoid Firebase Auth crashes
+        if (firebaseAuth.initialized && firebaseAuth.isSignedIn) {
+          appUserId = firebaseAuth.uid;
+          Logger.info('🔄 [RevenueCat] Using Firebase UID: $appUserId', tag: 'RevenueCat');
+        } else {
+          Logger.info('🔄 [RevenueCat] Firebase not initialized, using anonymous mode', tag: 'RevenueCat');
+        }
+        
+        await subs.initialize(appUserId: appUserId);
         // Wire auth to sync identity changes
         subs.wireAuth(firebaseAuth);
       }
@@ -371,6 +446,17 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
       Logger.info('✅ [RevenueCat] Initialized with Firebase auth', tag: 'RevenueCat');
     } catch (e) {
       Logger.error('❌ [RevenueCat] Initialization error: $e', tag: 'RevenueCat');
+      
+      // Fallback: Initialize subscription provider without Firebase
+      try {
+        final subs = context.read<SubscriptionProvider>();
+        if (!subs.initialized) {
+          Logger.info('🔄 [RevenueCat] Fallback: initializing without Firebase', tag: 'RevenueCat');
+          await subs.initialize();
+        }
+      } catch (fallbackError) {
+        Logger.error('❌ [RevenueCat] Fallback initialization also failed: $fallbackError', tag: 'RevenueCat');
+      }
     }
 
     // Check for shared content and redirect if needed

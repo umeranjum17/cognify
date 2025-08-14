@@ -172,56 +172,69 @@
 
             debugLog('Prepared redirect targets', { webUrl, mobileDeepLink, platform });
 
-            let redirected = false;
+            // Detect if we're on iOS Safari
+            const isIOSSafari = /iP(ad|hone|od)/.test(navigator.userAgent) && 
+                              /WebKit/.test(navigator.userAgent) && 
+                              !/CriOS|FxiOS|OPiOS|mercury/.test(navigator.userAgent);
 
-            // For mobile platforms, try direct deep link
-            if (platform === 'android' || platform === 'ios') {
+            // For iOS Safari, skip automatic redirects and show button immediately
+            if (platform === 'ios' || isIOSSafari) {
+                debugLog('iOS/Safari detected, showing manual button only');
+                updateUI(true, 'Authentication Successful!', 'Please tap the button below to return to Cognify.', true);
+                
+                // Set up the button with direct href for Safari
+                openAppBtn.href = mobileDeepLink;
+                openAppBtn.onclick = (e) => {
+                    // Let the href handle the navigation
+                    // Don't prevent default for iOS
+                };
+                
+                return; // Exit early for iOS
+            }
+
+            // For Android, try automatic redirect
+            if (platform === 'android') {
+                // Android: Try intent first, then custom scheme
                 try {
-                    // Try Android intent first for better reliability
-                    if (platform === 'android') {
-                        window.location.href = `intent://oauth/callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(encodedState)}#Intent;scheme=cognify;package=com.umerfarooq1995.cognify_flutter;end`;
-                    } else {
-                        window.location.href = mobileDeepLink;
-                    }
-                    redirected = true;
+                    window.location.href = `intent://oauth/callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(encodedState)}#Intent;scheme=cognify;package=com.umerfarooq1995.cognify_flutter;end`;
                 } catch (e) {
-                    debugLog('Mobile deep link failed, trying fallback', e.message);
-                    // Fallback to custom scheme
+                    debugLog('Android intent failed, trying custom scheme', e.message);
                     setTimeout(() => {
                         try {
                             window.location.href = mobileDeepLink;
                         } catch (e2) {
-                            debugLog('Mobile fallback failed', e2.message);
+                            debugLog('Android custom scheme failed', e2.message);
                         }
                     }, 500);
                 }
+                
+                // Show button as fallback after delay
+                setTimeout(() => {
+                    updateUI(true, 'Authentication Successful!', 'If the app did not open automatically, use the button below.', true);
+                    openAppBtn.onclick = (e) => {
+                        e.preventDefault();
+                        try { 
+                            window.location.href = `intent://oauth/callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(encodedState)}#Intent;scheme=cognify;package=com.umerfarooq1995.cognify_flutter;end`;
+                        } catch (_) {
+                            window.location.href = mobileDeepLink;
+                        }
+                    };
+                }, 2000);
             } else {
                 // Web platform - redirect to origin
                 try {
                     window.location.href = webUrl;
-                    redirected = true;
                 } catch (e) {
                     debugLog('Web redirect failed', e.message);
+                    // Show button as fallback
+                    setTimeout(() => {
+                        updateUI(true, 'Authentication Successful!', 'If redirect failed, use the button below.', true);
+                        openAppBtn.onclick = () => {
+                            try { window.location.href = webUrl; } catch (_) {}
+                        };
+                    }, 2000);
                 }
             }
-
-            // Manual action fallback
-            setTimeout(() => {
-                updateUI(true, 'Authentication Successful!', 'If the app did not open automatically, use the button below.', true);
-                openAppBtn.onclick = () => {
-                    if (platform === 'android' || platform === 'ios') {
-                        try { 
-                            if (platform === 'android') {
-                                window.location.href = `intent://oauth/callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(encodedState)}#Intent;scheme=cognify;package=com.umerfarooq1995.cognify_flutter;end`;
-                            } else {
-                                window.location.href = mobileDeepLink;
-                            }
-                        } catch (_) {}
-                    } else {
-                        try { window.location.href = webUrl; } catch (_) {}
-                    }
-                };
-            }, 2000);
         }
 
         function handleCallback() {
