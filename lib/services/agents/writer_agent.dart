@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:math' as math;
 
 import '../../models/chat_stream_event.dart';
@@ -52,7 +53,7 @@ class WriterAgent {
     // Add text content
     content.add({'type': 'text', 'text': prompt});
     
-    // Add image content
+    // Add image and file content
     for (final attachment in attachments) {
       if (attachment['type'] == 'image' && attachment['base64Data'] != null) {
         content.add({
@@ -61,6 +62,41 @@ class WriterAgent {
             'url': 'data:${attachment['mimeType']};base64,${attachment['base64Data']}'
           }
         });
+      } else if (attachment['type'] == 'pdf' && attachment['base64Data'] != null) {
+        // Attach PDF using OpenRouter-compatible 'file' part
+        final mime = (attachment['mimeType'] as String?) ?? 'application/pdf';
+        content.add({
+          'type': 'file',
+          'file': {
+            'filename': attachment['name'] ?? 'document.pdf',
+            'file_data': 'data:$mime;base64,${attachment['base64Data']}',
+          }
+        });
+        print('🔍 DEBUG: Added PDF attachment (file part): ${attachment['name']}');
+      } else if ((attachment['type'] == 'file' || attachment['type'] == 'document') && attachment['base64Data'] != null) {
+        // Attach generic documents (doc, docx, etc.) using 'file' part
+        final mime = (attachment['mimeType'] as String?) ?? 'application/octet-stream';
+        content.add({
+          'type': 'file',
+          'file': {
+            'filename': attachment['name'] ?? 'document',
+            'file_data': 'data:$mime;base64,${attachment['base64Data']}',
+          }
+        });
+        print('🔍 DEBUG: Added file attachment (file part): ${attachment['name']}');
+      } else if (attachment['type'] == 'text' && attachment['base64Data'] != null) {
+        // Add text file content directly
+        try {
+          final bytes = base64Decode(attachment['base64Data']);
+          final textContent = utf8.decode(bytes);
+          content.add({
+            'type': 'text',
+            'text': '--- Content of ${attachment['name']} ---\n$textContent\n--- End of ${attachment['name']} ---'
+          });
+          print('🔍 DEBUG: Added text attachment: ${attachment['name']}');
+        } catch (e) {
+          print('⚠️ DEBUG: Failed to decode text attachment: $e');
+        }
       }
     }
 

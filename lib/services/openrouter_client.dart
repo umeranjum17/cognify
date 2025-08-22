@@ -225,6 +225,14 @@ class OpenRouterClient {
 
     } on DioException catch (e) {
       print('🤖 Streaming chat completion failed: $e');
+      try {
+        final status = e.response?.statusCode;
+        final data = e.response?.data;
+        print('🤖 HTTP status: $status');
+        if (data != null) {
+          print('🤖 Error response body: ${data.toString()}');
+        }
+      } catch (_) {}
       _handleHttpError(e, context);
       yield {
         'type': 'error',
