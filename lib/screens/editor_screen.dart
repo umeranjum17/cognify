@@ -1203,6 +1203,7 @@ class _EditorScreenState extends State<EditorScreen> {
                             ),
                             onPressed: () {
                               Logger.debug('📎 Attachment button pressed', tag: 'EditorScreen');
+                              Logger.debug('📎 Current model capabilities: supportsFiles=${_currentModelCapabilities?.supportsFiles}, supportsImages=${_currentModelCapabilities?.supportsImages}', tag: 'EditorScreen');
                               _showAttachmentOptions();
                             },
                             tooltip: 'Attach files',
@@ -1914,6 +1915,7 @@ class _EditorScreenState extends State<EditorScreen> {
                 onTap: () {
                   setState(() {
                     _isDeepSearchMode = false;
+                    _currentMode = ChatMode.chat;
                     _showModeDropdown = false;
                   });
                   // Load the appropriate model for the new mode
@@ -1944,6 +1946,7 @@ class _EditorScreenState extends State<EditorScreen> {
                         // Enable DeepSearch and globe as premium is now active
                         setState(() {
                           _isDeepSearchMode = true;
+                          _currentMode = ChatMode.deepsearch;
                           _showModeDropdown = false;
                           _isOfflineMode = false; // enable online tools
                         });
@@ -1973,6 +1976,7 @@ class _EditorScreenState extends State<EditorScreen> {
 
                   setState(() {
                     _isDeepSearchMode = true;
+                    _currentMode = ChatMode.deepsearch;
                     _showModeDropdown = false;
                     // Auto-enable globe for DeepSearch mode (premium users only)
                     _isOfflineMode = false;
@@ -2500,51 +2504,26 @@ class _EditorScreenState extends State<EditorScreen> {
 
   Future<void> _loadSavedModel() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final savedModel = prefs.getString('selectedModel');
+      // Always load model from mode config (mode-specific models take precedence)
+      final modeConfigProvider = Provider.of<ModeConfigProvider>(context, listen: false);
+      final currentConfig = modeConfigProvider.getConfigForMode(_currentMode);
       
-      if (savedModel != null) {
-        // Check if saved model is available in current models list
-        if (_availableModels.contains(savedModel)) {
-          setState(() {
-            _selectedModel = savedModel;
-          });
-          Logger.info('🤖 Loaded saved model: $savedModel', tag: 'EditorScreen');
-        } else {
-          // If saved model is not available, try to get it from mode config
-          final modeConfigProvider = Provider.of<ModeConfigProvider>(context, listen: false);
-          final currentConfig = modeConfigProvider.getConfigForMode(_currentMode);
-          if (currentConfig != null && currentConfig.model.isNotEmpty) {
-            setState(() {
-              _selectedModel = currentConfig.model;
-            });
-            Logger.info('🤖 Loaded model from mode config: ${currentConfig.model}', tag: 'EditorScreen');
-          } else {
-            // Fallback to default model
-            final defaultModel = ModeConfigManager.getDefaultConfigForMode(_currentMode).model;
-            setState(() {
-              _selectedModel = defaultModel;
-            });
-            Logger.info('🤖 Using default model: $defaultModel', tag: 'EditorScreen');
-          }
-        }
+      if (currentConfig != null && currentConfig.model.isNotEmpty) {
+        setState(() {
+          _selectedModel = currentConfig.model;
+        });
+        Logger.info('🤖 Loaded model from mode config: ${currentConfig.model}', tag: 'EditorScreen');
       } else {
-        // No saved model, try to get from mode config
-        final modeConfigProvider = Provider.of<ModeConfigProvider>(context, listen: false);
-        final currentConfig = modeConfigProvider.getConfigForMode(_currentMode);
-        if (currentConfig != null && currentConfig.model.isNotEmpty) {
-          setState(() {
-            _selectedModel = currentConfig.model;
-          });
-          Logger.info('🤖 Loaded model from mode config: ${currentConfig.model}', tag: 'EditorScreen');
-        } else {
-          // Fallback to default model
-          final defaultModel = ModeConfigManager.getDefaultConfigForMode(_currentMode).model;
-          setState(() {
-            _selectedModel = defaultModel;
-          });
-          Logger.info('🤖 Using default model: $defaultModel', tag: 'EditorScreen');
-        }
+        // Fallback to default model for current mode
+        final defaultModel = ModeConfigManager.getDefaultConfigForMode(_currentMode).model;
+        setState(() {
+          _selectedModel = defaultModel;
+        });
+        Logger.info('🤖 Using default model for mode: $defaultModel', tag: 'EditorScreen');
+        
+        // Save the default model to the mode config
+        await modeConfigProvider.updateConfig(_currentMode, 
+          ModeConfigManager.getDefaultConfigForMode(_currentMode));
       }
       
       // Also update the LLM service with the selected model
@@ -2557,9 +2536,21 @@ class _EditorScreenState extends State<EditorScreen> {
 
   Future<void> _saveSelectedModel(String modelId) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('selectedModel', modelId);
-      Logger.info('🤖 Saved selected model: $modelId', tag: 'EditorScreen');
+      // Save model to the current mode's config instead of global SharedPreferences
+      final modeConfigProvider = Provider.of<ModeConfigProvider>(context, listen: false);
+      final currentConfig = modeConfigProvider.getConfigForMode(_currentMode);
+      
+      if (currentConfig != null) {
+        await modeConfigProvider.updateConfig(_currentMode, 
+          currentConfig.copyWith(model: modelId));
+      } else {
+        // Create new config if none exists
+        final defaultConfig = ModeConfigManager.getDefaultConfigForMode(_currentMode);
+        await modeConfigProvider.updateConfig(_currentMode, 
+          defaultConfig.copyWith(model: modelId));
+      }
+      
+      Logger.info('🤖 Saved model for current mode ($_currentMode): $modelId', tag: 'EditorScreen');
     } catch (e) {
       Logger.error('❌ Error saving selected model: $e', tag: 'EditorScreen');
     }
@@ -2840,6 +2831,9 @@ class _EditorScreenState extends State<EditorScreen> {
     
     // Reset session cost tracking
     SessionCostService().resetSession();
+    
+    // Preserve the current model from mode config for new chat
+    _loadModelForCurrentMode();
   }
 
 
@@ -2854,44 +2848,98 @@ class _EditorScreenState extends State<EditorScreen> {
         _modeConfigs = newConfigs;
       });
       
-      // Load the appropriate model for the current mode
-      _loadModelForCurrentMode();
+      // Update the selected model based on current mode and new configs
+      final currentConfig = newConfigs[_currentMode];
+      if (currentConfig != null && currentConfig.model.isNotEmpty) {
+        setState(() {
+          _selectedModel = currentConfig.model;
+        });
+        // Update LLM service immediately
+        LLMService().setCurrentModel(_selectedModel);
+      }
+      
       _checkModelCapabilities(); // Check capabilities when mode changes
       
-      // Debug: Print current state after update
-      
-      
-      
+      Logger.info('🔄 Mode config updated - Current mode: $_currentMode, Model: $_selectedModel', tag: 'EditorScreen');
     }
   }
 
   Future<void> _pickDocument() async {
     try {
+      Logger.debug('📄 Starting document picker...', tag: 'EditorScreen');
+      
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
-        allowedExtensions: ['pdf', 'txt'],
+        allowedExtensions: ['pdf', 'txt', 'doc', 'docx'],
         allowMultiple: false,
         withData: true,
       );
 
+      Logger.debug('📄 Document picker result: ${result?.files.length ?? 0} files', tag: 'EditorScreen');
+
       if (result != null && result.files.isNotEmpty) {
         final file = result.files.first;
+        Logger.debug('📄 Selected file: ${file.name}, size: ${file.size}, extension: ${file.extension}', tag: 'EditorScreen');
+        
         if (file.bytes != null) {
+          String mimeType;
+          switch (file.extension?.toLowerCase()) {
+            case 'pdf':
+              mimeType = 'application/pdf';
+              break;
+            case 'doc':
+              mimeType = 'application/msword';
+              break;
+            case 'docx':
+              mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+              break;
+            default:
+              mimeType = 'text/plain';
+          }
+          
           final attachment = FileAttachment.fromBytes(
             name: file.name,
             bytes: file.bytes!,
-            mimeType: file.extension == 'pdf' ? 'application/pdf' : 'text/plain',
+            mimeType: mimeType,
           );
 
           setState(() {
             _attachments.add(attachment);
           });
+          
+          Logger.debug('📄 Document attached successfully: ${file.name}', tag: 'EditorScreen');
+          
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('📄 Attached: ${file.name}'),
+                backgroundColor: Colors.green,
+                duration: Duration(seconds: 2),
+              ),
+            );
+          }
+        } else {
+          Logger.warn('⚠️ File bytes are null for: ${file.name}', tag: 'EditorScreen');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Failed to read file: ${file.name}'),
+                backgroundColor: Colors.orange,
+              ),
+            );
+          }
         }
+      } else {
+        Logger.debug('📄 No file selected or picker cancelled', tag: 'EditorScreen');
       }
     } catch (e) {
+      Logger.error('❌ Error picking document: $e', tag: 'EditorScreen');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to pick document: $e')),
+          SnackBar(
+            content: Text('Failed to pick document: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
@@ -3656,6 +3704,9 @@ class _EditorScreenState extends State<EditorScreen> {
   void _showAttachmentOptions() {
     final capabilities = _currentModelCapabilities;
     final List<Widget> options = [];
+    
+    Logger.debug('📎 Showing attachment options modal', tag: 'EditorScreen');
+    Logger.debug('📎 Model capabilities: $capabilities', tag: 'EditorScreen');
 
     // Add image options if model supports images
     if (capabilities?.supportsImages == true) {
@@ -3665,6 +3716,7 @@ class _EditorScreenState extends State<EditorScreen> {
           title: const Text('Choose from Gallery'),
           onTap: () {
             Navigator.pop(context);
+            Logger.debug('🖼️ Gallery option selected', tag: 'EditorScreen');
             _pickImage();
           },
         ),
@@ -3673,6 +3725,7 @@ class _EditorScreenState extends State<EditorScreen> {
           title: const Text('Take Photo'),
           onTap: () {
             Navigator.pop(context);
+            Logger.debug('📷 Camera option selected', tag: 'EditorScreen');
             _takePhoto();
           },
         ),
@@ -3705,33 +3758,21 @@ class _EditorScreenState extends State<EditorScreen> {
       );
     }
 
-    // Add file options if model supports files
-    if (capabilities?.supportsFiles == true) {
-      options.add(
-        ListTile(
-          leading: const Icon(Icons.attach_file),
-          title: const Text('Choose Document'),
-          onTap: () {
-            Navigator.pop(context);
-            _pickDocument();
-          },
-        ),
-      );
-    } else {
-      // Show disabled option with warning
-      options.add(
-        ListTile(
-          leading: const Icon(Icons.attach_file, color: Colors.grey),
-          title: const Text('Choose Document'),
-          subtitle: const Text('Not supported by current model'),
-          enabled: false,
-          onTap: () {
-            Navigator.pop(context);
-            _showModelCapabilityWarning('Files');
-          },
-        ),
-      );
-    }
+    // Add file options - Always show as enabled for now, let the model handle the error
+    options.add(
+      ListTile(
+        leading: const Icon(Icons.picture_as_pdf),
+        title: const Text('Choose Document (PDF, DOC, TXT)'),
+        subtitle: capabilities?.supportsFiles != true 
+            ? const Text('May not be supported by current model')
+            : null,
+        onTap: () {
+          Navigator.pop(context);
+          Logger.debug('📄 Document option selected', tag: 'EditorScreen');
+          _pickDocument();
+        },
+      ),
+    );
 
     showModalBottomSheet(
       context: context,
@@ -3746,6 +3787,13 @@ class _EditorScreenState extends State<EditorScreen> {
             ),
             const SizedBox(height: 16),
             ...options,
+            const SizedBox(height: 16),
+            Text(
+              'Current model: ${_selectedModel}',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.6),
+              ),
+            ),
           ],
         ),
       ),
@@ -4277,20 +4325,25 @@ class _EditorScreenState extends State<EditorScreen> {
       builder: (context) => UnifiedSettingsModal(
         selectedModel: _selectedModel,
         onModelChanged: (model) {
-          setState(() {
-            _selectedModel = model;
-          });
-          
-          // Save the selected model
-          _saveSelectedModel(model);
-          
-          // Also update the LLM service's current model to ensure API calls use the selected model
-          LLMService().setCurrentModel(model);
+          // This callback is now handled by the ModeConfigProvider
+          // The _onModeConfigChanged will be triggered automatically
         },
       ),
     ).then((_) async {
+      // Reload model configs and update current model based on current mode
+      await _loadModeConfigs();
+      
+      // Update the selected model from the current mode's config
+      final modeConfigProvider = Provider.of<ModeConfigProvider>(context, listen: false);
+      final currentConfig = modeConfigProvider.getConfigForMode(_currentMode);
+      if (currentConfig != null && currentConfig.model.isNotEmpty) {
+        setState(() {
+          _selectedModel = currentConfig.model;
+        });
+        LLMService().setCurrentModel(_selectedModel);
+      }
+      
       // Ensure services are still ready after settings close
-      // This prevents race conditions where the API key might be cleared
       _checkServicesReady();
       
       // Reload the API key from storage to ensure it's still available

@@ -627,7 +627,6 @@ class OpenRouterClient {
                 // Handle pricing data with better error handling
                 final pricing = model['pricing'];
                 if (pricing != null) {
-                  print('🤖 Processing pricing for model $modelId: ${pricing.runtimeType} - $pricing');
 
               // Handle different pricing structures
               double promptPrice = 0.0;

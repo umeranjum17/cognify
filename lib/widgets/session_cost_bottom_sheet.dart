@@ -4,6 +4,7 @@ import '../services/cost_service.dart';
 import '../services/session_cost_service.dart';
 import '../services/openrouter_client.dart';
 import '../services/cost_calculation_service.dart';
+import '../services/user_spending_service.dart';
 import '../utils/logger.dart';
 
 class SessionCostBottomSheet extends StatefulWidget {
@@ -26,6 +27,7 @@ class _SessionCostBottomSheetState extends State<SessionCostBottomSheet> {
   Map<String, dynamic>? sessionSummary;
   Map<String, dynamic>? platformCredits;
   Map<String, dynamic>? platformStats;
+  double? totalUserSpending;
   bool isLoading = true;
 
   @override
@@ -33,17 +35,18 @@ class _SessionCostBottomSheetState extends State<SessionCostBottomSheet> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
+    return IntrinsicHeight(
+      child: Container(
+        decoration: BoxDecoration(
+          color: theme.cardColor,
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
         ),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
           // Handle bar
           Container(
             margin: const EdgeInsets.only(top: 8),
@@ -94,17 +97,14 @@ class _SessionCostBottomSheetState extends State<SessionCostBottomSheet> {
           ),
 
           // Content
-          Expanded(
-            child: isLoading
-                ? const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(32),
-                      child: CircularProgressIndicator(),
-                    ),
-                  )
-                : _buildContent(theme, isDark),
-          ),
+          isLoading
+              ? const Padding(
+                  padding: EdgeInsets.all(32),
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              : _buildContent(theme, isDark),
         ],
+        ),
       ),
     );
   }
@@ -117,13 +117,9 @@ class _SessionCostBottomSheetState extends State<SessionCostBottomSheet> {
 
   Widget _buildContent(ThemeData theme, bool isDark) {
     if (sessionSummary == null) {
-      return Padding(
-        padding: const EdgeInsets.all(16),
-        child: Text(
-          'Loading session data...',
-          style: theme.textTheme.bodyMedium,
-          textAlign: TextAlign.center,
-        ),
+      return const Padding(
+        padding: EdgeInsets.all(32),
+        child: Center(child: CircularProgressIndicator()),
       );
     }
 
@@ -131,112 +127,169 @@ class _SessionCostBottomSheetState extends State<SessionCostBottomSheet> {
     final messageCount = sessionSummary!['messageCount'] as int? ?? 0;
     final totalGenerations = sessionSummary!['totalGenerations'] as int? ?? 0;
     
-    // Platform credits data (OpenRouter account) - Fix type casting
-    final totalCreditsRaw = platformCredits?['total_credits'];
-    final totalUsageRaw = platformCredits?['total_usage'];
     final remainingCreditsRaw = platformCredits?['remaining_credits'];
-    
-    // Safe type conversion
-    final totalCredits = _safeToDouble(totalCreditsRaw);
-    final totalUsage = _safeToDouble(totalUsageRaw);
     final remainingCredits = _safeToDouble(remainingCreditsRaw);
-    final creditsFetchedAt = platformCredits?['fetched_at'] as String?;
-    
-    // Platform stats data (local tracking)
+    final userTotalSpending = totalUserSpending ?? 0.0;
     final platformTotalCost = platformStats?['totalCost'] as double? ?? 0.0;
+    final allTimeCost = userTotalSpending > 0 ? userTotalSpending : platformTotalCost;
     final platformTotalRequests = platformStats?['modelCount'] as int? ?? 0;
 
-    return ListView(
-      controller: widget.scrollController,
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
-      children: [
-        // Current Session
-        _buildSectionCard(
-          theme,
-          'Current Session',
-          Icons.assessment,
-          [
-            _buildInfoRow(
-              'Session Cost',
-              sessionCost == 0.0 ? '\$0' : CostService.formatCost(sessionCost),
-              sessionCost == 0.0 ? Colors.green : Colors.orange
-            ),
-            _buildInfoRow('Requests', totalGenerations.toString(), Colors.blue),
-            _buildInfoRow('Messages', messageCount.toString(), Colors.grey),
-          ],
-        ),
-
-        const SizedBox(height: 16),
-
-        // Platform Usage (OpenRouter Account)
-        _buildSectionCard(
-          theme,
-          'OpenRouter Account',
-          Icons.account_balance,
-          [
-            _buildInfoRow('Total Spent', '\$${totalUsage.toStringAsFixed(2)}', Colors.red),
-            _buildInfoRow('Remaining', '\$${remainingCredits.toStringAsFixed(2)}', Colors.green),
-            _buildInfoRow('Total Credits', '\$${totalCredits.toStringAsFixed(2)}', Colors.blue),
-          ],
-        ),
-
-        const SizedBox(height: 16),
-
-        // Platform Stats (Local Tracking)
-        _buildSectionCard(
-          theme,
-          'Platform Stats',
-          Icons.analytics,
-          [
-            _buildInfoRow('Total Tracked Cost', '\$${platformTotalCost.toStringAsFixed(6)}', Colors.orange),
-            _buildInfoRow('Total Requests', platformTotalRequests.toString(), Colors.purple),
-          ],
-        ),
-
-        const SizedBox(height: 16),
-
-        // Last Updated
-        if (creditsFetchedAt != null || widget.additionalCostData?['timestamp'] != null) ...[
-          _buildSectionCard(
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Primary cost metrics - prominent display
+          Row(
+            children: [
+              Expanded(
+                flex: 3,
+                child: _buildPrimaryCard(
+                  theme,
+                  'Session Cost',
+                  sessionCost == 0.0 ? '\$0.00' : CostService.formatCost(sessionCost),
+                  sessionCost == 0.0 ? Colors.green : theme.colorScheme.primary,
+                  Icons.timeline,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                flex: 2,
+                child: _buildPrimaryCard(
+                  theme,
+                  'OR Credit',
+                  '\$${remainingCredits.toStringAsFixed(2)}',
+                  remainingCredits > 10 ? Colors.green : remainingCredits > 5 ? Colors.orange : Colors.red,
+                  Icons.account_balance_wallet,
+                ),
+              ),
+            ],
+          ),
+          
+          const SizedBox(height: 16),
+          
+          // All-time cost in its own row for better visibility
+          _buildSecondaryCard(
             theme,
-            'Last Updated',
-            Icons.access_time,
-            [
-              if (creditsFetchedAt != null)
-                _buildInfoRow('OpenRouter Data', 
-                  _formatTimestamp(creditsFetchedAt),
-                  Colors.grey),
-              if (widget.additionalCostData?['timestamp'] != null)
-                _buildInfoRow('Session Data', 
-                  _formatTimestamp(widget.additionalCostData!['timestamp'].toString()),
-                  Colors.grey),
+            'All Time Cost',
+            allTimeCost == 0.0 ? '\$0.00' : (userTotalSpending > 0 ? '\$${allTimeCost.toStringAsFixed(2)}' : '\$${allTimeCost.toStringAsFixed(6)}'),
+            allTimeCost == 0.0 ? Colors.green : Colors.red,
+            Icons.trending_up,
+          ),
+          
+          const SizedBox(height: 16),
+          
+          // Usage statistics - compact row
+          Row(
+            children: [
+              Expanded(
+                child: _buildStatCard(
+                  theme,
+                  'Session Msgs',
+                  messageCount.toString(),
+                  Colors.blue,
+                  Icons.message,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildStatCard(
+                  theme,
+                  'Total Requests',
+                  platformTotalRequests.toString(),
+                  Colors.purple,
+                  Icons.api,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildStatCard(
+                  theme,
+                  'Session Calls',
+                  totalGenerations.toString(),
+                  Colors.orange,
+                  Icons.refresh,
+                ),
+              ),
             ],
           ),
         ],
-      ],
+      ),
     );
   }
 
-  Widget _buildInfoRow(String label, String value, Color? valueColor) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  Widget _buildPrimaryCard(ThemeData theme, String title, String value, Color valueColor, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.3)),
+        boxShadow: [
+          BoxShadow(
+            color: theme.shadowColor.withValues(alpha: 0.1),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
+          Icon(icon, color: valueColor, size: 28),
+          const SizedBox(height: 8),
+          Text(
+            title,
+            style: theme.textTheme.bodySmall?.copyWith(
+              fontWeight: FontWeight.w500,
+              color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.8),
+              fontSize: 12,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: valueColor,
+              fontSize: 20,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSecondaryCard(ThemeData theme, String title, String value, Color valueColor, IconData icon) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: valueColor, size: 22),
+          const SizedBox(width: 12),
           Expanded(
             child: Text(
-              label,
+              title,
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+                fontWeight: FontWeight.w500,
+                color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.8),
               ),
             ),
           ),
           Text(
             value,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.w600,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
               color: valueColor,
+              fontSize: 16,
             ),
           ),
         ],
@@ -244,46 +297,45 @@ class _SessionCostBottomSheetState extends State<SessionCostBottomSheet> {
     );
   }
 
-  Widget _buildSectionCard(ThemeData theme, String title, IconData icon, List<Widget> children) {
+  Widget _buildStatCard(ThemeData theme, String title, String value, Color valueColor, IconData icon) {
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.2)),
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.15)),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Row(
-            children: [
-              Icon(icon, size: 18, color: theme.colorScheme.primary),
-              const SizedBox(width: 8),
-              Text(
-                title,
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
+          Icon(icon, color: valueColor, size: 16),
+          const SizedBox(height: 4),
+          Text(
+            title,
+            style: theme.textTheme.bodySmall?.copyWith(
+              fontWeight: FontWeight.w500,
+              color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.6),
+              fontSize: 10,
+            ),
+            textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 12),
-          ...children,
+          const SizedBox(height: 2),
+          Text(
+            value,
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: valueColor,
+              fontSize: 14,
+            ),
+            textAlign: TextAlign.center,
+          ),
         ],
       ),
     );
   }
 
-  String _formatTimestamp(String timestamp) {
-    try {
-      final dateTime = DateTime.parse(timestamp);
-      return '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')} '
-             '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}:${dateTime.second.toString().padLeft(2, '0')}';
-    } catch (e) {
-      return 'Unknown';
-    }
-  }
+
+
 
   /// Safe conversion from dynamic to double
   double _safeToDouble(dynamic value) {
@@ -314,10 +366,15 @@ class _SessionCostBottomSheetState extends State<SessionCostBottomSheet> {
       await costCalculationService.initialize();
       final stats = costCalculationService.getTotalStats();
       
+      // Load user spending data
+      final userSpendingService = UserSpendingService();
+      final userTotal = await userSpendingService.getTotalSpending();
+      
       setState(() {
         sessionSummary = summary;
         platformCredits = credits;
         platformStats = stats;
+        totalUserSpending = userTotal;
         isLoading = false;
       });
     } catch (e) {

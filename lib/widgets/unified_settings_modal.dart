@@ -553,10 +553,10 @@ class _UnifiedSettingsModalState extends State<UnifiedSettingsModal>
       _selectedChatModel = model;
     });
     _updateModeConfig(ChatMode.chat, model);
-    widget.onModelChanged(model); // Also update the main selected model
     
-    // Also update the LLM service's current model to ensure API calls use the selected model
-    LLMService().setCurrentModel(model);
+    // Only update the LLM service if this is the current mode
+    // The editor screen will handle updating the LLM service based on current mode
+    widget.onModelChanged(model); // Notify parent for consistency
   }
 
   void _handleDeepSearchModelChanged(String model) {
@@ -565,8 +565,9 @@ class _UnifiedSettingsModalState extends State<UnifiedSettingsModal>
     });
     _updateModeConfig(ChatMode.deepsearch, model);
     
-    // Also update the LLM service's current model to ensure API calls use the selected model
-    LLMService().setCurrentModel(model);
+    // Only update the LLM service if this is the current mode
+    // The editor screen will handle updating the LLM service based on current mode
+    widget.onModelChanged(model); // Notify parent for consistency
   }
 
 

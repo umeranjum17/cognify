@@ -1,8 +1,11 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import '../database/database_service.dart';
 import '../utils/logger.dart';
 import 'cost_service.dart';
+import 'generation_cost_cache_service.dart';
+import 'user_spending_service.dart';
 
 /// Data class for session cost updates
 class SessionCostData {
@@ -51,6 +54,11 @@ class SessionCostService {
   
   // Stream controller for cost updates
   final StreamController<SessionCostData> _costController = StreamController<SessionCostData>.broadcast();
+  
+  // Service dependencies
+  final DatabaseService _databaseService = DatabaseService();
+  final GenerationCostCacheService _costCacheService = GenerationCostCacheService();
+  final UserSpendingService _spendingService = UserSpendingService();
   
   factory SessionCostService() => _instance;
   
@@ -114,26 +122,48 @@ class SessionCostService {
     _sessionGenerations.addAll(newGenerationIds);
     _messageCount++;
     
-    // Calculate accurate costs using the new generation IDs
-    final costResult = await CostService.calculateAccurateCosts(newGenerationIds);
+    // Calculate accurate costs using the cached service
+    final costResult = await _costCacheService.getGenerationCosts(newGenerationIds);
     
-    if (costResult['hasAccurateCosts'] == true) {
-      final messageCost = (costResult['totalCost'] ?? 0.0).toDouble();
+    if (costResult['success'] == true) {
+      final messageCost = (costResult['totalApiCost'] ?? 0.0).toDouble();
       _sessionCost += messageCost;
       
       Logger.debug('Session cost updated: +\$${messageCost.toStringAsFixed(6)} = \$${_sessionCost.toStringAsFixed(6)}');
+      
+      // Build breakdown from generations data
+      final breakdown = <String, dynamic>{};
+      final generations = costResult['generations'] as List<dynamic>? ?? [];
+      for (final gen in generations) {
+        if (gen['success'] == true) {
+          final stage = gen['stage'] ?? 'unknown';
+          breakdown[stage] = {
+            'model': gen['model'] ?? 'unknown',
+            'cost': (gen['costData']?['total_cost'] ?? 0.0).toDouble(),
+            'success': true,
+            'generationId': gen['id'],
+            'inputTokens': gen['inputTokens'] ?? 0,
+            'outputTokens': gen['outputTokens'] ?? 0,
+            'totalTokens': gen['totalTokens'] ?? 0,
+            'costData': gen['costData'],
+          };
+        }
+      }
       
       // Emit cost update
       _costController.add(SessionCostData(
         sessionCost: _sessionCost,
         messageCount: _messageCount,
         lastMessageCost: messageCost,
-        lastMessageBreakdown: costResult['breakdown'] as Map<String, dynamic>?,
+        lastMessageBreakdown: breakdown,
         totalGenerations: _sessionGenerations.length,
         hasAccurateCosts: true,
       ));
+      
+      // Persist session data
+      await _persistSessionData();
     } else {
-      Logger.warn('Could not calculate accurate costs: ${costResult['error']}');
+      Logger.warn('Could not calculate accurate costs from cache service');
       
       // Track failed generations for retry
       final failedCount = (costResult['failedFetches'] ?? 0) as int;
@@ -150,7 +180,7 @@ class SessionCostService {
         lastMessageBreakdown: null,
         totalGenerations: _sessionGenerations.length,
         hasAccurateCosts: false,
-        error: costResult['error'] as String?,
+        error: 'Failed to fetch costs',
       ));
     }
   }
@@ -205,44 +235,48 @@ class SessionCostService {
       };
     }
 
-    // Calculate costs for all generations in this session
-    final costResult = await CostService.calculateAccurateCosts(_sessionGenerations);
+    // Use cached costs for all generations in this session
+    final costResult = await _costCacheService.getGenerationCosts(_sessionGenerations);
     
     // Merge generation data with cost data for enhanced display
     final enhancedGenerations = <Map<String, dynamic>>[];
-    final costBreakdown = costResult['breakdown'] as Map<String, dynamic>? ?? {};
-    final rawResponse = costResult['rawResponse'] as Map<String, dynamic>?;
-    final generations = rawResponse?['generations'] as List<dynamic>? ?? [];
+    final costBreakdown = <String, dynamic>{};
+    final generations = costResult['generations'] as List<dynamic>? ?? [];
     
-    for (int i = 0; i < _sessionGenerations.length; i++) {
-      final originalGen = _sessionGenerations[i];
-      final genId = originalGen['id'];
-      
-      // Find matching generation in cost response
-      final matchingGen = generations.cast<Map<String, dynamic>>()
-          .firstWhere((gen) => gen['id'] == genId, orElse: () => <String, dynamic>{});
-      
-      // Merge original data with cost data
-      final enhanced = Map<String, dynamic>.from(originalGen);
-      enhanced['success'] = matchingGen['success'] ?? false;
-      enhanced['cost'] = matchingGen['success'] == true 
-          ? (matchingGen['costData']?['total_cost'] ?? 0.0).toDouble() 
-          : 0.0;
-      enhanced['costData'] = matchingGen['costData'];
-      
-      enhancedGenerations.add(enhanced);
+    // Build cost breakdown by stage
+    double totalCost = 0.0;
+    for (final gen in generations) {
+      if (gen['success'] == true) {
+        final stage = gen['stage'] ?? 'unknown';
+        final cost = (gen['costData']?['total_cost'] ?? 0.0).toDouble();
+        totalCost += cost;
+        
+        costBreakdown[stage] = {
+          'model': gen['model'] ?? 'unknown',
+          'cost': cost,
+          'success': true,
+          'generationId': gen['id'],
+          'inputTokens': gen['inputTokens'] ?? 0,
+          'outputTokens': gen['outputTokens'] ?? 0,
+          'totalTokens': gen['totalTokens'] ?? 0,
+          'costData': gen['costData'],
+        };
+      }
     }
     
+    // Enhanced generations are just the cache result generations
+    enhancedGenerations.addAll(generations.cast<Map<String, dynamic>>());
+    
     return {
-      'sessionCost': costResult['totalCost'] ?? 0.0,
+      'sessionCost': costResult['totalApiCost'] ?? 0.0,
       'messageCount': _messageCount,
       'totalGenerations': _sessionGenerations.length,
       'breakdown': costBreakdown,
-      'hasAccurateCosts': costResult['hasAccurateCosts'] ?? false,
+      'hasAccurateCosts': costResult['success'] ?? false,
       'accuracy': costResult['accuracy'] ?? 0.0,
       'successfulFetches': costResult['successfulFetches'] ?? 0,
       'failedFetches': costResult['failedFetches'] ?? 0,
-      'error': costResult['error'],
+      'cachedFetches': costResult['cachedFetches'] ?? 0,
       'enhancedGenerations': enhancedGenerations,
     };
   }
@@ -255,28 +289,50 @@ class SessionCostService {
       return;
     }
 
-    print('🔄 Manually recalculating costs for ${_sessionGenerations.length} generations');
+    print('🔄 Manually recalculating costs for ${_sessionGenerations.length} generations using cache');
     
-    // Calculate costs for all generations in this session
-    final costResult = await CostService.calculateAccurateCosts(_sessionGenerations);
+    // Use cached cost service for recalculation
+    final costResult = await _costCacheService.getGenerationCosts(_sessionGenerations);
     
-    if (costResult['hasAccurateCosts'] == true) {
-      final newSessionCost = (costResult['totalCost'] ?? 0.0).toDouble();
+    if (costResult['success'] == true) {
+      final newSessionCost = (costResult['totalApiCost'] ?? 0.0).toDouble();
       final costDifference = newSessionCost - _sessionCost;
       
       if (costDifference != 0) {
         _sessionCost = newSessionCost;
         print('✅ Session cost updated: \$${_sessionCost.toStringAsFixed(6)} (change: \$${costDifference.toStringAsFixed(6)})');
         
+        // Build breakdown from generations
+        final breakdown = <String, dynamic>{};
+        final generations = costResult['generations'] as List<dynamic>? ?? [];
+        for (final gen in generations) {
+          if (gen['success'] == true) {
+            final stage = gen['stage'] ?? 'unknown';
+            breakdown[stage] = {
+              'model': gen['model'] ?? 'unknown',
+              'cost': (gen['costData']?['total_cost'] ?? 0.0).toDouble(),
+              'success': true,
+              'generationId': gen['id'],
+              'inputTokens': gen['inputTokens'] ?? 0,
+              'outputTokens': gen['outputTokens'] ?? 0,
+              'totalTokens': gen['totalTokens'] ?? 0,
+              'costData': gen['costData'],
+            };
+          }
+        }
+        
         // Emit updated cost
         _costController.add(SessionCostData(
           sessionCost: _sessionCost,
           messageCount: _messageCount,
           lastMessageCost: costDifference,
-          lastMessageBreakdown: costResult['breakdown'] as Map<String, dynamic>?,
+          lastMessageBreakdown: breakdown,
           totalGenerations: _sessionGenerations.length,
           hasAccurateCosts: true,
         ));
+        
+        // Persist updated session data
+        await _persistSessionData();
       } else {
         print('✅ Session cost unchanged: \$${_sessionCost.toStringAsFixed(6)}');
       }
@@ -286,8 +342,7 @@ class SessionCostService {
       
       if (failedFetches > 0) {
         // Update failed generations list with any still-failed generations
-        final rawResponse = costResult['rawResponse'] as Map<String, dynamic>?;
-        final generations = rawResponse?['generations'] as List<dynamic>? ?? [];
+        final generations = costResult['generations'] as List<dynamic>? ?? [];
         
         _failedGenerations.clear();
         for (final gen in generations) {
@@ -313,7 +368,7 @@ class SessionCostService {
         _stopRetryTimer();
       }
     } else {
-      print('⚠️ Could not recalculate accurate costs: ${costResult['error']}');
+      print('⚠️ Could not recalculate costs using cache service');
       
       // Emit error state
       _costController.add(SessionCostData(
@@ -453,5 +508,102 @@ class SessionCostService {
     _isRetrying = false;
     _failedGenerations.clear();
     print('⏹️ Retry timer stopped');
+  }
+
+  // ===================
+  // SESSION PERSISTENCE
+  // ===================
+
+  /// Persist current session data to database
+  Future<void> _persistSessionData() async {
+    if (_currentSessionId == null) return;
+    
+    try {
+      final sessionData = {
+        'sessionId': _currentSessionId,
+        'sessionCost': _sessionCost,
+        'messageCount': _messageCount,
+        'generations': _sessionGenerations,
+        'processedGenerationIds': _processedGenerationIds.keys.toList(),
+        'lastUpdated': DateTime.now().toIso8601String(),
+      };
+      
+      await _databaseService.saveSession(_currentSessionId!, sessionData);
+      Logger.debug('💾 Persisted session data for $_currentSessionId');
+    } catch (e) {
+      Logger.error('Failed to persist session data: $e');
+    }
+  }
+
+  /// Load session data from database
+  Future<void> loadSessionData(String sessionId) async {
+    try {
+      final sessionData = await _databaseService.getSession(sessionId);
+      if (sessionData != null) {
+        _currentSessionId = sessionData['sessionId'];
+        _sessionCost = (sessionData['sessionCost'] ?? 0.0).toDouble();
+        _messageCount = (sessionData['messageCount'] ?? 0) as int;
+        
+        final generations = sessionData['generations'] as List<dynamic>? ?? [];
+        _sessionGenerations.clear();
+        _sessionGenerations.addAll(generations.cast<Map<String, dynamic>>());
+        
+        final processedIds = sessionData['processedGenerationIds'] as List<dynamic>? ?? [];
+        _processedGenerationIds.clear();
+        for (final id in processedIds) {
+          _processedGenerationIds[id.toString()] = true;
+        }
+        
+        Logger.info('✅ Loaded session data for $sessionId: \$${_sessionCost.toStringAsFixed(6)}, ${_messageCount} messages, ${_sessionGenerations.length} generations');
+        
+        // Emit current state
+        _costController.add(SessionCostData(
+          sessionCost: _sessionCost,
+          messageCount: _messageCount,
+          lastMessageCost: 0.0,
+          lastMessageBreakdown: null,
+          totalGenerations: _sessionGenerations.length,
+          hasAccurateCosts: true,
+        ));
+      } else {
+        Logger.debug('No saved session data found for $sessionId');
+      }
+    } catch (e) {
+      Logger.error('Failed to load session data: $e');
+    }
+  }
+
+  /// Initialize the cache service with OpenRouter client
+  void initializeCacheService(dynamic openRouterClient) {
+    _costCacheService.initialize(openRouterClient);
+  }
+
+  /// Get session statistics
+  Future<Map<String, dynamic>> getSessionStats() async {
+    final totalSpending = await _spendingService.getTotalSpending();
+    final spendingSummary = await _spendingService.getSpendingSummary();
+    final cacheStats = await _costCacheService.getCacheStats();
+    
+    return {
+      'currentSession': {
+        'sessionId': _currentSessionId,
+        'cost': _sessionCost,
+        'messageCount': _messageCount,
+        'generationCount': _sessionGenerations.length,
+      },
+      'userSpending': {
+        'total': totalSpending,
+        'summary': spendingSummary,
+      },
+      'cache': cacheStats,
+    };
+  }
+
+  /// Clear session persistence data
+  Future<void> clearSessionPersistence() async {
+    if (_currentSessionId != null) {
+      await _databaseService.deleteSession(_currentSessionId!);
+      Logger.info('🗑️ Cleared session persistence for $_currentSessionId');
+    }
   }
 }

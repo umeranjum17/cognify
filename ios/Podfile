@@ -28,7 +28,9 @@ require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelpe
 flutter_ios_podfile_setup
 
 target 'Runner' do
-  use_frameworks!
+  # Avoid use_frameworks to prevent pods linking against a missing Flutter.framework
+  # If a specific pod requires frameworks, we can enable it per‑pod later.
+  # use_frameworks!
   use_modular_headers!
 
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))

@@ -30,6 +30,9 @@ import 'config/app_config.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Disable Provider debug checks to prevent subtype warnings
+  Provider.debugCheckInvalidValueType = null;
 
   // Initialize WebView platform implementation
   if (defaultTargetPlatform == TargetPlatform.android) {
@@ -221,23 +224,66 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
   late final GoRouter _router;
   late AppLinks _appLinks;
   StreamSubscription? _linkSubscription;
+  ThemeProvider? _themeProvider;
+  OAuthAuthProvider? _authProvider;
+  bool _isInitializing = true;
 
   @override
   Widget build(BuildContext context) {
+    // Show consistent loading screen while initializing
+    if (_isInitializing || _themeProvider == null || _authProvider == null) {
+      return MaterialApp(
+        theme: lightTheme,
+        darkTheme: darkTheme,
+        home: Scaffold(
+          backgroundColor: Colors.white,
+          body: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: Colors.blue,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Icon(
+                    Icons.smart_toy,
+                    size: 48,
+                    color: Colors.white,
+                  ),
+                ),
+                SizedBox(height: 24),
+                SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                  ),
+                ),
+                SizedBox(height: 16),
+                Text(
+                  'Starting Cognify...',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+    
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider.value(value: _themeProvider!),
+        ChangeNotifierProvider.value(value: _authProvider!),
         ChangeNotifierProvider(create: (_) => ModeConfigProvider()),
-        // Initialize OAuth provider with post-frame initialization
-        ChangeNotifierProvider(
-          create: (_) {
-            final provider = OAuthAuthProvider();
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              provider.initialize();
-            });
-            return provider;
-          },
-        ),
         // Firebase provider with post-frame initialization
         ChangeNotifierProvider(
           create: (_) {
@@ -354,22 +400,14 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
+    // Initialize everything before building UI
+    _initializeApp();
+
     // Initialize app links for deep linking
     _initializeAppLinks();
 
-    // Initialize sharing service after the first frame
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _initializeApp();
-    });
-
-    // Normalize and delegate router construction to AppRouter to keep main.dart lean
-    final defaultRouteName = WidgetsBinding.instance.platformDispatcher.defaultRouteName;
-    final initialLocation = AppRouter.normalizeInitialLocation(defaultRouteName);
-    Logger.debug('🚀 Initial location (normalized): $initialLocation', tag: 'AppInit');
-    Logger.debug('🚀 Base URI: ${Uri.base}', tag: 'AppInit');
-    Logger.debug('🚀 defaultRouteName: $defaultRouteName', tag: 'AppInit');
-
-    _router = AppRouter.createRouter(initialLocation: initialLocation);
+    // Delay router creation until after auth provider is initialized
+    // This prevents the onboarding screen from flashing for authenticated users
   }
 
   void _initializeAppLinks() {
@@ -411,7 +449,64 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
   }
 
   Future<void> _initializeApp() async {
-    await SharingService().initialize(context);
+    try {
+      Logger.info('🚀 Starting app initialization...', tag: 'AppInit');
+      
+      // Initialize theme provider first (synchronously)
+      _themeProvider = await ThemeProvider.create();
+      Logger.info('✅ Theme provider initialized', tag: 'AppInit');
+      
+      // Initialize auth provider
+      _authProvider = OAuthAuthProvider();
+      await _authProvider!.initialize();
+      Logger.info('✅ Auth provider initialized', tag: 'AppInit');
+      
+      // Create router after auth provider is initialized
+      final defaultRouteName = WidgetsBinding.instance.platformDispatcher.defaultRouteName;
+      final initialLocation = AppRouter.normalizeInitialLocation(defaultRouteName);
+      Logger.debug('🚀 Initial location (normalized): $initialLocation', tag: 'AppInit');
+      Logger.debug('🚀 Base URI: ${Uri.base}', tag: 'AppInit');
+      Logger.debug('🚀 defaultRouteName: $defaultRouteName', tag: 'AppInit');
+      _router = AppRouter.createRouter(initialLocation: initialLocation);
+      Logger.info('✅ Router initialized', tag: 'AppInit');
+      
+      // Mark initialization complete
+      if (mounted) {
+        setState(() {
+          _isInitializing = false;
+        });
+      }
+      
+      Logger.info('✅ Core initialization complete', tag: 'AppInit');
+      
+      // Initialize other services after UI is ready
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _initializeSecondaryServices();
+      });
+    } catch (e) {
+      Logger.error('❌ Error during app initialization: $e', tag: 'AppInit');
+      // Fallback initialization
+      _themeProvider ??= ThemeProvider();
+      _authProvider ??= OAuthAuthProvider();
+      
+      // Create fallback router
+      if (_router == null) {
+        final defaultRouteName = WidgetsBinding.instance.platformDispatcher.defaultRouteName;
+        final initialLocation = AppRouter.normalizeInitialLocation(defaultRouteName);
+        _router = AppRouter.createRouter(initialLocation: initialLocation);
+      }
+      
+      if (mounted) {
+        setState(() {
+          _isInitializing = false;
+        });
+      }
+    }
+  }
+  
+  Future<void> _initializeSecondaryServices() async {
+    try {
+      await SharingService().initialize(context);
 
     // Initialize user service
     try {
@@ -459,14 +554,17 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
       }
     }
 
-    // Check for shared content and redirect if needed
-    final sharedUrl = SharingService().getPendingSharedUrl();
-    if (sharedUrl != null && sharedUrl.isNotEmpty) {
-      // Navigate to sources screen with the shared URL
-      if (mounted) {
-        final encodedUrl = Uri.encodeQueryComponent(sharedUrl);
-        _router.go('/sources?sharedUrl=$encodedUrl');
+      // Check for shared content and redirect if needed
+      final sharedUrl = SharingService().getPendingSharedUrl();
+      if (sharedUrl != null && sharedUrl.isNotEmpty) {
+        // Navigate to sources screen with the shared URL
+        if (mounted) {
+          final encodedUrl = Uri.encodeQueryComponent(sharedUrl);
+          _router.go('/sources?sharedUrl=$encodedUrl');
+        }
       }
+    } catch (e) {
+      Logger.error('❌ Error initializing secondary services: $e', tag: 'AppInit');
     }
   }
 }

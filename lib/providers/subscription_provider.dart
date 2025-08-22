@@ -146,8 +146,14 @@ class SubscriptionProvider extends ChangeNotifier {
   }
 
   String? _lastKnownUid;
+  bool _isHandlingAuthChange = false; // Prevent duplicate auth handling
 
   void _handleAuthChange() {
+    // Prevent duplicate/concurrent auth change handling
+    if (_isHandlingAuthChange) {
+      debugPrint('⚠️ [SubscriptionProvider] Auth change already in progress, skipping...');
+      return;
+    }
     final uid = _auth?.uid;
     
     // Check if the user has changed (different UID)
@@ -158,6 +164,7 @@ class SubscriptionProvider extends ChangeNotifier {
     // When user signs in: identify with RevenueCat
     if (uid != null && uid.isNotEmpty) {
       Future<void> handleUserLogin() async {
+        _isHandlingAuthChange = true;
         try {
           // If user changed, reset RevenueCat completely and reinitialize
           if (userChanged && _lastKnownUid != null) {
@@ -168,9 +175,6 @@ class SubscriptionProvider extends ChangeNotifier {
             await Future.delayed(const Duration(milliseconds: 500));
             
             await RevenueCatService.instance.initialize(appUserId: uid);
-            
-            // Force refresh customer info to ensure we get fresh data
-            await RevenueCatService.instance.forceRefreshCustomerInfo();
           } else {
             debugPrint('🔄 [SubscriptionProvider] Same user - identifying with RevenueCat...');
             await RevenueCatService.instance.identify(uid);
@@ -205,6 +209,8 @@ class SubscriptionProvider extends ChangeNotifier {
           debugPrint('❌ [SubscriptionProvider] Error handling user login: $e');
           _setState(SubscriptionState.unknown);
           notifyListeners();
+        } finally {
+          _isHandlingAuthChange = false;
         }
       }
       
@@ -213,6 +219,7 @@ class SubscriptionProvider extends ChangeNotifier {
       // On sign out: reset RevenueCat completely
       debugPrint('🔄 [SubscriptionProvider] User signed out - resetting RevenueCat...');
       Future<void> handleUserLogout() async {
+        _isHandlingAuthChange = true;
         try {
           await RevenueCatService.instance.reset();
           await RevenueCatService.instance.initialize(); // Initialize without user ID (anonymous)
@@ -238,6 +245,8 @@ class SubscriptionProvider extends ChangeNotifier {
           debugPrint('❌ [SubscriptionProvider] Error handling user logout: $e');
           _setState(SubscriptionState.unknown);
           notifyListeners();
+        } finally {
+          _isHandlingAuthChange = false;
         }
       }
       
@@ -249,16 +258,26 @@ class SubscriptionProvider extends ChangeNotifier {
 
   void _updateEntitlementFromCache() {
     final entitled = RevenueCatService.instance.isEntitledToPremium;
+    debugPrint('🔄 [SubscriptionProvider] Updating entitlement state:');
+    debugPrint('  - Has customer info: ${_customerInfo != null}');
+    debugPrint('  - RevenueCat says entitled: $entitled');
+    debugPrint('  - Current state: $_state');
+    
     // If we have no customer info, remain unknown (fail-closed)
     if (_customerInfo == null) {
+      debugPrint('  - No customer info, setting to unknown');
       _setState(SubscriptionState.unknown);
       return;
     }
-    _setState(entitled ? SubscriptionState.active : SubscriptionState.inactive);
+    
+    final newState = entitled ? SubscriptionState.active : SubscriptionState.inactive;
+    debugPrint('  - Setting state to: $newState');
+    _setState(newState);
   }
 
   void _setState(SubscriptionState s) {
     if (_state != s) {
+      debugPrint('📝 [SubscriptionProvider] State changed: $_state → $s');
       _state = s;
     }
   }

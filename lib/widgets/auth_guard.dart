@@ -20,49 +20,27 @@ class AuthGuard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<OAuthAuthProvider>(
       builder: (context, authProvider, _) {
-        // Show loading while the provider is initializing
-        if (authProvider.isLoading) {
-          return const Scaffold(
-            body: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  Text('Checking authentication...'),
-                ],
-              ),
-            ),
-          );
-        }
-        
-        // If authenticated, show the protected child widget
+        // If authenticated, show the protected child widget immediately
         if (authProvider.isAuthenticated) {
           return child;
         }
         
-        // Not authenticated - redirect to onboarding or show onboarding screen
+        // Show minimal loading during actual initialization
+        if (authProvider.isLoading) {
+          return const SizedBox.shrink(); // Minimal loading handled by main app
+        }
+        
+        // Not authenticated - redirect immediately without showing loading
         if (redirectTo != null) {
-          // Use post-frame callback to avoid setState during build
+          // Immediate redirect to avoid flash
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (context.mounted) {
               context.go(redirectTo!);
             }
           });
           
-          // Show temporary loading while redirecting
-          return const Scaffold(
-            body: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  Text('Redirecting to authentication...'),
-                ],
-              ),
-            ),
-          );
+          // Return minimal widget to avoid flash
+          return const SizedBox.shrink();
         }
         
         // Show onboarding screen directly if no redirect specified

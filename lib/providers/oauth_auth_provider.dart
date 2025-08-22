@@ -215,6 +215,7 @@ class OAuthAuthProvider extends ChangeNotifier {
     _isLoading = true;
 
     try {
+      // Load credentials first
       _apiKey = await _secureStorage.read(key: _apiKeyStorageKey);
       final userInfoJson = await _secureStorage.read(key: _userInfoStorageKey);
 
@@ -227,29 +228,17 @@ class OAuthAuthProvider extends ChangeNotifier {
         }
       }
 
-      if (_apiKey != null) {
-        // Validate the stored API key directly during initialization
-        // (avoid circular dependency with AppConfig during init)
-        try {
-          final isValid = await _validateApiKey(_apiKey);
-          _isAuthenticated = isValid;
-
-          if (!isValid) {
-            // Clear invalid credentials
-            await clearAuthentication();
-          }
-        } catch (e) {
-          print('⚠️ Validation failed during initialization: $e');
-          // On validation errors during init, assume key is invalid and clear
-          _isAuthenticated = false;
-          _apiKey = null;
-        }
+      if (_apiKey != null && _apiKey!.isNotEmpty) {
+        // For startup performance, assume stored key is valid and validate async
+        _isAuthenticated = true;
+        
+        // Validate in background (don't block startup)
+        _validateApiKeyInBackground(_apiKey!);
       } else {
         _isAuthenticated = false;
       }
     } catch (e) {
       print('Error initializing OAuth provider: $e');
-      // Don't clear authentication on general errors, only on validation failures
       _isAuthenticated = false;
       _apiKey = null;
       _userInfo = null;
@@ -257,6 +246,25 @@ class OAuthAuthProvider extends ChangeNotifier {
       // Set loading to false and notify listeners only once at the end
       _isLoading = false;
       notifyListeners();
+    }
+  }
+  
+  /// Validate API key in background without blocking UI
+  void _validateApiKeyInBackground(String apiKey) async {
+    try {
+      // Add a small delay to avoid blocking startup
+      await Future.delayed(const Duration(milliseconds: 500));
+      
+      final isValid = await _validateApiKey(apiKey);
+      
+      if (!isValid && _apiKey == apiKey) {
+        // Only clear if this is still the current key
+        print('⚠️ Background validation failed, clearing invalid key');
+        await clearAuthentication();
+      }
+    } catch (e) {
+      // Ignore validation errors in background - key remains valid for this session
+      print('⚠️ Background validation error: $e');
     }
   }
 

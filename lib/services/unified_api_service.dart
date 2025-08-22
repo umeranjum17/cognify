@@ -17,6 +17,7 @@ import 'content_extractor.dart';
 import 'daily_quotes_service.dart';
 import 'document_processor.dart';
 import 'file_upload_service.dart';
+import 'generation_cost_cache_service.dart';
 import 'llm_service.dart';
 import 'openrouter_client.dart';
 import 'trending_service.dart';
@@ -38,6 +39,7 @@ class UnifiedApiService {
   final AgentSystem _agentSystem = AgentSystem();
   final TrendingService _trendingService = TrendingService();
   final DailyQuotesService _dailyQuotesService = DailyQuotesService();
+  final GenerationCostCacheService _costCacheService = GenerationCostCacheService();
   
   bool _initialized = false;
   bool _useAgentSystem = true; // Flag to switch between old and new system
@@ -359,126 +361,12 @@ Return only the questions, one per line, without numbering.''';
     }
   }
 
-  /// Get generation costs by calling the generation API for each generation ID
+  /// Get generation costs using intelligent caching
   Future<Map<String, dynamic>> getGenerationCosts(List<Map<String, dynamic>> generationIds) async {
     await _ensureInitialized();
-
-    if (generationIds.isEmpty) {
-      return {
-        'success': true,
-        'totalApiCost': 0.0,
-        'successfulFetches': 0,
-        'failedFetches': 0,
-        'accuracy': 1.0,
-        'generations': [],
-      };
-    }
-
-    try {
-      print('💰 Fetching generation costs for ${generationIds.length} generation IDs');
-      
-      final List<Map<String, dynamic>> processedGenerations = [];
-      int successfulFetches = 0;
-      int failedFetches = 0;
-      double totalCost = 0.0;
-
-      // Fetch costs for each generation ID
-      for (final genInfo in generationIds) {
-        final generationId = genInfo['id'] as String?;
-        final stage = genInfo['stage'] as String? ?? 'unknown';
-        final model = genInfo['model'] as String? ?? 'unknown';
-        final inputTokens = genInfo['inputTokens'] as int? ?? 0;
-        final outputTokens = genInfo['outputTokens'] as int? ?? 0;
-        final totalTokens = genInfo['totalTokens'] as int? ?? 0;
-
-        if (generationId == null) {
-          print('⚠️ Skipping generation with null ID');
-          failedFetches++;
-          continue;
-        }
-
-        try {
-          // Call OpenRouter generation API to get cost data
-          final costData = await _openRouterClient.getGenerationCost(generationId);
-          
-          if (costData != null) {
-            final cost = (costData['total_cost'] ?? 0.0).toDouble();
-            totalCost += cost;
-            successfulFetches++;
-            
-            processedGenerations.add({
-              'id': generationId,
-              'stage': stage,
-              'model': model,
-              'inputTokens': inputTokens,
-              'outputTokens': outputTokens,
-              'totalTokens': totalTokens,
-              'success': true,
-              'costData': costData,
-              'fetchedAt': DateTime.now().toIso8601String(),
-            });
-            
-            print('✅ Fetched cost for generation $generationId: \$${cost.toStringAsFixed(6)}');
-          } else {
-            failedFetches++;
-            processedGenerations.add({
-              'id': generationId,
-              'stage': stage,
-              'model': model,
-              'inputTokens': inputTokens,
-              'outputTokens': outputTokens,
-              'totalTokens': totalTokens,
-              'success': false,
-              'costData': null,
-              'error': 'No cost data returned from API',
-              'fetchedAt': DateTime.now().toIso8601String(),
-            });
-            print('❌ No cost data for generation $generationId');
-          }
-        } catch (e) {
-          failedFetches++;
-          processedGenerations.add({
-            'id': generationId,
-            'stage': stage,
-            'model': model,
-            'inputTokens': inputTokens,
-            'outputTokens': outputTokens,
-            'totalTokens': totalTokens,
-            'success': false,
-            'costData': null,
-            'error': e.toString(),
-            'fetchedAt': DateTime.now().toIso8601String(),
-          });
-          print('❌ Failed to fetch cost for generation $generationId: $e');
-        }
-      }
-
-      final accuracy = generationIds.isNotEmpty ? successfulFetches / generationIds.length : 1.0;
-      
-      print('💰 Generation cost summary: $successfulFetches successful, $failedFetches failed, total cost: \$${totalCost.toStringAsFixed(6)}');
-      
-      return {
-        'success': true,
-        'totalApiCost': totalCost,
-        'successfulFetches': successfulFetches,
-        'failedFetches': failedFetches,
-        'accuracy': accuracy,
-        'generations': processedGenerations,
-        'timestamp': DateTime.now().toIso8601String(),
-      };
-      
-    } catch (e) {
-      print('❌ Error fetching generation costs: $e');
-      return {
-        'success': false,
-        'error': e.toString(),
-        'totalApiCost': 0.0,
-        'successfulFetches': 0,
-        'failedFetches': generationIds.length,
-        'accuracy': 0.0,
-        'generations': [],
-      };
-    }
+    
+    // Delegate to the cache service for intelligent cost fetching
+    return await _costCacheService.getGenerationCosts(generationIds);
   }
 
   /// Get knowledge graph entities (mock implementation)
@@ -640,6 +528,9 @@ Return only the questions, one per line, without numbering.''';
     await _contentExtractor.initialize();
     await _databaseService.initialize();
     await _fileUploadService.initialize();
+    
+    // Initialize cost cache service with OpenRouter client
+    _costCacheService.initialize(_openRouterClient);
     
     // Initialize agent system if enabled
     if (_useAgentSystem) {

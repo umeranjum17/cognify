@@ -76,53 +76,35 @@ class AppRouter {
               subs.wireAuth(firebaseAuth);
             }
 
-            // OpenRouter auth handling: wait for initialization, then check authentication
+            // OpenRouter auth handling: immediate redirect if authenticated
             return MaterialPage(
               key: state.pageKey,
               child: Consumer<OAuthAuthProvider>(
                 builder: (context, authProvider, child) {
-                  // Show loading while the provider is initializing
-                  if (authProvider.isLoading) {
-                    return const Scaffold(
-                      body: Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            CircularProgressIndicator(),
-                            SizedBox(height: 16),
-                            Text('Checking authentication...'),
-                          ],
-                        ),
-                      ),
-                    );
-                  }
-                  
-                  // After initialization, check if authenticated
-                  if (authProvider.isAuthenticated) {
-                    // Surgical guard: if we're handling a share, don't override it.
+                  // If already authenticated, redirect immediately without showing loading
+                  if (authProvider.isAuthenticated && !authProvider.isLoading) {
+                    // Check if we're handling a share
                     final uri = GoRouterState.of(context).uri;
                     final isShareFlow = uri.path == '/sources' ||
                         uri.queryParameters.containsKey('sharedUrl');
+                    
+                    // Immediate redirect to avoid flash
                     WidgetsBinding.instance.addPostFrameCallback((_) {
                       if (context.mounted && !isShareFlow) {
                         context.go('/editor');
                       }
                     });
-                    return const Scaffold(
-                      body: Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            CircularProgressIndicator(),
-                            SizedBox(height: 16),
-                            Text('Redirecting to editor...'),
-                          ],
-                        ),
-                      ),
-                    );
+                    
+                    // Return minimal loading to avoid flash
+                    return const SizedBox.shrink();
                   }
                   
-                  // Not authenticated, show onboarding
+                  // Show loading only during actual loading
+                  if (authProvider.isLoading) {
+                    return const SizedBox.shrink(); // Minimal loading handled by main app
+                  }
+                  
+                  // Not authenticated, show onboarding directly
                   return const OAuthOnboardingScreen();
                 },
               ),

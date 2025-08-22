@@ -13,11 +13,17 @@ class DatabaseService {
   static const String _sourceContentBox = 'source_content';
   static const String _settingsBox = 'settings';
   static const String _cacheBox = 'cache';
+  static const String _generationCostsBox = 'generation_costs';
+  static const String _userSpendingBox = 'user_spending';
+  static const String _sessionsBox = 'sessions';
 
   Box? _sources;
   Box? _sourceContent;
   Box? _settings;
   Box? _cache;
+  Box? _generationCosts;
+  Box? _userSpending;
+  Box? _sessions;
   bool _initialized = false;
 
   factory DatabaseService() => _instance;
@@ -32,6 +38,9 @@ class DatabaseService {
     await _sourceContent!.clear();
     await _settings!.clear();
     await _cache!.clear();
+    await _generationCosts!.clear();
+    await _userSpending!.clear();
+    await _sessions!.clear();
   }
 
   Future<void> clearCache() async {
@@ -57,6 +66,9 @@ class DatabaseService {
     await _sourceContent?.close();
     await _settings?.close();
     await _cache?.close();
+    await _generationCosts?.close();
+    await _userSpending?.close();
+    await _sessions?.close();
 
     _initialized = false;
   }
@@ -150,6 +162,9 @@ class DatabaseService {
       'sourceContent': _sourceContent!.length,
       'settings': _settings!.length,
       'cache': _cache!.length,
+      'generationCosts': _generationCosts!.length,
+      'userSpending': _userSpending!.length,
+      'sessions': _sessions!.length,
       'totalSize': await getDatabaseSize(),
     };
   }
@@ -163,6 +178,9 @@ class DatabaseService {
       _sourceContent = await Hive.openBox(_sourceContentBox);
       _settings = await Hive.openBox(_settingsBox);
       _cache = await Hive.openBox(_cacheBox);
+      _generationCosts = await Hive.openBox(_generationCostsBox);
+      _userSpending = await Hive.openBox(_userSpendingBox);
+      _sessions = await Hive.openBox(_sessionsBox);
 
       _initialized = true;
       Logger.info('✅ [DATABASE] DatabaseService initialized successfully', tag: 'Database');
@@ -224,5 +242,189 @@ class DatabaseService {
     if (!_initialized) {
       await initialize();
     }
+  }
+
+  // ===================
+  // COST CACHE OPERATIONS
+  // ===================
+
+  /// Get cached generation cost data
+  Future<Map<String, dynamic>?> getGenerationCost(String generationId) async {
+    await _ensureInitialized();
+    final data = _generationCosts!.get(generationId);
+    if (data != null) {
+      return Map<String, dynamic>.from(data);
+    }
+    return null;
+  }
+
+  /// Cache generation cost data
+  Future<void> saveGenerationCost(String generationId, Map<String, dynamic> costData) async {
+    await _ensureInitialized();
+    final cacheEntry = {
+      ...costData,
+      'cachedAt': DateTime.now().toIso8601String(),
+    };
+    await _generationCosts!.put(generationId, cacheEntry);
+  }
+
+  /// Delete cached generation cost
+  Future<void> deleteGenerationCost(String generationId) async {
+    await _ensureInitialized();
+    await _generationCosts!.delete(generationId);
+  }
+
+  /// Get multiple cached generation costs
+  Future<Map<String, Map<String, dynamic>>> getGenerationCosts(List<String> generationIds) async {
+    await _ensureInitialized();
+    final results = <String, Map<String, dynamic>>{};
+    
+    for (final id in generationIds) {
+      final data = await getGenerationCost(id);
+      if (data != null) {
+        results[id] = data;
+      }
+    }
+    
+    return results;
+  }
+
+  /// Clear old cached generation costs (older than specified days)
+  Future<void> clearOldGenerationCosts({int olderThanDays = 30}) async {
+    await _ensureInitialized();
+    final cutoffDate = DateTime.now().subtract(Duration(days: olderThanDays));
+    final toDelete = <String>[];
+    
+    for (final key in _generationCosts!.keys) {
+      final data = _generationCosts!.get(key);
+      if (data != null) {
+        final dataMap = Map<String, dynamic>.from(data);
+        final cachedAt = dataMap['cachedAt'] as String?;
+        if (cachedAt != null) {
+          final cacheDate = DateTime.parse(cachedAt);
+          if (cacheDate.isBefore(cutoffDate)) {
+            toDelete.add(key as String);
+          }
+        }
+      }
+    }
+    
+    for (final key in toDelete) {
+      await _generationCosts!.delete(key);
+    }
+    
+    Logger.info('Cleared ${toDelete.length} old generation costs', tag: 'Database');
+  }
+
+  // ===================
+  // USER SPENDING OPERATIONS
+  // ===================
+
+  /// Get user total spending
+  Future<double> getUserTotalSpending() async {
+    await _ensureInitialized();
+    return _userSpending!.get('totalSpending', defaultValue: 0.0)?.toDouble() ?? 0.0;
+  }
+
+  /// Add to user total spending
+  Future<void> addToUserSpending(double amount) async {
+    await _ensureInitialized();
+    final currentTotal = await getUserTotalSpending();
+    final newTotal = currentTotal + amount;
+    await _userSpending!.put('totalSpending', newTotal);
+    
+    // Also track spending history
+    final spendingHistory = await getUserSpendingHistory();
+    spendingHistory.add({
+      'amount': amount,
+      'timestamp': DateTime.now().toIso8601String(),
+    });
+    await _userSpending!.put('spendingHistory', spendingHistory);
+  }
+
+  /// Get user spending history
+  Future<List<Map<String, dynamic>>> getUserSpendingHistory() async {
+    await _ensureInitialized();
+    final history = _userSpending!.get('spendingHistory');
+    if (history != null) {
+      return List<Map<String, dynamic>>.from(history);
+    }
+    return [];
+  }
+
+  /// Reset user spending
+  Future<void> resetUserSpending() async {
+    await _ensureInitialized();
+    await _userSpending!.clear();
+  }
+
+  // ===================
+  // SESSION OPERATIONS
+  // ===================
+
+  /// Save session data
+  Future<void> saveSession(String sessionId, Map<String, dynamic> sessionData) async {
+    await _ensureInitialized();
+    await _sessions!.put(sessionId, sessionData);
+  }
+
+  /// Get session data
+  Future<Map<String, dynamic>?> getSession(String sessionId) async {
+    await _ensureInitialized();
+    final data = _sessions!.get(sessionId);
+    if (data != null) {
+      return Map<String, dynamic>.from(data);
+    }
+    return null;
+  }
+
+  /// Delete session
+  Future<void> deleteSession(String sessionId) async {
+    await _ensureInitialized();
+    await _sessions!.delete(sessionId);
+  }
+
+  /// Get all sessions
+  Future<List<Map<String, dynamic>>> getAllSessions() async {
+    await _ensureInitialized();
+    final sessions = <Map<String, dynamic>>[];
+    
+    for (final value in _sessions!.values) {
+      try {
+        final sessionMap = Map<String, dynamic>.from(value);
+        sessions.add(sessionMap);
+      } catch (e) {
+        Logger.error('Error parsing session: $e', tag: 'Database');
+      }
+    }
+    
+    return sessions;
+  }
+
+  /// Clear old sessions (older than specified days)
+  Future<void> clearOldSessions({int olderThanDays = 7}) async {
+    await _ensureInitialized();
+    final cutoffDate = DateTime.now().subtract(Duration(days: olderThanDays));
+    final toDelete = <String>[];
+    
+    for (final key in _sessions!.keys) {
+      final data = _sessions!.get(key);
+      if (data != null) {
+        final sessionMap = Map<String, dynamic>.from(data);
+        final lastUpdated = sessionMap['lastUpdated'] as String?;
+        if (lastUpdated != null) {
+          final updateDate = DateTime.parse(lastUpdated);
+          if (updateDate.isBefore(cutoffDate)) {
+            toDelete.add(key as String);
+          }
+        }
+      }
+    }
+    
+    for (final key in toDelete) {
+      await _sessions!.delete(key);
+    }
+    
+    Logger.info('Cleared ${toDelete.length} old sessions', tag: 'Database');
   }
 }

@@ -45,8 +45,8 @@ android {
 
     defaultConfig {
         applicationId "com.umerfarooq1995.cognify_flutter"
-        minSdkVersion flutter.minSdkVersion
-        targetSdkVersion 34
+        minSdkVersion 23
+        targetSdkVersion 35
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
     }

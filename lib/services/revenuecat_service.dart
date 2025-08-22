@@ -230,9 +230,15 @@ class RevenueCatService {
 
   bool get isEntitledToPremium {
     final entitlements = _customerInfoCache?.entitlements.active;
-    return entitlements
-            ?.containsKey(SubscriptionsConfig.entitlementPremium) ==
-        true;
+    
+    // Debug: Log all active entitlements to help diagnose issues
+    debugPrint('🎫 [RevenueCat] Active entitlements: ${entitlements?.keys.join(", ") ?? "none"}');
+    debugPrint('🔍 [RevenueCat] Looking for entitlement: "${SubscriptionsConfig.entitlementPremium}"');
+    
+    final hasExpectedEntitlement = entitlements?.containsKey(SubscriptionsConfig.entitlementPremium) == true;
+    debugPrint('✅ [RevenueCat] Has expected entitlement: $hasExpectedEntitlement');
+    
+    return hasExpectedEntitlement;
   }
 
   Future<PurchaseResult> purchasePackage(
