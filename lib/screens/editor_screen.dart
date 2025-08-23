@@ -3255,6 +3255,11 @@ class _EditorScreenState extends State<EditorScreen> {
       List<ChatSource>? finalSources;
       List<String>? finalFollowUpQuestions;
 
+      // Source accumulation variables for progressive display
+      List<ChatSource> accumulatedSources = [];
+      List<Map<String, dynamic>> accumulatedImages = [];
+      Set<String> seenSourceUrls = {};
+
       // Typing effect variables removed for instant streaming
 
       // Choose the appropriate streaming endpoint
@@ -3342,11 +3347,32 @@ class _EditorScreenState extends State<EditorScreen> {
             break;
             
           case StreamEventType.sourcesReady:
-            // Handle sources and images ready event - display them immediately
-            final sources = event.sources ?? [];
-            final images = event.images ?? [];
+            // Handle sources and images ready event - accumulate them progressively
+            final newSources = event.sources ?? [];
+            final newImages = event.images ?? [];
 
-            // Update the streaming message with sources and images
+            // Add only unique sources to avoid duplicates
+            for (final source in newSources) {
+              if (!seenSourceUrls.contains(source.url)) {
+                seenSourceUrls.add(source.url);
+                accumulatedSources.add(source);
+              }
+            }
+
+            // Add new images (simple deduplication by checking if not already present)
+            for (final newImage in newImages) {
+              final imageUrl = newImage['url'] as String?;
+              if (imageUrl != null) {
+                final isDuplicate = accumulatedImages.any((existing) => existing['url'] == imageUrl);
+                if (!isDuplicate) {
+                  accumulatedImages.add(newImage);
+                }
+              } else {
+                accumulatedImages.add(newImage); // Add if no URL to check
+              }
+            }
+
+            // Update the streaming message with accumulated sources and images
             final index = _messages.indexWhere((m) => m.id == streamingMessage.id);
             if (index != -1) {
               setState(() {
@@ -3356,12 +3382,12 @@ class _EditorScreenState extends State<EditorScreen> {
                   content: streamingContent,
                   timestamp: streamingMessage.timestamp,
                   isProcessing: true,
-                  sources: sources,
-                  images: images,
+                  sources: List.from(accumulatedSources), // Use accumulated sources
+                  images: List.from(accumulatedImages),   // Use accumulated images
                 );
               });
             }
-            Logger.debug('📋 Sources ready: ${sources.length} sources, ${images.length} images', tag: 'EditorScreen');
+            Logger.debug('📋 Sources ready: +${newSources.length} new sources (${accumulatedSources.length} total), +${newImages.length} new images (${accumulatedImages.length} total)', tag: 'EditorScreen');
             break;
             
           case StreamEventType.content:

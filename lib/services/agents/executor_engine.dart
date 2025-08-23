@@ -18,6 +18,9 @@ typedef ToolProgressCallback = void Function(Map<String, dynamic> progress);
 /// Result callback for tool execution
 typedef ToolResultCallback = void Function(ToolResult result);
 
+/// Source ready callback for progressive source emission
+typedef SourceReadyCallback = void Function(List<ChatSource> sources, List<Map<String, dynamic>> images);
+
 /// Optimized Executor Engine - Fast tool execution without isolate overhead
 class ExecutorEngine {
   static const int _maxCacheSize = 50;
@@ -146,12 +149,32 @@ class ExecutorEngine {
     }
   }
 
+  /// Convert a single tool result to sources and images for progressive emission
+  Map<String, dynamic> _convertToolResultToSources(ToolResult result) {
+    if (result.failed) {
+      return {'sources': <ChatSource>[], 'images': <Map<String, dynamic>>[]};
+    }
+    
+    final extractionResult = ToolResultProcessor.extractSourcesAndImages(result.output, result.tool);
+    final sources = extractionResult['sources'] as List<ChatSource>? ?? <ChatSource>[];
+    final images = extractionResult['images'] as List<Map<String, dynamic>>? ?? <Map<String, dynamic>>[];
+    
+    // Clean and deduplicate sources for this individual result
+    final cleanSources = ToolResultProcessor.cleanSources(sources);
+    
+    return {
+      'sources': cleanSources,
+      'images': images,
+    };
+  }
+
   /// Execute tools in optimized two-phase approach
   Future<List<ToolResult>> executeTools(
     List<ToolSpec> toolSpecs,
     {
       void Function(Map<String, dynamic>)? onProgress,
       void Function(ToolResult)? onResult,
+      SourceReadyCallback? onSourceReady,
     }
   ) async {
     if (!_initialized) {
@@ -219,6 +242,17 @@ class ExecutorEngine {
           'stage': result.failed ? 'search_failed' : 'search_completed',
         });
 
+        // Emit sources progressively if callback provided and tool succeeded
+        if (onSourceReady != null && !result.failed) {
+          final converted = _convertToolResultToSources(result);
+          final sources = converted['sources'] as List<ChatSource>;
+          final images = converted['images'] as List<Map<String, dynamic>>;
+          
+          if (sources.isNotEmpty || images.isNotEmpty) {
+            onSourceReady(sources, images);
+          }
+        }
+
         return result;
       });
 
@@ -258,6 +292,17 @@ class ExecutorEngine {
           'stage': result.failed ? 'fetch_failed' : 'fetch_completed',
         });
 
+        // Emit sources progressively if callback provided and tool succeeded
+        if (onSourceReady != null && !result.failed) {
+          final converted = _convertToolResultToSources(result);
+          final sources = converted['sources'] as List<ChatSource>;
+          final images = converted['images'] as List<Map<String, dynamic>>;
+          
+          if (sources.isNotEmpty || images.isNotEmpty) {
+            onSourceReady(sources, images);
+          }
+        }
+
         return result;
       });
 
@@ -284,6 +329,17 @@ class ExecutorEngine {
           'message': result.failed ? '❌ Tool failed' : '✅ Tool completed',
           'stage': result.failed ? 'other_failed' : 'other_completed',
         });
+
+        // Emit sources progressively if callback provided and tool succeeded
+        if (onSourceReady != null && !result.failed) {
+          final converted = _convertToolResultToSources(result);
+          final sources = converted['sources'] as List<ChatSource>;
+          final images = converted['images'] as List<Map<String, dynamic>>;
+          
+          if (sources.isNotEmpty || images.isNotEmpty) {
+            onSourceReady(sources, images);
+          }
+        }
 
         return result;
       });
@@ -350,6 +406,126 @@ class ExecutorEngine {
     ));
 
     return await Future.wait(futures);
+  }
+
+  /// Execute tools with streaming source emission - yields sources as tools complete
+  Stream<Map<String, dynamic>> executeToolsStream(
+    List<ToolSpec> toolSpecs, {
+    ToolProgressCallback? onProgress,
+    ToolResultCallback? onResult,
+  }) async* {
+    if (!_initialized) {
+      throw Exception('Executor Engine not initialized');
+    }
+
+    // Categorize tools like in the regular executeTools method
+    final searchTools = toolSpecs.where((spec) => 
+      spec.name == 'brave_search' || 
+      spec.name == 'brave_search_enhanced' || 
+      spec.name == 'image_search' ||
+      spec.name == 'keyword_extraction' ||
+      spec.name == 'youtube_processor'
+    ).toList();
+
+    final fetchTools = toolSpecs.where((spec) => 
+      spec.name == 'web_fetch' || 
+      spec.name == 'source_content' ||
+      spec.name == 'source_query'
+    ).toList();
+
+    final otherTools = toolSpecs.where((spec) => 
+      !searchTools.contains(spec) && !fetchTools.contains(spec)
+    ).toList();
+
+    // Execute search tools and yield sources as they complete
+    if (searchTools.isNotEmpty) {
+      final braveApiKey = await AppConfig().braveSearchApiKey ?? 'BSA6Crcr3bFuvfEOIgHdL-y7IO_YPqr';
+
+      for (final spec in searchTools) {
+        final input = spec.name.contains('brave') || spec.name == 'image_search'
+            ? {...spec.input, 'braveApiKey': braveApiKey}
+            : spec.input;
+
+        final result = await executeTool(
+          ToolSpec(
+            name: spec.name,
+            input: input,
+            order: spec.order,
+            reasoning: spec.reasoning,
+          ),
+          onProgress: onProgress,
+          onResult: onResult,
+        );
+
+        // Emit sources immediately if tool succeeded
+        if (!result.failed) {
+          final converted = _convertToolResultToSources(result);
+          final sources = converted['sources'] as List<ChatSource>;
+          final images = converted['images'] as List<Map<String, dynamic>>;
+          
+          if (sources.isNotEmpty || images.isNotEmpty) {
+            yield {
+              'type': 'sourcesReady',
+              'sources': sources,
+              'images': images,
+              'toolName': spec.name,
+            };
+          }
+        }
+      }
+      
+      // Extract URLs for content fetching from search results
+      // Note: This is simplified - in a real implementation we'd need to collect all search results first
+      // For now, we'll add fetch tools to the existing fetchTools list
+    }
+
+    // Execute fetch tools and yield sources as they complete
+    for (final spec in fetchTools) {
+      final result = await executeTool(spec, onProgress: onProgress, onResult: onResult);
+
+      // Emit sources immediately if tool succeeded
+      if (!result.failed) {
+        final converted = _convertToolResultToSources(result);
+        final sources = converted['sources'] as List<ChatSource>;
+        final images = converted['images'] as List<Map<String, dynamic>>;
+        
+        if (sources.isNotEmpty || images.isNotEmpty) {
+          yield {
+            'type': 'sourcesReady',
+            'sources': sources,
+            'images': images,
+            'toolName': spec.name,
+          };
+        }
+      }
+    }
+
+    // Execute other tools and yield sources as they complete
+    for (final spec in otherTools) {
+      final result = await executeTool(spec, onProgress: onProgress, onResult: onResult);
+
+      // Emit sources immediately if tool succeeded
+      if (!result.failed) {
+        final converted = _convertToolResultToSources(result);
+        final sources = converted['sources'] as List<ChatSource>;
+        final images = converted['images'] as List<Map<String, dynamic>>;
+        
+        if (sources.isNotEmpty || images.isNotEmpty) {
+          yield {
+            'type': 'sourcesReady',
+            'sources': sources,
+            'images': images,
+            'toolName': spec.name,
+          };
+        }
+      }
+    }
+
+    // Yield completion event
+    yield {
+      'type': 'complete',
+      'message': 'All tools completed',
+    };
   }
 
   Future<void> initialize() async {

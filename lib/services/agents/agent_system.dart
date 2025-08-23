@@ -41,6 +41,7 @@ class AgentSystem {
     }
   }
 
+
   /// Process query with unified stream events - SINGLE ORCHESTRATOR
   Stream<ChatStreamEvent> processQuery({
     required String query,
@@ -145,11 +146,25 @@ class AgentSystem {
         progress: 0.4,
       );
       
-      final toolResults = await _executorEngine.executeTools(
+      // Execute tools with progressive source emission using streaming approach
+      final List<ToolResult> toolResults = [];
+      
+      await for (final streamEvent in _executorEngine.executeToolsStream(
         toolSpecs,
         onProgress: onToolProgress,
-        onResult: onToolResult,
-      );
+        onResult: (result) {
+          toolResults.add(result);
+          onToolResult?.call(result);
+        },
+      )) {
+        if (streamEvent['type'] == 'sourcesReady') {
+          // Emit sources progressively as they become available
+          yield ChatStreamEvent.sourcesReady(
+            sources: streamEvent['sources'] as List<ChatSource>,
+            images: streamEvent['images'] as List<Map<String, dynamic>>,
+          );
+        }
+      }
 
       yield ChatStreamEvent.milestone(
         message: '✅ Tool execution completed',
@@ -157,16 +172,9 @@ class AgentSystem {
         progress: 0.7,
       );
 
-      // Step 2.5: Convert tool results to sources and emit immediately
+      // Step 2.5: Sources are now emitted progressively above, but we still need final collections for completion event
       final sources = _convertToolResultsToSources(toolResults);
       final images = _convertToolResultsToImages(toolResults);
-      
-      if (sources.isNotEmpty || images.isNotEmpty) {
-        yield ChatStreamEvent.sourcesReady(
-          sources: sources,
-          images: images,
-        );
-      }
 
       // Step 3: Writing - Use streaming to yield content chunks
       yield ChatStreamEvent.milestone(
