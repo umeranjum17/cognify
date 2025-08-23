@@ -437,7 +437,9 @@ class OAuthAuthProvider extends ChangeNotifier {
   /// Store credentials securely
   Future<void> _storeCredentials(String apiKey) async {
     try {
+      print('🔑 OAuth: About to store API key to secure storage with key: $_apiKeyStorageKey');
       await _secureStorage.write(key: _apiKeyStorageKey, value: apiKey);
+      print('✅ OAuth: Successfully stored API key to secure storage');
 
       // Fetch and store user info
       final userInfo = await _fetchUserInfo(apiKey);

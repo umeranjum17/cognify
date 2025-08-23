@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../database/database_service.dart';
-import '../providers/oauth_auth_provider.dart';
 import '../utils/logger.dart';
 
 /// Application configuration management
@@ -55,10 +55,8 @@ class AppConfig {
   bool _initialized = false;
   final DatabaseService _db = DatabaseService();
 
-  // Cache for API key to avoid repeated OAuth provider initialization
+  // Cache for API key to avoid repeated secure storage reads
   String? _cachedOpenRouterKey;
-  DateTime? _cacheTimestamp;
-  static const Duration _cacheExpiry = Duration(seconds: 30); // Cache for 30 seconds
 
   factory AppConfig() => _instance;
   AppConfig._internal();
@@ -99,37 +97,32 @@ class AppConfig {
 
   // API Keys
   Future<String?> get openRouterApiKey async {
-    // Check cache first
-    if (_cachedOpenRouterKey != null && 
-        _cacheTimestamp != null && 
-        DateTime.now().difference(_cacheTimestamp!) < _cacheExpiry) {
-      Logger.info('🔑 AppConfig: Using cached API key: ${_cachedOpenRouterKey!.substring(0, 10)}...', tag: 'AppConfig');
+    // Return cached key if available
+    if (_cachedOpenRouterKey != null) {
       return _cachedOpenRouterKey;
     }
 
-    // First try to get from OAuth provider (user's own key)
+    // Try secure storage first (where OAuth provider stores keys)
     try {
-      final oauthProvider = OAuthAuthProvider();
-      await oauthProvider.initialize();
-      final userApiKey = oauthProvider.apiKey;
-      if (userApiKey != null && userApiKey.isNotEmpty) {
-        // Cache the key
-        _cachedOpenRouterKey = userApiKey;
-        _cacheTimestamp = DateTime.now();
-        Logger.info('🔑 AppConfig: Got API key from OAuth provider: ${userApiKey.substring(0, 10)}...', tag: 'AppConfig');
-        return userApiKey;
+      const storage = FlutterSecureStorage();
+      final secureKey = await storage.read(key: 'openrouter_api_key');
+      
+      if (secureKey != null && secureKey.isNotEmpty) {
+        // Cache the key for subsequent calls
+        _cachedOpenRouterKey = secureKey;
+        Logger.info('🔑 AppConfig: Got API key from secure storage: ${secureKey.substring(0, 10)}...', tag: 'AppConfig');
+        return secureKey;
       }
     } catch (e) {
-      Logger.error('Error getting OAuth API key: $e', tag: 'AppConfig');
+      Logger.error('Error getting secure storage API key: $e', tag: 'AppConfig');
     }
 
     // Fallback to database storage
     await _ensureInitialized();
     final dbKey = await _db.getSetting<String>(_openRouterApiKeyKey);
     
-    // Cache the result
+    // Cache the result (even if null)
     _cachedOpenRouterKey = dbKey;
-    _cacheTimestamp = DateTime.now();
     
     if (dbKey != null) {
       Logger.info('🔑 AppConfig: Got API key from database: ${dbKey.substring(0, 10)}...', tag: 'AppConfig');
@@ -201,7 +194,6 @@ class AppConfig {
   void clearApiKeyCache() {
     Logger.info('🔑 AppConfig: Clearing API key cache', tag: 'AppConfig');
     _cachedOpenRouterKey = null;
-    _cacheTimestamp = null;
   }
 
   Future<void> _ensureInitialized() async {

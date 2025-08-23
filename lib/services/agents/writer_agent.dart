@@ -807,7 +807,6 @@ $responseGuidelines''';
         maxTokens: maxTokens,
       )) {
         chunkCount++;
-        print('🐛 DEBUG: WriterAgent received chunk #$chunkCount: ${chunk.keys.toList()}');
         
         // Extract generation ID and usage from streaming response (aligned with server-side)
         if (!foundChunkUsage && chunk.containsKey('generationId')) {

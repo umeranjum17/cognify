@@ -1460,6 +1460,25 @@ class _EditorScreenState extends State<EditorScreen> {
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
               ),
+              // Retry with different model button (for user messages)
+              if (isUser)
+                Padding(
+                  padding: const EdgeInsets.only(left: 8),
+                  child: IconButton(
+                    onPressed: () => _retryUserMessageWithModel(message),
+                    icon: const Icon(Icons.sync_alt, size: 14),
+                    iconSize: 14,
+                    padding: const EdgeInsets.all(2),
+                    constraints: const BoxConstraints(
+                      minWidth: 20,
+                      minHeight: 20,
+                    ),
+                    tooltip: 'Switch model and retry',
+                    style: IconButton.styleFrom(
+                      foregroundColor: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                    ),
+                  ),
+                ),
             ],
           ),
 
@@ -3047,6 +3066,40 @@ class _EditorScreenState extends State<EditorScreen> {
       _messageController.text = userMessage.textContent;
       await _sendMessage();
     }
+  }
+
+  void _retryUserMessageWithModel(Message userMessage) {
+    showModelQuickSwitcher(
+      context: context,
+      mode: _currentMode,
+      selectedModel: _selectedModel,
+      onModelSelected: (modelId) async {
+        // Remove any responses after this user message
+        final userIndex = _messages.indexWhere((m) => m.id == userMessage.id);
+        if (userIndex != -1) {
+          setState(() {
+            _messages.removeRange(userIndex, _messages.length);
+            // Permanently switch to selected model
+            _selectedModel = modelId;
+          });
+
+          // Save model selection for this mode
+          final modeConfigProvider = Provider.of<ModeConfigProvider>(context, listen: false);
+          final currentConfig = modeConfigProvider.getConfigForMode(_currentMode);
+          if (currentConfig != null) {
+            modeConfigProvider.updateConfig(_currentMode, currentConfig.copyWith(model: modelId));
+          }
+          // Update LLM service
+          LLMService().setCurrentModel(modelId);
+
+          // Set the text in the input field and send the message again
+          _messageController.text = userMessage.textContent;
+          await _sendMessage();
+          
+          _checkModelCapabilities();
+        }
+      },
+    );
   }
 
 
