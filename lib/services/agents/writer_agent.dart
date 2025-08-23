@@ -120,8 +120,11 @@ class WriterAgent {
     // Create rich tool summary using executor data (aligned with server-side)
     final toolSummary = _createRichToolSummary(toolResults);
     
-    // Create sources section from web_fetch tool results
-    final sourcesSection = _createSourcesSectionFromWebFetch(toolResults);
+    // Create sources section - try extracted sources first, fallback to web_fetch
+    final extractedSourcesSection = _createSourcesSectionFromExtractedSources(toolResults);
+    final sourcesSection = extractedSourcesSection.isNotEmpty 
+      ? extractedSourcesSection 
+      : _createSourcesSectionFromWebFetch(toolResults);
 
     // Create images section for markdown inclusion (aligned with server-side)
     String imagesSection = '';
@@ -1081,6 +1084,53 @@ $context
     }
     
     return toolSummary;
+  }
+
+  /// Create sources section from pre-extracted sources (priority method)
+  String _createSourcesSectionFromExtractedSources(List<ToolResult> toolResults) {
+    // Look for pre-extracted sources from executor engine
+    for (final result in toolResults) {
+      if (!result.failed && result.output['extractedSources'] != null) {
+        final extractedSources = result.output['extractedSources'] as List<dynamic>?;
+        
+        if (extractedSources == null || extractedSources.isEmpty) continue;
+        
+        String sourcesSection = '''
+
+**SOURCES WITH CONTENT:**
+
+''';
+        
+        for (int i = 0; i < extractedSources.length; i++) {
+          final sourceData = extractedSources[i] as Map<String, dynamic>?;
+          if (sourceData == null) continue;
+          
+          final title = sourceData['title'] as String? ?? 'Untitled Source';
+          final url = sourceData['url'] as String? ?? '';
+          final description = sourceData['description'] as String? ?? sourceData['snippet'] as String? ?? '';
+          final content = sourceData['content'] as String? ?? '';
+          
+          // Use the most detailed content available
+          String sourceContent = content.isNotEmpty ? content : description;
+          
+          // Truncate very long content for prompt efficiency
+          if (sourceContent.length > 1000) {
+            sourceContent = sourceContent.substring(0, 1000) + '...';
+          }
+          
+          sourcesSection += '''
+**Source ${i + 1}: $title**
+URL: $url
+CONTENT: $sourceContent
+
+''';
+        }
+        
+        return sourcesSection;
+      }
+    }
+    
+    return '';
   }
 
   /// Create sources section from web_fetch tool results with randomized content extraction
