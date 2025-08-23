@@ -576,7 +576,8 @@ ${mode.toLowerCase() == 'deepsearch'
   Map<String, int> _getModeSearchLimits(String mode) {
     switch (mode.toLowerCase()) {
       case 'deepsearch':
-        return {'maxResults': 45, 'maxScrape': 45};
+        // Brave API max per-request results is 20; keep scrape equal
+        return {'maxResults': 20, 'maxScrape': 20};
       case 'chat':
       default:
         return {'maxResults': 10, 'maxScrape': 10};

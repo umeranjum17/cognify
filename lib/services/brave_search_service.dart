@@ -81,12 +81,21 @@ class BraveSearchService {
         throw Exception('Brave Search API key not configured');
       }
       
+      // Clamp count to Brave API limit (max 20) to avoid 422 responses
+      final int requestedCount = count;
+      final int clampedCount = requestedCount < 1
+          ? 1
+          : (requestedCount > 20 ? 20 : requestedCount);
+      if (clampedCount != requestedCount) {
+        Logger.debug('Brave search service: clamping count from ' + requestedCount.toString() + ' to ' + clampedCount.toString());
+      }
+
       Logger.debug('Brave search service: Making API request for "$query"');
       final response = await _dio.get(
         webSearchEndpoint,
         queryParameters: {
           'q': query,
-          'count': count,
+          'count': clampedCount,
           if (country != null) 'country': country,
           if (language != null) 'search_lang': language,
           'safesearch': safesearch ? 'strict' : 'off',
@@ -154,12 +163,20 @@ class BraveSearchService {
       if (key.isEmpty) {
         throw Exception('Brave Search API key not configured');
       }
+      // Clamp count to Brave API limit (max 20)
+      final int requestedCount = count;
+      final int clampedCount = requestedCount < 1
+          ? 1
+          : (requestedCount > 20 ? 20 : requestedCount);
+      if (clampedCount != requestedCount) {
+        Logger.debug('Brave image search: clamping count from ' + requestedCount.toString() + ' to ' + clampedCount.toString(), tag: 'BraveSearch');
+      }
       
       final response = await _dio.get(
         imageSearchEndpoint,
         queryParameters: {
           'q': query,
-          'count': count,
+          'count': clampedCount,
           if (country != null) 'country': country,
           if (language != null) 'search_lang': language,
           'safesearch': safesearch ? 'strict' : 'off',
@@ -234,12 +251,20 @@ class BraveSearchService {
       if (key.isEmpty) {
         throw Exception('Brave Search API key not configured');
       }
+      // Clamp count to Brave API limit (max 20)
+      final int requestedCount = count;
+      final int clampedCount = requestedCount < 1
+          ? 1
+          : (requestedCount > 20 ? 20 : requestedCount);
+      if (clampedCount != requestedCount) {
+        Logger.debug('Brave web search: clamping count from ' + requestedCount.toString() + ' to ' + clampedCount.toString(), tag: 'BraveSearch');
+      }
       
       final response = await _dio.get(
         webSearchEndpoint,
         queryParameters: {
           'q': query,
-          'count': count,
+          'count': clampedCount,
           if (country != null) 'country': country,
           if (language != null) 'search_lang': language,
           'safesearch': safesearch ? 'strict' : 'off',
