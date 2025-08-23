@@ -81,66 +81,70 @@ class BraveSearchService {
         throw Exception('Brave Search API key not configured');
       }
       
-      // Clamp count to Brave API limit (max 20) to avoid 422 responses
-      final int requestedCount = count;
-      final int clampedCount = requestedCount < 1
-          ? 1
-          : (requestedCount > 20 ? 20 : requestedCount);
-      if (clampedCount != requestedCount) {
-        Logger.debug('Brave search service: clamping count from ' + requestedCount.toString() + ' to ' + clampedCount.toString());
+      // Implement pagination: Brave supports max 20 per request. If count > 20,
+      // perform multiple requests using the `offset` page parameter and merge results.
+      final int requestedCount = count < 1 ? 1 : count;
+      final int pageSize = 20;
+      final int pages = ((requestedCount + pageSize - 1) / pageSize).floor();
+
+      final List<Map<String, dynamic>> aggregated = [];
+      final Set<String> seenUrls = {};
+
+      for (int page = 0; page < pages; page++) {
+        final int remaining = requestedCount - (page * pageSize);
+        final int thisPageCount = remaining > pageSize ? pageSize : remaining;
+
+        Logger.debug('Brave search service: Making API request for ' + '"' + query + '"' + ' page=' + page.toString() + ' count=' + thisPageCount.toString());
+        final response = await _dio.get(
+          webSearchEndpoint,
+          queryParameters: {
+            'q': query,
+            'count': thisPageCount,
+            'offset': page, // Brave pagination uses zero-based offset pages
+            if (country != null) 'country': country,
+            if (language != null) 'search_lang': language,
+            'safesearch': safesearch ? 'strict' : 'off',
+          },
+          options: Options(
+            headers: {
+              'X-Subscription-Token': key,
+            },
+          ),
+        );
+
+        if (response.statusCode == 200) {
+          final data = response.data;
+          List<dynamic> results = [];
+          if (data['web'] != null && data['web']['results'] != null) {
+            results = data['web']['results'] as List<dynamic>;
+          } else if (data['results'] != null) {
+            results = data['results'] as List<dynamic>;
+          } else {
+            continue;
+          }
+
+          for (final item in results) {
+            final url = (item['url'] ?? '') as String;
+            if (url.isEmpty || seenUrls.contains(url)) continue;
+            seenUrls.add(url);
+            aggregated.add({
+              'title': item['title'] ?? '',
+              'url': url,
+              'description': item['description'] ?? '',
+              'source': item['source'] ?? '',
+            });
+            if (aggregated.length >= requestedCount) break;
+          }
+        } else {
+          Logger.warn('Brave search service: API error status: ${response.statusCode}');
+          throw Exception('Brave Search API error: ${response.statusCode}');
+        }
+
+        if (aggregated.length >= requestedCount) break;
       }
 
-      Logger.debug('Brave search service: Making API request for "$query"');
-      final response = await _dio.get(
-        webSearchEndpoint,
-        queryParameters: {
-          'q': query,
-          'count': clampedCount,
-          if (country != null) 'country': country,
-          if (language != null) 'search_lang': language,
-          'safesearch': safesearch ? 'strict' : 'off',
-        },
-        options: Options(
-          headers: {
-            'X-Subscription-Token': key,
-          },
-        ),
-      );
-      
-      if (response.statusCode == 200) {
-        final data = response.data;
-        Logger.debug('Brave search service: API response status: ${response.statusCode}');
-        Logger.debug('Brave search service: API response data keys: ${data.keys.toList()}');
-        
-        // Handle the complex API response structure
-        List<dynamic> results = [];
-        
-        // Check if there's a 'web' section with results
-        if (data['web'] != null && data['web']['results'] != null) {
-          results = data['web']['results'] as List<dynamic>;
-          Logger.debug('Brave search service: Found ${results.length} web results');
-        } else if (data['results'] != null) {
-          // Fallback to direct results
-          results = data['results'] as List<dynamic>;
-                      Logger.debug('Brave search service: Found ${results.length} direct results');
-          } else {
-            Logger.debug('Brave search service: No results found in API response');
-          return [];
-        }
-        
-        final processedResults = results.map<Map<String, dynamic>>((result) => {
-          'title': result['title'] ?? '',
-          'url': result['url'] ?? '',
-          'description': result['description'] ?? '',
-          'source': result['source'] ?? '',
-        }).toList();
-        
-        Logger.debug('Brave search service: Returning ${processedResults.length} processed results');
-        return processedResults;
-      } else {
-        Logger.warn('Brave search service: API error status: ${response.statusCode}');
-        throw Exception('Brave Search API error: ${response.statusCode}');
-      }
+      Logger.debug('Brave search service: Returning ${aggregated.length} processed results');
+      return aggregated;
     } catch (e) {
       Logger.error('Brave search error: $e');
       return [];
@@ -251,49 +255,63 @@ class BraveSearchService {
       if (key.isEmpty) {
         throw Exception('Brave Search API key not configured');
       }
-      // Clamp count to Brave API limit (max 20)
-      final int requestedCount = count;
-      final int clampedCount = requestedCount < 1
-          ? 1
-          : (requestedCount > 20 ? 20 : requestedCount);
-      if (clampedCount != requestedCount) {
-        Logger.debug('Brave web search: clamping count from ' + requestedCount.toString() + ' to ' + clampedCount.toString(), tag: 'BraveSearch');
-      }
-      
-      final response = await _dio.get(
-        webSearchEndpoint,
-        queryParameters: {
-          'q': query,
-          'count': clampedCount,
-          if (country != null) 'country': country,
-          if (language != null) 'search_lang': language,
-          'safesearch': safesearch ? 'strict' : 'off',
-        },
-        options: Options(
-          headers: {
-            'X-Subscription-Token': key,
+      // Pagination-aware implementation up to requested count
+      final int requestedCount = count < 1 ? 1 : count;
+      final int pageSize = 20;
+      final int pages = ((requestedCount + pageSize - 1) / pageSize).floor();
+
+      final List<Map<String, dynamic>> aggregated = [];
+      final Set<String> seenUrls = {};
+
+      for (int page = 0; page < pages; page++) {
+        final int remaining = requestedCount - (page * pageSize);
+        final int thisPageCount = remaining > pageSize ? pageSize : remaining;
+
+        final response = await _dio.get(
+          webSearchEndpoint,
+          queryParameters: {
+            'q': query,
+            'count': thisPageCount,
+            'offset': page,
+            if (country != null) 'country': country,
+            if (language != null) 'search_lang': language,
+            'safesearch': safesearch ? 'strict' : 'off',
           },
-        ),
-      );
-      
-      if (response.statusCode == 200) {
-        final data = response.data;
-        final results = data['web']?['results'] ?? [];
-        
-        return {
-          'success': true,
-          'results': results.map((result) => {
-            'title': result['title'] ?? '',
-            'url': result['url'] ?? '',
-            'description': result['description'] ?? '',
-            'published': result['age'] ?? '',
-          }).toList(),
-          'query': query,
-          'total': results.length,
-        };
-      } else {
-        throw Exception('HTTP ${response.statusCode}: ${response.statusMessage}');
+          options: Options(
+            headers: {
+              'X-Subscription-Token': key,
+            },
+          ),
+        );
+
+        if (response.statusCode == 200) {
+          final data = response.data;
+          final current = (data['web']?['results'] ?? []) as List<dynamic>;
+          for (final result in current) {
+            final url = (result['url'] ?? '') as String;
+            if (url.isEmpty || seenUrls.contains(url)) continue;
+            seenUrls.add(url);
+            aggregated.add({
+              'title': result['title'] ?? '',
+              'url': url,
+              'description': result['description'] ?? '',
+              'published': result['age'] ?? '',
+            });
+            if (aggregated.length >= requestedCount) break;
+          }
+        } else {
+          throw Exception('HTTP ${response.statusCode}: ${response.statusMessage}');
+        }
+
+        if (aggregated.length >= requestedCount) break;
       }
+
+      return {
+        'success': true,
+        'results': aggregated,
+        'query': query,
+        'total': aggregated.length,
+      };
     } catch (e) {
       Logger.error('🔍 Brave web search error: $e', tag: 'BraveSearch');
       return {
