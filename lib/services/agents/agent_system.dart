@@ -6,6 +6,7 @@ import '../../models/message.dart';
 import '../../models/tool_result.dart';
 import '../../models/tool_spec.dart';
 import '../../utils/json_utils.dart';
+import '../tool_result_processor.dart';
 import 'executor_engine.dart';
 import 'milestone_messages.dart';
 import 'search_agent.dart';
@@ -164,6 +165,33 @@ class AgentSystem {
             images: streamEvent['images'] as List<Map<String, dynamic>>,
           );
         }
+      }
+
+      // After streaming completes, aggregate sources/images for writer agent
+      if (toolResults.isNotEmpty && !toolResults.first.failed) {
+        // Collect all sources and images from tool results for writer agent
+        final allSources = <ChatSource>[];
+        final allImages = <Map<String, dynamic>>[];
+        
+        for (final result in toolResults) {
+          if (!result.failed) {
+            final extractionResult = ToolResultProcessor.extractSourcesAndImages(result.output, result.tool);
+            final sources = extractionResult['sources'] as List<ChatSource>? ?? <ChatSource>[];
+            final images = extractionResult['images'] as List<Map<String, dynamic>>? ?? <Map<String, dynamic>>[];
+            allSources.addAll(sources);
+            allImages.addAll(images);
+          }
+        }
+        
+        // Deduplicate and clean sources
+        final uniqueSources = ToolResultProcessor.deduplicateSources(allSources);
+        final cleanSources = ToolResultProcessor.cleanSources(uniqueSources);
+        
+        // Store in first tool result for writer agent to access
+        toolResults.first.output['extractedSources'] = cleanSources.map((s) => s.toJson()).toList();
+        toolResults.first.output['extractedImages'] = allImages;
+        
+        print('🔍 DEBUG: Aggregated ${cleanSources.length} sources and ${allImages.length} images for writer agent');
       }
 
       yield ChatStreamEvent.milestone(
