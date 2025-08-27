@@ -64,5 +64,14 @@
 			</array>
 		</dict>
 	</array>
+	<!-- iOS Privacy Usage Descriptions required for photo/camera access used by plugins like image_picker -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Allow Cognify to access your photo library to select images and attachments.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Allow Cognify to save images to your photo library when you choose to download or export.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Allow Cognify to use the camera to take photos for attachments.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Allow Cognify to access the microphone when recording videos.</string>
 </dict>
 </plist>

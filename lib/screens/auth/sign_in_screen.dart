@@ -118,11 +118,12 @@ class _SignInScreenState extends State<SignInScreen> {
                     ),
                     const SizedBox(height: 12),
                   ],
-                  _SignInButton(
-                    label: 'Continue with Google',
-                    icon: Icons.login,
-                    onPressed: _busy ? null : () => _handleGoogle(context),
-                  ),
+                  if (!isIOS)
+                    _SignInButton(
+                      label: 'Continue with Google',
+                      icon: Icons.login,
+                      onPressed: _busy ? null : () => _handleGoogle(context),
+                    ),
                   const SizedBox(height: 24),
                   if (_busy) const CircularProgressIndicator(),
                 ],

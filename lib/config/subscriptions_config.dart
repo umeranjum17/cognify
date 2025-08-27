@@ -6,7 +6,7 @@ class SubscriptionsConfig {
   // Get these from RevenueCat → Apps & providers → Select your Android app → SDK API Keys (Client)
   // Use Android SDK API Key (Client) starting with 'apx_' - NOT Secret API keys
   static const String rcPublicKeyAndroid = 'goog_bPnaGqdwHbhqoOYLYupZBaPWySp'; // TODO: Replace with actual Android SDK API Key (Client)
-  static const String rcPublicKeyIOS = 'appl_development_key_placeholder'; // Placeholder for development - replace with real iOS key
+  static const String rcPublicKeyIOS = 'appl_YEqixFmxSRzmfBQeDEzEVrdHzfa';
 
   // Offering and entitlement identifiers
   static const String offeringDefault = 'default';

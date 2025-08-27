@@ -1,3 +1,4 @@
+import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:provider/provider.dart';
@@ -78,33 +79,38 @@ class _PaywallScreenState extends State<PaywallScreen> {
     });
 
     try {
-      // Step 1: If user is not signed in, trigger Google Sign-In first
+      // Step 1: If user is not signed in, trigger native sign-in first (Apple on iOS, Google elsewhere)
       if (auth.uid == null || auth.uid!.isEmpty) {
+        final isIOS = Platform.isIOS;
         setState(() {
-          _error = 'Starting Google Sign-In...';
+          _error = isIOS ? 'Starting Sign in with Apple...' : 'Starting Google Sign-In...';
         });
-        
-        await auth.signInWithGoogle();
-        
+
+        if (isIOS) {
+          await auth.signInWithApple();
+        } else {
+          await auth.signInWithGoogle();
+        }
+
         // After sign-in, identify with RevenueCat using the UID
         if (auth.uid != null && auth.uid!.isNotEmpty) {
           setState(() {
             _error = 'Identifying user with RevenueCat...';
           });
-          
+
           await RevenueCatService.instance.identify(auth.uid!);
-          
+
           // Refresh offerings to show correct packages
           setState(() {
             _error = 'Refreshing subscription offerings...';
           });
-          
+
           await subs.refreshOfferings();
           await _loadOfferings();
         } else {
           setState(() {
             _busy = false;
-            _error = 'Google Sign-In failed: No UID received. Auth state: ${auth.isSignedIn}, UID: ${auth.uid}';
+            _error = 'Sign-in failed: No UID received. Auth state: ${auth.isSignedIn}, UID: ${auth.uid}';
           });
           return;
         }
@@ -319,12 +325,14 @@ class _PaywallScreenState extends State<PaywallScreen> {
                               ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
-                                children: const [
+                                children: [
                                   Text('Keep your access safe',
                                       style: TextStyle(fontWeight: FontWeight.bold)),
                                   SizedBox(height: 6),
                                   Text(
-                                    'We\'ll link your purchase to your Google account so you can restore it on any device.',
+                                    Platform.isIOS
+                                        ? 'We\'ll link your purchase to your Apple ID so you can restore it on any device.'
+                                        : 'We\'ll link your purchase to your Google account so you can restore it on any device.',
                                   ),
                                 ],
                               ),
@@ -343,7 +351,11 @@ class _PaywallScreenState extends State<PaywallScreen> {
                                         });
                                         try {
                                           final auth = context.read<FirebaseAuthProvider>();
-                                          await auth.signInWithGoogle();
+                                          if (Platform.isIOS) {
+                                            await auth.signInWithApple();
+                                          } else {
+                                            await auth.signInWithGoogle();
+                                          }
                                           // After sign-in, identify with RevenueCat using the UID
                                           if (auth.uid != null && auth.uid!.isNotEmpty) {
                                             await RevenueCatService.instance.identify(auth.uid!);
@@ -364,7 +376,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
                                         }
                                       },
                                 icon: const Icon(Icons.login),
-                                label: Text(_busy ? 'Signing in...' : 'Continue with Google'),
+                                label: Text(_busy ? 'Signing in...' : (Platform.isIOS ? 'Continue with Apple' : 'Continue with Google')),
                               ),
                             ),
                             const SizedBox(height: 8),

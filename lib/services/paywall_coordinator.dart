@@ -1,3 +1,4 @@
+import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
@@ -96,7 +97,11 @@ class PaywallCoordinator {
 
     // Sign-in gate: enforce sign-in before purchase (as per approved flow)
     if (!auth.isSignedIn) {
-      await auth.signInWithGoogle();
+      if (Platform.isIOS && !kIsWeb) {
+        await auth.signInWithApple();
+      } else {
+        await auth.signInWithGoogle();
+      }
     }
     final uid = auth.uid;
     if (uid == null || uid.isEmpty) {

@@ -100,6 +100,10 @@ class FirebaseAuthProvider extends ChangeNotifier {
   Future<void> signInWithGoogle() async {
     _lastError = null;
     try {
+      // Guard: Google Sign-In not available on iOS in our setup unless GIDClientID is configured
+      if (!kIsWeb && Platform.isIOS) {
+        throw Exception('Google Sign-In is not configured on iOS. Use Sign in with Apple.');
+      }
       if (kIsWeb) {
         final googleProvider = fb.GoogleAuthProvider();
         final cred = await _auth.signInWithPopup(googleProvider);
