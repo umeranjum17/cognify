@@ -45,6 +45,18 @@ void main() async {
   // Initialize services
   await ServicesManager().initialize();
 
+  // Ensure any previously running background service is stopped on launch
+  // This prevents crashes if a lingering service tries to post a notification without permission
+  try {
+    final backgroundService = FlutterBackgroundService();
+    final isRunning = await backgroundService.isRunning();
+    if (isRunning) {
+      backgroundService.invoke('stopService');
+    }
+  } catch (_) {
+    // Ignore - service might not be initialized yet in this install
+  }
+
   // Background service disabled to prevent permission crashes
   // Users can manually enable "Allow background activity" in Android settings if needed
   // await initializeServiceSafely();

@@ -365,34 +365,6 @@ class ModernAppHeader extends StatelessWidget implements PreferredSizeWidget {
           ],
         ),
       ),
-      PopupMenuItem<String>(
-        value: 'sources',
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.darkTextSecondary.withValues(alpha: 0.1) : AppColors.lightTextSecondary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                Icons.folder_outlined,
-                size: 18,
-                color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Text(
-              'Sources',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w500,
-                fontSize: 15,
-              ),
-            ),
-          ],
-        ),
-      ),
       const PopupMenuDivider(height: 16),
       PopupMenuItem<String>(
         value: 'settings',
@@ -495,9 +467,6 @@ class ModernAppHeader extends StatelessWidget implements PreferredSizeWidget {
     switch (value) {
       case 'history':
         router.push('/history');
-        break;
-      case 'sources':
-        router.push('/sources');
         break;
       case 'settings':
         // Show settings modal

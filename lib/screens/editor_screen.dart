@@ -94,6 +94,9 @@ class _EditorScreenState extends State<EditorScreen> {
   String? _contextInfo;
   bool _isProcessing = false;
   bool _showLoader = false;
+  bool _isCancelled = false;
+  bool _showScrollToBottom = false;
+  bool _isUserScrolling = false;
   String _selectedModel = 'mistralai/mistral-small-3.2-24b-instruct:free';
   ModelCapabilities? _currentModelCapabilities;
   double _sessionCost = 0.0;
@@ -136,7 +139,7 @@ class _EditorScreenState extends State<EditorScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: ModernAppHeader(
-        showBackButton: true,
+        showBackButton: false,
         showLogo: true,
         centerTitle: false,
         title: _buildHeaderTitle(),
@@ -232,6 +235,9 @@ class _EditorScreenState extends State<EditorScreen> {
 
     // Start auto-save for conversations
     ConversationService().startAutoSave();
+
+    // Add scroll listener for scroll-to-bottom button
+    _scrollController.addListener(_onScroll);
 
     // Check if services are ready
     _checkServicesReady();
@@ -777,7 +783,9 @@ class _EditorScreenState extends State<EditorScreen> {
 
           // Messages List (fills available space, avoids extra bottom space)
           Expanded(
-            child: _messages.isEmpty
+            child: Stack(
+              children: [
+                _messages.isEmpty
                 ? Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -858,13 +866,48 @@ class _EditorScreenState extends State<EditorScreen> {
                     itemCount: _messages.length,
                     itemBuilder: (context, index) {
                       final message = _messages[index];
-                      // Use simple key for streaming messages to avoid rebuild optimization issues
                       return KeyedSubtree(
                         key: ValueKey(message.id),
                         child: _buildMessageWidget(message, theme),
                       );
                     },
                   ),
+
+                // Minimal scroll-to-bottom button inside messages area
+                if (_showScrollToBottom)
+                  Positioned(
+                    right: 12,
+                    bottom: 12,
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () => _scrollToBottom(force: true),
+                        borderRadius: BorderRadius.circular(16),
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.surface.withValues(alpha: 0.95),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: theme.dividerColor.withValues(alpha: 0.4)),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.06),
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            Icons.keyboard_arrow_down,
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+                            size: 18,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
 
           // Compact attachment preview
@@ -1324,17 +1367,14 @@ class _EditorScreenState extends State<EditorScreen> {
                           Padding(
                             padding: const EdgeInsets.only(right: 4, bottom: 4),
                             child: IconButton(
-                              onPressed: (_isProcessing || !_servicesReady) ? null : () => _sendMessage(),
-                              icon: _showLoader
-                                  ? SizedBox(
-                                      width: 22,
-                                      height: 22,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        valueColor: AlwaysStoppedAnimation<Color>(
-                                          theme.brightness == Brightness.dark ? AppColors.darkButtonText : AppColors.lightButtonText,
-                                        ),
-                                      ),
+                              onPressed: _isProcessing 
+                                  ? () => _cancelMessage()
+                                  : (_servicesReady ? () => _sendMessage() : null),
+                              icon: _isProcessing
+                                  ? Icon(
+                                      Icons.close,
+                                      size: 20,
+                                      color: theme.colorScheme.error,
                                     )
                                   : Icon(
                                       Icons.keyboard_arrow_up,
@@ -1343,7 +1383,7 @@ class _EditorScreenState extends State<EditorScreen> {
                                     ),
                               style: IconButton.styleFrom(
                                 backgroundColor: _isProcessing
-                                    ? (theme.brightness == Brightness.dark ? AppColors.darkTextMuted : AppColors.lightTextMuted)
+                                    ? theme.colorScheme.surface
                                     : (theme.brightness == Brightness.dark ? AppColors.darkAccent : AppColors.lightAccent),
                                 padding: const EdgeInsets.all(8),
                                 minimumSize: const Size(38, 38),
@@ -3104,7 +3144,23 @@ class _EditorScreenState extends State<EditorScreen> {
 
 
 
-  void _scrollToBottom() {
+  void _onScroll() {
+    if (!mounted || !_scrollController.hasClients) return;
+
+    final position = _scrollController.position;
+    final isAtBottom = position.pixels >= (position.maxScrollExtent - 100); // 100px threshold
+    final shouldShow = !isAtBottom;
+
+    if (_showScrollToBottom != shouldShow || _isUserScrolling == isAtBottom) {
+      setState(() {
+        _showScrollToBottom = shouldShow;
+        _isUserScrolling = !isAtBottom; // when not at bottom, treat as user scrolling/up
+      });
+    }
+  }
+
+  void _scrollToBottom({bool force = false}) {
+    if (!force) return; // never auto-scroll unless explicitly forced
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
@@ -3116,9 +3172,32 @@ class _EditorScreenState extends State<EditorScreen> {
     });
   }
 
+  void _cancelMessage() {
+    if (_isProcessing) {
+      setState(() {
+        _isCancelled = true;
+        _isProcessing = false;
+        _showLoader = false;
+      });
+      
+      // Remove the processing message
+      final processingMessageIndex = _messages.indexWhere((m) => m.isProcessing == true);
+      if (processingMessageIndex != -1) {
+        setState(() {
+          _messages.removeAt(processingMessageIndex);
+        });
+      }
+      
+      print('🚫 Message cancelled by user');
+    }
+  }
+
   Future<void> _sendMessage([String? initialText]) async {
     final textToSend = initialText ?? _messageController.text.trim();
     if (textToSend.isEmpty && _attachments.isEmpty) return;
+
+    // Reset cancellation flag
+    _isCancelled = false;
 
     // Check if services are ready
     if (!_servicesReady) {
@@ -3194,10 +3273,26 @@ class _EditorScreenState extends State<EditorScreen> {
       _currentProgress = null;
     });
 
+    // Save conversation immediately after adding user message
+    if (_currentConversationId != null) {
+      ConversationService().saveConversation(
+        id: _currentConversationId!,
+        title: _title.isNotEmpty ? _title : 'Untitled Conversation',
+        messages: _messages,
+        metadata: {
+          'sessionCost': _sessionCost,
+          'selectedModel': _selectedModel,
+          'selectedPersonality': _selectedPersonality,
+          'selectedLanguage': _selectedLanguage,
+        },
+      );
+    }
+
     // Dismiss the keyboard after sending the message
     _messageFocusNode.unfocus();
 
-    // _scrollToBottom();
+    // Force scroll only when user sends a message
+    _scrollToBottom(force: true);
 
     // Add processing message
     final processingMessage = Message(
@@ -3214,7 +3309,7 @@ class _EditorScreenState extends State<EditorScreen> {
       _showLoader = true;
     });
 
-    // _scrollToBottom();
+    // Do not auto-scroll here
 
     // Create streaming message placeholder
     final streamingMessage = Message(
@@ -3328,6 +3423,11 @@ class _EditorScreenState extends State<EditorScreen> {
             );
 
             await for (final event in stream) {
+              // Check if operation was cancelled
+              if (_isCancelled) {
+                print('🚫 Breaking stream loop due to cancellation');
+                break;
+              }
               
         // Handle both Map<String, dynamic> (legacy) and ChatStreamEvent (unified) formats
          
@@ -3614,7 +3714,7 @@ class _EditorScreenState extends State<EditorScreen> {
       // Update knowledge graph with new conversation data
       await _updateKnowledgeGraph();
 
-      // _scrollToBottom();
+      // Do not auto-scroll on completion
     } catch (e) {
       // Stop vibration on error
       try {
