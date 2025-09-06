@@ -37,6 +37,7 @@ import '../services/premium_feature_gate.dart';
 import '../services/paywall_coordinator.dart';
 import '../providers/subscription_provider.dart';
 import '../providers/app_access_provider.dart';
+import '../providers/tab_provider.dart';
 import '../theme/app_theme.dart';
 import '../utils/logger.dart';
 import '../widgets/cost_display_widget.dart';
@@ -59,6 +60,7 @@ class EditorScreen extends StatefulWidget {
   final String? prompt;
   final String? role;
   final String? contextInfo;
+  final bool showAppBar;
 
   const EditorScreen({
     super.key,
@@ -66,6 +68,7 @@ class EditorScreen extends StatefulWidget {
     this.prompt,
     this.role,
     this.contextInfo,
+    this.showAppBar = true,
   });
 
   @override
@@ -138,7 +141,7 @@ class _EditorScreenState extends State<EditorScreen> {
     final theme = Theme.of(context);
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: ModernAppHeader(
+      appBar: widget.showAppBar ? ModernAppHeader(
         showBackButton: false,
         showLogo: true,
         centerTitle: false,
@@ -149,7 +152,7 @@ class _EditorScreenState extends State<EditorScreen> {
             _showSettings();
           }
         },
-      ),
+      ) : null,
       body: GestureDetector(
         onTap: () {
           if (_showModeDropdown) {
@@ -3221,15 +3224,19 @@ class _EditorScreenState extends State<EditorScreen> {
       return;
     }
 
-    // Set conversation title on first message
+    // Set human-friendly header title on first message
     if (_isFirstMessage && textToSend.isNotEmpty) {
-      final suggestedTitle = textToSend.length > 50
-          ? '${textToSend.substring(0, 50)}...'
-          : textToSend;
+      final raw = textToSend.replaceAll('\n', ' ').trim();
+      final snippet = raw.length > 40 ? '${raw.substring(0, 40)}…' : raw;
+      // Update local title for persistence with a richer label
       setState(() {
-        _title = '${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year} - $suggestedTitle';
+        _title = snippet.isNotEmpty ? snippet : 'New Conversation';
         _isFirstMessage = false;
       });
+      // Update tab label to the concise snippet (no date prefix)
+      if (mounted) {
+        context.read<TabProvider>().updateActiveTabTitle(_title);
+      }
     }
 
     final messageId = _uuid.v4();

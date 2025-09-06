@@ -1,8 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
-    <!-- Foreground service + wake lock permissions for Android 14+ compliance -->
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <!-- Remove Foreground service permissions; app does not run a user-visible foreground service -->
+    <!-- Play Console requires declaration if present, so we remove them to avoid FGS policy prompts -->
+    <!-- If background service is enabled later, re-add specific foregroundServiceType and declare in Console -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     
     <!-- Network Permissions -->
@@ -13,8 +13,8 @@
     <!-- Background Processing - Optional, gracefully handled -->
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     
-    <!-- Explicitly remove Advertising ID permission added by transitive dependencies -->
-    <uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="remove" />
+    <!-- Advertising ID permission required for Firebase Analytics and Google Sign-In -->
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
 
     <!-- Notification -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
@@ -117,29 +117,36 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
-        <!-- Explicitly declare that this app does NOT access advertising ID -->
+        <!-- Advertising ID configuration for Firebase Analytics -->
         <meta-data
             android:name="google_analytics_adid_collection_enabled"
-            android:value="false" />
+            android:value="true" />
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-3940256099942544~3347511713" />
+        
+        <!-- Explicitly declare no foreground services are used -->
         <meta-data
             android:name="com.google.android.gms.ads.DELAY_APP_MEASUREMENT_INIT"
             android:value="true" />
+        <meta-data
+            android:name="firebase_analytics_collection_enabled"
+            android:value="true" />
         
-        <!-- Disable flutter_background_service auto-start to prevent crashes until fully configured -->
+        <!-- Foreground Service Declaration - explicitly state none are used -->
+        <meta-data
+            android:name="android.app.uses_foreground_service"
+            android:value="false" />
+        
+        <!-- Remove flutter_background_service declarations to avoid FGS requirements -->
         <receiver
             android:name="id.flutter.flutter_background_service.WatchdogReceiver"
             tools:node="remove" />
         <receiver
             android:name="id.flutter.flutter_background_service.BootReceiver"
             tools:node="remove" />
-
-        <!-- Keep service declared for manifest merge, but disable to avoid unintended starts -->
         <service
             android:name="id.flutter.flutter_background_service.BackgroundService"
-            android:enabled="false"
-            android:exported="false"
-            android:stopWithTask="false"
-            android:foregroundServiceType="dataSync"
-            tools:replace="android:enabled,android:foregroundServiceType,android:exported,android:stopWithTask" />
+            tools:node="remove" />
     </application>
 </manifest>

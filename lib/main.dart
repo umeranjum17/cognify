@@ -20,6 +20,7 @@ import 'services/revenuecat_service.dart';
 
 import 'providers/mode_config_provider.dart';
 import 'providers/oauth_auth_provider.dart';
+import 'providers/tab_provider.dart';
 import 'services/services_manager.dart';
 import 'services/sharing_service.dart';
 import 'services/user_service.dart';
@@ -308,6 +309,8 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
         ),
         // Subscription provider without immediate initialization
         ChangeNotifierProvider(create: (_) => SubscriptionProvider()),
+        // Tab provider for managing editor tabs
+        ChangeNotifierProvider(create: (_) => TabProvider()),
         // Access gating provider (tester whitelist + RevenueCat entitlement)
         ProxyProvider2<FirebaseAuthProvider, SubscriptionProvider, AppAccessProvider>(
           update: (context, firebaseAuth, subscription, previous) {

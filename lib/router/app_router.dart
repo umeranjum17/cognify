@@ -10,6 +10,7 @@ import '../providers/app_access_provider.dart';
 
 import '../screens/home_screen.dart';
 import '../screens/editor_screen.dart';
+import '../screens/tabbed_editor_screen.dart';
 import '../screens/sources_screen.dart';
 import '../screens/streaming_test_screen.dart';
 import '../screens/conversation_history_screen.dart';
@@ -170,13 +171,17 @@ class AppRouter {
           pageBuilder: (context, state) {
             final prompt = state.uri.queryParameters['prompt'];
             final conversationId = state.uri.queryParameters['conversationId'];
+            final role = state.uri.queryParameters['role'];
+            final contextInfo = state.uri.queryParameters['contextInfo'];
             return MaterialPage(
               key: state.pageKey,
               child: AuthGuard(
                 redirectTo: '/',
-                child: EditorScreen(
+                child: TabbedEditorScreen(
                   prompt: prompt,
                   conversationId: conversationId,
+                  role: role,
+                  contextInfo: contextInfo,
                 ),
               ),
             );
