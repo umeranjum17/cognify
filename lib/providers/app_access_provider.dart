@@ -7,9 +7,8 @@ import '../services/access_service.dart';
 
 /// Tracks high-level access flags for the signed-in user.
 ///
-/// Premium subscriptions have been sunset in favour of a token-based system,
-/// so `hasPremiumAccess` now defaults to true for all authenticated users.
-/// Testers remain whitelisted for internal tooling/experiments.
+/// Now uses RevenueCat subscription status to determine premium access.
+/// Premium access is granted when user has an active RevenueCat entitlement.
 class AppAccessProvider extends ChangeNotifier {
   AppAccessProvider({
     required FirebaseAuthProvider authProvider,
@@ -25,7 +24,7 @@ class AppAccessProvider extends ChangeNotifier {
   final SubscriptionProvider _subs;
 
   bool _isTester = false;
-  bool _hasPremiumAccess = true;
+  bool _hasPremiumAccess = false;
 
   bool get isTester => _isTester;
   bool get hasPremiumAccess => _hasPremiumAccess;
@@ -33,16 +32,23 @@ class AppAccessProvider extends ChangeNotifier {
   String? get userEmail => _auth.user?.email;
 
   void _evaluate() {
-    // Tokens-based access is universal; no tester whitelist needed
-    const hasAccess = true;
+    // Check actual RevenueCat subscription status
+    final hasActiveSubscription = _subs.isEntitled;
+    
+    // No tester whitelist in production
     const tester = false;
 
-    AccessService.instance.update(hasPremium: hasAccess, isTester: tester);
+    AccessService.instance.update(hasPremium: hasActiveSubscription, isTester: tester);
 
-    if (tester != _isTester || hasAccess != _hasPremiumAccess) {
+    if (tester != _isTester || hasActiveSubscription != _hasPremiumAccess) {
       _isTester = tester;
-      _hasPremiumAccess = hasAccess;
+      _hasPremiumAccess = hasActiveSubscription;
       notifyListeners();
+      
+      debugPrint('🔐 [AppAccessProvider] Access updated:');
+      debugPrint('  - Has premium: $hasActiveSubscription');
+      debugPrint('  - Subscription state: ${_subs.state}');
+      debugPrint('  - Is tester: $tester');
     }
   }
 

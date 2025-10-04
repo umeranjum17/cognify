@@ -1,25 +1,35 @@
 import 'dart:async';
-
 import 'package:flutter/foundation.dart';
 
-import '../models/usage_quota.dart';
-import '../services/usage_quota_service.dart';
+import '../services/subscription_credits_service.dart';
 import 'firebase_auth_provider.dart';
 
-/// Exposes realtime usage token information for the signed-in user.
+/// Provider for user's subscription-based credits (monthly allowance).
+/// Syncs with Firestore subscription data updated by RevenueCat webhook.
+/// 
+/// This replaces the old SharedPreferences-based quota system with a 
+/// Firestore-backed system that syncs with RevenueCat subscriptions.
 class UsageQuotaProvider extends ChangeNotifier {
   FirebaseAuthProvider? _auth;
-  StreamSubscription<UsageQuota>? _subscription;
+  StreamSubscription<SubscriptionCredits>? _creditsSub;
 
-  UsageQuota? _current;
+  SubscriptionCredits? _credits;
   bool _loading = false;
   Object? _error;
 
-  UsageQuota? get quota => _current;
+  SubscriptionCredits? get credits => _credits;
   bool get isLoading => _loading;
   Object? get lastError => _error;
-  bool get isExceeded => _current?.isExceeded ?? false;
-  int get remainingTokens => _current?.remaining ?? 0;
+  
+  // Legacy compatibility getters (for existing UI code)
+  int get remainingTokens => _credits?.remaining ?? 0;
+  int get remaining => _credits?.remaining ?? 0;
+  bool get isExceeded => _credits?.isExceeded ?? false;
+  bool get hasQuota => remaining > 0;
+  int get limit => _credits?.monthlyAllowance ?? 0;
+  int get used => _credits?.consumed ?? 0;
+  double get percentUsed => _credits?.percentUsed ?? 0.0;
+  SubscriptionCredits? get quota => _credits; // For compatibility
 
   String? get _uid => _auth?.uid;
 
@@ -38,15 +48,17 @@ class UsageQuotaProvider extends ChangeNotifier {
     _startStreamIfPossible(force: true);
   }
 
-  Future<UsageQuota?> refresh() async {
+  Future<SubscriptionCredits?> refresh() async {
     final uid = _uid;
     if (uid == null) return null;
+    
     _loading = true;
     notifyListeners();
+    
     try {
-      final quota = await UsageQuotaService.instance.fetchQuota(uid);
-      _current = quota;
-      return quota;
+      final credits = await SubscriptionCreditsService.instance.fetchCredits(uid);
+      _credits = credits;
+      return credits;
     } catch (e) {
       _error = e;
       rethrow;
@@ -56,19 +68,20 @@ class UsageQuotaProvider extends ChangeNotifier {
     }
   }
 
-  Future<UsageQuota> consume({int amount = 1}) async {
+  Future<SubscriptionCredits> consume({int amount = 1}) async {
     final uid = _uid;
     if (uid == null) {
-      throw StateError('Cannot consume quota without a signed-in user');
+      throw StateError('Cannot consume credits without a signed-in user');
     }
+    
     try {
-      final quota = await UsageQuotaService.instance.consume(
+      final credits = await SubscriptionCreditsService.instance.consume(
         uid: uid,
         amount: amount,
       );
-      _current = quota;
+      _credits = credits;
       notifyListeners();
-      return quota;
+      return credits;
     } on QuotaExceededException catch (e) {
       _error = e;
       notifyListeners();
@@ -76,10 +89,10 @@ class UsageQuotaProvider extends ChangeNotifier {
     }
   }
 
+  // Note: Refund is not supported in the new subscription-based system
+  // Credits are managed by RevenueCat subscription lifecycle
   Future<void> refund({int amount = 1}) async {
-    final uid = _uid;
-    if (uid == null) return;
-    await UsageQuotaService.instance.refund(uid: uid, amount: amount);
+    debugPrint('⚠️ [UsageQuotaProvider] Refund not supported in subscription-based credits');
   }
 
   void _handleAuthChange() {
@@ -89,38 +102,45 @@ class UsageQuotaProvider extends ChangeNotifier {
   void _startStreamIfPossible({bool force = false}) {
     final uid = _uid;
     if (uid == null) {
-      _subscription?.cancel();
-      _subscription = null;
-      _current = null;
+      _creditsSub?.cancel();
+      _creditsSub = null;
+      _credits = null;
       notifyListeners();
       return;
     }
 
-    if (!force && _subscription != null) {
+    if (!force && _creditsSub != null) {
       return;
     }
 
-    _subscription?.cancel();
-    _subscription = UsageQuotaService.instance
-        .watchQuota(uid)
+    _creditsSub?.cancel();
+    _creditsSub = SubscriptionCreditsService.instance
+        .watchCredits(uid)
         .listen(
-          (quota) {
-            _current = quota;
+          (credits) {
+            _credits = credits;
             _loading = false;
             _error = null;
             notifyListeners();
+            
+            debugPrint('📊 [UsageQuotaProvider] Credits updated:');
+            debugPrint('  - Status: ${credits.status}');
+            debugPrint('  - Tier: ${credits.tier}');
+            debugPrint('  - Remaining: ${credits.remaining}/${credits.monthlyAllowance}');
+            debugPrint('  - Period: ${credits.currentPeriodStart.toIso8601String()} → ${credits.currentPeriodEnd.toIso8601String()}');
           },
           onError: (err) {
             _error = err;
             _loading = false;
             notifyListeners();
+            debugPrint('❌ [UsageQuotaProvider] Stream error: $err');
           },
         );
   }
 
   @override
   void dispose() {
-    _subscription?.cancel();
+    _creditsSub?.cancel();
     _auth?.removeListener(_handleAuthChange);
     super.dispose();
   }

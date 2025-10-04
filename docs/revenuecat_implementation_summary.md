@@ -1,77 +1,170 @@
-# RevenueCat Paywall Flow Implementation Summary
+# RevenueCat Monthly Credits Implementation Summary
 
-## Changes Made
+## What Was Done
 
-### 1. Updated RevenueCat Configuration
-**File:** `lib/config/subscriptions_config.dart`
-- Updated Android key placeholder to use proper format (`apx_placeholder_replace_with_real_key`)
-- Added clear comments about getting the correct Android SDK API Key (Client) from RevenueCat
-- Emphasized NOT to use Secret API keys in the app
+Implemented a complete RevenueCat + Firestore subscription system with monthly credit allowances that reset automatically each billing period.
 
-### 2. Fixed Subscription Provider Logout Issue
-**File:** `lib/providers/subscription_provider.dart`
-- **Problem:** Calling `Purchases.logOut()` when the current RC user is anonymous causes errors
-- **Solution:** Removed the logout call when user signs out, only refresh offerings and customer info
-- **Impact:** Prevents "Called logOut but the current user is anonymous" errors
+## Key Changes
 
-### 3. Enhanced Paywall Purchase Flow
-**File:** `lib/screens/subscription/paywall_screen.dart`
-- **Updated `_purchase()` method:** Now implements the approved Android-first flow:
-  1. Check if user is signed in
-  2. If not signed in, trigger Google Sign-In first
-  3. After sign-in, identify with RevenueCat using the UID
-  4. Refresh offerings to show correct packages
-  5. Proceed with purchase
-- **Updated "Continue with Google" button:** Also identifies with RevenueCat after sign-in
-- **Fixed imports:** Removed duplicate import statements
+### 1. Backend Webhook (`api/rc/webhook.ts`) ✅
+- **Before**: Simple credits grant/deduct, no period tracking
+- **After**: Full subscription lifecycle management
+  - Extracts period dates from RevenueCat payload
+  - Determines tier from product ID
+  - Stores in Firestore: `users/{uid}/subscription/current`
+  - Handles: INITIAL_PURCHASE, RENEWAL, CANCELLATION, EXPIRATION, REFUND
+  - Resets consumed credits on renewal
 
-## Approved User Flow (Android)
+### 2. New Service: `SubscriptionCreditsService` ✅
+- **Purpose**: Firestore-backed credits with RevenueCat sync
+- **Features**:
+  - Real-time streaming from Firestore
+  - Auto-detects period expiration
+  - Auto-resets credits when period expires
+  - Atomic consumption via Firestore transactions
+  - No local storage (SharedPreferences removed)
 
-1. **User taps premium-gated action** → navigate to PaywallScreen
-2. **Paywall loads offerings** (requires correct `apx_` key)
-3. **User taps Continue:**
-   - Google Sign-In (Firebase)
-   - On success: `RevenueCatService.identify(uid)`
-   - Then `RevenueCatService.purchasePackage(selected)`
-4. **On purchase success:** return to previous screen and show entitlement enabled
+### 3. Updated `UsageQuotaProvider` ✅
+- **Before**: Used local SharedPreferences `UsageQuotaService`
+- **After**: Uses Firestore `SubscriptionCreditsService`
+- **Maintains**: Legacy API compatibility for existing UI code
 
-## Key Benefits
+### 4. Updated `AppAccessProvider` ✅
+- **Before**: Hardcoded `hasPremiumAccess = true`
+- **After**: Uses actual RevenueCat entitlement status
+- Now properly gates features based on subscription
 
-- **Ensures RC App User ID is linked to Firebase UID** at purchase time
-- **Avoids anonymous-only purchases** in the chosen flow
-- **Keeps cross-device restore and account linking sane**
-- **Prevents "anonymous logout" errors** by not calling logout on anonymous users
+### 5. Documentation ✅
+- Created comprehensive architecture guide
+- Included data flow examples
+- Testing scenarios
+- Troubleshooting guide
+- Migration notes
+
+## How It Works
+
+```
+USER SUBSCRIBES → REVENUECAT WEBHOOK → FIRESTORE UPDATE → CLIENT STREAM → UI UPDATE
+                                               ↓
+                                  Monthly reset on period expiration
+                                               ↓
+                                    Consumption tracked in Firestore
+```
+
+## Monthly Reset Logic
+
+**Event-Driven (No Scheduled Jobs!)**
+
+1. RevenueCat tracks billing period end date
+2. Client detects when current time > period end
+3. Auto-resets consumed to 0, updates period dates
+4. Happens on:
+   - Every Firestore watch event
+   - Manual fetch
+   - Before consumption
+
+## Architecture Benefits
+
+✅ **RevenueCat as authority** - Subscription truth lives in RevenueCat  
+✅ **Minimal local state** - Client only caches, doesn't own data  
+✅ **Auto-sync on events** - Webhook keeps Firestore in sync  
+✅ **Period-based reset** - No scheduled jobs needed  
+✅ **Offline resilience** - Firestore cache works offline  
+✅ **Fail-closed security** - Defaults to gated when unavailable  
+
+## Firestore Structure
+
+```
+users/{uid}/
+  └── subscription/
+      └── current/
+          ├── status: 'active' | 'cancelled' | 'expired' | 'free'
+          ├── tier: 'premium_monthly' | 'premium_annual' | 'free'
+          ├── productId: 'premium_monthly'
+          ├── currentPeriodStart: Timestamp
+          ├── currentPeriodEnd: Timestamp
+          ├── monthlyAllowance: 100
+          ├── consumed: 0
+          └── lastSyncedFromRC: Timestamp
+```
+
+## Configuration
+
+**Tier Allowances (Backend)**:
+```typescript
+const TIER_ALLOWANCES = {
+  'premium_monthly': 100,
+  'premium_annual': 100,
+  'free': 10,
+};
+```
+
+**Product IDs**:
+- `premium_monthly` - 100 credits/month
+- `premium_annual` - 100 credits/month
+- `free` - 10 credits/month (fallback)
+
+## Testing Checklist
+
+- [ ] Configure RevenueCat webhook URL in dashboard
+- [ ] Set `RC_WEBHOOK_SECRET` environment variable
+- [ ] Test purchase in RevenueCat sandbox
+- [ ] Verify Firestore `users/{uid}/subscription/current` created
+- [ ] Check client receives credits
+- [ ] Manually set `currentPeriodEnd` to past date
+- [ ] Verify auto-reset on app open
+- [ ] Test consumption and quota exceeded
+- [ ] Test cancellation flow
 
 ## Next Steps
 
-1. **Get the Android SDK API Key (Client)** from RevenueCat:
-   - RevenueCat → Apps & providers → Select your Android app → SDK API Keys (Client)
-   - Copy the Android SDK API Key (starts with `apx_...`)
+1. **Deploy webhook** - Ensure Vercel function is deployed with env vars
+2. **Configure RevenueCat** - Add webhook URL to RevenueCat dashboard
+3. **Test in sandbox** - Use RevenueCat test environment
+4. **Monitor logs** - Check Vercel and RevenueCat for errors
+5. **Production rollout** - Enable for real users
 
-2. **Replace the placeholder key:**
-   - Update `SubscriptionsConfig.rcPublicKeyAndroid` in `lib/config/subscriptions_config.dart`
+## Breaking Changes
 
-3. **Do a full hot-restart** (not just hot-reload) after changing the key
+⚠️ **Important for existing users**:
 
-4. **Test the flow:**
-   - Open paywall → offerings load with prices
-   - Tap Continue → Google Sign-In → app returns with UID
-   - RC identifies to UID → purchase completes
-   - Entitlement premium is active in `CustomerInfo` → gated premium toggles on
-   - Restore purchases flow works from PaywallScreen
+- `UsageQuotaProvider.quota` now returns `SubscriptionCredits` (not `UsageQuota`)
+- `consumeRequests()` method removed - use `consume()` instead
+- `refund()` no longer supported (managed by RevenueCat lifecycle)
+- Legacy getters maintained for UI compatibility
 
 ## Files Modified
 
-- `lib/config/subscriptions_config.dart` - Updated key format and comments
-- `lib/providers/subscription_provider.dart` - Fixed anonymous logout issue
-- `lib/screens/subscription/paywall_screen.dart` - Enhanced purchase flow with sign-in
-- `test_revenuecat_flow.dart` - Created test file for verification
+✅ `api/rc/webhook.ts` - Enhanced webhook with period tracking  
+✅ `lib/services/subscription_credits_service.dart` - New Firestore service  
+✅ `lib/providers/usage_quota_provider.dart` - Updated to use new service  
+✅ `lib/providers/app_access_provider.dart` - Uses real subscription status  
+✅ `docs/revenuecat_monthly_credits_architecture.md` - Full documentation  
 
-## Error Prevention
+## Monitoring
 
-- **Secret API Key Error (7243):** Fixed by using Android SDK API Key (Client) format
-- **Anonymous Logout Error:** Fixed by not calling logout on anonymous users
-- **Provider Lookup Error:** Fixed by ensuring proper provider mounting and hot-restart
-- **Empty Offerings:** Fixed by using correct API key format
+**Check webhook health**:
+- Vercel logs: `/api/rc/webhook` function
+- RevenueCat events: Firestore `revenuecat_events` collection
+- User subscriptions: Firestore `users/{uid}/subscription/current`
 
-The implementation now follows the approved Android-first flow and should work correctly once the real RevenueCat API key is provided. 
+**Debug commands**:
+```dart
+// Force refresh credits
+await quotaProvider.refresh();
+
+// Check current state
+print('Remaining: ${quotaProvider.remaining}');
+print('Allowance: ${quotaProvider.limit}');
+print('Status: ${quotaProvider.credits?.status}');
+```
+
+## Support
+
+See full documentation: `docs/revenuecat_monthly_credits_architecture.md`
+
+For troubleshooting, check:
+1. RevenueCat dashboard → Events
+2. Vercel logs → `/api/rc/webhook`
+3. Firestore → `revenuecat_events` collection
+4. Firestore → `users/{uid}/subscription/current` document
