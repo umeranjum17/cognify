@@ -186,7 +186,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
     final packages = offerings?.current?.availablePackages ?? [];
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Go Premium')),
+      appBar: AppBar(title: const Text('Token Access')),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -195,15 +195,15 @@ class _PaywallScreenState extends State<PaywallScreen> {
               padding: const EdgeInsets.all(20),
               child: Column(
                 children: [
-                  const Icon(Icons.star, size: 56),
+                  const Icon(Icons.token, size: 56),
                   const SizedBox(height: 12),
                   Text(
-                    'Unlock Premium',
+                    'Tokens Overview',
                     style: Theme.of(context).textTheme.headlineSmall,
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Secure your subscription to unlock ${AppSecrets.premiumRequestsPerMonth} premium AI requests every month and restore access on any device.',
+                    'Cognify now runs on request tokens. Every account starts with ${AppSecrets.initialTokenAllocation} tokens and top-up options are coming soon.',
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 24),

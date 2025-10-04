@@ -37,7 +37,9 @@ class PaywallCoordinator {
   /// Direct native purchase flow for globe tap and modal upgrade
   /// Returns true if purchase was successful, false if cancelled/failed
   static Future<bool> showNativePurchaseFlow(BuildContext context) async {
-    debugPrint('🛒 Purchases disabled: premium subscriptions replaced by tokens.');
+    debugPrint(
+      '🛒 Purchases disabled: premium subscriptions replaced by tokens.',
+    );
     return false;
   }
 }

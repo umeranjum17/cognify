@@ -42,14 +42,14 @@ class UsageQuotaService {
       await ref.set(quota.toJson(), SetOptions(merge: true));
       return quota;
     }
-    return UsageQuota.fromJson(snapshot.data()!, allocation: _defaultAllocation);
+    return UsageQuota.fromJson(
+      snapshot.data()!,
+      allocation: _defaultAllocation,
+    );
   }
 
   /// Consumes [amount] tokens. Throws [QuotaExceededException] when exhausted.
-  Future<UsageQuota> consume({
-    required String uid,
-    int amount = 1,
-  }) async {
+  Future<UsageQuota> consume({required String uid, int amount = 1}) async {
     if (amount <= 0) {
       return fetchQuota(uid);
     }
@@ -96,10 +96,7 @@ class UsageQuotaService {
   }
 
   /// Reverts a prior consumption in failure scenarios.
-  Future<void> refund({
-    required String uid,
-    int amount = 1,
-  }) async {
+  Future<void> refund({required String uid, int amount = 1}) async {
     if (amount <= 0) {
       return;
     }
@@ -138,7 +135,8 @@ class UsageQuotaService {
 
     if (data != null) {
       total = (data['totalTokens'] as num?)?.toInt() ?? total;
-      consumed = (data['tokensConsumed'] as num?)?.toInt() ??
+      consumed =
+          (data['tokensConsumed'] as num?)?.toInt() ??
           (data['requestsUsed'] as num?)?.toInt() ??
           0;
 

@@ -23,9 +23,7 @@ class UsageQuotaProvider extends ChangeNotifier {
 
   String? get _uid => _auth?.uid;
 
-  void attach({
-    required FirebaseAuthProvider auth,
-  }) {
+  void attach({required FirebaseAuthProvider auth}) {
     final authChanged = _auth != auth;
 
     if (authChanged && _auth != null) {
@@ -81,10 +79,7 @@ class UsageQuotaProvider extends ChangeNotifier {
   Future<void> refund({int amount = 1}) async {
     final uid = _uid;
     if (uid == null) return;
-    await UsageQuotaService.instance.refund(
-      uid: uid,
-      amount: amount,
-    );
+    await UsageQuotaService.instance.refund(uid: uid, amount: amount);
   }
 
   void _handleAuthChange() {
@@ -106,19 +101,21 @@ class UsageQuotaProvider extends ChangeNotifier {
     }
 
     _subscription?.cancel();
-    _subscription = UsageQuotaService.instance.watchQuota(uid).listen(
-      (quota) {
-        _current = quota;
-        _loading = false;
-        _error = null;
-        notifyListeners();
-      },
-      onError: (err) {
-        _error = err;
-        _loading = false;
-        notifyListeners();
-      },
-    );
+    _subscription = UsageQuotaService.instance
+        .watchQuota(uid)
+        .listen(
+          (quota) {
+            _current = quota;
+            _loading = false;
+            _error = null;
+            notifyListeners();
+          },
+          onError: (err) {
+            _error = err;
+            _loading = false;
+            notifyListeners();
+          },
+        );
   }
 
   @override

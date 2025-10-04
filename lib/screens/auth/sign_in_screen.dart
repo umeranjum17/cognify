@@ -93,8 +93,8 @@ class _SignInScreenState extends State<SignInScreen> {
                   Text(
                     'Cognify',
                     style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   // Project Pitch
@@ -102,8 +102,8 @@ class _SignInScreenState extends State<SignInScreen> {
                     'Your AI-powered writing assistant.\nCreate, edit, and enhance content with advanced language models.',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: Theme.of(context).textTheme.bodySmall?.color,
-                        ),
+                      color: Theme.of(context).textTheme.bodySmall?.color,
+                    ),
                   ),
                   const SizedBox(height: 32),
                   // Sign-in prompt
@@ -112,12 +112,12 @@ class _SignInScreenState extends State<SignInScreen> {
                   Text(
                     'Sign in to continue',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Sync your subscription, restore purchases, and access your monthly quota of ${AppSecrets.freeRequestsPerMonth} free requests.',
+                    'Sign in to sync your workspace and access your starter balance of ${AppSecrets.initialTokenAllocation} tokens for Cognify.',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),

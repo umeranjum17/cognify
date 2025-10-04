@@ -15,8 +15,8 @@ class AppAccessProvider extends ChangeNotifier {
   AppAccessProvider({
     required FirebaseAuthProvider authProvider,
     required SubscriptionProvider subscriptionProvider,
-  })  : _auth = authProvider,
-        _subs = subscriptionProvider {
+  }) : _auth = authProvider,
+       _subs = subscriptionProvider {
     _auth.addListener(_evaluate);
     _subs.addListener(_evaluate);
     _evaluate();
@@ -40,10 +40,7 @@ class AppAccessProvider extends ChangeNotifier {
     // Tokens-based access is universal; testers still surfaced for diagnostics.
     const hasAccess = true;
 
-    AccessService.instance.update(
-      hasPremium: hasAccess,
-      isTester: tester,
-    );
+    AccessService.instance.update(hasPremium: hasAccess, isTester: tester);
 
     if (tester != _isTester || hasAccess != _hasPremiumAccess) {
       _isTester = tester;

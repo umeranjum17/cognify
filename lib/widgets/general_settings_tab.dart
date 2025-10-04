@@ -1,16 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:firebase_auth/firebase_auth.dart' as fb;
-import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:go_router/go_router.dart';
 
 import '../providers/firebase_auth_provider.dart';
-import '../providers/subscription_provider.dart';
 import '../providers/app_access_provider.dart';
 import '../providers/usage_quota_provider.dart';
 import '../config/app_secrets.dart';
-import '../services/revenuecat_service.dart';
 import '../services/data_deletion_service.dart';
 import '../theme/app_theme.dart';
 
@@ -53,7 +49,6 @@ class _GeneralSettingsTabState extends State<GeneralSettingsTab> {
           context,
           listen: false,
         );
-        await RevenueCatService.instance.reset();
         await authProvider.signOut();
 
         if (mounted) {
@@ -308,50 +303,33 @@ class _GeneralSettingsTabState extends State<GeneralSettingsTab> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final authProvider = context.watch<FirebaseAuthProvider>();
-    final subscriptionProvider = context.watch<SubscriptionProvider>();
     final accessProvider = context.watch<AppAccessProvider>();
     final quotaProvider = context.watch<UsageQuotaProvider>();
     final user = authProvider.user;
 
-    final planName = accessProvider.hasPremiumAccess ? 'Premium' : 'Free';
-    final entitlementSubtitle = subscriptionProvider.isEntitled
-        ? 'Entitlement active'
-        : 'Upgrade to unlock full access';
-
-    final expiration = subscriptionProvider.customerInfo?.latestExpirationDate;
-    final expirationText = expiration != null
-        ? 'Renews $expiration'
-        : null;
-
     final quota = quotaProvider.quota;
-    final int limit = accessProvider.isTester
+    final int totalTokens =
+        quota?.totalTokens ?? AppSecrets.initialTokenAllocation;
+    final int remainingTokens = accessProvider.isTester
+        ? totalTokens
+        : quota?.remaining ?? totalTokens;
+    final int consumedTokens = accessProvider.isTester
         ? 0
-        : quota?.limit ??
-              (accessProvider.hasPremiumAccess
-                  ? AppSecrets.premiumRequestsPerMonth
-                  : AppSecrets.freeRequestsPerMonth);
-    final int remaining = accessProvider.isTester
-        ? 0
-        : quota?.remaining ?? limit;
+        : quota?.tokensConsumed ?? (totalTokens - remainingTokens);
 
-    String quotaLine;
+    String tokenValue;
+    String tokenSubtitle;
     if (accessProvider.isTester) {
-      quotaLine = 'Unlimited requests (tester access)';
+      tokenValue = 'Unlimited';
+      tokenSubtitle = 'Tester access • tokens are not limited';
     } else if (quotaProvider.isLoading && quota == null) {
-      quotaLine = 'Calculating remaining requests…';
+      tokenValue = 'Calculating…';
+      tokenSubtitle = 'Fetching your current token balance';
     } else {
-      final safeRemaining = remaining.clamp(0, limit);
-      quotaLine = '$safeRemaining of $limit requests remaining this month';
+      tokenValue = '$remainingTokens tokens';
+      tokenSubtitle =
+          '$consumedTokens used • $totalTokens available since signup';
     }
-
-    final subtitleLines = <String>[];
-    if (expirationText != null) {
-      subtitleLines.add(expirationText);
-    } else {
-      subtitleLines.add(entitlementSubtitle);
-    }
-    subtitleLines.add(quotaLine);
-    final subscriptionSubtitle = subtitleLines.join('\n');
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
@@ -373,49 +351,14 @@ class _GeneralSettingsTabState extends State<GeneralSettingsTab> {
 
           const SizedBox(height: 24),
 
-          _buildSection(theme, isDark, 'Subscription', [
+          _buildSection(theme, isDark, 'Usage', [
             _buildInfoCard(
               theme,
               isDark,
-              icon: Icons.workspace_premium_outlined,
-              title: 'Plan',
-              value: planName,
-              subtitle: subscriptionSubtitle,
-              valueColor: accessProvider.hasPremiumAccess
-                  ? (isDark ? AppColors.darkSuccess : AppColors.lightSuccess)
-                  : null,
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () => context.go('/paywall'),
-                    icon: const Icon(Icons.star_outline),
-                    label: Text(
-                      accessProvider.hasPremiumAccess
-                          ? 'Manage Subscription'
-                          : 'Go Premium',
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: subscriptionProvider.initialized
-                        ? () => subscriptionProvider.restore()
-                        : null,
-                    icon: const Icon(Icons.restore),
-                    label: const Text('Restore'),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
-                  ),
-                ),
-              ],
+              icon: Icons.token_outlined,
+              title: 'Token Balance',
+              value: tokenValue,
+              subtitle: tokenSubtitle,
             ),
           ]),
 

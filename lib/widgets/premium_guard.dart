@@ -3,7 +3,7 @@ import '../services/premium_feature_gate.dart';
 
 /// PremiumGuard widget for consistent feature gating
 /// Implements two-tier feature flags: visibility and enablement
-/// 
+///
 /// Usage:
 /// ```dart
 /// PremiumGuard(
@@ -67,9 +67,6 @@ class PremiumButton extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    return GestureDetector(
-      onTap: onPressed,
-      child: child,
-    );
+    return GestureDetector(onTap: onPressed, child: child);
   }
 }

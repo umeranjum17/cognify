@@ -10,7 +10,6 @@ import '../providers/subscription_provider.dart';
 import '../screens/auth/sign_in_screen.dart';
 import '../screens/conversation_history_screen.dart';
 import '../screens/editor_screen.dart';
-import '../screens/sources_screen.dart';
 import '../screens/subscription/paywall_screen.dart';
 import '../screens/tabbed_editor_screen.dart';
 import '../widgets/auth_guard.dart';
@@ -100,13 +99,6 @@ class AppRouter {
               return MaterialPage(
                 key: state.pageKey,
                 child: SignInScreen(pendingSharedUrl: sharedUrl),
-              );
-            }
-
-            if (sharedUrl != null && sharedUrl.isNotEmpty) {
-              return MaterialPage(
-                key: state.pageKey,
-                child: SourcesScreen(initialUrl: sharedUrl),
               );
             }
 

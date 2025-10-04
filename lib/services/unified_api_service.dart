@@ -9,7 +9,6 @@ import '../models/chat_stream_event.dart';
 import '../models/message.dart';
 import '../models/source.dart';
 import '../models/tools_config.dart';
-import '../models/trending_topic.dart';
 import '../models/usage_quota.dart';
 import 'agent_service.dart';
 import 'agents/agent_system.dart';
@@ -21,7 +20,6 @@ import 'file_upload_service.dart';
 import 'generation_cost_cache_service.dart';
 import 'llm_service.dart';
 import 'openrouter_client.dart';
-import 'trending_service.dart';
 
 /// Unified API service that replaces the old backend-dependent ApiService
 /// Uses direct API calls to OpenRouter, Brave Search, etc.
@@ -31,15 +29,14 @@ class UnifiedApiService {
   // Direct service clients
   final LLMService _llmService = LLMService();
   final OpenRouterClient _openRouterClient = OpenRouterClient();
+  final AgentService _agentService = AgentService();
+  final AgentSystem _agentSystem = AgentSystem();
   final BraveSearchService _braveSearchService = BraveSearchService();
   final ContentExtractor _contentExtractor = ContentExtractor();
+  final DailyQuotesService _dailyQuotesService = DailyQuotesService();
   final DatabaseService _databaseService = DatabaseService();
   final DocumentProcessor _documentProcessor = DocumentProcessor();
   final FileUploadService _fileUploadService = FileUploadService();
-  final AgentService _agentService = AgentService();
-  final AgentSystem _agentSystem = AgentSystem();
-  final TrendingService _trendingService = TrendingService();
-  final DailyQuotesService _dailyQuotesService = DailyQuotesService();
   final GenerationCostCacheService _costCacheService =
       GenerationCostCacheService();
 
@@ -473,19 +470,6 @@ Return only the questions, one per line, without numbering.''';
     return await _databaseService.getAllSources();
   }
 
-  /// Get trending topics using the new service
-  Future<List<TrendingTopic>> getTrendingTopics() async {
-    await _ensureInitialized();
-
-    try {
-      return await _trendingService.getTrendingTopics();
-    } catch (e) {
-      print('❌ Error fetching trending topics: $e');
-      // Return empty list on error
-      return [];
-    }
-  }
-
   /// Initialize all services
   Future<void> initialize() async {
     if (_initialized) return;
@@ -842,10 +826,7 @@ Return only the questions, one per line, without numbering.''';
       return {'success': false, 'error': 'Agent system is disabled'};
     }
 
-    return await _agentService.testTool(
-      toolName: toolName,
-      testInput: testInput,
-    );
+    return await _agentService.testTool(toolName, testInput ?? {});
   }
 
   /// Upload file (alias for uploadSource)
@@ -873,8 +854,12 @@ Return only the questions, one per line, without numbering.''';
   }
 
   String _quotaExceededMessage(QuotaExceededException exception) {
-    return 'You have reached your monthly request quota of '
-        '${exception.limit} requests. Upgrade your plan to continue.';
+    final remaining = exception.remaining;
+    if (remaining <= 0) {
+      return 'You have run out of tokens. Add more tokens to keep chatting.';
+    }
+    return 'This action needs ${exception.requested} token(s) but only '
+        '$remaining remain. Switch to a lower-cost model or top up tokens.';
   }
 
   Future<void> _ensureInitialized() async {

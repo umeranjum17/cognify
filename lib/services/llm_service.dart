@@ -9,7 +9,7 @@ import '../database/database_service.dart';
 import 'access_service.dart';
 import 'openai_client.dart';
 import 'openrouter_client.dart';
-import 'revenuecat_service.dart';
+import 'cost_service.dart';
 import 'usage_quota_service.dart';
 
 /// Unified LLM service with automatic fallback and model selection
@@ -45,7 +45,7 @@ class LLMService {
     await _ensureInitialized();
 
     final selectedModel = model ?? _currentModel ?? AppConfig.defaultModel;
-    final quotaUsage = await _reserveQuota();
+    final quotaUsage = await _reserveQuota(model: selectedModel);
 
     try {
       // Try primary provider first
@@ -123,7 +123,7 @@ class LLMService {
     await _ensureInitialized();
 
     final selectedModel = model ?? _currentModel ?? AppConfig.defaultModel;
-    final quotaUsage = await _reserveQuota();
+    final quotaUsage = await _reserveQuota(model: selectedModel);
 
     try {
       // Try primary provider first
@@ -358,7 +358,7 @@ class LLMService {
     // Usage tracked silently
   }
 
-  Future<_QuotaUsage?> _reserveQuota({int amount = 1}) async {
+  Future<_QuotaUsage?> _reserveQuota({required String model}) async {
     if (AccessService.instance.isTester) {
       return null;
     }
@@ -368,28 +368,45 @@ class LLMService {
       throw StateError('No signed-in user available for quota tracking.');
     }
 
-    final usage = _QuotaUsage(
-      uid: user.uid,
-      isPremium:
-          AccessService.instance.hasPremiumAccess ||
-          RevenueCatService.instance.isEntitledToPremium,
-      amount: amount,
-    );
+    final tokens = await _tokensForModel(model);
+    if (tokens == 0) {
+      return null;
+    }
 
-    await UsageQuotaService.instance.consume(
-      uid: usage.uid,
-      isPremium: usage.isPremium,
-      amount: usage.amount,
-    );
+    print('🔒 Reserving $tokens token(s) for model $model');
 
-    return usage;
+    await UsageQuotaService.instance.consume(uid: user.uid, amount: tokens);
+
+    return _QuotaUsage(uid: user.uid, amount: tokens, model: model);
+  }
+
+  Future<int> _tokensForModel(String model) async {
+    try {
+      final pricing = await CostService.getModelPricingById(model);
+      if (pricing == null) {
+        return 1;
+      }
+
+      final inputPrice = (pricing['input'] ?? 0).toDouble();
+      final outputPrice = (pricing['output'] ?? 0).toDouble();
+      final totalPrice = inputPrice + outputPrice;
+
+      if (totalPrice <= 0) {
+        return 0;
+      }
+
+      final tokens = totalPrice.ceil();
+      return tokens <= 0 ? 1 : tokens;
+    } catch (e) {
+      print('⚠️ Failed to determine token cost for $model: $e');
+      return 1;
+    }
   }
 
   Future<void> _refundQuota(_QuotaUsage? usage) async {
     if (usage == null) return;
     await UsageQuotaService.instance.refund(
       uid: usage.uid,
-      isPremium: usage.isPremium,
       amount: usage.amount,
     );
   }
@@ -408,12 +425,12 @@ class LLMService {
         handleError: (error, stackTrace, sink) {
           if (!refunded) {
             refunded = true;
+            print(
+              '↩️ Refunding ${usage.amount} token(s) for model ${usage.model} '
+              'due to stream error: $error',
+            );
             UsageQuotaService.instance
-                .refund(
-                  uid: usage.uid,
-                  isPremium: usage.isPremium,
-                  amount: usage.amount,
-                )
+                .refund(uid: usage.uid, amount: usage.amount)
                 .catchError((_) {});
           }
           sink.addError(error, stackTrace);
@@ -474,11 +491,11 @@ class LLMService {
 class _QuotaUsage {
   const _QuotaUsage({
     required this.uid,
-    required this.isPremium,
     required this.amount,
+    required this.model,
   });
 
   final String uid;
-  final bool isPremium;
   final int amount;
+  final String model;
 }

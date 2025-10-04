@@ -227,14 +227,6 @@ class _EditorScreenState extends State<EditorScreen> {
     super.dispose();
   }
 
-  void handleNavigateToEntities() {
-    GoRouter.of(context).push('/entities');
-  }
-
-  void handleNavigateToSources() {
-    GoRouter.of(context).push('/sources');
-  }
-
   @override
   void initState() {
     super.initState();
@@ -3904,32 +3896,7 @@ class _EditorScreenState extends State<EditorScreen> {
             }
 
             // Trigger vibration AFTER updating UI (non-blocking)
-            if (newContent.isNotEmpty) {
-              try {
-                // Use unawaited to prevent vibration from blocking streaming
-                unawaited(onSSETextReceived(newContent));
-              } catch (e) {
-                // Silently handle vibration errors to prevent crashes
-              }
-            }
-
-            // Check for sentence completion vibration triggers (non-blocking)
-            if (newContent.contains('.') ||
-                newContent.contains('!') ||
-                newContent.contains('?')) {
-              try {
-                unawaited(onSSESentenceComplete());
-              } catch (e) {}
-            }
-
-            // Check for paragraph completion vibration triggers (non-blocking)
-            if (newContent.contains('\n\n') ||
-                newContent.contains('\n---') ||
-                newContent.contains('\n##')) {
-              try {
-                unawaited(onSSEParagraphComplete());
-              } catch (e) {}
-            }
+            // Vibration callbacks removed
             break;
 
           case StreamEventType.complete:

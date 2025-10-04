@@ -365,10 +365,7 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
             );
           },
         ),
-        ChangeNotifierProxyProvider<
-          FirebaseAuthProvider,
-          UsageQuotaProvider
-        >(
+        ChangeNotifierProxyProvider<FirebaseAuthProvider, UsageQuotaProvider>(
           create: (_) => UsageQuotaProvider(),
           update: (_, auth, quota) {
             quota ??= UsageQuotaProvider();

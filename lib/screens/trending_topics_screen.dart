@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 
-import '../providers/app_access_provider.dart';
-import '../widgets/cognify_logo.dart';
-
-/// Trending topics screen - Premium feature only
+/// Trending topics screen
 class TrendingTopicsScreen extends StatefulWidget {
   const TrendingTopicsScreen({super.key});
 
@@ -16,6 +12,12 @@ class TrendingTopicsScreen extends StatefulWidget {
 class _TrendingTopicsScreenState extends State<TrendingTopicsScreen> {
   bool _isLoading = true;
   List<Map<String, dynamic>> _trendingTopics = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTrendingTopics();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,15 +38,35 @@ class _TrendingTopicsScreenState extends State<TrendingTopicsScreen> {
     );
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _loadTrendingTopics();
+  Widget _buildTrendingTopicsContent() {
+    return RefreshIndicator(
+      onRefresh: _refreshTrendingTopics,
+      child: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          Text(
+            'Discover trending conversations and topics',
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Join discussions on the most popular topics right now',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).textTheme.bodySmall?.color,
+            ),
+          ),
+          const SizedBox(height: 24),
+          ..._trendingTopics.map(_buildTopicCard),
+        ],
+      ),
+    );
   }
 
   Widget _buildTopicCard(Map<String, dynamic> topic) {
     final theme = Theme.of(context);
-    
+
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       child: InkWell(
@@ -136,55 +158,31 @@ class _TrendingTopicsScreenState extends State<TrendingTopicsScreen> {
     );
   }
 
-  Widget _buildTrendingTopicsContent() {
-    return RefreshIndicator(
-      onRefresh: _refreshTrendingTopics,
-      child: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Text(
-            'Discover trending conversations and topics',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Join discussions on the most popular topics right now',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).textTheme.bodySmall?.color,
-            ),
-          ),
-          const SizedBox(height: 24),
-          ..._trendingTopics.map((topic) => _buildTopicCard(topic)),
-        ],
-      ),
-    );
-  }
-
   Future<void> _loadTrendingTopics() async {
-    // Simulate loading trending topics
     await Future.delayed(const Duration(seconds: 1));
-    
+
     setState(() {
       _trendingTopics = [
         {
           'title': 'AI and Machine Learning Trends',
-          'description': 'Latest developments in artificial intelligence and ML technologies',
+          'description':
+              'Latest developments in artificial intelligence and ML technologies',
           'category': 'Technology',
           'engagement': '2.3k discussions',
           'icon': Icons.psychology,
         },
         {
           'title': 'Climate Change Solutions',
-          'description': 'Innovative approaches to addressing environmental challenges',
+          'description':
+              'Innovative approaches to addressing environmental challenges',
           'category': 'Environment',
           'engagement': '1.8k discussions',
           'icon': Icons.eco,
         },
         {
           'title': 'Remote Work Best Practices',
-          'description': 'Tips and strategies for effective remote collaboration',
+          'description':
+              'Tips and strategies for effective remote collaboration',
           'category': 'Business',
           'engagement': '1.5k discussions',
           'icon': Icons.work,
@@ -216,7 +214,6 @@ class _TrendingTopicsScreenState extends State<TrendingTopicsScreen> {
   }
 
   void _startTopicConversation(Map<String, dynamic> topic) {
-    // Navigate to editor with the topic as initial prompt
     final prompt = 'Let\'s discuss: ${topic['title']}. ${topic['description']}';
     context.push('/editor?prompt=${Uri.encodeComponent(prompt)}');
   }
