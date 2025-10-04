@@ -8,6 +8,7 @@ import '../../config/subscriptions_config.dart';
 import '../../providers/subscription_provider.dart';
 import '../../providers/firebase_auth_provider.dart';
 import '../../services/revenuecat_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// PaywallScreen()
 class PaywallScreen extends StatefulWidget {
@@ -178,6 +179,20 @@ class _PaywallScreenState extends State<PaywallScreen> {
     }
   }
 
+  Future<void> _manageSubscription() async {
+    try {
+      final info = context.read<SubscriptionProvider>().customerInfo;
+      final url = info?.managementURL;
+      if (url == null) return;
+      final uri = Uri.parse(url);
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (e) {
+      setState(() {
+        _error = 'Failed to open manage subscriptions: $e';
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final subs = context.watch<SubscriptionProvider>();
@@ -315,6 +330,18 @@ class _PaywallScreenState extends State<PaywallScreen> {
                             onPressed: _busy ? null : () => _loadOfferings(),
                             child: const Text('Retry Loading'),
                           ),
+                          const SizedBox(height: 8),
+                          Builder(builder: (context) {
+                            final manageUrl = context
+                                .watch<SubscriptionProvider>()
+                                .customerInfo
+                                ?.managementURL;
+                            if (manageUrl == null) return const SizedBox.shrink();
+                            return TextButton(
+                              onPressed: _busy ? null : _manageSubscription,
+                              child: const Text('Manage Subscription'),
+                            );
+                          })
                         ],
                       ),
                     )
@@ -415,6 +442,17 @@ class _PaywallScreenState extends State<PaywallScreen> {
                               onPressed: _busy ? null : _restore,
                               child: const Text('Restore Purchases'),
                             ),
+                            Builder(builder: (context) {
+                              final manageUrl = context
+                                  .watch<SubscriptionProvider>()
+                                  .customerInfo
+                                  ?.managementURL;
+                              if (manageUrl == null) return const SizedBox.shrink();
+                              return TextButton(
+                                onPressed: _busy ? null : _manageSubscription,
+                                child: const Text('Manage Subscription'),
+                              );
+                            }),
                             const SizedBox(height: 8),
                           ],
                         );
@@ -444,6 +482,17 @@ class _PaywallScreenState extends State<PaywallScreen> {
                       onPressed: _busy ? null : _restore,
                       child: const Text('Restore Purchases'),
                     ),
+                    Builder(builder: (context) {
+                      final manageUrl = context
+                          .watch<SubscriptionProvider>()
+                          .customerInfo
+                          ?.managementURL;
+                      if (manageUrl == null) return const SizedBox.shrink();
+                      return TextButton(
+                        onPressed: _busy ? null : _manageSubscription,
+                        child: const Text('Manage Subscription'),
+                      );
+                    }),
                   ],
                 ],
               ),

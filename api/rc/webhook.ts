@@ -2,17 +2,49 @@ import { getAdminDb } from '../shared/firebase-admin';
 
 export const config = { runtime: 'nodejs18.x' };
 
-// Tier configurations for monthly allowances
-const TIER_ALLOWANCES: Record<string, number> = {
-  'premium_monthly': 100,
-  'premium_annual': 100,
-  'free': 10, // Free tier fallback
+// Default tier allowances used if no remote config is present
+const DEFAULT_TIER_ALLOWANCES: Record<string, number> = {
+  premium_monthly: 100,
+  premium_annual: 100,
+  free: 10,
 };
 
-// Extract subscription tier from product ID
-function getTierFromProductId(productId: string): string {
-  if (productId.includes('annual')) return 'premium_annual';
-  if (productId.includes('monthly')) return 'premium_monthly';
+type SubscriptionsConfigDoc = {
+  tierAllowances?: Record<string, number>;
+  // Map of exact store product IDs to internal tier keys
+  // Example: { 'com.acme.premium.monthly': 'premium_monthly' }
+  productTiers?: Record<string, string>;
+};
+
+async function loadSubscriptionsConfig(db: FirebaseFirestore.Firestore): Promise<{
+  allowances: Record<string, number>;
+  productTiers: Record<string, string>;
+}> {
+  try {
+    const snap = await db.collection('config').doc('subscriptions').get();
+    if (!snap.exists) {
+      return { allowances: DEFAULT_TIER_ALLOWANCES, productTiers: {} };
+    }
+    const data = (snap.data() || {}) as SubscriptionsConfigDoc;
+    const allowances = data.tierAllowances && Object.keys(data.tierAllowances).length > 0
+      ? data.tierAllowances
+      : DEFAULT_TIER_ALLOWANCES;
+    const productTiers = data.productTiers || {};
+    return { allowances, productTiers };
+  } catch {
+    // On any error, use defaults
+    return { allowances: DEFAULT_TIER_ALLOWANCES, productTiers: {} };
+  }
+}
+
+// Resolve internal tier from a product ID using explicit mapping first, then a safe heuristic
+function getTierFromProductId(productId: string, productTiers: Record<string, string>): string {
+  const mapped = productTiers[productId];
+  if (mapped) return mapped;
+  // Heuristic fallback if explicit mapping not configured
+  const id = productId.toLowerCase();
+  if (id.includes('annual') || id.includes('year')) return 'premium_annual';
+  if (id.includes('monthly') || id.includes('month')) return 'premium_monthly';
   return 'free';
 }
 
@@ -76,10 +108,14 @@ export default async function handler(req: Request) {
     }
 
     const type: string = payload?.type || payload?.event?.type || '';
+    const environment: string | null = payload?.environment || payload?.event?.environment || null;
     const productId: string = payload?.product_id || payload?.event?.product_id || '';
 
     const idempotencyRef = db.collection('revenuecat_events').doc(eventId);
     const subscriptionRef = db.collection('users').doc(appUserId).collection('subscription').doc('current');
+
+    // Load dynamic configuration (allowances and SKU→tier mapping)
+    const { allowances, productTiers } = await loadSubscriptionsConfig(db);
 
     const result = await db.runTransaction(async (tx: any) => {
       const seen = await tx.get(idempotencyRef);
@@ -88,8 +124,8 @@ export default async function handler(req: Request) {
       }
 
       const { periodStart, periodEnd } = extractPeriodDates(payload);
-      const tier = getTierFromProductId(productId);
-      const monthlyAllowance = TIER_ALLOWANCES[tier] || TIER_ALLOWANCES['free'];
+      const tier = getTierFromProductId(productId, productTiers);
+      const monthlyAllowance = allowances[tier] ?? allowances['free'] ?? DEFAULT_TIER_ALLOWANCES.free;
       const now = new Date().toISOString();
 
       // Handle subscription events
@@ -104,6 +140,7 @@ export default async function handler(req: Request) {
           monthlyAllowance: monthlyAllowance,
           consumed: 0, // Reset on new period
           lastSyncedFromRC: now,
+          environment: environment,
           updatedAt: now,
         }, { merge: true });
 
@@ -115,6 +152,7 @@ export default async function handler(req: Request) {
           action: 'subscription_activated',
           tier,
           monthlyAllowance,
+          environment,
         });
 
         return { duplicated: false, action: 'subscription_activated', tier, allowance: monthlyAllowance };
@@ -129,6 +167,7 @@ export default async function handler(req: Request) {
           status: 'cancelled',
           cancelledAt: now,
           lastSyncedFromRC: now,
+          environment: environment,
           updatedAt: now,
         }, { merge: true });
 
@@ -137,9 +176,34 @@ export default async function handler(req: Request) {
           appUserId, 
           type, 
           action: 'subscription_cancelled',
+          environment,
         });
 
         return { duplicated: false, action: 'subscription_cancelled' };
+      }
+      else if (type.includes('UNCANCELLATION')) {
+        // Subscription was uncancelled - mark back to active
+        const { periodStart, periodEnd } = extractPeriodDates(payload);
+        tx.set(subscriptionRef, {
+          status: 'active',
+          tier: tier,
+          productId: productId,
+          currentPeriodStart: periodStart || now,
+          currentPeriodEnd: periodEnd || undefined,
+          lastSyncedFromRC: now,
+          environment: environment,
+          updatedAt: now,
+        }, { merge: true });
+
+        tx.set(idempotencyRef, {
+          handledAt: now,
+          appUserId,
+          type,
+          action: 'subscription_uncancelled',
+          environment,
+        });
+
+        return { duplicated: false, action: 'subscription_uncancelled' };
       }
       else if (type.includes('EXPIRATION')) {
         // Subscription expired - downgrade to free tier
@@ -147,10 +211,11 @@ export default async function handler(req: Request) {
           status: 'expired',
           tier: 'free',
           productId: null,
-          monthlyAllowance: TIER_ALLOWANCES['free'],
+          monthlyAllowance: allowances['free'] ?? DEFAULT_TIER_ALLOWANCES.free,
           consumed: 0, // Reset to free tier allowance
           expiredAt: now,
           lastSyncedFromRC: now,
+          environment: environment,
           updatedAt: now,
         }, { merge: true });
 
@@ -159,6 +224,7 @@ export default async function handler(req: Request) {
           appUserId, 
           type, 
           action: 'subscription_expired',
+          environment,
         });
 
         return { duplicated: false, action: 'subscription_expired' };
@@ -169,10 +235,11 @@ export default async function handler(req: Request) {
           status: 'refunded',
           tier: 'free',
           productId: null,
-          monthlyAllowance: TIER_ALLOWANCES['free'],
+          monthlyAllowance: allowances['free'] ?? DEFAULT_TIER_ALLOWANCES.free,
           consumed: 0,
           refundedAt: now,
           lastSyncedFromRC: now,
+          environment: environment,
           updatedAt: now,
         }, { merge: true });
 
@@ -181,9 +248,56 @@ export default async function handler(req: Request) {
           appUserId, 
           type, 
           action: 'subscription_refunded',
+          environment,
         });
 
         return { duplicated: false, action: 'subscription_refunded' };
+      }
+      else if (type.includes('BILLING_ISSUE')) {
+        // Payment issue - keep tier but mark status so client can show hold UI
+        const currentSub = await tx.get(subscriptionRef);
+        const currentData = currentSub.exists ? currentSub.data() : {};
+        tx.set(subscriptionRef, {
+          ...currentData,
+          status: 'on_hold',
+          lastSyncedFromRC: now,
+          environment: environment,
+          updatedAt: now,
+        }, { merge: true });
+
+        tx.set(idempotencyRef, {
+          handledAt: now,
+          appUserId,
+          type,
+          action: 'billing_issue',
+          environment,
+        });
+        return { duplicated: false, action: 'billing_issue' };
+      }
+      else if (type.includes('PRODUCT_CHANGE')) {
+        // Product changed (upgrade/downgrade). Update tier & allowance; keep consumed.
+        const currentSub = await tx.get(subscriptionRef);
+        const currentData = currentSub.exists ? currentSub.data() : {};
+        const newTier = getTierFromProductId(productId, productTiers);
+        const newAllowance = allowances[newTier] ?? allowances['free'] ?? DEFAULT_TIER_ALLOWANCES.free;
+        tx.set(subscriptionRef, {
+          ...currentData,
+          tier: newTier,
+          productId: productId,
+          monthlyAllowance: newAllowance,
+          lastSyncedFromRC: now,
+          environment: environment,
+          updatedAt: now,
+        }, { merge: true });
+
+        tx.set(idempotencyRef, {
+          handledAt: now,
+          appUserId,
+          type,
+          action: 'product_changed',
+          environment,
+        });
+        return { duplicated: false, action: 'product_changed' };
       }
       else {
         // Unknown event - just log it
@@ -192,6 +306,7 @@ export default async function handler(req: Request) {
           appUserId, 
           type, 
           action: 'logged_only',
+          environment,
         });
         return { duplicated: false, action: 'logged_only', type };
       }

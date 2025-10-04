@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@vercel/edge": "^1.1.1",
-    "firebase-admin": "^12.5.0"
+    "firebase-admin": "^12.7.0"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",

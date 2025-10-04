@@ -13,6 +13,8 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
+import 'package:purchases_flutter/errors.dart';
+import 'package:flutter/services.dart';
 
 import '../config/subscriptions_config.dart';
 
@@ -65,7 +67,9 @@ class RevenueCatService {
 
     try {
       // Configure SDK with platform-specific public SDK key
-      final apiKey = defaultTargetPlatform == TargetPlatform.iOS
+      final isApplePlatform = defaultTargetPlatform == TargetPlatform.iOS ||
+          defaultTargetPlatform == TargetPlatform.macOS;
+      final apiKey = isApplePlatform
           ? SubscriptionsConfig.rcPublicKeyIOS
           : SubscriptionsConfig.rcPublicKeyAndroid;
 
@@ -80,6 +84,13 @@ class RevenueCatService {
       debugPrint('🔧 [RevenueCat] Configuring with key: ${apiKey.substring(0, 10)}...');
       
       final configuration = PurchasesConfiguration(apiKey);
+      // If we already know the user, set it on configuration to avoid identity races
+      if (appUserId != null && appUserId.isNotEmpty) {
+        configuration.appUserID = appUserId;
+      }
+      // Enable trusted entitlements in informational mode for extra safety
+      configuration.entitlementVerificationMode =
+          EntitlementVerificationMode.informational;
       await _withTimeout(() => Purchases.configure(configuration), timeout);
       _configured = true;
       debugPrint('✅ [RevenueCat] Configuration successful');
@@ -258,8 +269,8 @@ class RevenueCatService {
     debugPrint('  Product type: ${pkg.packageType}');
     
     try {
-      final customerInfo =
-          await _withTimeout(() => Purchases.purchasePackage(pkg), timeout);
+      final customerInfo = await _withTimeout(
+          () => Purchases.purchase(PurchaseParams(package: pkg)), timeout);
       _customerInfoCache = customerInfo;
       _customerInfoController.add(customerInfo);
       final entitled = customerInfo.entitlements.active.containsKey(
@@ -268,12 +279,15 @@ class RevenueCatService {
       
       debugPrint('✅ [RevenueCat] Purchase successful - Entitled: $entitled');
       return PurchaseResult(success: entitled, customerInfo: customerInfo);
-    } on PurchasesErrorCode catch (e) {
-      debugPrint('❌ [RevenueCat] PurchasesErrorCode: ${e.toString()}');
-      return PurchaseResult(
-        success: false,
-        errorMessage: 'Purchases error: $e',
-      );
+    } on PlatformException catch (e) {
+      final code = PurchasesErrorHelper.getErrorCode(e);
+      if (code == PurchasesErrorCode.purchaseCancelledError) {
+        debugPrint('ℹ️ [RevenueCat] Purchase cancelled by user');
+        return PurchaseResult(success: false, errorMessage: 'cancelled');
+      }
+      debugPrint(
+          '❌ [RevenueCat] Purchases error: $code ${e.message ?? e.code}');
+      return PurchaseResult(success: false, errorMessage: e.message ?? '$code');
     } catch (e) {
       debugPrint('❌ [RevenueCat] General purchase error: ${e.toString()}');
       return PurchaseResult(success: false, errorMessage: e.toString());

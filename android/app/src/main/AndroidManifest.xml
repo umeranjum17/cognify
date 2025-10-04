@@ -9,6 +9,8 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <!-- Billing permission for Google Play purchases (per RevenueCat docs) -->
+    <uses-permission android:name="com.android.vending.BILLING" />
     
     <!-- Background Processing - Optional, gracefully handled -->
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
@@ -35,6 +37,8 @@
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="*" />
         </intent>
+        <!-- Visibility of Play Store app/package for billing flows on Android 11+ -->
+        <package android:name="com.android.vending" />
     </queries>
 
     <application
