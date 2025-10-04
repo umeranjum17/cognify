@@ -2,7 +2,7 @@ import 'dart:math' as math;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import '../config/app_secrets.dart';
+import '../config/app_config.dart';
 import '../models/usage_quota.dart';
 import '../utils/logger.dart';
 

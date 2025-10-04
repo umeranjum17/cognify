@@ -6,8 +6,6 @@ import 'package:flutter/material.dart';
 
 import '../config/app_config.dart';
 import '../database/database_service.dart';
-import 'access_service.dart';
-import 'openai_client.dart';
 import 'openrouter_client.dart';
 import 'cost_service.dart';
 import 'usage_quota_service.dart';
@@ -16,13 +14,12 @@ import 'usage_quota_service.dart';
 class LLMService {
   static final LLMService _instance = LLMService._internal();
   final OpenRouterClient _openRouterClient = OpenRouterClient();
-  final OpenAIClient _openAIClient = OpenAIClient();
 
   final DatabaseService _db = DatabaseService();
   bool _initialized = false;
   String? _currentModel;
 
-  String _preferredProvider = 'openrouter'; // 'openrouter' or 'openai'
+  String _preferredProvider = 'openrouter';
   // Usage tracking
   int _totalTokensUsed = 0;
   double _totalCostIncurred = 0.0;
@@ -60,51 +57,28 @@ class LLMService {
           toolChoice: toolChoice?.toString(),
           context: context,
         );
-      } else {
-        return await _openAIClient.chatCompletion(
-          model: selectedModel,
-          messages: messages,
-          temperature: temperature,
-          maxTokens: maxTokens,
-          stream: stream,
-          tools: tools,
-          toolChoice: toolChoice,
-        );
       }
     } catch (e) {
       print('🧠 Primary provider failed, trying fallback: $e');
 
       // Try fallback provider
       try {
-        if (_preferredProvider == 'openrouter') {
-          final fallbackModel = _openAIClient.getBestModel(preferCheap: true);
-          return await _openAIClient.chatCompletion(
-            model: fallbackModel,
-            messages: messages,
-            temperature: temperature,
-            maxTokens: maxTokens,
-            stream: stream,
-            tools: tools,
-            toolChoice: toolChoice,
-          );
-        } else {
-          final fallbackModel = await _openRouterClient.getBestModel(
-            preferFree: true,
-          );
-          return await _openRouterClient.chatCompletion(
-            model: fallbackModel,
-            messages: messages,
-            temperature: temperature,
-            maxTokens: maxTokens,
-            stream: stream,
-            tools: tools != null ? {'tools': tools} : null,
-            toolChoice: toolChoice?.toString(),
-            context: context,
-          );
-        }
+        final fallbackModel = await _openRouterClient.getBestModel(
+          preferFree: true,
+        );
+        return await _openRouterClient.chatCompletion(
+          model: fallbackModel,
+          messages: messages,
+          temperature: temperature,
+          maxTokens: maxTokens,
+          stream: stream,
+          tools: tools != null ? {'tools': tools} : null,
+          toolChoice: toolChoice?.toString(),
+          context: context,
+        );
       } catch (fallbackError) {
         await _refundQuota(quotaUsage);
-        print('🧠 Both providers failed: $fallbackError');
+        print('🧠 Fallback provider failed: $fallbackError');
         rethrow;
       }
     }
@@ -140,58 +114,31 @@ class LLMService {
           ),
           quotaUsage,
         );
-      } else {
-        yield* _attachQuotaRefund(
-          _openAIClient.chatCompletionStream(
-            model: selectedModel,
-            messages: messages,
-            temperature: temperature,
-            maxTokens: maxTokens,
-            tools: tools,
-            toolChoice: toolChoice,
-          ),
-          quotaUsage,
-        );
       }
     } catch (e) {
       print('🧠 Primary provider streaming failed, trying fallback: $e');
 
       // Try fallback provider
       try {
-        if (_preferredProvider == 'openrouter') {
-          final fallbackModel = _openAIClient.getBestModel(preferCheap: true);
-          yield* _attachQuotaRefund(
-            _openAIClient.chatCompletionStream(
-              model: fallbackModel,
-              messages: messages,
-              temperature: temperature,
-              maxTokens: maxTokens,
-              tools: tools,
-              toolChoice: toolChoice,
-            ),
-            quotaUsage,
-          );
-        } else {
-          final fallbackModel = await _openRouterClient.getBestModel(
-            preferFree: true,
-          );
-          yield* _attachQuotaRefund(
-            _openRouterClient.chatCompletionStream(
-              model: fallbackModel,
-              messages: messages,
-              temperature: temperature,
-              maxTokens: maxTokens,
-              tools: tools != null ? {'tools': tools} : null,
-              toolChoice: toolChoice?.toString(),
-              context: context,
-            ),
-            quotaUsage,
-          );
-        }
+        final fallbackModel = await _openRouterClient.getBestModel(
+          preferFree: true,
+        );
+        yield* _attachQuotaRefund(
+          _openRouterClient.chatCompletionStream(
+            model: fallbackModel,
+            messages: messages,
+            temperature: temperature,
+            maxTokens: maxTokens,
+            tools: tools != null ? {'tools': tools} : null,
+            toolChoice: toolChoice?.toString(),
+            context: context,
+          ),
+          quotaUsage,
+        );
       } catch (fallbackError) {
         await _refundQuota(quotaUsage);
         yield {
-          'error': 'Both providers failed: $fallbackError',
+          'error': 'Fallback provider failed: $fallbackError',
           'streaming': true,
         };
       }
@@ -203,8 +150,7 @@ class LLMService {
     await _ensureInitialized();
 
     try {
-      // Try OpenAI first for embeddings (they have better embedding models)
-      return await _openAIClient.generateEmbeddings(text: text);
+      return await _openRouterClient.generateEmbeddings(text: text);
     } catch (e) {
       print('🧠 Embeddings generation failed: $e');
 
@@ -223,14 +169,12 @@ class LLMService {
     final openRouterModels = await _openRouterClient.getModels(
       context: context,
     );
-    final openAIModels = await _openAIClient.getModels();
 
     return {
       'openrouter': {
         'models': openRouterModels['models'],
         'pricing': openRouterModels['pricing'],
       },
-      'openai': {'models': openAIModels, 'pricing': OpenAIClient.modelPricing},
     };
   }
 
@@ -279,7 +223,6 @@ class LLMService {
 
     await _db.initialize();
     await _openRouterClient.initialize();
-    await _openAIClient.initialize();
 
     // Load current model from config
     _currentModel = await AppConfig().currentModel;
@@ -294,10 +237,8 @@ class LLMService {
   /// Check if any LLM provider is configured
   Future<bool> isConfigured() async {
     final openRouterKey = await AppConfig().openRouterApiKey;
-    final openAIKey = await AppConfig().openAiApiKey;
 
-    return (openRouterKey != null && openRouterKey.isNotEmpty) ||
-        (openAIKey != null && openAIKey.isNotEmpty);
+    return (openRouterKey != null && openRouterKey.isNotEmpty);
   }
 
   /// Reset usage statistics
@@ -327,14 +268,14 @@ class LLMService {
   Future<void> setPreferredProvider(String provider) async {
     await _ensureInitialized();
 
-    if (provider == 'openrouter' || provider == 'openai') {
+    if (provider == 'openrouter') {
       _preferredProvider = provider;
       await _db.saveSetting('preferred_llm_provider', provider);
 
       print('🧠 Preferred provider set to: $provider');
     } else {
       throw ArgumentError(
-        'Invalid provider: $provider. Must be "openrouter" or "openai"',
+        'Invalid provider: $provider. Must be "openrouter"',
       );
     }
   }

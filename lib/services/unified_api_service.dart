@@ -10,14 +10,8 @@ import '../models/message.dart';
 import '../models/source.dart';
 import '../models/tools_config.dart';
 import '../models/usage_quota.dart';
-import 'agent_service.dart';
-import 'agents/agent_system.dart';
-import 'brave_search_service.dart';
-import 'content_extractor.dart';
-import 'daily_quotes_service.dart';
 import 'document_processor.dart';
 import 'file_upload_service.dart';
-import 'generation_cost_cache_service.dart';
 import 'llm_service.dart';
 import 'openrouter_client.dart';
 
@@ -29,19 +23,11 @@ class UnifiedApiService {
   // Direct service clients
   final LLMService _llmService = LLMService();
   final OpenRouterClient _openRouterClient = OpenRouterClient();
-  final AgentService _agentService = AgentService();
-  final AgentSystem _agentSystem = AgentSystem();
-  final BraveSearchService _braveSearchService = BraveSearchService();
-  final ContentExtractor _contentExtractor = ContentExtractor();
-  final DailyQuotesService _dailyQuotesService = DailyQuotesService();
   final DatabaseService _databaseService = DatabaseService();
   final DocumentProcessor _documentProcessor = DocumentProcessor();
   final FileUploadService _fileUploadService = FileUploadService();
-  final GenerationCostCacheService _costCacheService =
-      GenerationCostCacheService();
 
   bool _initialized = false;
-  bool _useAgentSystem = true; // Flag to switch between old and new system
 
   factory UnifiedApiService() => _instance;
   UnifiedApiService._internal();

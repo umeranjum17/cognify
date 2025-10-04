@@ -6,7 +6,6 @@ import '../models/tools_config.dart';
 import '../providers/mode_config_provider.dart';
 import '../screens/model_selection_screen.dart';
 import '../services/llm_service.dart'; // Added import for LLMService
-import '../services/premium_feature_gate.dart';
 import '../theme/app_theme.dart';
 import 'general_settings_tab.dart';
 

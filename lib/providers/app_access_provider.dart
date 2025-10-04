@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 
-import '../config/tester_whitelist.dart';
 import '../providers/firebase_auth_provider.dart';
 import '../providers/subscription_provider.dart';
 import '../services/access_service.dart';
@@ -34,11 +33,9 @@ class AppAccessProvider extends ChangeNotifier {
   String? get userEmail => _auth.user?.email;
 
   void _evaluate() {
-    final email = _auth.user?.email;
-    final tester = TesterWhitelist.isTesterEmail(email);
-
-    // Tokens-based access is universal; testers still surfaced for diagnostics.
+    // Tokens-based access is universal; no tester whitelist needed
     const hasAccess = true;
+    const tester = false;
 
     AccessService.instance.update(hasPremium: hasAccess, isTester: tester);
 

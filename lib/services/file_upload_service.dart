@@ -9,7 +9,6 @@ import '../database/database_service.dart';
 import '../models/source.dart';
 import '../utils/helpers.dart';
 import '../utils/logger.dart';
-import 'content_extractor.dart';
 import 'document_processor.dart';
 
 /// File upload and processing service
@@ -17,7 +16,6 @@ class FileUploadService {
   static final FileUploadService _instance = FileUploadService._internal();
   final DatabaseService _db = DatabaseService();
   final DocumentProcessor _documentProcessor = DocumentProcessor();
-  final ContentExtractor _contentExtractor = ContentExtractor();
 
   final ImagePicker _imagePicker = ImagePicker();
   final Uuid _uuid = const Uuid();
@@ -192,28 +190,16 @@ class FileUploadService {
       // Save initial source
       await _db.saveSource(source);
       
-      // Actually fetch content using ContentExtractor
-      Logger.info('📁 Fetching content from URL: $url', tag: 'FileUpload');
-      final contentResult = await _contentExtractor.extractFromUrl(url);
-      
-      if (contentResult.containsKey('error')) {
-        // Handle extraction error
-        final errorSource = source.copyWith(
-          status: 'failed',
-          stage: 'failed',
-          errorMessage: contentResult['error'].toString(),
-        );
-        await _db.saveSource(errorSource);
-        return errorSource;
-      }
-      
-      // Extract content and metadata
-      final content = contentResult['content'] ?? '';
-      final title = contentResult['title'] ?? url;
-      final description = contentResult['description'] ?? '';
-      final author = contentResult['author'] ?? '';
-      final publishedDate = contentResult['publishedDate'] ?? '';
-      final wordCount = contentResult['wordCount'] ?? 0;
+      // URL content extraction disabled - stub implementation
+      Logger.info('📁 URL processing (stub): $url', tag: 'FileUpload');
+
+      // Basic stub values
+      final content = 'URL content extraction not available';
+      final title = url;
+      final description = '';
+      final author = '';
+      final publishedDate = '';
+      final wordCount = 0;
       
       // Save extracted content to database
       await _db.saveSourceContent(sourceId, {

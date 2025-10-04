@@ -1,8 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'brave_search_service.dart';
-import 'content_extractor.dart';
 import 'openrouter_client.dart';
 import '../utils/logger.dart';
 

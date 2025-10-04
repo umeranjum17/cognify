@@ -3,7 +3,6 @@ import 'package:hive_flutter/hive_flutter.dart';
 import '../config/app_config.dart';
 import '../database/database_service.dart';
 import '../utils/logger.dart';
-import 'content_extractor.dart';
 import 'cost_calculation_service.dart';
 import 'document_processor.dart';
 import 'file_upload_service.dart';
@@ -22,7 +21,6 @@ class ServicesManager {
 
   late final DocumentProcessor documentProcessor;
   late final FileUploadService fileUploadService;
-  late final ContentExtractor contentExtractor;
   late final UserService userService;
   late final LLMService llmService;
   late final PromptService promptService;
@@ -58,7 +56,6 @@ class ServicesManager {
         'appConfig': appConfig.hashCode,
         'documentProcessor': documentProcessor.hashCode,
         'fileUploadService': fileUploadService.hashCode,
-        'contentExtractor': contentExtractor.hashCode,
         'userService': userService.hashCode,
         'llmService': llmService.hashCode,
         'promptService': promptService.hashCode,
@@ -96,10 +93,6 @@ class ServicesManager {
       fileUploadService = FileUploadService();
       await fileUploadService.initialize();
       Logger.info('✅ FileUploadService initialized', tag: 'ServicesManager');
-
-      contentExtractor = ContentExtractor();
-      await contentExtractor.initialize();
-      Logger.info('✅ ContentExtractor initialized', tag: 'ServicesManager');
 
       // Initialize user service
       userService = UserService();

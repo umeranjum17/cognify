@@ -6,8 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../providers/firebase_auth_provider.dart';
 import '../providers/app_access_provider.dart';
 import '../providers/usage_quota_provider.dart';
-import '../config/app_secrets.dart';
-import '../services/data_deletion_service.dart';
+import '../config/app_config.dart';
 import '../theme/app_theme.dart';
 
 class GeneralSettingsTab extends StatefulWidget {

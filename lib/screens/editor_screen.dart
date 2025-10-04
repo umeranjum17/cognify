@@ -1,5 +1,3 @@
-// Conditional import for vibration support
-// ignore: uri_does_not_exist
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math' as math;
@@ -28,13 +26,8 @@ import '../services/llm_service.dart';
 import '../services/model_service.dart';
 import '../services/openrouter_client.dart';
 import '../services/services_manager.dart';
-import '../services/session_cost_service.dart';
 import '../services/unified_api_service.dart';
-import '../services/environment_service.dart';
-import '../config/feature_flags.dart';
 import '../config/model_registry.dart';
-import '../services/premium_feature_gate.dart';
-import '../services/paywall_coordinator.dart';
 import '../providers/subscription_provider.dart';
 import '../providers/app_access_provider.dart';
 import '../providers/tab_provider.dart';
@@ -52,7 +45,6 @@ import '../widgets/unified_settings_modal.dart';
 import '../widgets/model_quick_switcher_modal.dart';
 import '../widgets/model_capabilities_bottom_sheet.dart';
 import 'model_selection_screen.dart';
-import 'vibration_stub.dart' if (dart.library.io) 'vibration_impl.dart';
 
 class EditorScreen extends StatefulWidget {
   final String? conversationId;
@@ -3900,10 +3892,7 @@ class _EditorScreenState extends State<EditorScreen> {
             break;
 
           case StreamEventType.complete:
-            // Stop vibration when stream completes
-            try {
-              stopVibration();
-            } catch (e) {}
+            // Stream completed
             // Finalize the message
             finalConversationId = event.conversationId;
             finalCost = event.metadata?['cost']?.toDouble();
@@ -4054,12 +4043,7 @@ class _EditorScreenState extends State<EditorScreen> {
               '🐛 DEBUG: EditorScreen received StreamEventType.error: ${event.error}',
             );
 
-            // Stop vibration on error
-            try {
-              stopVibration();
-            } catch (e) {
-              // Handle vibration error silently
-            }
+            // Error occurred
 
             // ALWAYS clean up UI state first, regardless of error type
             setState(() {
@@ -4112,10 +4096,7 @@ class _EditorScreenState extends State<EditorScreen> {
 
       // Do not auto-scroll on completion
     } catch (e) {
-      // Stop vibration on error
-      try {
-        stopVibration();
-      } catch (vibrationError) {}
+      // Error cleanup
 
       // Clean up streaming controller on error
       StreamingMessageRegistry().removeController(streamingMessage.id);
