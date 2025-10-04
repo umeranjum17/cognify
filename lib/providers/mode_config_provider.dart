@@ -58,6 +58,8 @@ class ModeConfigProvider extends ChangeNotifier {
       print('Error loading mode configs: $e');
       _configs = {
         ChatMode.chat: ModeConfigManager.getDefaultConfigForMode(ChatMode.chat),
+        ChatMode.search: ModeConfigManager.getDefaultConfigForMode(ChatMode.search),
+        ChatMode.aipedia: ModeConfigManager.getDefaultConfigForMode(ChatMode.aipedia),
         ChatMode.deepsearch: ModeConfigManager.getDefaultConfigForMode(ChatMode.deepsearch),
       };
     }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../services/unified_api_service.dart';
+import '../services/user_service.dart';
 import '../theme/app_theme.dart';
 
 class CreditsUsageWidget extends StatefulWidget {
@@ -252,7 +252,7 @@ class _CreditsUsageWidgetState extends State<CreditsUsageWidget> {
     });
 
     try {
-      final data = await UnifiedApiService().getCredits();
+      final data = await UserService().getCredits();
       setState(() {
         _creditsData = data;
         _isLoading = false;

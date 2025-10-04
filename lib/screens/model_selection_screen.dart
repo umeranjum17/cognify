@@ -130,26 +130,6 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
 
     // Free/paid filter
     if (_showFreeOnly) {
-      // Known free model IDs as fallback
-      final knownFreeModels = {
-        'mistralai/mistral-7b-instruct:free',
-        'deepseek/deepseek-chat:free',
-        'deepseek/deepseek-chat-v3-0324:free',
-        'deepseek/deepseek-r1:free',
-        'google/gemini-2.0-flash-exp:free',
-        'meta-llama/llama-3.2-3b-instruct:free',
-        'meta-llama/llama-3.2-1b-instruct:free',
-        'meta-llama/llama-3.1-8b-instruct:free',
-        'meta-llama/llama-3.1-70b-instruct:free',
-        'meta-llama/llama-3.1-405b-instruct:free',
-        'meta-llama/llama-3-8b-instruct:free',
-        'meta-llama/llama-3-70b-instruct:free',
-        'meta-llama/codellama-34b-instruct:free',
-        'microsoft/phi-3-medium-128k-instruct:free',
-        'microsoft/phi-3-mini-128k-instruct:free',
-        'mistralai/mixtral-8x7b-instruct:free',
-      };
-
       filtered = filtered.where((model) {
         // Primary check: backend isFree field
         if (model['isFree'] == true) {
@@ -159,11 +139,6 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
         // Fallback: check if model ID ends with :free
         final modelId = model['id'] as String? ?? '';
         if (modelId.endsWith(':free')) {
-          return true;
-        }
-
-        // Fallback: check against known free models
-        if (knownFreeModels.contains(modelId)) {
           return true;
         }
 

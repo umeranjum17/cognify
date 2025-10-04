@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/premium_feature_gate.dart';
 
 /// PremiumGuard widget for consistent feature gating
 /// Implements two-tier feature flags: visibility and enablement

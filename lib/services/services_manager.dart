@@ -3,12 +3,10 @@ import 'package:hive_flutter/hive_flutter.dart';
 import '../config/app_config.dart';
 import '../database/database_service.dart';
 import '../utils/logger.dart';
-import 'cost_calculation_service.dart';
 import 'document_processor.dart';
 import 'file_upload_service.dart';
 import 'llm_service.dart';
 import 'prompt_service.dart';
-import 'unified_api_service.dart';
 import 'user_service.dart';
 
 /// Central services manager for the application
@@ -24,8 +22,6 @@ class ServicesManager {
   late final UserService userService;
   late final LLMService llmService;
   late final PromptService promptService;
-  late final CostCalculationService costCalculationService;
-  late final UnifiedApiService unifiedApiService;
   bool _initialized = false;
   factory ServicesManager() => _instance;
   
@@ -59,8 +55,6 @@ class ServicesManager {
         'userService': userService.hashCode,
         'llmService': llmService.hashCode,
         'promptService': promptService.hashCode,
-        'costCalculationService': costCalculationService.hashCode,
-        'unifiedApiService': unifiedApiService.hashCode,
       },
       'timestamp': DateTime.now().toIso8601String(),
     };
@@ -107,15 +101,6 @@ class ServicesManager {
       promptService = PromptService();
       await promptService.initialize();
       Logger.info('✅ PromptService initialized', tag: 'ServicesManager');
-
-      costCalculationService = CostCalculationService();
-      await costCalculationService.initialize();
-      Logger.info('✅ CostCalculationService initialized', tag: 'ServicesManager');
-
-      // Initialize unified API service (includes agent system)
-      unifiedApiService = UnifiedApiService();
-      await unifiedApiService.initialize();
-      Logger.info('✅ UnifiedApiService initialized', tag: 'ServicesManager');
 
       _initialized = true;
       Logger.info('🎉 ServicesManager initialization completed successfully', tag: 'ServicesManager');

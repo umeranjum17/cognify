@@ -403,21 +403,47 @@ class ModelSwitchRecommendationModal extends StatelessWidget {
   }
 
   Color _getProviderColor(String modelId) {
-    if (modelId.contains('gpt')) return Colors.green;
-    if (modelId.contains('gemini')) return Colors.blue;
-    if (modelId.contains('claude')) return Colors.orange;
-    if (modelId.contains('deepseek')) return Colors.purple;
-    if (modelId.contains('mistral')) return Colors.indigo;
-    return Colors.grey;
+    final provider = ModelRegistry.getModelProvider(modelId).toLowerCase();
+    switch (provider) {
+      case 'openai':
+        return Colors.green;
+      case 'google':
+        return Colors.blue;
+      case 'anthropic':
+        return Colors.orange;
+      case 'deepseek':
+        return Colors.purple;
+      case 'mistral':
+      case 'mistralai':
+        return Colors.indigo;
+      case 'meta':
+      case 'meta-llama':
+        return Colors.teal;
+      default:
+        return Colors.grey;
+    }
   }
 
   IconData _getProviderIcon(String modelId) {
-    if (modelId.contains('gpt')) return Icons.chat;
-    if (modelId.contains('gemini')) return Icons.auto_awesome;
-    if (modelId.contains('claude')) return Icons.psychology;
-    if (modelId.contains('deepseek')) return Icons.search;
-    if (modelId.contains('mistral')) return Icons.cloud;
-    return Icons.smart_toy;
+    final provider = ModelRegistry.getModelProvider(modelId).toLowerCase();
+    switch (provider) {
+      case 'openai':
+        return Icons.chat;
+      case 'google':
+        return Icons.auto_awesome;
+      case 'anthropic':
+        return Icons.psychology;
+      case 'deepseek':
+        return Icons.search;
+      case 'mistral':
+      case 'mistralai':
+        return Icons.cloud;
+      case 'meta':
+      case 'meta-llama':
+        return Icons.memory;
+      default:
+        return Icons.smart_toy;
+    }
   }
 
   void _openModelSwitcher(BuildContext context) {

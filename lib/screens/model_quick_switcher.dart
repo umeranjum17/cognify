@@ -45,14 +45,6 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
     'stealth': 'Stealth',
   };
 
-  static const Set<String> _knownFreeModels = {
-    'gpt-3.5-turbo:free',
-    'claude-3-haiku:free',
-    'gemini-pro:free',
-    'llama-2-7b-chat:free',
-    'mistral-7b-instruct:free',
-  };
-
   @override
   void initState() {
     super.initState();
@@ -130,7 +122,6 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
     if (model['isFree'] == true) return true;
     final modelId = model['id'] as String? ?? '';
     if (modelId.endsWith(':free')) return true;
-    if (_knownFreeModels.contains(modelId)) return true;
     final pricing = model['pricing'] as Map<String, dynamic>?;
     if (pricing != null) {
       final input = pricing['input'] ?? pricing['prompt'];

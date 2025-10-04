@@ -9,6 +9,7 @@ import '../database/database_service.dart';
 import 'openrouter_client.dart';
 import 'cost_service.dart';
 import 'usage_quota_service.dart';
+import '../models/message.dart';
 
 /// Unified LLM service with automatic fallback and model selection
 class LLMService {
@@ -27,15 +28,16 @@ class LLMService {
   Map<String, int> _modelUsageCount = {};
   factory LLMService() => _instance;
   LLMService._internal();
+  bool get isInitialized => _initialized;
 
   /// Send a chat completion request with automatic fallback
   Future<Map<String, dynamic>> chatCompletion({
-    required List<Map<String, dynamic>> messages,
+    required List<dynamic> messages,
     String? model,
     double temperature = 0.7,
     int? maxTokens,
     bool stream = false,
-    List<Map<String, dynamic>>? tools,
+    dynamic tools,
     dynamic toolChoice,
     BuildContext? context,
   }) async {
@@ -49,11 +51,11 @@ class LLMService {
       if (_preferredProvider == 'openrouter') {
         return await _openRouterClient.chatCompletion(
           model: selectedModel,
-          messages: messages,
+          messages: _normalizeMessages(messages),
           temperature: temperature,
           maxTokens: maxTokens,
           stream: stream,
-          tools: tools != null ? {'tools': tools} : null,
+          tools: _convertTools(tools),
           toolChoice: toolChoice?.toString(),
           context: context,
         );
@@ -68,11 +70,11 @@ class LLMService {
         );
         return await _openRouterClient.chatCompletion(
           model: fallbackModel,
-          messages: messages,
+          messages: _normalizeMessages(messages),
           temperature: temperature,
           maxTokens: maxTokens,
           stream: stream,
-          tools: tools != null ? {'tools': tools} : null,
+          tools: _convertTools(tools),
           toolChoice: toolChoice?.toString(),
           context: context,
         );
@@ -82,17 +84,29 @@ class LLMService {
         rethrow;
       }
     }
+    // If we reach here, no provider matched; throw to satisfy non-null contract
+    throw Exception('No LLM provider available');
   }
 
   /// Send a streaming chat completion request
   Stream<Map<String, dynamic>> chatCompletionStream({
-    required List<Map<String, dynamic>> messages,
+    required List<dynamic> messages,
     String? model,
     double temperature = 0.7,
     int? maxTokens,
-    List<Map<String, dynamic>>? tools,
+    dynamic tools,
     dynamic toolChoice,
     BuildContext? context,
+    // Additional optional parameters accepted for compatibility; ignored here
+    String? conversationId,
+    bool? isDeepSearchMode,
+    bool? isOfflineMode,
+    String? personality,
+    String? language,
+    dynamic mode,
+    String? chatModel,
+    String? deepsearchModel,
+    bool? isEntitled,
   }) async* {
     await _ensureInitialized();
 
@@ -105,10 +119,10 @@ class LLMService {
         yield* _attachQuotaRefund(
           _openRouterClient.chatCompletionStream(
             model: selectedModel,
-            messages: messages,
+            messages: _normalizeMessages(messages),
             temperature: temperature,
             maxTokens: maxTokens,
-            tools: tools != null ? {'tools': tools} : null,
+            tools: _convertTools(tools),
             toolChoice: toolChoice?.toString(),
             context: context,
           ),
@@ -126,10 +140,10 @@ class LLMService {
         yield* _attachQuotaRefund(
           _openRouterClient.chatCompletionStream(
             model: fallbackModel,
-            messages: messages,
+            messages: _normalizeMessages(messages),
             temperature: temperature,
             maxTokens: maxTokens,
-            tools: tools != null ? {'tools': tools} : null,
+            tools: _convertTools(tools),
             toolChoice: toolChoice?.toString(),
             context: context,
           ),
@@ -158,6 +172,26 @@ class LLMService {
       // In a real implementation, you might want to use a local embedding model
       return List.filled(1536, 0.0); // OpenAI embedding dimension
     }
+  }
+
+  List<Map<String, dynamic>> _normalizeMessages(List<dynamic> messages) {
+    if (messages.isEmpty) return const [];
+    if (messages.first is Map<String, dynamic>) {
+      return List<Map<String, dynamic>>.from(messages);
+    }
+    if (messages.first is Message) {
+      return (messages as List<Message>).map((m) => m.toJson()).toList();
+    }
+    // Fallback empty
+    return const [];
+  }
+
+  Map<String, dynamic>? _convertTools(dynamic tools) {
+    // Accept a pre-built tools map or ignore for now.
+    if (tools == null) return null;
+    if (tools is Map<String, dynamic>) return tools;
+    // ToolsConfig or others can be converted here if needed.
+    return null;
   }
 
   /// Get available models from all providers

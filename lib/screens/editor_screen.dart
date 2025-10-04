@@ -26,7 +26,7 @@ import '../services/llm_service.dart';
 import '../services/model_service.dart';
 import '../services/openrouter_client.dart';
 import '../services/services_manager.dart';
-import '../services/unified_api_service.dart';
+import '../services/mode_engine.dart';
 import '../config/model_registry.dart';
 import '../providers/subscription_provider.dart';
 import '../providers/app_access_provider.dart';
@@ -45,6 +45,9 @@ import '../widgets/unified_settings_modal.dart';
 import '../widgets/model_quick_switcher_modal.dart';
 import '../widgets/model_capabilities_bottom_sheet.dart';
 import 'model_selection_screen.dart';
+import '../services/session_cost_service.dart';
+import '../services/premium_feature_gate.dart';
+import '../services/paywall_coordinator.dart';
 
 class EditorScreen extends StatefulWidget {
   final String? conversationId;
@@ -67,7 +70,8 @@ class EditorScreen extends StatefulWidget {
 }
 
 class _EditorScreenState extends State<EditorScreen> {
-  late final UnifiedApiService _apiService;
+  late final LLMService _llmService;
+  late final ConversationService _conversationService;
 
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
@@ -223,8 +227,9 @@ class _EditorScreenState extends State<EditorScreen> {
   void initState() {
     super.initState();
 
-    // Get the globally initialized API service
-    _apiService = ServicesManager().unifiedApiService;
+    // Get the globally initialized services
+    _llmService = ServicesManager().llmService;
+    _conversationService = ConversationService();
 
     // Start auto-save for conversations
     ConversationService().startAutoSave();
@@ -487,9 +492,10 @@ class _EditorScreenState extends State<EditorScreen> {
     final isDark = theme.brightness == Brightness.dark;
     final modelName = _formatModelName(_selectedModel);
     final isFree = _isModelFree(_selectedModel);
+    final allowModelSelection = ModeRegistry.getSpec(_currentMode).allowModelSelection;
 
     return GestureDetector(
-      onTap: () => _showModelQuickSwitcher(),
+      onTap: allowModelSelection ? () => _showModelQuickSwitcher() : null,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
@@ -540,13 +546,14 @@ class _EditorScreenState extends State<EditorScreen> {
               ),
             ),
             const SizedBox(width: 4),
-            Icon(
-              Icons.keyboard_arrow_down,
-              size: 16,
-              color: isDark
-                  ? AppColors.darkTextSecondary
-                  : AppColors.lightTextSecondary,
-            ),
+            if (allowModelSelection)
+              Icon(
+                Icons.keyboard_arrow_down,
+                size: 16,
+                color: isDark
+                    ? AppColors.darkTextSecondary
+                    : AppColors.lightTextSecondary,
+              ),
           ],
         ),
       ),
@@ -565,15 +572,13 @@ class _EditorScreenState extends State<EditorScreen> {
   }
 
   bool _isModelFree(String modelId) {
-    return modelId.endsWith(':free') ||
-        modelId.contains('gpt-3.5-turbo') ||
-        modelId.contains('claude-3-haiku') ||
-        modelId.contains('gemini-pro') ||
-        modelId.contains('llama-2-7b') ||
-        modelId.contains('mistral-7b');
+    return ModelRegistry.isModelFree(modelId);
   }
 
   void _showModelQuickSwitcher() {
+    if (!ModeRegistry.getSpec(_currentMode).allowModelSelection) {
+      return;
+    }
     showModelQuickSwitcher(
       context: context,
       mode: _currentMode,
@@ -1148,6 +1153,9 @@ class _EditorScreenState extends State<EditorScreen> {
               ),
               GestureDetector(
                 onTap: () {
+                  if (!ModeRegistry.getSpec(_currentMode).allowModelSelection) {
+                    return;
+                  }
                   showModelQuickSwitcher(
                     context: context,
                     mode: _currentMode,
@@ -2063,7 +2071,7 @@ class _EditorScreenState extends State<EditorScreen> {
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Icon(
-                _isDeepSearchMode ? Icons.manage_search : Icons.flash_on,
+                _currentMode.iconData,
                 size: 14,
                 color: isDark
                     ? AppColors.darkButtonText
@@ -2072,7 +2080,7 @@ class _EditorScreenState extends State<EditorScreen> {
             ),
             const SizedBox(width: 8),
             Text(
-              _isDeepSearchMode ? 'DeepSearch' : 'Chat',
+              _currentMode.displayName,
               style: theme.textTheme.bodyMedium?.copyWith(
                 fontWeight: FontWeight.w600,
                 color: isDark ? AppColors.darkText : AppColors.lightText,
@@ -2233,7 +2241,7 @@ class _EditorScreenState extends State<EditorScreen> {
                 icon: Icons.flash_on,
                 title: 'Chat',
                 description: 'Lightning fast responses with minimal search',
-                isSelected: !_isDeepSearchMode,
+                isSelected: _currentMode == ChatMode.chat,
                 onTap: () {
                   setState(() {
                     _isDeepSearchMode = false;
@@ -2244,6 +2252,8 @@ class _EditorScreenState extends State<EditorScreen> {
                   _loadModelForCurrentMode();
                   // Update model capabilities when mode changes
                   _checkModelCapabilities();
+                  // Apply presets for this mode
+                  _applyModePresets(_currentMode);
                 },
               ),
               Divider(
@@ -2251,68 +2261,44 @@ class _EditorScreenState extends State<EditorScreen> {
                 thickness: 1,
                 color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
               ),
-              // DeepSearch option
+              // Search option
               _buildModeDropdownItem(
-                icon: Icons.manage_search,
-                title: 'DeepSearch',
-                description: 'Advanced search and reasoning (Premium)',
-                isSelected: _isDeepSearchMode,
-                requiresPremium: true,
-                onTap: () async {
-                  // Check if user has premium access for DeepSearch
-                  if (!isPremiumUnlocked(context, listen: false)) {
-                    // Direct RevenueCat purchase flow (same as globe toggle)
-                    try {
-                      final ok =
-                          await PaywallCoordinator.showNativePurchaseFlow(
-                            context,
-                          );
-                      if (ok) {
-                        // Enable DeepSearch and globe as premium is now active
-                        setState(() {
-                          _isDeepSearchMode = true;
-                          _currentMode = ChatMode.deepsearch;
-                          _showModeDropdown = false;
-                          _isOfflineMode = false; // enable online tools
-                        });
-                        // Load the appropriate model for the new mode
-                        _loadModelForCurrentMode();
-                        // Update model capabilities when mode changes
-                        _checkModelCapabilities();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              'Premium unlocked - DeepSearch enabled',
-                            ),
-                          ),
-                        );
-                      } else {
-                        setState(() {
-                          _showModeDropdown = false;
-                        });
-                      }
-                    } catch (e) {
-                      // Optional: show a small toast/snackbar on fail
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Purchase failed: $e')),
-                      );
-                      setState(() {
-                        _showModeDropdown = false;
-                      });
-                    }
-                    return;
-                  }
-
+                icon: Icons.search,
+                title: 'Search',
+                description: 'Perplexity-style quick answers (Gemini Flash, fixed)',
+                isSelected: _currentMode == ChatMode.search,
+                onTap: () {
                   setState(() {
-                    _isDeepSearchMode = true;
-                    _currentMode = ChatMode.deepsearch;
+                    _isDeepSearchMode = false; // not deepsearch
+                    _currentMode = ChatMode.search;
                     _showModeDropdown = false;
-                    // Auto-enable globe for DeepSearch mode (premium users only)
-                    _isOfflineMode = false;
+                    _isOfflineMode = false; // ensure online tools
                   });
-                  // Load the appropriate model for the new mode
+                  _applyModePresets(_currentMode);
                   _loadModelForCurrentMode();
-                  // Update model capabilities when mode changes
+                  _checkModelCapabilities();
+                },
+              ),
+              Divider(
+                height: 1,
+                thickness: 1,
+                color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+              ),
+              // AIpedia option
+              _buildModeDropdownItem(
+                icon: Icons.menu_book,
+                title: 'AIpedia',
+                description: 'Wikipedia-style overviews with sources & images',
+                isSelected: _currentMode == ChatMode.aipedia,
+                onTap: () {
+                  setState(() {
+                    _isDeepSearchMode = false; // not deepsearch
+                    _currentMode = ChatMode.aipedia;
+                    _showModeDropdown = false;
+                    _isOfflineMode = false; // ensure online tools
+                  });
+                  _applyModePresets(_currentMode);
+                  _loadModelForCurrentMode();
                   _checkModelCapabilities();
                 },
               ),
@@ -2548,22 +2534,12 @@ class _EditorScreenState extends State<EditorScreen> {
           '🔍 Failed to get capabilities from API: $e',
           tag: 'EditorScreen',
         );
-        // Fallback: if it's a Gemini model, assume it supports images and files
-        final supportsImages = currentModel.contains('gemini');
-        final supportsFiles = currentModel.contains(
-          'gemini',
-        ); // Gemini models typically support both
+        // Fallback: use registry-provided capabilities (no model-specific heuristics)
         setState(() {
-          _currentModelCapabilities = ModelCapabilities(
-            inputModalities: supportsImages ? ['text', 'image'] : ['text'],
-            outputModalities: ['text'],
-            supportsImages: supportsImages,
-            supportsFiles: supportsFiles,
-            isMultimodal: supportsImages || supportsFiles,
-          );
+          _currentModelCapabilities = ModelRegistry.getModelCapabilities(currentModel);
         });
         Logger.debug(
-          '🔍 Using fallback capabilities: supportsImages=$supportsImages, supportsFiles=$supportsFiles',
+          '🔍 Using registry fallback capabilities for model: $currentModel',
           tag: 'EditorScreen',
         );
       }
@@ -2610,8 +2586,8 @@ class _EditorScreenState extends State<EditorScreen> {
     // Check if ServicesManager is initialized and agent system is ready
     final servicesManager = ServicesManager();
     if (servicesManager.isInitialized) {
-      final agentStatus = _apiService.getAgentSystemStatus();
-      final isReady = agentStatus['enabled'] == true;
+      // Services are ready when LLM service is initialized
+      final isReady = _llmService.isInitialized;
 
       setState(() {
         _servicesReady = isReady;
@@ -2694,11 +2670,16 @@ class _EditorScreenState extends State<EditorScreen> {
   }
 
   String _getCurrentModeName() {
-    // Determine current mode based on flags and return its string representation
-    if (_isDeepSearchMode) {
-      return 'deepsearch';
-    } else {
-      return 'chat';
+    // Map the current mode to a string for downstream services
+    switch (_currentMode) {
+      case ChatMode.chat:
+        return 'chat';
+      case ChatMode.search:
+        return 'search';
+      case ChatMode.aipedia:
+        return 'aipedia';
+      case ChatMode.deepsearch:
+        return 'deepsearch';
     }
   }
 
@@ -2718,20 +2699,19 @@ class _EditorScreenState extends State<EditorScreen> {
   }
 
   String _getModelForCurrentMode() {
-    // Determine current mode based on flags
-    if (_isDeepSearchMode) {
-      _currentMode = ChatMode.deepsearch;
-    } else {
-      _currentMode = ChatMode.chat;
+    // If this mode enforces a fixed model, prefer it
+    final spec = ModeRegistry.getSpec(_currentMode);
+    if (!spec.allowModelSelection && spec.fixedModelId != null) {
+      return spec.fixedModelId!;
     }
 
-    // Get model from mode config (mode-specific models take precedence)
+    // Otherwise, use configured model for this mode
     final config = _modeConfigs[_currentMode];
-    if (config != null) {
+    if (config != null && config.model.isNotEmpty) {
       return config.model;
     }
 
-    // Fallback to default model for mode
+    // Fallback to default per-mode model
     return ModeConfigManager.getDefaultConfigForMode(_currentMode).model;
   }
 
@@ -2834,15 +2814,12 @@ class _EditorScreenState extends State<EditorScreen> {
       // Load saved model preference with better fallback logic
       await _loadSavedModel();
     } catch (e) {
-      // Set fallback models if API fails
+      // Set fallback models if API fails using registry
       setState(() {
-        _availableModels = [
-          'mistralai/mistral-7b-instruct:free',
-          'deepseek/deepseek-chat:free',
-          'deepseek/deepseek-chat-v3-0324:free',
-          'deepseek/deepseek-r1:free',
-          'google/gemini-2.0-flash-exp:free',
-        ];
+        final registryModels = ModelRegistry.getAllModels();
+        _availableModels = registryModels.isNotEmpty
+            ? registryModels
+            : [];
       });
 
       // Try to load saved model even with fallback models
@@ -2931,6 +2908,21 @@ class _EditorScreenState extends State<EditorScreen> {
 
   Future<void> _loadModelForCurrentMode() async {
     try {
+      // If this mode enforces a fixed model, set it and persist
+      final spec = ModeRegistry.getSpec(_currentMode);
+      if (!spec.allowModelSelection && spec.fixedModelId != null) {
+        setState(() {
+          _selectedModel = spec.fixedModelId!;
+        });
+        await _saveSelectedModel(_selectedModel);
+        LLMService().setCurrentModel(_selectedModel);
+        Logger.info(
+          '🤖 Using fixed model for mode $_currentMode: $_selectedModel',
+          tag: 'EditorScreen',
+        );
+        return;
+      }
+
       // Get the model for the current mode from the provider
       final modeConfigProvider = Provider.of<ModeConfigProvider>(
         context,
@@ -3053,7 +3045,7 @@ class _EditorScreenState extends State<EditorScreen> {
 
           // Fetch source details for display
           try {
-            final allSources = await _apiService.getSources();
+            final allSources = await _conversationService.getSources();
             final filtered = allSources
                 .where((s) => sourceIds.contains(s.id))
                 .toList();
@@ -3142,6 +3134,12 @@ class _EditorScreenState extends State<EditorScreen> {
           ChatMode.chat: ModeConfigManager.getDefaultConfigForMode(
             ChatMode.chat,
           ),
+          ChatMode.search: ModeConfigManager.getDefaultConfigForMode(
+            ChatMode.search,
+          ),
+          ChatMode.aipedia: ModeConfigManager.getDefaultConfigForMode(
+            ChatMode.aipedia,
+          ),
           ChatMode.deepsearch: ModeConfigManager.getDefaultConfigForMode(
             ChatMode.deepsearch,
           ),
@@ -3163,15 +3161,8 @@ class _EditorScreenState extends State<EditorScreen> {
         // Create default tools configuration to enable agent system
         const defaultConfig = ToolsConfig(
           braveSearch: true,
-          sequentialThinking: true,
           webFetch: true,
-          youtubeProcessor: true,
-          browserRoadmap: true,
           imageSearch: true,
-          keywordExtraction: true,
-          memoryManager: true,
-          sourceQuery: true,
-          sourceContent: true,
           timeTool: true,
         );
         setState(() {
@@ -3186,15 +3177,8 @@ class _EditorScreenState extends State<EditorScreen> {
       // Create default tools configuration as fallback
       const defaultConfig = ToolsConfig(
         braveSearch: true,
-        sequentialThinking: true,
         webFetch: true,
-        youtubeProcessor: true,
-        browserRoadmap: true,
         imageSearch: true,
-        keywordExtraction: true,
-        memoryManager: true,
-        sourceQuery: true,
-        sourceContent: true,
         timeTool: true,
       );
       setState(() {
@@ -3204,6 +3188,27 @@ class _EditorScreenState extends State<EditorScreen> {
         '🔧 Created fallback tools configuration to enable agent system',
         tag: 'EditorScreen',
       );
+    }
+  }
+
+  Future<void> _applyModePresets(ChatMode mode) async {
+    final spec = ModeRegistry.getSpec(mode);
+    // Apply tools preset and persist
+    setState(() {
+      _toolsConfig = spec.toolsPreset;
+    });
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('toolsConfig', jsonEncode(spec.toolsPreset.toJson()));
+    } catch (_) {}
+
+    // Enforce fixed model if specified
+    if (!spec.allowModelSelection && spec.fixedModelId != null) {
+      setState(() {
+        _selectedModel = spec.fixedModelId!;
+      });
+      await _saveSelectedModel(spec.fixedModelId!);
+      await LLMService().setCurrentModel(spec.fixedModelId!);
     }
   }
 
@@ -3478,6 +3483,9 @@ class _EditorScreenState extends State<EditorScreen> {
   }
 
   void _retryUserMessageWithModel(Message userMessage) {
+    if (!ModeRegistry.getSpec(_currentMode).allowModelSelection) {
+      return;
+    }
     showModelQuickSwitcher(
       context: context,
       mode: _currentMode,
@@ -3614,6 +3622,25 @@ class _EditorScreenState extends State<EditorScreen> {
       // Update tab label to the concise snippet (no date prefix)
       if (mounted) {
         context.read<TabProvider>().updateActiveTabTitle(_title);
+      }
+    }
+
+    // Ensure system prompt for selected mode exists at the start of conversation
+    final hasSystem = _messages.any((m) => m.type == 'system');
+    if (!hasSystem) {
+      final spec = ModeRegistry.getSpec(_currentMode);
+      if (spec.systemPrompt.trim().isNotEmpty) {
+        setState(() {
+          _messages.insert(
+            0,
+            Message(
+              id: _uuid.v4(),
+              type: 'system',
+              content: spec.systemPrompt,
+              timestamp: DateTime.now().toIso8601String(),
+            ),
+          );
+        });
       }
     }
 
@@ -3762,29 +3789,10 @@ class _EditorScreenState extends State<EditorScreen> {
       // Debug current model state
       _debugModelState();
 
-      final stream = isSourceGrounded
-          ? _apiService.sourceGroundedChatStream(
+      final stream = _llmService.chatCompletionStream(
               model: modelToUse,
               messages: _messages.where((m) => m.isProcessing != true).toList(),
-              selectedSourceIds: sourceIdsToUse,
-              enabledTools: _toolsConfig,
-              attachments: files,
-              textInput: textToSend,
-              conversationId: _currentConversationId,
-              isDeepSearchMode: _isDeepSearchMode,
-              isOfflineMode: _isOfflineMode,
-              personality: _selectedPersonality,
-              language: _selectedLanguage,
-              mode: currentMode,
-              chatModel: chatModel,
-              deepsearchModel: deepsearchModel,
-            )
-          : _apiService.streamChat(
-              model: modelToUse,
-              messages: _messages.where((m) => m.isProcessing != true).toList(),
-              enabledTools: _toolsConfig,
-              attachments: files,
-              textInput: textToSend,
+              tools: _toolsConfig,
               conversationId: _currentConversationId,
               isDeepSearchMode: _isDeepSearchMode,
               isOfflineMode: _isOfflineMode,
@@ -4965,7 +4973,7 @@ class _EditorScreenState extends State<EditorScreen> {
       _checkServicesReady();
 
       // Reload the API key from storage to ensure it's still available
-      await _apiService.initialize();
+      // Services already initialized by ServicesManager
     });
   }
 
@@ -5461,12 +5469,10 @@ class _EditorScreenState extends State<EditorScreen> {
           return ModelRegistry.getAllModels().take(3).toList();
       }
     } catch (e) {
-      // Fallback to default models if registry fails
-      return [
-        'google/gemini-2.0-flash-exp:free',
-        'deepseek/deepseek-r1:free',
-        'mistralai/mistral-7b-instruct:free',
-      ];
+      // Fallback to registry known free models if available
+      final free = ModelRegistry.getFreeModels();
+      if (free.isNotEmpty) return free.take(3).toList();
+      return ModelRegistry.getAllModels().take(3).toList();
     }
   }
 
@@ -5604,12 +5610,12 @@ String _getModelShortName(String? modelName) {
   final parts = modelName.split('/');
   final lastPart = parts.last;
 
-  // Handle common model name patterns
-  if (lastPart.contains('mistral')) return 'Mistral';
-  if (lastPart.contains('llama')) return 'Llama';
-  if (lastPart.contains('gpt')) return 'GPT';
-  if (lastPart.contains('claude')) return 'Claude';
-  if (lastPart.contains('gemini')) return 'Gemini';
+  // Prefer provider-based naming via registry
+  final provider = ModelRegistry.getModelProvider(modelName);
+  final providerDisplay = ModelRegistry.getProviderDisplayName(provider);
+  if (providerDisplay.isNotEmpty && providerDisplay != provider.toUpperCase()) {
+    return providerDisplay.split(' ').first;
+  }
 
   // Fallback: take first word or first 8 characters
   final shortName = lastPart.split('-').first;

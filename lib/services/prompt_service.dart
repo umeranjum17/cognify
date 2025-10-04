@@ -14,6 +14,31 @@ User: {user_input}''',
       'variables': ['user_input'],
       'category': 'general',
     },
+    'chat_basic_guidelines': {
+      'name': 'Chat (Guidelines)',
+      'template': '''You are a concise, helpful assistant. Keep responses clear, structured, and actionable.
+
+User: {user_input}''',
+      'variables': ['user_input'],
+      'category': 'general',
+    },
+    'search_quick': {
+      'name': 'Search (Quick Answer)',
+      'template': '''Act like a web answer engine. Use search results to answer succinctly, then list sources.
+
+Query: {user_input}''',
+      'variables': ['user_input'],
+      'category': 'search',
+    },
+    'aipedia_article': {
+      'name': 'AIpedia Article',
+      'template': '''Write a Wikipedia‑style overview for the topic below.
+Include: Summary, Key Facts, Main Sections, and References.
+
+Topic: {user_input}''',
+      'variables': ['user_input'],
+      'category': 'knowledge',
+    },
     'summarize': {
       'name': 'Content Summarization',
       'template': '''Please provide a comprehensive summary of the following content. Include:

@@ -1,5 +1,7 @@
 import '../models/file_attachment.dart';
 import '../models/mode_config.dart';
+import '../config/model_registry.dart';
+import '../config/app_config.dart';
 import 'openrouter_client.dart';
 
 /// Service for managing AI models using direct OpenRouter API integration
@@ -367,25 +369,16 @@ class ModelService {
 
   /// Fallback free models
   static List<String> _getFallbackFreeModels() {
-    return [
-      'deepseek/deepseek-chat:free',
-      'deepseek/deepseek-r1:free',
-      'google/gemini-2.0-flash-exp:free',
-      'mistralai/mistral-7b-instruct:free',
-    ];
+    // Use centralized registry for fallback free models
+    return ModelRegistry.getFreeModels();
   }
 
   /// Fallback models when API fails
   static List<String> _getFallbackModels() {
-    return [
-      'deepseek/deepseek-chat:free',
-      'deepseek/deepseek-r1:free',
-      'google/gemini-2.0-flash-exp:free',
-      'mistralai/mistral-7b-instruct:free',
-      'google/gemini-flash-1.5',
-      'openai/gpt-4o-mini',
-      'anthropic/claude-3-haiku',
-    ];
+    final all = ModelRegistry.getAllModels();
+    if (all.isNotEmpty) return all;
+    // If registry is minimal, fall back to default model
+    return [AppConfig.defaultModel];
   }
 
   /// Fallback models for specific mode
@@ -403,34 +396,13 @@ class ModelService {
 
   /// Get model context length
   static int _getModelContextLength(String modelId) {
-    // Estimate context length based on model patterns
-    if (modelId.contains('gemini-2.0') || modelId.contains('flash')) {
-      return 1000000; // 1M tokens
-    } else if (modelId.contains('r1') || modelId.contains('reasoning')) {
-      return 128000; // 128K tokens
-    } else if (modelId.contains('gpt-4')) {
-      return 128000; // 128K tokens
-    } else if (modelId.contains('claude')) {
-      return 200000; // 200K tokens
-    }
-    return 4096; // Default 4K tokens
+    final caps = ModelRegistry.getModelCapabilities(modelId);
+    return caps.contextLength ?? 4096;
   }
 
   /// Get model description
   static String _getModelDescription(String modelId) {
-    // Simple description based on model ID patterns
-    if (modelId.contains('deepseek')) {
-      return 'DeepSeek AI model for reasoning and chat';
-    } else if (modelId.contains('gemini')) {
-      return 'Google Gemini multimodal AI model';
-    } else if (modelId.contains('gpt')) {
-      return 'OpenAI GPT model for chat and reasoning';
-    } else if (modelId.contains('claude')) {
-      return 'Anthropic Claude AI assistant';
-    } else if (modelId.contains('mistral')) {
-      return 'Mistral AI language model';
-    }
-    return 'AI language model';
+    return ModelRegistry.getModelDescription(modelId);
   }
 
   /// Get model provider
@@ -461,10 +433,10 @@ class ModelService {
       return supportsFiles;
     }
 
-    // Fallback: For now, assume models that support images also support files
-    final supportsFiles = _modelSupportsImages(model);
-    print('🔍 Fallback check for model $id: supportsFiles=$supportsFiles');
-    return supportsFiles;
+    // Fallback: use registry capabilities
+    final registrySupportsFiles = ModelRegistry.getModelCapabilities(id).supportsFiles;
+    print('🔍 Registry fallback for model $id: supportsFiles=$registrySupportsFiles');
+    return registrySupportsFiles;
   }
 
   /// Check if model supports images
@@ -484,23 +456,9 @@ class ModelService {
       return supportsImages;
     }
 
-    // Fallback: Check against known multimodal models
-    final multimodalModels = [
-      'google/gemini-flash-1.5',
-      'google/gemini-pro-vision',
-      'google/gemini-2.0-flash-exp',
-      'google/gemini-2.0-flash-exp:free',
-      'openai/gpt-4o',
-      'openai/gpt-4o-mini',
-      'anthropic/claude-3-opus',
-      'anthropic/claude-3-sonnet',
-      'anthropic/claude-3-haiku',
-    ];
-
-    final supportsImages = multimodalModels.any((pattern) => id.contains(pattern.split('/').last));
-    print('🔍 Fallback check for model $id: supportsImages=$supportsImages');
-    return supportsImages;
+    // Fallback: use registry capabilities
+    final registrySupportsImages = ModelRegistry.getModelCapabilities(id).supportsImages;
+    print('🔍 Registry fallback for model $id: supportsImages=$registrySupportsImages');
+    return registrySupportsImages;
   }
 }
-
-

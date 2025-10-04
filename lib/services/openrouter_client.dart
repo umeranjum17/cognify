@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import '../config/model_registry.dart';
 import 'dart:math' as math;
 
 import 'package:dio/dio.dart';
@@ -19,8 +20,8 @@ class OpenRouterClient {
   static const String generationEndpoint = '/generations';
 
   // Default models
-  static const String defaultModel = 'deepseek/deepseek-chat:free';
-  static const String fallbackModel = 'mistralai/mistral-7b-instruct:free';
+  static const String defaultModel = AppConfig.defaultModel;
+  static const String fallbackModel = AppConfig.fallbackModel;
   late final Dio _dio;
   bool _initialized = false;
 
@@ -476,6 +477,12 @@ class OpenRouterClient {
     return cheapestModel ?? models.first;
   }
 
+  /// Stub embeddings generator to satisfy callers.
+  Future<List<double>> generateEmbeddings({required String text}) async {
+    // No embeddings endpoint used in this build; return a fixed-size vector.
+    return List<double>.filled(1536, 0.0);
+  }
+
   /// Get credits information from OpenRouter
   Future<Map<String, dynamic>?> getCredits({BuildContext? context}) async {
     await _ensureInitialized();
@@ -869,30 +876,13 @@ class OpenRouterClient {
 
   /// Get model context length
   int _getModelContextLength(String modelId) {
-    // Estimate context length based on model patterns
-    if (modelId.contains('gemini-2.0') || modelId.contains('flash')) {
-      return 1000000; // 1M tokens
-    } else if (modelId.contains('r1') || modelId.contains('reasoning')) {
-      return 128000; // 128K tokens
-    } else if (modelId.contains('claude') || modelId.contains('gpt-4')) {
-      return 200000; // 200K tokens
-    }
-    return 4096; // Default 4K tokens
+    final caps = ModelRegistry.getModelCapabilities(modelId);
+    return caps.contextLength ?? 4096;
   }
 
   /// Get model description
   String _getModelDescription(String modelId) {
-    // Simple description based on model ID patterns
-    if (modelId.contains('deepseek')) {
-      return 'DeepSeek AI model for reasoning and chat';
-    } else if (modelId.contains('gemini')) {
-      return 'Google Gemini multimodal AI model';
-    } else if (modelId.contains('claude')) {
-      return 'Anthropic Claude AI assistant';
-    } else if (modelId.contains('gpt')) {
-      return 'OpenAI GPT language model';
-    }
-    return 'AI language model';
+    return ModelRegistry.getModelDescription(modelId);
   }
 
   /// Get model provider

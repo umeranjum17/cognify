@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import '../config/model_registry.dart';
 
 import 'openrouter_client.dart';
 import '../utils/logger.dart';
@@ -258,7 +259,7 @@ Maximum keywords: $maxKeywords
 ''';
 
       final response = await _openRouterClient.createChatCompletion(
-        model: 'google/gemini-2.0-flash-exp:free',
+        model: ModelRegistry.defaults['BUDGET_MODEL']!,
         messages: [
           {'role': 'user', 'content': prompt}
         ],
@@ -425,7 +426,7 @@ Format your response as JSON with the following structure:
 ''';
 
       final response = await _openRouterClient.createChatCompletion(
-        model: 'google/gemini-2.0-flash-exp:free',
+        model: ModelRegistry.defaults['BUDGET_MODEL']!,
         messages: [
           {'role': 'user', 'content': prompt}
         ],
@@ -621,30 +622,16 @@ class ToolsManager {
   final List<Tool> allTools = [
     BraveSearchTool(),
     BraveSearchEnhancedTool(),
-    SequentialThinkingTool(),
     WebFetchTool(),
-    YouTubeTool(),
-    BrowserRoadmapTool(),
     ImageSearchTool(),
-    KeywordExtractionTool(),
-    MemoryTool(),
-    SourceQueryTool(),
-    SourceContentTool(),
     TimeTool(),
   ];
   // Core tools for basic functionality
   final List<Tool> coreTools = [
     BraveSearchTool(),
     BraveSearchEnhancedTool(),
-    SequentialThinkingTool(),
     WebFetchTool(),
-    YouTubeTool(),
-    BrowserRoadmapTool(),
     ImageSearchTool(),
-    KeywordExtractionTool(),
-    MemoryTool(),
-    SourceQueryTool(),
-    SourceContentTool(),
     TimeTool(),
   ];
 

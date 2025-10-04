@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/mode_config.dart';
 import '../theme/app_theme.dart';
 import '../services/session_cost_service.dart';
-import '../services/unified_api_service.dart';
+import '../services/user_service.dart';
 import 'session_cost_bottom_sheet.dart';
 
 class SessionInfoWidget extends StatefulWidget {
@@ -61,7 +61,7 @@ class _SessionInfoWidgetState extends State<SessionInfoWidget> {
     });
 
     try {
-      final data = await UnifiedApiService().getCredits();
+      final data = await UserService().getCredits();
       setState(() {
         _creditsData = data;
         _isLoadingCredits = false;

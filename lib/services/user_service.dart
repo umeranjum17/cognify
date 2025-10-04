@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
+import '../config/app_config.dart';
 import 'package:uuid/uuid.dart';
 
 import '../utils/logger.dart';
@@ -198,7 +199,7 @@ class UserService {
           'lastActiveAt': DateTime.now().toIso8601String(),
           'preferences': {
             'theme': 'system',
-            'defaultModel': 'mistralai/mistral-7b-instruct:free',
+            'defaultModel': AppConfig.defaultModel,
             'personality': 'helpful',
           },
           'stats': {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/file_attachment.dart';
 import '../theme/app_theme.dart';
+import '../config/model_registry.dart';
 
 class ModelCapabilitiesBottomSheet extends StatelessWidget {
   final ModelCapabilities? modelCapabilities;
@@ -58,17 +59,7 @@ class ModelCapabilitiesBottomSheet extends StatelessWidget {
     if (modelData != null) {
       if (modelData!['isFree'] == true) return true;
       final modelId = modelData!['id'] as String? ?? '';
-      if (modelId.endsWith(':free')) return true;
-      
-      // Check known free models (could be extended if needed)
-      final knownFreeModels = {
-        'gpt-3.5-turbo:free',
-        'claude-3-haiku:free',
-        'gemini-pro:free',
-        'llama-2-7b-chat:free',
-        'mistral-7b-instruct:free',
-      };
-      if (knownFreeModels.contains(modelId)) return true;
+      if (ModelRegistry.isModelFree(modelId)) return true;
     }
     
     // Check pricing data

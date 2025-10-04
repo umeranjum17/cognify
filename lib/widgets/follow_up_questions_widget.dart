@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../services/session_cost_service.dart';
-import '../services/unified_api_service.dart';
+import '../services/llm_service.dart';
+import '../config/model_registry.dart';
 import 'modern_card.dart';
 
 class FollowUpQuestionsWidget extends StatefulWidget {
@@ -216,13 +217,13 @@ class _FollowUpQuestionsWidgetState extends State<FollowUpQuestionsWidget> {
   }
 
   Future<List<String>> _fetchFollowUpQuestions() async {
-    // Use the updated UnifiedApiService method for /api/followup-questions
-    final response = await UnifiedApiService().generateFollowUpQuestions(
-      widget.aiAnswer,
-      model: widget.model,
-      sources: widget.sources,
-      messages: widget.messages,
-      stream: false,
+    // Generate follow-up questions using LLM service
+    final response = await LLMService().chatCompletion(
+      model: widget.model ?? ModelRegistry.defaults['FOLLOWUP_QUESTIONS']!,
+      messages: [
+        {'role': 'system', 'content': 'Generate 3 follow-up questions based on the answer.'},
+        {'role': 'user', 'content': widget.aiAnswer},
+      ],
     );
 
     // Track generation ID for cost calculation if available
@@ -233,7 +234,7 @@ class _FollowUpQuestionsWidgetState extends State<FollowUpQuestionsWidget> {
           {
             'id': response['generationId'],
             'stage': 'followup-questions',
-            'model': widget.model ?? 'google/gemini-2.0-flash-exp:free',
+            'model': widget.model ?? ModelRegistry.defaults['FOLLOWUP_QUESTIONS']!,
             'inputTokens': response['usage']?['prompt_tokens'] ?? 0,
             'outputTokens': response['usage']?['completion_tokens'] ?? 0,
             'totalTokens': response['usage']?['total_tokens'] ?? 0,

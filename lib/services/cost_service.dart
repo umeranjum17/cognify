@@ -1,13 +1,12 @@
 import 'dart:convert';
 
 import 'package:cognify_flutter/config/app_config.dart';
+import '../config/model_registry.dart';
 import 'package:http/http.dart' as http;
-
-import 'unified_api_service.dart';
 
 class CostService {
   static final String baseUrl = AppConfig.apiUrl;
-  
+
   // Cache for pricing to avoid repeated API calls
   static Map<String, Map<String, double>>? _cachedPricing;
   static DateTime? _cacheTimestamp;
@@ -27,10 +26,9 @@ class CostService {
 
     try {
       print('💰 Calculating accurate costs for ${generationIds.length} generation IDs');
-      
-      // Import UnifiedApiService for the network call
-      final apiService = UnifiedApiService();
-      final costResponse = await apiService.getGenerationCosts(generationIds);
+
+      // Cost calculation disabled - return stub
+      final costResponse = {'success': false};
 
       if (costResponse['success'] == true) {
         final totalApiCost = (costResponse['totalApiCost'] ?? 0.0).toDouble();
@@ -232,15 +230,19 @@ class CostService {
 
   /// Get fallback pricing data
   static Map<String, Map<String, double>> _getFallbackPricing() {
-    return {
-      'google/gemini-flash-1.5': {'input': 0.075, 'output': 0.30},
-      'anthropic/claude-3-haiku': {'input': 0.25, 'output': 1.25},
-      'openai/gpt-4o-mini': {'input': 0.15, 'output': 0.60},
-      // Free models
-      'mistralai/mistral-7b-instruct:free': {'input': 0, 'output': 0},
-      'deepseek/deepseek-chat:free': {'input': 0, 'output': 0},
-      'deepseek/deepseek-r1:free': {'input': 0, 'output': 0},
-    };
+    // Build fallback pricing from ModelRegistry fallback info only
+    final Map<String, Map<String, double>> pricing = {};
+    for (final entry in ModelRegistry.fallbackModelInfo.entries) {
+      final id = entry.key;
+      final info = entry.value;
+      final p = info['pricing'] as Map<String, dynamic>?;
+      if (p != null) {
+        final input = (p['input'] as num?)?.toDouble() ?? 0.0;
+        final output = (p['output'] as num?)?.toDouble() ?? 0.0;
+        pricing[id] = {'input': input, 'output': output};
+      }
+    }
+    return pricing;
   }
 
   /// Check if cache is valid

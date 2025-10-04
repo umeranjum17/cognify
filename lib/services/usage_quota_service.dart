@@ -1,177 +1,92 @@
-import 'dart:math' as math;
+import 'dart:async';
+import 'dart:convert';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../config/app_config.dart';
 import '../models/usage_quota.dart';
-import '../utils/logger.dart';
 
-/// Handles persistence of token balances per user in Firestore.
+/// Local UsageQuota service backed by SharedPreferences.
 class UsageQuotaService {
-  UsageQuotaService._();
+  UsageQuotaService._internal();
+  static final UsageQuotaService instance = UsageQuotaService._internal();
 
-  static final UsageQuotaService instance = UsageQuotaService._();
+  final Map<String, StreamController<UsageQuota>> _controllersByUid = {};
 
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  static const String _collection = 'usage_quotas';
+  String _keyFor(String uid) => 'usage_quota_$uid';
 
-  DocumentReference<Map<String, dynamic>> _doc(String uid) =>
-      _firestore.collection(_collection).doc(uid);
+  Future<UsageQuota> _load(String uid) async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonStr = prefs.getString(_keyFor(uid));
 
-  int get _defaultAllocation => AppSecrets.initialTokenAllocation;
+    if (jsonStr != null && jsonStr.isNotEmpty) {
+      try {
+        final data = json.decode(jsonStr) as Map<String, dynamic>;
+        return UsageQuota.fromJson(data, allocation: AppSecrets.initialTokenAllocation);
+      } catch (_) {}
+    }
 
-  /// Returns a stream of [UsageQuota] updates for the active user.
-  Stream<UsageQuota> watchQuota(String uid) {
-    return _doc(uid).snapshots().map((snapshot) {
-      if (snapshot.exists) {
-        return UsageQuota.fromJson(
-          snapshot.data()!,
-          allocation: _defaultAllocation,
-        );
-      }
-      return UsageQuota.initial(allocation: _defaultAllocation);
-    });
+    // Initialize with default allocation
+    final initial = UsageQuota.initial(allocation: AppSecrets.initialTokenAllocation);
+    await _save(uid, initial);
+    return initial;
   }
 
-  /// Fetches the latest quota, creating a default record if necessary.
+  Future<void> _save(String uid, UsageQuota quota) async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonStr = json.encode(quota.toJson());
+    await prefs.setString(_keyFor(uid), jsonStr);
+  }
+
+  Stream<UsageQuota> watchQuota(String uid) async* {
+    // Emit current value immediately
+    yield await fetchQuota(uid);
+
+    // Then subscribe to controller updates
+    final controller = _controllersByUid.putIfAbsent(
+      uid,
+      () => StreamController<UsageQuota>.broadcast(),
+    );
+    yield* controller.stream;
+  }
+
   Future<UsageQuota> fetchQuota(String uid) async {
-    final ref = _doc(uid);
-    final snapshot = await ref.get();
-    if (!snapshot.exists) {
-      final quota = UsageQuota.initial(allocation: _defaultAllocation);
-      await ref.set(quota.toJson(), SetOptions(merge: true));
-      return quota;
-    }
-    return UsageQuota.fromJson(
-      snapshot.data()!,
-      allocation: _defaultAllocation,
-    );
+    return await _load(uid);
   }
 
-  /// Consumes [amount] tokens. Throws [QuotaExceededException] when exhausted.
   Future<UsageQuota> consume({required String uid, int amount = 1}) async {
-    if (amount <= 0) {
-      return fetchQuota(uid);
-    }
-
-    final now = DateTime.now().toUtc();
-
-    return _firestore.runTransaction((transaction) async {
-      final ref = _doc(uid);
-      final snapshot = await transaction.get(ref);
-
-      final state = _readSnapshot(snapshot);
-
-      if (amount > state.remaining) {
-        throw QuotaExceededException(
-          limit: state.totalTokens,
-          used: state.tokensConsumed,
-          requested: amount,
-        );
-      }
-
-      final updatedConsumed = state.tokensConsumed + amount;
-      final updatedRemaining = state.totalTokens - updatedConsumed;
-
-      transaction.set(ref, {
-        'totalTokens': state.totalTokens,
-        'tokensConsumed': updatedConsumed,
-        'tokensRemaining': updatedRemaining,
-        'createdAt': Timestamp.fromDate(state.createdAt),
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
-
-      Logger.debug(
-        '💾 Tokens consumed: $updatedConsumed/${state.totalTokens} (delta=$amount, uid=$uid)',
-        tag: 'UsageQuota',
+    final current = await _load(uid);
+    final requested = amount.clamp(0, 1 << 30);
+    if (current.tokensConsumed + requested > current.totalTokens) {
+      throw QuotaExceededException(
+        limit: current.totalTokens,
+        used: current.tokensConsumed,
+        requested: requested,
       );
-
-      return UsageQuota(
-        totalTokens: state.totalTokens,
-        tokensConsumed: updatedConsumed,
-        createdAt: state.createdAt,
-        updatedAt: now,
-      );
-    });
-  }
-
-  /// Reverts a prior consumption in failure scenarios.
-  Future<void> refund({required String uid, int amount = 1}) async {
-    if (amount <= 0) {
-      return;
     }
 
-    await _firestore.runTransaction((transaction) async {
-      final ref = _doc(uid);
-      final snapshot = await transaction.get(ref);
-      if (!snapshot.exists) {
-        return;
-      }
-
-      final state = _readSnapshot(snapshot);
-      if (state.tokensConsumed == 0) {
-        return;
-      }
-
-      final updatedConsumed = math.max(0, state.tokensConsumed - amount);
-      final updatedRemaining = state.totalTokens - updatedConsumed;
-
-      transaction.set(ref, {
-        'totalTokens': state.totalTokens,
-        'tokensConsumed': updatedConsumed,
-        'tokensRemaining': updatedRemaining,
-        'createdAt': Timestamp.fromDate(state.createdAt),
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
-    });
-  }
-
-  _QuotaState _readSnapshot(DocumentSnapshot<Map<String, dynamic>> snapshot) {
-    final now = DateTime.now().toUtc();
-    final data = snapshot.data();
-    int total = _defaultAllocation;
-    int consumed = 0;
-    DateTime createdAt = now;
-
-    if (data != null) {
-      total = (data['totalTokens'] as num?)?.toInt() ?? total;
-      consumed =
-          (data['tokensConsumed'] as num?)?.toInt() ??
-          (data['requestsUsed'] as num?)?.toInt() ??
-          0;
-
-      final remainingField = (data['tokensRemaining'] as num?)?.toInt();
-      if (remainingField != null) {
-        total = math.max(total, consumed + remainingField);
-      }
-
-      final createdField = data['createdAt'];
-      if (createdField is Timestamp) {
-        createdAt = createdField.toDate().toUtc();
-      }
-    }
-
-    total = math.max(total, consumed);
-    consumed = consumed.clamp(0, total);
-
-    return _QuotaState(
-      totalTokens: total,
-      tokensConsumed: consumed,
-      createdAt: createdAt,
+    final updated = UsageQuota(
+      totalTokens: current.totalTokens,
+      tokensConsumed: current.tokensConsumed + requested,
+      createdAt: current.createdAt,
+      updatedAt: DateTime.now().toUtc(),
     );
+    await _save(uid, updated);
+    _controllersByUid[uid]?.add(updated);
+    return updated;
+  }
+
+  Future<void> refund({required String uid, int amount = 1}) async {
+    final current = await _load(uid);
+    final refunded = (current.tokensConsumed - amount).clamp(0, current.totalTokens);
+    final updated = UsageQuota(
+      totalTokens: current.totalTokens,
+      tokensConsumed: refunded,
+      createdAt: current.createdAt,
+      updatedAt: DateTime.now().toUtc(),
+    );
+    await _save(uid, updated);
+    _controllersByUid[uid]?.add(updated);
   }
 }
 
-class _QuotaState {
-  _QuotaState({
-    required this.totalTokens,
-    required this.tokensConsumed,
-    required this.createdAt,
-  });
-
-  final int totalTokens;
-  final int tokensConsumed;
-  final DateTime createdAt;
-
-  int get remaining => (totalTokens - tokensConsumed).clamp(0, totalTokens);
-}

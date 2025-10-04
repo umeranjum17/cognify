@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import '../config/model_registry.dart';
 
 import 'package:archive/archive.dart';
 import 'package:html/parser.dart' as html_parser;
@@ -241,7 +242,7 @@ Extracted text:''';
       print('🤖 Messages structure: ${messages.length} messages');
 
       final response = await _openRouterClient.chatCompletion(
-        model: 'google/gemini-2.0-flash-exp:free',
+        model: ModelRegistry.defaults['BUDGET_MODEL']!,
         messages: messages,
         temperature: 0.1, // Low temperature for consistent extraction
         maxTokens: 4000, // Allow for large text extraction
@@ -593,7 +594,7 @@ Extracted text:''';
             'type': sourceType,
             'size': fileData.length,
             'extractionMethod': 'openrouter',
-            'model': 'google/gemini-2.0-flash-exp:free',
+            'model': ModelRegistry.defaults['BUDGET_MODEL']!,
           }
         };
       } else {

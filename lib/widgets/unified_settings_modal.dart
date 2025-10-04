@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../config/model_registry.dart';
 import 'package:provider/provider.dart';
 
 import '../models/mode_config.dart';
@@ -372,114 +373,6 @@ class _UnifiedSettingsModalState extends State<UnifiedSettingsModal>
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
-                // DeepSearch Mode Card
-                InkWell(
-                  onTap: () => _showModelSelection(ChatMode.deepsearch),
-                  borderRadius: BorderRadius.circular(8),
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: isDark ? AppColors.darkCard : AppColors.lightCard,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: isDark ? AppColors.darkDivider.withValues(alpha: 0.2) : AppColors.lightDivider.withValues(alpha: 0.2),
-                        width: 1,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: isDark ? 0.1 : 0.05),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: isDark ? AppColors.darkTextSecondary.withValues(alpha: 0.1) : AppColors.lightTextSecondary.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Icon(
-                            Icons.search,
-                            color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
-                            size: 16,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'DeepSearch',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
-                                  color: isDark ? AppColors.darkText : AppColors.lightText,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                'Ultra-comprehensive research with enhanced visual content and 4x more detailed responses (10x resources)',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w400,
-                                  color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: _isModelFree(_selectedDeepSearchModel)
-                                          ? (isDark ? AppColors.darkSuccess.withValues(alpha: 0.2) : AppColors.lightSuccess.withValues(alpha: 0.15))
-                                          : (isDark ? AppColors.darkWarning.withValues(alpha: 0.2) : AppColors.lightWarning.withValues(alpha: 0.15)),
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: Text(
-                                      _isModelFree(_selectedDeepSearchModel) ? 'Free' : 'Paid',
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w500,
-                                        color: _isModelFree(_selectedDeepSearchModel)
-                                            ? (isDark ? AppColors.darkSuccess : AppColors.lightSuccess)
-                                            : (isDark ? AppColors.darkWarning : AppColors.lightWarning),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      _formatModelName(_selectedDeepSearchModel),
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w500,
-                                        color: isDark ? AppColors.darkText : AppColors.lightText,
-                                      ),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 6),
-                              _buildModelCapabilities(_selectedDeepSearchModel, isDark),
-                            ],
-                          ),
-                        ),
-                        Icon(
-                          Icons.arrow_forward_ios,
-                          color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
-                          size: 14,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
               ],
             ),
           ),
@@ -493,29 +386,28 @@ class _UnifiedSettingsModalState extends State<UnifiedSettingsModal>
       return const SizedBox.shrink();
     }
 
-    // Extract capabilities from model ID and common patterns
-    final capabilities = <Widget>[];
+    final capabilitiesList = <Widget>[];
 
-    // Context length estimation (simplified)
-    String contextInfo = '4K';
-    if (modelId.contains('flash') || modelId.contains('gemini')) {
-      contextInfo = '1M';
-    } else if (modelId.contains('r1') || modelId.contains('reasoning')) {
-      contextInfo = '128K';
-    } else if (modelId.contains('gpt-4')) {
-      contextInfo = '128K';
+    // Use centralized registry for capabilities when available
+    final caps = ModelRegistry.getModelCapabilities(modelId);
+
+    if (caps.contextLength != null) {
+      final length = caps.contextLength!;
+      final label = length >= 1000000
+          ? '${(length / 1000000).toStringAsFixed(1)}M'
+          : length >= 1000
+              ? '${(length / 1000).round()}K'
+              : '$length';
+      capabilitiesList.add(_buildCapabilityChip(
+        label,
+        Icons.memory,
+        isDark ? AppColors.darkInfo.withValues(alpha: 0.2) : AppColors.lightInfo.withValues(alpha: 0.15),
+        isDark ? AppColors.darkInfo : AppColors.lightInfo,
+      ));
     }
 
-    capabilities.add(_buildCapabilityChip(
-      contextInfo,
-      Icons.memory,
-      isDark ? AppColors.darkInfo.withValues(alpha: 0.2) : AppColors.lightInfo.withValues(alpha: 0.15),
-      isDark ? AppColors.darkInfo : AppColors.lightInfo,
-    ));
-
-    // Modality support
-    if (modelId.contains('gpt-4') || modelId.contains('gemini') || modelId.contains('claude')) {
-      capabilities.add(_buildCapabilityChip(
+    if (caps.supportsImages) {
+      capabilitiesList.add(_buildCapabilityChip(
         'Images',
         Icons.image,
         isDark ? AppColors.darkAccentSecondary.withValues(alpha: 0.2) : AppColors.lightAccentSecondary.withValues(alpha: 0.15),
@@ -523,9 +415,8 @@ class _UnifiedSettingsModalState extends State<UnifiedSettingsModal>
       ));
     }
 
-    // Reasoning capability
-    if (modelId.contains('r1') || modelId.contains('reasoning') || modelId.contains('think')) {
-      capabilities.add(_buildCapabilityChip(
+    if (ModelRegistry.isReasoningModel(modelId)) {
+      capabilitiesList.add(_buildCapabilityChip(
         'Reasoning',
         Icons.psychology,
         isDark ? AppColors.darkAccent.withValues(alpha: 0.2) : AppColors.lightAccent.withValues(alpha: 0.15),
@@ -536,7 +427,7 @@ class _UnifiedSettingsModalState extends State<UnifiedSettingsModal>
     return Wrap(
       spacing: 6,
       runSpacing: 4,
-      children: capabilities,
+      children: capabilitiesList,
     );
   }
 

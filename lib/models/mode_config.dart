@@ -4,9 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../services/model_service.dart';
+import '../config/model_registry.dart';
 
 enum ChatMode {
   chat,
+  search,
+  aipedia,
   deepsearch,
 }
 
@@ -77,6 +80,20 @@ class ModeConfigManager {
       description: 'Lightning fast responses with minimal search',
       defaultModel: 'google/gemini-2.5-flash-lite',
     ),
+    ChatMode.search: const ModeConfig(
+      mode: ChatMode.search,
+      model: 'google/gemini-2.5-flash-lite',
+      displayName: 'Search',
+      description: 'Perplexity-style quick web answers (fixed model)',
+      defaultModel: 'google/gemini-2.5-flash-lite',
+    ),
+    ChatMode.aipedia: const ModeConfig(
+      mode: ChatMode.aipedia,
+      model: 'google/gemini-2.5-flash-lite',
+      displayName: 'AIpedia',
+      description: 'Wikipedia-style overviews with sources and images',
+      defaultModel: 'google/gemini-2.5-flash-lite',
+    ),
     ChatMode.deepsearch: const ModeConfig(
       mode: ChatMode.deepsearch,
       model: 'deepseek/deepseek-r1:free',
@@ -113,20 +130,16 @@ class ModeConfigManager {
       return List<String>.from(modelData['models'] ?? []);
     } catch (e) {
       print('Error fetching models for mode: $e');
-      // Return fallback models
+      // Return only configured defaults per mode
       switch (mode) {
         case ChatMode.chat:
-          return [
-            'mistralai/mistral-7b-instruct:free',
-            'deepseek/deepseek-chat:free',
-            'google/gemini-2.5-flash-lite',
-          ];
+          return [ModelRegistry.defaults['CHAT_MODE']!];
+        case ChatMode.search:
+          return [ModelRegistry.defaults['CHAT_MODE']!];
+        case ChatMode.aipedia:
+          return [ModelRegistry.defaults['CHAT_MODE']!];
         case ChatMode.deepsearch:
-          return [
-            'deepseek/deepseek-r1:free',
-            'deepseek/deepseek-chat-v3-0324:free',
-            'google/gemini-2.5-flash-lite',
-          ];
+          return [ModelRegistry.defaults['DEEPSEARCH_MODE']!];
       }
     }
   }
@@ -159,7 +172,8 @@ class ModeConfigManager {
     if (explicitMode == null) {
       final input = userInput.toLowerCase();
       if (input.contains('search') || input.contains('research') || input.contains('find')) {
-        mode = ChatMode.deepsearch;
+        // Route generic search intents to the lightweight Search mode
+        mode = ChatMode.search;
       }
     }
     
@@ -206,9 +220,7 @@ class ModeConfigManager {
   }
 
   static bool isReasoningModel(String model) {
-    return model.contains('deepseek-r1') || 
-           model.contains('reasoning') ||
-           model.contains('think');
+    return ModelRegistry.isReasoningModel(model);
   }
 
   static Future<Map<ChatMode, ModeConfig>> loadConfigs() async {
@@ -263,6 +275,12 @@ class ModeConfigManager {
 
   static ChatMode parseModeFromString(String modeString) {
     switch (modeString.toLowerCase()) {
+      case 'search':
+        return ChatMode.search;
+      case 'aipedia':
+      case 'ai_pedia':
+      case 'ai-pedia':
+        return ChatMode.aipedia;
       case 'deepsearch':
       case 'deep_search':
         return ChatMode.deepsearch;
@@ -305,6 +323,10 @@ extension ChatModeExtension on ChatMode {
     switch (this) {
       case ChatMode.chat:
         return '💬';
+      case ChatMode.search:
+        return '🔎';
+      case ChatMode.aipedia:
+        return '📚';
       case ChatMode.deepsearch:
         return '🔍';
     }
@@ -320,6 +342,10 @@ extension ChatModeMaterialIcon on ChatMode {
     switch (this) {
       case ChatMode.chat:
         return Icons.bolt;
+      case ChatMode.search:
+        return Icons.search;
+      case ChatMode.aipedia:
+        return Icons.menu_book;
       case ChatMode.deepsearch:
         return Icons.search;
     }
