@@ -16,13 +16,12 @@ import 'package:webview_flutter_android/webview_flutter_android.dart';
 import 'providers/app_access_provider.dart';
 import 'providers/firebase_auth_provider.dart';
 import 'providers/subscription_provider.dart';
+import 'providers/usage_quota_provider.dart';
 import 'services/revenuecat_service.dart';
 
 import 'providers/mode_config_provider.dart';
-import 'providers/oauth_auth_provider.dart';
 import 'providers/tab_provider.dart';
 import 'services/services_manager.dart';
-import 'services/sharing_service.dart';
 import 'services/user_service.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_provider.dart';
@@ -31,7 +30,7 @@ import 'config/app_config.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Disable Provider debug checks to prevent subtype warnings
   Provider.debugCheckInvalidValueType = null;
 
@@ -68,7 +67,10 @@ void main() async {
 // Resilient background service initialization with graceful error handling
 Future<void> initializeServiceSafely() async {
   try {
-    Logger.info('🚀 Initializing background service...', tag: 'BackgroundService');
+    Logger.info(
+      '🚀 Initializing background service...',
+      tag: 'BackgroundService',
+    );
 
     final service = FlutterBackgroundService();
 
@@ -90,22 +92,39 @@ Future<void> initializeServiceSafely() async {
       ),
     );
 
-    Logger.info('✅ Background service configured successfully', tag: 'BackgroundService');
+    Logger.info(
+      '✅ Background service configured successfully',
+      tag: 'BackgroundService',
+    );
 
     // Only start service on explicit user action, not automatically
-    Logger.info('📋 Background service ready - will start when needed', tag: 'BackgroundService');
-
+    Logger.info(
+      '📋 Background service ready - will start when needed',
+      tag: 'BackgroundService',
+    );
   } catch (e, stackTrace) {
-    Logger.error('❌ Failed to initialize background service: $e', tag: 'BackgroundService');
+    Logger.error(
+      '❌ Failed to initialize background service: $e',
+      tag: 'BackgroundService',
+    );
     Logger.error('📍 Stack trace: $stackTrace', tag: 'BackgroundService');
 
     // Log the specific error for debugging
     if (e.toString().contains('permission')) {
-      Logger.warn('🔐 Permission-related error - app will continue without background functionality', tag: 'BackgroundService');
+      Logger.warn(
+        '🔐 Permission-related error - app will continue without background functionality',
+        tag: 'BackgroundService',
+      );
     } else if (e.toString().contains('service')) {
-      Logger.warn('⚙️ Service configuration error - app will continue without background functionality', tag: 'BackgroundService');
+      Logger.warn(
+        '⚙️ Service configuration error - app will continue without background functionality',
+        tag: 'BackgroundService',
+      );
     } else {
-      Logger.warn('❓ Unknown error - app will continue without background functionality', tag: 'BackgroundService');
+      Logger.warn(
+        '❓ Unknown error - app will continue without background functionality',
+        tag: 'BackgroundService',
+      );
     }
 
     // Critical: Don't rethrow - allow app to continue without background service
@@ -118,7 +137,10 @@ void onStart(ServiceInstance service) async {
   Logger.info('🚀 Background service started', tag: 'BackgroundService');
 
   // Background service will maintain network connections
-  Logger.info('🔧 Initializing background networking...', tag: 'BackgroundService');
+  Logger.info(
+    '🔧 Initializing background networking...',
+    tag: 'BackgroundService',
+  );
 
   // WebSocket connection for real-time communication
   WebSocketChannel? channel;
@@ -133,7 +155,10 @@ void onStart(ServiceInstance service) async {
 
   scheduleReconnect = () {
     if (reconnectAttempts >= maxReconnectAttempts) {
-      Logger.warn('🚨 Max WebSocket reconnect attempts reached in background', tag: 'BackgroundService');
+      Logger.warn(
+        '🚨 Max WebSocket reconnect attempts reached in background',
+        tag: 'BackgroundService',
+      );
       return;
     }
 
@@ -142,7 +167,10 @@ void onStart(ServiceInstance service) async {
 
     reconnectTimer = Timer(delay, () {
       reconnectAttempts++;
-      Logger.info('🔄 Attempting WebSocket reconnect in background (attempt $reconnectAttempts)', tag: 'BackgroundService');
+      Logger.info(
+        '🔄 Attempting WebSocket reconnect in background (attempt $reconnectAttempts)',
+        tag: 'BackgroundService',
+      );
       connectWebSocket();
     });
   };
@@ -150,36 +178,52 @@ void onStart(ServiceInstance service) async {
   connectWebSocket = () async {
     try {
       // Replace with your actual WebSocket endpoint
-      const wsUrl = 'wss://echo.websocket.events'; // or your server's WebSocket URL
+      const wsUrl =
+          'wss://echo.websocket.events'; // or your server's WebSocket URL
       channel = WebSocketChannel.connect(Uri.parse(wsUrl));
 
-      Logger.info('📡 WebSocket connected in background', tag: 'BackgroundService');
+      Logger.info(
+        '📡 WebSocket connected in background',
+        tag: 'BackgroundService',
+      );
       reconnectAttempts = 0;
 
       channel!.stream.listen(
         (message) {
-          Logger.debug('📨 Background received: $message', tag: 'BackgroundService');
+          Logger.debug(
+            '📨 Background received: $message',
+            tag: 'BackgroundService',
+          );
 
           // Update notification with latest activity
           if (service is AndroidServiceInstance) {
             service.setForegroundNotificationInfo(
               title: 'Cognify Active',
-              content: 'Last activity: ${DateTime.now().toLocal().toString().split('.')[0]}',
+              content:
+                  'Last activity: ${DateTime.now().toLocal().toString().split('.')[0]}',
             );
           }
         },
         onError: (error) {
-          Logger.error('❌ Background WebSocket error: $error', tag: 'BackgroundService');
+          Logger.error(
+            '❌ Background WebSocket error: $error',
+            tag: 'BackgroundService',
+          );
           scheduleReconnect();
         },
         onDone: () {
-          Logger.info('🔒 Background WebSocket closed', tag: 'BackgroundService');
+          Logger.info(
+            '🔒 Background WebSocket closed',
+            tag: 'BackgroundService',
+          );
           scheduleReconnect();
         },
       );
-
     } catch (e) {
-      Logger.error('❌ Failed to connect WebSocket in background: $e', tag: 'BackgroundService');
+      Logger.error(
+        '❌ Failed to connect WebSocket in background: $e',
+        tag: 'BackgroundService',
+      );
       scheduleReconnect();
     }
   };
@@ -191,26 +235,34 @@ void onStart(ServiceInstance service) async {
   Timer.periodic(const Duration(seconds: 30), (timer) async {
     if (service is AndroidServiceInstance) {
       if (await service.isForegroundService()) {
-
         // Send heartbeat ping
         try {
-          channel?.sink.add(jsonEncode({
-            'type': 'heartbeat',
-            'timestamp': DateTime.now().toIso8601String(),
-            'backgroundService': true,
-            'activeStreams': activeStreams,
-          }));
+          channel?.sink.add(
+            jsonEncode({
+              'type': 'heartbeat',
+              'timestamp': DateTime.now().toIso8601String(),
+              'backgroundService': true,
+              'activeStreams': activeStreams,
+            }),
+          );
         } catch (e) {
-          Logger.error('❌ Failed to send heartbeat: $e', tag: 'BackgroundService');
+          Logger.error(
+            '❌ Failed to send heartbeat: $e',
+            tag: 'BackgroundService',
+          );
         }
 
         // Update notification with simple status
         service.setForegroundNotificationInfo(
           title: 'Cognify Background 🔄',
-          content: 'Active streams: $activeStreams | ${DateTime.now().toLocal().toString().split('.')[0]}',
+          content:
+              'Active streams: $activeStreams | ${DateTime.now().toLocal().toString().split('.')[0]}',
         );
 
-        Logger.debug('💓 Background heartbeat sent - Active streams: $activeStreams', tag: 'BackgroundService');
+        Logger.debug(
+          '💓 Background heartbeat sent - Active streams: $activeStreams',
+          tag: 'BackgroundService',
+        );
       }
     }
   });
@@ -223,7 +275,10 @@ void onStart(ServiceInstance service) async {
     service.stopSelf();
   });
 
-  Logger.info('✅ Background service fully initialized', tag: 'BackgroundService');
+  Logger.info(
+    '✅ Background service fully initialized',
+    tag: 'BackgroundService',
+  );
 }
 
 class CognifyApp extends StatefulWidget {
@@ -234,17 +289,20 @@ class CognifyApp extends StatefulWidget {
 }
 
 class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
-  late final GoRouter _router;
+  GoRouter? _router;
   late AppLinks _appLinks;
   StreamSubscription? _linkSubscription;
   ThemeProvider? _themeProvider;
-  OAuthAuthProvider? _authProvider;
+  FirebaseAuthProvider? _firebaseAuthProvider;
   bool _isInitializing = true;
 
   @override
   Widget build(BuildContext context) {
     // Show consistent loading screen while initializing
-    if (_isInitializing || _themeProvider == null || _authProvider == null) {
+    if (_isInitializing ||
+        _themeProvider == null ||
+        _firebaseAuthProvider == null ||
+        _router == null) {
       return MaterialApp(
         theme: lightTheme,
         darkTheme: darkTheme,
@@ -261,11 +319,7 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
                     color: Colors.blue,
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: Icon(
-                    Icons.smart_toy,
-                    size: 48,
-                    color: Colors.white,
-                  ),
+                  child: Icon(Icons.smart_toy, size: 48, color: Colors.white),
                 ),
                 SizedBox(height: 24),
                 SizedBox(
@@ -291,33 +345,35 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
         ),
       );
     }
-    
+
     return MultiProvider(
       providers: [
         ChangeNotifierProvider.value(value: _themeProvider!),
-        ChangeNotifierProvider.value(value: _authProvider!),
+        ChangeNotifierProvider.value(value: _firebaseAuthProvider!),
         ChangeNotifierProvider(create: (_) => ModeConfigProvider()),
-        // Firebase provider with post-frame initialization
-        ChangeNotifierProvider(
-          create: (_) {
-            final provider = FirebaseAuthProvider();
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              provider.initialize();
-            });
-            return provider;
-          },
-        ),
-        // Subscription provider without immediate initialization
         ChangeNotifierProvider(create: (_) => SubscriptionProvider()),
-        // Tab provider for managing editor tabs
         ChangeNotifierProvider(create: (_) => TabProvider()),
-        // Access gating provider (tester whitelist + RevenueCat entitlement)
-        ProxyProvider2<FirebaseAuthProvider, SubscriptionProvider, AppAccessProvider>(
+        ProxyProvider2<
+          FirebaseAuthProvider,
+          SubscriptionProvider,
+          AppAccessProvider
+        >(
           update: (context, firebaseAuth, subscription, previous) {
             return AppAccessProvider(
               authProvider: firebaseAuth,
               subscriptionProvider: subscription,
             );
+          },
+        ),
+        ChangeNotifierProxyProvider<
+          FirebaseAuthProvider,
+          UsageQuotaProvider
+        >(
+          create: (_) => UsageQuotaProvider(),
+          update: (_, auth, quota) {
+            quota ??= UsageQuotaProvider();
+            quota.attach(auth: auth);
+            return quota;
           },
         ),
       ],
@@ -328,7 +384,7 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
             theme: lightTheme,
             darkTheme: darkTheme,
             themeMode: themeProvider.themeMode,
-            routerConfig: _router,
+            routerConfig: _router!,
             debugShowCheckedModeBanner: false,
             builder: (context, child) {
               return PopScope(
@@ -337,15 +393,26 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
                   if (didPop) return;
 
                   final router = GoRouter.of(context);
-                  final currentLocation = GoRouterState.of(context).uri.toString();
+                  final currentLocation = GoRouterState.of(
+                    context,
+                  ).uri.toString();
 
-                  Logger.debug('🔙 Back button pressed. Current location: $currentLocation', tag: 'Navigation');
-                  Logger.debug('🔙 Can pop: ${router.canPop()}', tag: 'Navigation');
+                  Logger.debug(
+                    '🔙 Back button pressed. Current location: $currentLocation',
+                    tag: 'Navigation',
+                  );
+                  Logger.debug(
+                    '🔙 Can pop: ${router.canPop()}',
+                    tag: 'Navigation',
+                  );
 
                   // Check if we're on the home screen (root route)
                   if (currentLocation == '/' || currentLocation == '/home') {
                     // If we're on the home screen, show exit confirmation
-                    Logger.debug('🔙 On home screen, showing exit confirmation...', tag: 'Navigation');
+                    Logger.debug(
+                      '🔙 On home screen, showing exit confirmation...',
+                      tag: 'Navigation',
+                    );
                     final shouldExit = await showDialog<bool>(
                       context: context,
                       builder: (context) => AlertDialog(
@@ -389,24 +456,12 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
-
-    // Check for shared content when app resumes
-    if (state == AppLifecycleState.resumed) {
-      SharingService().checkForSharedContent().then((_) {
-        final sharedUrl = SharingService().getPendingSharedUrl();
-        if (sharedUrl != null && sharedUrl.isNotEmpty && mounted) {
-          final encodedUrl = Uri.encodeQueryComponent(sharedUrl);
-          _router.go('/sources?sharedUrl=$encodedUrl');
-        }
-      });
-    }
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _linkSubscription?.cancel();
-    SharingService().dispose();
     super.dispose();
   }
 
@@ -414,6 +469,8 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+
+    _firebaseAuthProvider = FirebaseAuthProvider();
 
     // Initialize everything before building UI
     _initializeApp();
@@ -428,72 +485,76 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
   void _initializeAppLinks() {
     if (!kIsWeb) {
       _appLinks = AppLinks();
-      
+
       // Handle links when app is already running
-      _linkSubscription = _appLinks.uriLinkStream.listen((uri) {
-        Logger.info('🔗 Deep link received: $uri', tag: 'DeepLink');
-        _handleDeepLink(uri);
-      }, onError: (err) {
-        Logger.error('🔗 Deep link error: $err', tag: 'DeepLink');
-      });
+      _linkSubscription = _appLinks.uriLinkStream.listen(
+        (uri) {
+          Logger.info('🔗 Deep link received: $uri', tag: 'DeepLink');
+          _handleDeepLink(uri);
+        },
+        onError: (err) {
+          Logger.error('🔗 Deep link error: $err', tag: 'DeepLink');
+        },
+      );
 
       // Handle initial link if app was launched from a link
-      _appLinks.getInitialLink().then((uri) {
-        if (uri != null) {
-          Logger.info('🔗 Initial deep link: $uri', tag: 'DeepLink');
-          _handleDeepLink(uri);
-        }
-      }).catchError((err) {
-        Logger.error('🔗 Initial deep link error: $err', tag: 'DeepLink');
-      });
+      _appLinks
+          .getInitialLink()
+          .then((uri) {
+            if (uri != null) {
+              Logger.info('🔗 Initial deep link: $uri', tag: 'DeepLink');
+              _handleDeepLink(uri);
+            }
+          })
+          .catchError((err) {
+            Logger.error('🔗 Initial deep link error: $err', tag: 'DeepLink');
+          });
     }
   }
 
   void _handleDeepLink(Uri uri) {
-    // Check if this is an OAuth callback
-    if (uri.scheme == 'cognify' && uri.host == 'oauth' && uri.path == '/callback') {
-      final code = uri.queryParameters['code'];
-      final state = uri.queryParameters['state'];
-      final error = uri.queryParameters['error'];
-      
-      Logger.info('🔗 OAuth callback received - code: ${code != null}, state: ${state != null}, error: $error', tag: 'DeepLink');
-      
-      // Let the OAuth provider handle it through its own listener
-      // The provider is already listening to app links
-    }
+    Logger.info('🔗 Deep link received: $uri', tag: 'DeepLink');
+    // Additional deep-link handling (e.g., magic links) can be wired here.
   }
 
   Future<void> _initializeApp() async {
     try {
       Logger.info('🚀 Starting app initialization...', tag: 'AppInit');
-      
+
       // Initialize theme provider first (synchronously)
       _themeProvider = await ThemeProvider.create();
       Logger.info('✅ Theme provider initialized', tag: 'AppInit');
-      
-      // Initialize auth provider
-      _authProvider = OAuthAuthProvider();
-      await _authProvider!.initialize();
-      Logger.info('✅ Auth provider initialized', tag: 'AppInit');
-      
+
+      await _firebaseAuthProvider!.initialize();
+      Logger.info('✅ Firebase auth provider initialized', tag: 'AppInit');
+
       // Create router after auth provider is initialized
-      final defaultRouteName = WidgetsBinding.instance.platformDispatcher.defaultRouteName;
-      final initialLocation = AppRouter.normalizeInitialLocation(defaultRouteName);
-      Logger.debug('🚀 Initial location (normalized): $initialLocation', tag: 'AppInit');
+      final defaultRouteName =
+          WidgetsBinding.instance.platformDispatcher.defaultRouteName;
+      final initialLocation = AppRouter.normalizeInitialLocation(
+        defaultRouteName,
+      );
+      Logger.debug(
+        '🚀 Initial location (normalized): $initialLocation',
+        tag: 'AppInit',
+      );
       Logger.debug('🚀 Base URI: ${Uri.base}', tag: 'AppInit');
       Logger.debug('🚀 defaultRouteName: $defaultRouteName', tag: 'AppInit');
-      _router = AppRouter.createRouter(initialLocation: initialLocation);
+      _router = AppRouter.createRouter(
+        initialLocation: initialLocation,
+        authProvider: _firebaseAuthProvider!,
+      );
       Logger.info('✅ Router initialized', tag: 'AppInit');
-      
+
       // Mark initialization complete
       if (mounted) {
         setState(() {
           _isInitializing = false;
         });
       }
-      
+
       Logger.info('✅ Core initialization complete', tag: 'AppInit');
-      
+
       // Initialize other services after UI is ready
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _initializeSecondaryServices();
@@ -502,15 +563,21 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
       Logger.error('❌ Error during app initialization: $e', tag: 'AppInit');
       // Fallback initialization
       _themeProvider ??= ThemeProvider();
-      _authProvider ??= OAuthAuthProvider();
-      
+      _firebaseAuthProvider ??= FirebaseAuthProvider();
+
       // Create fallback router
       if (_router == null) {
-        final defaultRouteName = WidgetsBinding.instance.platformDispatcher.defaultRouteName;
-        final initialLocation = AppRouter.normalizeInitialLocation(defaultRouteName);
-        _router = AppRouter.createRouter(initialLocation: initialLocation);
+        final defaultRouteName =
+            WidgetsBinding.instance.platformDispatcher.defaultRouteName;
+        final initialLocation = AppRouter.normalizeInitialLocation(
+          defaultRouteName,
+        );
+        _router = AppRouter.createRouter(
+          initialLocation: initialLocation,
+          authProvider: _firebaseAuthProvider!,
+        );
       }
-      
+
       if (mounted) {
         setState(() {
           _isInitializing = false;
@@ -518,68 +585,83 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
       }
     }
   }
-  
+
   Future<void> _initializeSecondaryServices() async {
     try {
-      await SharingService().initialize(context);
-
-    // Initialize user service
-    try {
-      final userId = await UserService().initializeUser();
-      Logger.info('👤 [USER] Initialized user with ID: $userId', tag: 'UserService');
-    } catch (e) {
-      Logger.error('❌ [USER] Error initializing user service: $e', tag: 'UserService');
-    }
-
-    // Initialize RevenueCat with Firebase auth (if available)
-    try {
-      final firebaseAuth = context.read<FirebaseAuthProvider>();
-      final subs = context.read<SubscriptionProvider>();
-      
-      // Initialize subscription provider with Firebase UID only if Firebase is initialized
-      if (!subs.initialized) {
-        String? appUserId;
-        
-        // Only try to get UID if Firebase is initialized to avoid Firebase Auth crashes
-        if (firebaseAuth.initialized && firebaseAuth.isSignedIn) {
-          appUserId = firebaseAuth.uid;
-          Logger.info('🔄 [RevenueCat] Using Firebase UID: $appUserId', tag: 'RevenueCat');
-        } else {
-          Logger.info('🔄 [RevenueCat] Firebase not initialized, using anonymous mode', tag: 'RevenueCat');
-        }
-        
-        await subs.initialize(appUserId: appUserId);
-        // Wire auth to sync identity changes
-        subs.wireAuth(firebaseAuth);
-      }
-      
-      Logger.info('✅ [RevenueCat] Initialized with Firebase auth', tag: 'RevenueCat');
-    } catch (e) {
-      Logger.error('❌ [RevenueCat] Initialization error: $e', tag: 'RevenueCat');
-      
-      // Fallback: Initialize subscription provider without Firebase
+      // Initialize user service
       try {
-        final subs = context.read<SubscriptionProvider>();
-        if (!subs.initialized) {
-          Logger.info('🔄 [RevenueCat] Fallback: initializing without Firebase', tag: 'RevenueCat');
-          await subs.initialize();
-        }
-      } catch (fallbackError) {
-        Logger.error('❌ [RevenueCat] Fallback initialization also failed: $fallbackError', tag: 'RevenueCat');
+        final userId = await UserService().initializeUser();
+        Logger.info(
+          '👤 [USER] Initialized user with ID: $userId',
+          tag: 'UserService',
+        );
+      } catch (e) {
+        Logger.error(
+          '❌ [USER] Error initializing user service: $e',
+          tag: 'UserService',
+        );
       }
-    }
 
-      // Check for shared content and redirect if needed
-      final sharedUrl = SharingService().getPendingSharedUrl();
-      if (sharedUrl != null && sharedUrl.isNotEmpty) {
-        // Navigate to sources screen with the shared URL
-        if (mounted) {
-          final encodedUrl = Uri.encodeQueryComponent(sharedUrl);
-          _router.go('/sources?sharedUrl=$encodedUrl');
+      // Initialize RevenueCat with Firebase auth (if available)
+      try {
+        final firebaseAuth = context.read<FirebaseAuthProvider>();
+        final subs = context.read<SubscriptionProvider>();
+
+        // Initialize subscription provider with Firebase UID only if Firebase is initialized
+        if (!subs.initialized) {
+          String? appUserId;
+
+          // Only try to get UID if Firebase is initialized to avoid Firebase Auth crashes
+          if (firebaseAuth.initialized && firebaseAuth.isSignedIn) {
+            appUserId = firebaseAuth.uid;
+            Logger.info(
+              '🔄 [RevenueCat] Using Firebase UID: $appUserId',
+              tag: 'RevenueCat',
+            );
+          } else {
+            Logger.info(
+              '🔄 [RevenueCat] Firebase not initialized, using anonymous mode',
+              tag: 'RevenueCat',
+            );
+          }
+
+          await subs.initialize(appUserId: appUserId);
+          // Wire auth to sync identity changes
+          subs.wireAuth(firebaseAuth);
+        }
+
+        Logger.info(
+          '✅ [RevenueCat] Initialized with Firebase auth',
+          tag: 'RevenueCat',
+        );
+      } catch (e) {
+        Logger.error(
+          '❌ [RevenueCat] Initialization error: $e',
+          tag: 'RevenueCat',
+        );
+
+        // Fallback: Initialize subscription provider without Firebase
+        try {
+          final subs = context.read<SubscriptionProvider>();
+          if (!subs.initialized) {
+            Logger.info(
+              '🔄 [RevenueCat] Fallback: initializing without Firebase',
+              tag: 'RevenueCat',
+            );
+            await subs.initialize();
+          }
+        } catch (fallbackError) {
+          Logger.error(
+            '❌ [RevenueCat] Fallback initialization also failed: $fallbackError',
+            tag: 'RevenueCat',
+          );
         }
       }
     } catch (e) {
-      Logger.error('❌ Error initializing secondary services: $e', tag: 'AppInit');
+      Logger.error(
+        '❌ Error initializing secondary services: $e',
+        tag: 'AppInit',
+      );
     }
   }
 }

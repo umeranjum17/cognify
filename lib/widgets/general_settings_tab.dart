@@ -7,8 +7,10 @@ import 'package:go_router/go_router.dart';
 
 import '../providers/firebase_auth_provider.dart';
 import '../providers/subscription_provider.dart';
-import '../providers/oauth_auth_provider.dart';
-import '../services/secure_storage.dart';
+import '../providers/app_access_provider.dart';
+import '../providers/usage_quota_provider.dart';
+import '../config/app_secrets.dart';
+import '../services/revenuecat_service.dart';
 import '../services/data_deletion_service.dart';
 import '../theme/app_theme.dart';
 
@@ -20,90 +22,16 @@ class GeneralSettingsTab extends StatefulWidget {
 }
 
 class _GeneralSettingsTabState extends State<GeneralSettingsTab> {
-  String? _openRouterKey;
-  bool _isLoadingKey = true;
-  bool _showKey = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadOpenRouterKey();
-  }
-
-  Future<void> _loadOpenRouterKey() async {
-    final key = await SecureStorage.getOpenRouterApiKey();
-    if (mounted) {
-      setState(() {
-        _openRouterKey = key;
-        _isLoadingKey = false;
-      });
-    }
-  }
-
-  Future<void> _clearOpenRouterKey() async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Clear OpenRouter Key'),
-        content: const Text('Are you sure you want to clear your OpenRouter API key? You will need to enter it again to use the app.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Clear'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm == true) {
-      await SecureStorage.clearAllApiKeys();
-      await _loadOpenRouterKey();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('OpenRouter key cleared')),
-        );
-        // Navigate to onboarding screen after clearing key
-        Navigator.of(context).pop(); // Close settings modal
-        context.go('/oauth-onboarding'); // Navigate to onboarding
-      }
-    }
-  }
-
-  String _obscureKey(String? key) {
-    if (key == null || key.isEmpty) return 'Not set';
-    if (_showKey) return key;
-    if (key.length <= 9) return '•' * key.length;
-    return '${key.substring(0, 7)}${'•' * (key.length - 9)}${key.substring(key.length - 2)}';
-  }
-
-  String _getPackageName(CustomerInfo? info) {
-    if (info == null) return 'Free';
-    
-    // Check for active entitlements
-    if (info.entitlements.active.isNotEmpty) {
-      final entitlement = info.entitlements.active.values.first;
-      return entitlement.identifier;
-    }
-    
-    // Check for active subscriptions
-    if (info.activeSubscriptions.isNotEmpty) {
-      return 'Premium';
-    }
-    
-    return 'Free';
-  }
+  bool _signingOut = false;
 
   Future<void> _logout() async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout? This will clear all your data including API keys and you will need to sign in again.'),
+        content: const Text(
+          'Are you sure you want to sign out? You can sign back in anytime.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -112,34 +40,34 @@ class _GeneralSettingsTabState extends State<GeneralSettingsTab> {
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Logout'),
+            child: const Text('Sign out'),
           ),
         ],
       ),
     );
 
     if (confirm == true) {
+      setState(() => _signingOut = true);
       try {
-        // Clear all secure storage
-        await SecureStorage.clearAllApiKeys();
-        
-        // Sign out from Firebase
-        final authProvider = Provider.of<FirebaseAuthProvider>(context, listen: false);
+        final authProvider = Provider.of<FirebaseAuthProvider>(
+          context,
+          listen: false,
+        );
+        await RevenueCatService.instance.reset();
         await authProvider.signOut();
-        
-        // Sign out from OAuth
-        final oauthProvider = Provider.of<OAuthAuthProvider>(context, listen: false);
-        await oauthProvider.clearAuthentication();
-        
+
         if (mounted) {
-          // Navigate to onboarding screen
-          context.go('/oauth-onboarding');
+          context.go('/sign-in');
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error logging out: $e')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Error signing out: $e')));
+        }
+      } finally {
+        if (mounted) {
+          setState(() => _signingOut = false);
         }
       }
     }
@@ -195,9 +123,12 @@ class _GeneralSettingsTabState extends State<GeneralSettingsTab> {
       );
 
       try {
-        final authProvider = Provider.of<FirebaseAuthProvider>(context, listen: false);
+        final authProvider = Provider.of<FirebaseAuthProvider>(
+          context,
+          listen: false,
+        );
         final deletionService = DataDeletionService();
-        
+
         final success = await deletionService.requestDataDeletion(
           firebaseAuth: authProvider,
           includeFirebaseAccount: true,
@@ -205,7 +136,7 @@ class _GeneralSettingsTabState extends State<GeneralSettingsTab> {
 
         if (mounted) {
           Navigator.of(context).pop(); // Close loading dialog
-          
+
           if (success) {
             // Show success and redirect
             showDialog(
@@ -219,12 +150,14 @@ class _GeneralSettingsTabState extends State<GeneralSettingsTab> {
                     Text('Data Deleted'),
                   ],
                 ),
-                content: const Text('All your data has been successfully deleted.'),
+                content: const Text(
+                  'All your data has been successfully deleted.',
+                ),
                 actions: [
                   TextButton(
                     onPressed: () {
                       Navigator.of(context).pop();
-                      context.go('/oauth-onboarding');
+                      context.go('/sign-in');
                     },
                     child: const Text('OK'),
                   ),
@@ -260,299 +193,288 @@ class _GeneralSettingsTabState extends State<GeneralSettingsTab> {
     final retentionInfo = deletionService.getDataRetentionInfo();
 
     return await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Data Deletion Information'),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'The following data types will be permanently deleted:',
-                  style: TextStyle(fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 8),
-                ...dataTypes.map((type) => Padding(
-                  padding: const EdgeInsets.only(left: 8, bottom: 4),
-                  child: Row(
-                    children: [
-                      const Text('• ', style: TextStyle(fontWeight: FontWeight.bold)),
-                      Expanded(child: Text(type, style: const TextStyle(fontSize: 13))),
-                    ],
-                  ),
-                )),
-                const SizedBox(height: 16),
-                const Text(
-                  'Data Retention Policy:',
-                  style: TextStyle(fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 8),
-                ...retentionInfo.entries.map((entry) => Padding(
-                  padding: const EdgeInsets.only(bottom: 6),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(
-                        width: 100,
-                        child: Text(
-                          '${entry.key}:',
-                          style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Data Deletion Information'),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'The following data types will be permanently deleted:',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 8),
+                    ...dataTypes.map(
+                      (type) => Padding(
+                        padding: const EdgeInsets.only(left: 8, bottom: 4),
+                        child: Row(
+                          children: [
+                            const Text(
+                              '• ',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            Expanded(
+                              child: Text(
+                                type,
+                                style: const TextStyle(fontSize: 13),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      Expanded(
-                        child: Text(
-                          entry.value,
-                          style: const TextStyle(fontSize: 13),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Data Retention Policy:',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 8),
+                    ...retentionInfo.entries.map(
+                      (entry) => Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(
+                              width: 100,
+                              child: Text(
+                                '${entry.key}:',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              child: Text(
+                                entry.value,
+                                style: const TextStyle(fontSize: 13),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ],
-                  ),
-                )),
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.amber.shade50,
-                    border: Border.all(color: Colors.amber),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Row(
-                    children: [
-                      Icon(Icons.warning, color: Colors.amber, size: 20),
-                      SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'This action is permanent and cannot be undone.',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 13,
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.amber.shade50,
+                        border: Border.all(color: Colors.amber),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.warning, color: Colors.amber, size: 20),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'This action is permanent and cannot be undone.',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                              ),
+                            ),
                           ),
-                        ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                child: const Text('Continue'),
+              ),
+            ],
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Continue'),
-          ),
-        ],
-      ),
-    ) ?? false;
+        ) ??
+        false;
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final authProvider = Provider.of<FirebaseAuthProvider>(context);
-    final subscriptionProvider = Provider.of<SubscriptionProvider>(context);
+    final authProvider = context.watch<FirebaseAuthProvider>();
+    final subscriptionProvider = context.watch<SubscriptionProvider>();
+    final accessProvider = context.watch<AppAccessProvider>();
+    final quotaProvider = context.watch<UsageQuotaProvider>();
     final user = authProvider.user;
+
+    final planName = accessProvider.hasPremiumAccess ? 'Premium' : 'Free';
+    final entitlementSubtitle = subscriptionProvider.isEntitled
+        ? 'Entitlement active'
+        : 'Upgrade to unlock full access';
+
+    final expiration = subscriptionProvider.customerInfo?.latestExpirationDate;
+    final expirationText = expiration != null
+        ? 'Renews $expiration'
+        : null;
+
+    final quota = quotaProvider.quota;
+    final int limit = accessProvider.isTester
+        ? 0
+        : quota?.limit ??
+              (accessProvider.hasPremiumAccess
+                  ? AppSecrets.premiumRequestsPerMonth
+                  : AppSecrets.freeRequestsPerMonth);
+    final int remaining = accessProvider.isTester
+        ? 0
+        : quota?.remaining ?? limit;
+
+    String quotaLine;
+    if (accessProvider.isTester) {
+      quotaLine = 'Unlimited requests (tester access)';
+    } else if (quotaProvider.isLoading && quota == null) {
+      quotaLine = 'Calculating remaining requests…';
+    } else {
+      final safeRemaining = remaining.clamp(0, limit);
+      quotaLine = '$safeRemaining of $limit requests remaining this month';
+    }
+
+    final subtitleLines = <String>[];
+    if (expirationText != null) {
+      subtitleLines.add(expirationText);
+    } else {
+      subtitleLines.add(entitlementSubtitle);
+    }
+    subtitleLines.add(quotaLine);
+    final subscriptionSubtitle = subtitleLines.join('\n');
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Account Section
-          _buildSection(
-            theme,
-            isDark,
-            'Account',
-            [
-              _buildInfoCard(
-                theme,
-                isDark,
-                icon: Icons.person_outline,
-                title: 'User',
-                value: user?.email ?? user?.displayName ?? 'Anonymous',
-                subtitle: user?.uid != null ? 'UID: ${user!.uid.substring(0, 8)}...' : null,
-              ),
-              const SizedBox(height: 12),
-              _buildInfoCard(
-                theme,
-                isDark,
-                icon: Icons.card_membership,
-                title: 'Subscription',
-                value: _getPackageName(subscriptionProvider.customerInfo),
-                subtitle: subscriptionProvider.isEntitled ? 'Active' : 'Inactive',
-                valueColor: subscriptionProvider.isEntitled 
-                    ? (isDark ? AppColors.darkSuccess : AppColors.lightSuccess)
-                    : null,
-              ),
-            ],
-          ),
+          _buildSection(theme, isDark, 'Account', [
+            _buildInfoCard(
+              theme,
+              isDark,
+              icon: Icons.person_outline,
+              title: 'Signed in as',
+              value: user?.email ?? user?.displayName ?? 'Anonymous session',
+              subtitle: user?.uid != null
+                  ? 'UID: ${user!.uid.substring(0, 8)}…'
+                  : null,
+            ),
+          ]),
 
           const SizedBox(height: 24),
 
-          // API Configuration Section
-          _buildSection(
-            theme,
-            isDark,
-            'API Configuration',
-            [
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: isDark ? AppColors.darkCard : AppColors.lightCard,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: isDark 
-                        ? AppColors.darkDivider.withValues(alpha: 0.2) 
-                        : AppColors.lightDivider.withValues(alpha: 0.2),
+          _buildSection(theme, isDark, 'Subscription', [
+            _buildInfoCard(
+              theme,
+              isDark,
+              icon: Icons.workspace_premium_outlined,
+              title: 'Plan',
+              value: planName,
+              subtitle: subscriptionSubtitle,
+              valueColor: accessProvider.hasPremiumAccess
+                  ? (isDark ? AppColors.darkSuccess : AppColors.lightSuccess)
+                  : null,
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () => context.go('/paywall'),
+                    icon: const Icon(Icons.star_outline),
+                    label: Text(
+                      accessProvider.hasPremiumAccess
+                          ? 'Manage Subscription'
+                          : 'Go Premium',
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
                   ),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.key,
-                          size: 20,
-                          color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'OpenRouter API Key',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: isDark ? AppColors.darkText : AppColors.lightText,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              _isLoadingKey
-                                  ? const SizedBox(
-                                      height: 16,
-                                      width: 16,
-                                      child: CircularProgressIndicator(strokeWidth: 2),
-                                    )
-                                  : Row(
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            _obscureKey(_openRouterKey),
-                                            style: TextStyle(
-                                              fontSize: 13,
-                                              fontFamily: 'monospace',
-                                              color: isDark 
-                                                  ? AppColors.darkTextMuted 
-                                                  : AppColors.lightTextMuted,
-                                            ),
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ),
-                                        if (_openRouterKey != null && _openRouterKey!.isNotEmpty) ...[
-                                          IconButton(
-                                            icon: Icon(
-                                              _showKey ? Icons.visibility_off : Icons.visibility,
-                                              size: 18,
-                                            ),
-                                            onPressed: () => setState(() => _showKey = !_showKey),
-                                            tooltip: _showKey ? 'Hide key' : 'Show key',
-                                            padding: EdgeInsets.zero,
-                                            constraints: const BoxConstraints(),
-                                          ),
-                                        ],
-                                      ],
-                                    ),
-                            ],
-                          ),
-                        ),
-                        if (_openRouterKey != null && _openRouterKey!.isNotEmpty)
-                          TextButton(
-                            onPressed: _clearOpenRouterKey,
-                            style: TextButton.styleFrom(
-                              foregroundColor: Colors.red,
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                            ),
-                            child: const Text('Clear', style: TextStyle(fontSize: 13)),
-                          ),
-                      ],
+                const SizedBox(width: 12),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: subscriptionProvider.initialized
+                        ? () => subscriptionProvider.restore()
+                        : null,
+                    icon: const Icon(Icons.restore),
+                    label: const Text('Restore'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
-                  ],
+                  ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
+          ]),
 
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
 
-          // Data Management Section
-          _buildSection(
-            theme,
-            isDark,
-            'Data Management',
-            [
-              // Delete All Data Button
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: OutlinedButton.icon(
-                  onPressed: _deleteAllData,
-                  icon: const Icon(Icons.delete_forever),
-                  label: const Text('Delete All My Data'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.red,
-                    side: const BorderSide(color: Colors.red),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+          _buildSection(theme, isDark, 'Data & Privacy', [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: OutlinedButton.icon(
+                onPressed: _deleteAllData,
+                icon: const Icon(Icons.delete_forever),
+                label: const Text('Delete All My Data'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.red,
+                  side: const BorderSide(color: Colors.red),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
-              // Logout Button
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: ElevatedButton(
-                  onPressed: _logout,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 0,
+            ),
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: ElevatedButton(
+                onPressed: _signingOut ? null : _logout,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Text(
-                    'Logout (Keep Data)',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  elevation: 0,
+                ),
+                child: Text(
+                  _signingOut ? 'Signing out…' : 'Sign out',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ]),
         ],
       ),
     );
   }
 
-  Widget _buildSection(ThemeData theme, bool isDark, String title, List<Widget> children) {
+  Widget _buildSection(
+    ThemeData theme,
+    bool isDark,
+    String title,
+    List<Widget> children,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -585,8 +507,8 @@ class _GeneralSettingsTabState extends State<GeneralSettingsTab> {
         color: isDark ? AppColors.darkCard : AppColors.lightCard,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isDark 
-              ? AppColors.darkDivider.withValues(alpha: 0.2) 
+          color: isDark
+              ? AppColors.darkDivider.withValues(alpha: 0.2)
               : AppColors.lightDivider.withValues(alpha: 0.2),
         ),
       ),
@@ -595,15 +517,17 @@ class _GeneralSettingsTabState extends State<GeneralSettingsTab> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: isDark 
-                  ? AppColors.darkTextSecondary.withValues(alpha: 0.1) 
+              color: isDark
+                  ? AppColors.darkTextSecondary.withValues(alpha: 0.1)
                   : AppColors.lightTextSecondary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
               icon,
               size: 20,
-              color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+              color: isDark
+                  ? AppColors.darkTextSecondary
+                  : AppColors.lightTextSecondary,
             ),
           ),
           const SizedBox(width: 12),
@@ -616,7 +540,9 @@ class _GeneralSettingsTabState extends State<GeneralSettingsTab> {
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
-                    color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
+                    color: isDark
+                        ? AppColors.darkTextMuted
+                        : AppColors.lightTextMuted,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -625,7 +551,9 @@ class _GeneralSettingsTabState extends State<GeneralSettingsTab> {
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    color: valueColor ?? (isDark ? AppColors.darkText : AppColors.lightText),
+                    color:
+                        valueColor ??
+                        (isDark ? AppColors.darkText : AppColors.lightText),
                   ),
                 ),
                 if (subtitle != null) ...[
@@ -634,7 +562,9 @@ class _GeneralSettingsTabState extends State<GeneralSettingsTab> {
                     subtitle,
                     style: TextStyle(
                       fontSize: 12,
-                      color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
+                      color: isDark
+                          ? AppColors.darkTextMuted
+                          : AppColors.lightTextMuted,
                     ),
                   ),
                 ],

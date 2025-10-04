@@ -30,23 +30,9 @@ class _TrendingTopicsScreenState extends State<TrendingTopicsScreen> {
           ),
         ],
       ),
-      body: Consumer<AppAccessProvider>(
-        builder: (context, appAccess, child) {
-          final hasAccess = appAccess.hasPremiumAccess;
-          
-          if (!hasAccess) {
-            return _buildPremiumPrompt();
-          }
-          
-          if (_isLoading) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
-          }
-          
-          return _buildTrendingTopicsContent();
-        },
-      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _buildTrendingTopicsContent(),
     );
   }
 
@@ -54,98 +40,6 @@ class _TrendingTopicsScreenState extends State<TrendingTopicsScreen> {
   void initState() {
     super.initState();
     _loadTrendingTopics();
-  }
-
-  Widget _buildPremiumPrompt() {
-    final theme = Theme.of(context);
-    
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const CognifyLogo(size: 60, variant: 'robot'),
-            const SizedBox(height: 24),
-            Icon(
-              Icons.trending_up,
-              size: 64,
-              color: theme.colorScheme.primary.withValues(alpha: 0.5),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'Trending Topics',
-              style: theme.textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Discover what\'s trending and join conversations on the latest topics.',
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: theme.textTheme.bodyMedium?.color,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 32),
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: theme.colorScheme.primary.withValues(alpha: 0.2),
-                ),
-              ),
-              child: Column(
-                children: [
-                  Icon(
-                    Icons.lock,
-                    size: 32,
-                    color: theme.colorScheme.primary,
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Premium Feature',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.primary,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Trending topics are available in the Premium version. Upgrade to access real-time trending content and join discussions.',
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 32),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  context.push('/subscription');
-                },
-                icon: const Icon(Icons.star),
-                label: const Text('Upgrade to Premium'),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('Back to Chat'),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   Widget _buildTopicCard(Map<String, dynamic> topic) {
@@ -269,17 +163,6 @@ class _TrendingTopicsScreenState extends State<TrendingTopicsScreen> {
   }
 
   Future<void> _loadTrendingTopics() async {
-    // Check if user has access to this premium feature
-    final appAccess = Provider.of<AppAccessProvider>(context, listen: false);
-    final hasAccess = appAccess.hasPremiumAccess;
-    
-    if (!hasAccess) {
-      setState(() {
-        _isLoading = false;
-      });
-      return;
-    }
-
     // Simulate loading trending topics
     await Future.delayed(const Duration(seconds: 1));
     

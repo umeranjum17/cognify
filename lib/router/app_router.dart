@@ -3,21 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../providers/app_access_provider.dart';
 import '../providers/firebase_auth_provider.dart';
 import '../providers/subscription_provider.dart';
-import '../providers/oauth_auth_provider.dart';
-import '../providers/app_access_provider.dart';
 
-import '../screens/home_screen.dart';
-import '../screens/editor_screen.dart';
-import '../screens/tabbed_editor_screen.dart';
-import '../screens/sources_screen.dart';
-import '../screens/streaming_test_screen.dart';
+import '../screens/auth/sign_in_screen.dart';
 import '../screens/conversation_history_screen.dart';
-import '../screens/trending_topics_screen.dart';
-import '../screens/oauth_onboarding_screen.dart';
-import '../screens/oauth_callback_screen.dart';
+import '../screens/editor_screen.dart';
+import '../screens/sources_screen.dart';
 import '../screens/subscription/paywall_screen.dart';
+import '../screens/tabbed_editor_screen.dart';
 import '../widgets/auth_guard.dart';
 
 class AppRouter {
@@ -25,23 +20,54 @@ class AppRouter {
 
   static GoRouter createRouter({
     required String initialLocation,
+    required FirebaseAuthProvider authProvider,
   }) {
     return GoRouter(
       initialLocation: initialLocation,
       debugLogDiagnostics: true,
+      refreshListenable: authProvider,
       redirect: (context, state) {
         final loc = state.uri.toString();
-        // Defensive: catch custom schemes or full URLs and normalize
+        final isInitializing =
+            authProvider.initializing && !authProvider.initialized;
+        if (isInitializing) {
+          return null;
+        }
+
+        final signedIn = authProvider.isSignedIn;
+        final loggingIn = state.matchedLocation == '/sign-in';
+
+        if (!signedIn) {
+          if (loggingIn) {
+            return null;
+          }
+          final qp = Map<String, String>.from(state.uri.queryParameters);
+          return Uri(
+            path: '/sign-in',
+            queryParameters: qp.isEmpty ? null : qp,
+          ).toString();
+        }
+
+        if (signedIn && loggingIn) {
+          return '/editor';
+        }
+
         if (loc.contains('://')) {
           final u = Uri.tryParse(loc);
-          debugPrint('🧯 [RouterRedirect] Intercepted location="$loc" parsed="$u"');
+          debugPrint(
+            '🧯 [RouterRedirect] Intercepted location="$loc" parsed="$u"',
+          );
           if (u != null && u.scheme == 'cognify') {
-            debugPrint('🧯 [RouterRedirect] Rerouting custom-scheme to /editor (will check auth)');
+            debugPrint(
+              '🧯 [RouterRedirect] Rerouting custom-scheme to /editor',
+            );
             return '/editor';
           }
           if (u != null && (u.scheme == 'http' || u.scheme == 'https')) {
-            final pathOnly =
-                Uri(path: u.path, queryParameters: u.queryParameters).toString();
+            final pathOnly = Uri(
+              path: u.path,
+              queryParameters: u.queryParameters,
+            ).toString();
             final fixed = pathOnly.startsWith('/') ? pathOnly : '/$pathOnly';
             debugPrint('🧯 [RouterRedirect] Rerouting http(s) to "$fixed"');
             return fixed;
@@ -50,17 +76,33 @@ class AppRouter {
         return null;
       },
       routes: [
-        // Root route with special behavior:
-        // - sharedUrl redirection to SourcesScreen
-        // - initialize SubscriptionProvider with Firebase UID (single init)
         GoRoute(
           path: '/',
           pageBuilder: (context, state) {
-            debugPrint('🏠 Root route hit with path: ${state.uri.path}');
-            debugPrint('🏠 Full URI: ${state.uri}');
-            debugPrint('🏠 Query parameters: ${state.uri.queryParameters}');
-
+            final firebaseAuth = context.read<FirebaseAuthProvider>();
+            final subs = context.read<SubscriptionProvider>();
             final sharedUrl = state.uri.queryParameters['sharedUrl'];
+
+            if (!subs.initialized && firebaseAuth.initialized) {
+              subs.initialize(appUserId: firebaseAuth.uid);
+              subs.wireAuth(firebaseAuth);
+            }
+
+            if (!firebaseAuth.initialized || firebaseAuth.initializing) {
+              return const MaterialPage(
+                child: Scaffold(
+                  body: Center(child: CircularProgressIndicator()),
+                ),
+              );
+            }
+
+            if (!firebaseAuth.isSignedIn) {
+              return MaterialPage(
+                key: state.pageKey,
+                child: SignInScreen(pendingSharedUrl: sharedUrl),
+              );
+            }
+
             if (sharedUrl != null && sharedUrl.isNotEmpty) {
               return MaterialPage(
                 key: state.pageKey,
@@ -68,104 +110,18 @@ class AppRouter {
               );
             }
 
-            // Initialize RevenueCat via SubscriptionProvider with Firebase UID
-            final firebaseAuth = context.read<FirebaseAuthProvider>();
-            final subs = context.read<SubscriptionProvider>();
-            if (!subs.initialized) {
-              subs.initialize(appUserId: firebaseAuth.uid);
-              // Also wire auth to sync identity changes
-              subs.wireAuth(firebaseAuth);
-            }
-
-            // OpenRouter auth handling: immediate redirect if authenticated
-            return MaterialPage(
-              key: state.pageKey,
-              child: Consumer<OAuthAuthProvider>(
-                builder: (context, authProvider, child) {
-                  // If already authenticated, redirect immediately without showing loading
-                  if (authProvider.isAuthenticated && !authProvider.isLoading) {
-                    // Check if we're handling a share
-                    final uri = GoRouterState.of(context).uri;
-                    final isShareFlow = uri.path == '/sources' ||
-                        uri.queryParameters.containsKey('sharedUrl');
-                    
-                    // Immediate redirect to avoid flash
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                      if (context.mounted && !isShareFlow) {
-                        context.go('/editor');
-                      }
-                    });
-                    
-                    // Return minimal loading to avoid flash
-                    return const SizedBox.shrink();
-                  }
-                  
-                  // Show loading only during actual loading
-                  if (authProvider.isLoading) {
-                    return const SizedBox.shrink(); // Minimal loading handled by main app
-                  }
-                  
-                  // Not authenticated, show onboarding directly
-                  return const OAuthOnboardingScreen();
-                },
-              ),
-            );
+            return const MaterialPage(child: TabbedEditorScreen());
           },
         ),
-
-        // OAuth onboarding
         GoRoute(
-          path: '/oauth-onboarding',
+          path: '/sign-in',
           pageBuilder: (context, state) => MaterialPage(
             key: state.pageKey,
-            child: const OAuthOnboardingScreen(),
-          ),
-        ),
-
-        // OAuth callback
-        GoRoute(
-          path: '/oauth/callback',
-          pageBuilder: (context, state) {
-            debugPrint('🔄 OAuth callback route DEFINITELY hit!');
-            debugPrint('🔄 GoRouter URI: ${state.uri}');
-            debugPrint('🔄 Browser URL: ${Uri.base}');
-
-            final actualUri = kIsWeb ? Uri.base : state.uri;
-            debugPrint('🔄 Actual URI: $actualUri');
-            debugPrint('🔄 Query string: ${actualUri.query}');
-            debugPrint('🔄 Query parameters: ${actualUri.queryParameters}');
-
-            final code = actualUri.queryParameters['code'];
-            final stateParam = actualUri.queryParameters['state'];
-            final error = actualUri.queryParameters['error'];
-
-            debugPrint(
-                '🔄 OAuth callback - code: ${code != null && code.length > 10 ? '${code.substring(0, 10)}...' : code}, state: ${stateParam != null && stateParam.length > 20 ? '${stateParam.substring(0, 20)}...' : stateParam}, error: $error');
-
-            return MaterialPage(
-              key: state.pageKey,
-              child: OAuthCallbackScreen(
-                code: code,
-                state: stateParam,
-                error: error,
-              ),
-            );
-          },
-        ),
-
-        // Home/Dashboard route - Protected Route
-        GoRoute(
-          path: '/home',
-          pageBuilder: (context, state) => MaterialPage(
-            key: state.pageKey,
-            child: const AuthGuard(
-              redirectTo: '/',
-              child: HomeScreen(),
+            child: SignInScreen(
+              pendingSharedUrl: state.uri.queryParameters['sharedUrl'],
             ),
           ),
         ),
-
-        // Editor (supports prompt and conversationId query params) - Protected Route
         GoRoute(
           path: '/editor',
           pageBuilder: (context, state) {
@@ -187,23 +143,6 @@ class AppRouter {
             );
           },
         ),
-
-        // Sources (supports sharedUrl parameter) - Protected Route
-        GoRoute(
-          path: '/sources',
-          pageBuilder: (context, state) {
-            final sharedUrl = state.uri.queryParameters['sharedUrl'];
-            return MaterialPage(
-              key: state.pageKey,
-              child: AuthGuard(
-                redirectTo: '/',
-                child: SourcesScreen(initialUrl: sharedUrl),
-              ),
-            );
-          },
-        ),
-
-        // Conversation history - Protected Route
         GoRoute(
           path: '/history',
           pageBuilder: (context, state) => MaterialPage(
@@ -214,56 +153,15 @@ class AppRouter {
             ),
           ),
         ),
-
-        // Streaming test - Protected Route
-        GoRoute(
-          path: '/streaming-test',
-          pageBuilder: (context, state) => MaterialPage(
-            key: state.pageKey,
-            child: const AuthGuard(
-              redirectTo: '/',
-              child: StreamingTestScreen(),
-            ),
-          ),
-        ),
-
-        // Trending topics (premium feature; guard where used with PremiumGuard widget) - Protected Route
-        GoRoute(
-          path: '/trending-topics',
-          pageBuilder: (context, state) => MaterialPage(
-            key: state.pageKey,
-            child: const AuthGuard(
-              redirectTo: '/',
-              child: TrendingTopicsScreen(),
-            ),
-          ),
-        ),
-
-        // Paywall
         GoRoute(
           path: '/paywall',
-          pageBuilder: (context, state) => MaterialPage(
-            key: state.pageKey,
-            child: const PaywallScreen(),
-          ),
-        ),
-
-        // Subscription management placeholder
-        GoRoute(
-          path: '/subscription',
-          pageBuilder: (context, state) => const MaterialPage(
-            child: Scaffold(
-              body: Center(
-                child: Text('Subscription Screen - Coming Soon'),
-              ),
-            ),
-          ),
+          pageBuilder: (context, state) =>
+              const MaterialPage(child: PaywallScreen()),
         ),
       ],
     );
   }
 
-  /// Normalizes the initial location used by GoRouter to avoid custom scheme pitfalls.
   static String normalizeInitialLocation(String defaultRouteName) {
     try {
       String incoming = defaultRouteName;
@@ -272,13 +170,16 @@ class AppRouter {
       if (incoming.contains('://')) {
         final u = Uri.parse(incoming);
         debugPrint(
-            '🔍 [DL] Parsed incoming => scheme=${u.scheme}, host=${u.host}, path=${u.path}, query=${u.query}');
+          '🔍 [DL] Parsed incoming => scheme=${u.scheme}, host=${u.host}, path=${u.path}, query=${u.query}',
+        );
         if (u.scheme == 'cognify') {
-          debugPrint('🛡️ [DL] Custom scheme detected. Rerouting to /editor (will check auth)');
+          debugPrint('🛡️ [DL] Custom scheme detected. Rerouting to /editor');
           return '/editor';
         } else {
-          final normalized =
-              Uri(path: u.path, queryParameters: u.queryParameters).toString();
+          final normalized = Uri(
+            path: u.path,
+            queryParameters: u.queryParameters,
+          ).toString();
           return normalized.startsWith('/') ? normalized : '/$normalized';
         }
       } else if (incoming.startsWith('/')) {

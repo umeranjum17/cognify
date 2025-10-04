@@ -1,12 +1,16 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:flutter/material.dart';
 
 import '../config/app_config.dart';
 import '../database/database_service.dart';
+import 'access_service.dart';
 import 'openai_client.dart';
 import 'openrouter_client.dart';
+import 'revenuecat_service.dart';
+import 'usage_quota_service.dart';
 
 /// Unified LLM service with automatic fallback and model selection
 class LLMService {
@@ -17,7 +21,7 @@ class LLMService {
   final DatabaseService _db = DatabaseService();
   bool _initialized = false;
   String? _currentModel;
-  
+
   String _preferredProvider = 'openrouter'; // 'openrouter' or 'openai'
   // Usage tracking
   int _totalTokensUsed = 0;
@@ -39,9 +43,10 @@ class LLMService {
     BuildContext? context,
   }) async {
     await _ensureInitialized();
-    
+
     final selectedModel = model ?? _currentModel ?? AppConfig.defaultModel;
-    
+    final quotaUsage = await _reserveQuota();
+
     try {
       // Try primary provider first
       if (_preferredProvider == 'openrouter') {
@@ -83,7 +88,9 @@ class LLMService {
             toolChoice: toolChoice,
           );
         } else {
-          final fallbackModel = await _openRouterClient.getBestModel(preferFree: true);
+          final fallbackModel = await _openRouterClient.getBestModel(
+            preferFree: true,
+          );
           return await _openRouterClient.chatCompletion(
             model: fallbackModel,
             messages: messages,
@@ -96,6 +103,7 @@ class LLMService {
           );
         }
       } catch (fallbackError) {
+        await _refundQuota(quotaUsage);
         print('🧠 Both providers failed: $fallbackError');
         rethrow;
       }
@@ -113,59 +121,75 @@ class LLMService {
     BuildContext? context,
   }) async* {
     await _ensureInitialized();
-    
+
     final selectedModel = model ?? _currentModel ?? AppConfig.defaultModel;
-    
+    final quotaUsage = await _reserveQuota();
+
     try {
       // Try primary provider first
       if (_preferredProvider == 'openrouter') {
-        yield* _openRouterClient.chatCompletionStream(
-          model: selectedModel,
-          messages: messages,
-          temperature: temperature,
-          maxTokens: maxTokens,
-          tools: tools != null ? {'tools': tools} : null,
-          toolChoice: toolChoice?.toString(),
-          context: context,
-        );
-      } else {
-        yield* _openAIClient.chatCompletionStream(
-          model: selectedModel,
-          messages: messages,
-          temperature: temperature,
-          maxTokens: maxTokens,
-          tools: tools,
-          toolChoice: toolChoice,
-        );
-      }
-    } catch (e) {
-      print('🧠 Primary provider streaming failed, trying fallback: $e');
-      
-      // Try fallback provider
-      try {
-        if (_preferredProvider == 'openrouter') {
-          final fallbackModel = _openAIClient.getBestModel(preferCheap: true);
-          yield* _openAIClient.chatCompletionStream(
-            model: fallbackModel,
-            messages: messages,
-            temperature: temperature,
-            maxTokens: maxTokens,
-            tools: tools,
-            toolChoice: toolChoice,
-          );
-        } else {
-          final fallbackModel = await _openRouterClient.getBestModel(preferFree: true);
-          yield* _openRouterClient.chatCompletionStream(
-            model: fallbackModel,
+        yield* _attachQuotaRefund(
+          _openRouterClient.chatCompletionStream(
+            model: selectedModel,
             messages: messages,
             temperature: temperature,
             maxTokens: maxTokens,
             tools: tools != null ? {'tools': tools} : null,
             toolChoice: toolChoice?.toString(),
             context: context,
+          ),
+          quotaUsage,
+        );
+      } else {
+        yield* _attachQuotaRefund(
+          _openAIClient.chatCompletionStream(
+            model: selectedModel,
+            messages: messages,
+            temperature: temperature,
+            maxTokens: maxTokens,
+            tools: tools,
+            toolChoice: toolChoice,
+          ),
+          quotaUsage,
+        );
+      }
+    } catch (e) {
+      print('🧠 Primary provider streaming failed, trying fallback: $e');
+
+      // Try fallback provider
+      try {
+        if (_preferredProvider == 'openrouter') {
+          final fallbackModel = _openAIClient.getBestModel(preferCheap: true);
+          yield* _attachQuotaRefund(
+            _openAIClient.chatCompletionStream(
+              model: fallbackModel,
+              messages: messages,
+              temperature: temperature,
+              maxTokens: maxTokens,
+              tools: tools,
+              toolChoice: toolChoice,
+            ),
+            quotaUsage,
+          );
+        } else {
+          final fallbackModel = await _openRouterClient.getBestModel(
+            preferFree: true,
+          );
+          yield* _attachQuotaRefund(
+            _openRouterClient.chatCompletionStream(
+              model: fallbackModel,
+              messages: messages,
+              temperature: temperature,
+              maxTokens: maxTokens,
+              tools: tools != null ? {'tools': tools} : null,
+              toolChoice: toolChoice?.toString(),
+              context: context,
+            ),
+            quotaUsage,
           );
         }
       } catch (fallbackError) {
+        await _refundQuota(quotaUsage);
         yield {
           'error': 'Both providers failed: $fallbackError',
           'streaming': true,
@@ -177,13 +201,13 @@ class LLMService {
   /// Generate embeddings for text
   Future<List<double>> generateEmbeddings(String text) async {
     await _ensureInitialized();
-    
+
     try {
       // Try OpenAI first for embeddings (they have better embedding models)
       return await _openAIClient.generateEmbeddings(text: text);
     } catch (e) {
       print('🧠 Embeddings generation failed: $e');
-      
+
       // Return a placeholder embedding vector
       // In a real implementation, you might want to use a local embedding model
       return List.filled(1536, 0.0); // OpenAI embedding dimension
@@ -191,10 +215,14 @@ class LLMService {
   }
 
   /// Get available models from all providers
-  Future<Map<String, dynamic>> getAvailableModels({BuildContext? context}) async {
+  Future<Map<String, dynamic>> getAvailableModels({
+    BuildContext? context,
+  }) async {
     await _ensureInitialized();
 
-    final openRouterModels = await _openRouterClient.getModels(context: context);
+    final openRouterModels = await _openRouterClient.getModels(
+      context: context,
+    );
     final openAIModels = await _openAIClient.getModels();
 
     return {
@@ -202,30 +230,33 @@ class LLMService {
         'models': openRouterModels['models'],
         'pricing': openRouterModels['pricing'],
       },
-      'openai': {
-        'models': openAIModels,
-        'pricing': OpenAIClient.modelPricing,
-      },
+      'openai': {'models': openAIModels, 'pricing': OpenAIClient.modelPricing},
     };
   }
 
   /// Get the best available model across all providers
-  Future<String> getBestModel({bool preferFree = true, bool preferCheap = true}) async {
+  Future<String> getBestModel({
+    bool preferFree = true,
+    bool preferCheap = true,
+  }) async {
     await _ensureInitialized();
-    
+
     try {
       // Try OpenRouter first for free models
       if (preferFree) {
-        final bestOpenRouter = await _openRouterClient.getBestModel(preferFree: true);
+        final bestOpenRouter = await _openRouterClient.getBestModel(
+          preferFree: true,
+        );
         return bestOpenRouter;
       }
-      
+
       // Compare pricing across providers
-      final openRouterModel = await _openRouterClient.getBestModel(preferFree: false);
+      final openRouterModel = await _openRouterClient.getBestModel(
+        preferFree: false,
+      );
 
       // For simplicity, prefer OpenRouter for cost-effectiveness
       return openRouterModel;
-      
     } catch (e) {
       print('🧠 Failed to get best model: $e');
       return AppConfig.defaultModel;
@@ -264,45 +295,47 @@ class LLMService {
   Future<bool> isConfigured() async {
     final openRouterKey = await AppConfig().openRouterApiKey;
     final openAIKey = await AppConfig().openAiApiKey;
-    
+
     return (openRouterKey != null && openRouterKey.isNotEmpty) ||
-           (openAIKey != null && openAIKey.isNotEmpty);
+        (openAIKey != null && openAIKey.isNotEmpty);
   }
 
   /// Reset usage statistics
   Future<void> resetUsageStats() async {
     await _ensureInitialized();
-    
+
     _totalTokensUsed = 0;
     _totalCostIncurred = 0.0;
     _modelUsageCount.clear();
-    
+
     await _saveUsageStats();
-    
+
     print('🧠 Usage statistics reset');
   }
 
   /// Set the current model
   Future<void> setCurrentModel(String model) async {
     await _ensureInitialized();
-    
+
     _currentModel = model;
     await AppConfig().setCurrentModel(model);
-    
+
     print('🧠 Current model set to: $model');
   }
 
   /// Set the preferred provider
   Future<void> setPreferredProvider(String provider) async {
     await _ensureInitialized();
-    
+
     if (provider == 'openrouter' || provider == 'openai') {
       _preferredProvider = provider;
       await _db.saveSetting('preferred_llm_provider', provider);
-      
+
       print('🧠 Preferred provider set to: $provider');
     } else {
-      throw ArgumentError('Invalid provider: $provider. Must be "openrouter" or "openai"');
+      throw ArgumentError(
+        'Invalid provider: $provider. Must be "openrouter" or "openai"',
+      );
     }
   }
 
@@ -314,15 +347,79 @@ class LLMService {
     required double cost,
   }) async {
     await _ensureInitialized();
-    
+
     _totalTokensUsed += inputTokens + outputTokens;
     _totalCostIncurred += cost;
     _modelUsageCount[model] = (_modelUsageCount[model] ?? 0) + 1;
-    
+
     // Save to database
     await _saveUsageStats();
-    
+
     // Usage tracked silently
+  }
+
+  Future<_QuotaUsage?> _reserveQuota({int amount = 1}) async {
+    if (AccessService.instance.isTester) {
+      return null;
+    }
+
+    final user = fb.FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      throw StateError('No signed-in user available for quota tracking.');
+    }
+
+    final usage = _QuotaUsage(
+      uid: user.uid,
+      isPremium:
+          AccessService.instance.hasPremiumAccess ||
+          RevenueCatService.instance.isEntitledToPremium,
+      amount: amount,
+    );
+
+    await UsageQuotaService.instance.consume(
+      uid: usage.uid,
+      isPremium: usage.isPremium,
+      amount: usage.amount,
+    );
+
+    return usage;
+  }
+
+  Future<void> _refundQuota(_QuotaUsage? usage) async {
+    if (usage == null) return;
+    await UsageQuotaService.instance.refund(
+      uid: usage.uid,
+      isPremium: usage.isPremium,
+      amount: usage.amount,
+    );
+  }
+
+  Stream<Map<String, dynamic>> _attachQuotaRefund(
+    Stream<Map<String, dynamic>> base,
+    _QuotaUsage? usage,
+  ) {
+    if (usage == null) return base;
+    var refunded = false;
+    return base.transform(
+      StreamTransformer.fromHandlers(
+        handleData: (data, sink) {
+          sink.add(data);
+        },
+        handleError: (error, stackTrace, sink) {
+          if (!refunded) {
+            refunded = true;
+            UsageQuotaService.instance
+                .refund(
+                  uid: usage.uid,
+                  isPremium: usage.isPremium,
+                  amount: usage.amount,
+                )
+                .catchError((_) {});
+          }
+          sink.addError(error, stackTrace);
+        },
+      ),
+    );
   }
 
   Future<void> _ensureInitialized() async {
@@ -334,17 +431,29 @@ class LLMService {
   /// Load usage statistics from database
   Future<void> _loadUsageStats() async {
     try {
-      _totalTokensUsed = await _db.getSetting<int>('total_tokens_used', defaultValue: 0) ?? 0;
-      _totalCostIncurred = await _db.getSetting<double>('total_cost_incurred', defaultValue: 0.0) ?? 0.0;
-      
+      _totalTokensUsed =
+          await _db.getSetting<int>('total_tokens_used', defaultValue: 0) ?? 0;
+      _totalCostIncurred =
+          await _db.getSetting<double>(
+            'total_cost_incurred',
+            defaultValue: 0.0,
+          ) ??
+          0.0;
+
       final usageCountJson = await _db.getSetting<String>('model_usage_count');
       if (usageCountJson != null) {
         final decoded = jsonDecode(usageCountJson) as Map<String, dynamic>;
-        _modelUsageCount = decoded.map((key, value) => MapEntry(key, value as int));
+        _modelUsageCount = decoded.map(
+          (key, value) => MapEntry(key, value as int),
+        );
       }
-      
-      _preferredProvider = await _db.getSetting<String>('preferred_llm_provider', defaultValue: 'openrouter') ?? 'openrouter';
-      
+
+      _preferredProvider =
+          await _db.getSetting<String>(
+            'preferred_llm_provider',
+            defaultValue: 'openrouter',
+          ) ??
+          'openrouter';
     } catch (e) {
       print('🧠 Failed to load usage stats: $e');
     }
@@ -360,4 +469,16 @@ class LLMService {
       print('🧠 Failed to save usage stats: $e');
     }
   }
+}
+
+class _QuotaUsage {
+  const _QuotaUsage({
+    required this.uid,
+    required this.isPremium,
+    required this.amount,
+  });
+
+  final String uid;
+  final bool isPremium;
+  final int amount;
 }

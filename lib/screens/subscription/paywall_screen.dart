@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:provider/provider.dart';
 
+import '../../config/app_secrets.dart';
 import '../../config/subscriptions_config.dart';
 import '../../providers/subscription_provider.dart';
 import '../../providers/firebase_auth_provider.dart';
@@ -29,11 +30,11 @@ class _PaywallScreenState extends State<PaywallScreen> {
 
   Future<void> _loadOfferings() async {
     final subs = context.read<SubscriptionProvider>();
-    
+
     setState(() {
       _error = 'Initializing subscription provider...';
     });
-    
+
     if (!subs.initialized) {
       setState(() {
         _error = 'Initializing RevenueCat service...';
@@ -45,16 +46,19 @@ class _PaywallScreenState extends State<PaywallScreen> {
       });
       await subs.refreshOfferings();
     }
-    
+
     final offerings = subs.offerings;
-    
+
     setState(() {
       if (offerings == null) {
-        _error = 'No offerings available. RevenueCat may not be configured properly.\n\nDebug info:\n- RevenueCat configured: ${RevenueCatService.instance.isConfigured}\n- Subscription provider initialized: ${subs.initialized}\n- API Key: ${SubscriptionsConfig.rcPublicKeyAndroid.substring(0, 10)}...';
+        _error =
+            'No offerings available. RevenueCat may not be configured properly.\n\nDebug info:\n- RevenueCat configured: ${RevenueCatService.instance.isConfigured}\n- Subscription provider initialized: ${subs.initialized}\n- API Key: ${SubscriptionsConfig.rcPublicKeyAndroid.substring(0, 10)}...';
       } else if (offerings.current == null) {
-        _error = 'No current offering found. Check RevenueCat dashboard configuration.\n\nDebug info:\n- Total offerings: ${offerings.all.length}';
+        _error =
+            'No current offering found. Check RevenueCat dashboard configuration.\n\nDebug info:\n- Total offerings: ${offerings.all.length}';
       } else if (offerings.current!.availablePackages.isEmpty) {
-        _error = 'No packages available in current offering. Check product configuration.\n\nDebug info:\n- Offering ID: ${offerings.current!.identifier}\n- Packages: ${offerings.current!.availablePackages.map((p) => p.identifier).join(', ')}\n- Lifetime packages: ${offerings.current!.lifetime?.identifier ?? 'none'}\n- Annual packages: ${offerings.current!.annual?.identifier ?? 'none'}\n- Monthly packages: ${offerings.current!.monthly?.identifier ?? 'none'}';
+        _error =
+            'No packages available in current offering. Check product configuration.\n\nDebug info:\n- Offering ID: ${offerings.current!.identifier}\n- Packages: ${offerings.current!.availablePackages.map((p) => p.identifier).join(', ')}\n- Lifetime packages: ${offerings.current!.lifetime?.identifier ?? 'none'}\n- Annual packages: ${offerings.current!.annual?.identifier ?? 'none'}\n- Monthly packages: ${offerings.current!.monthly?.identifier ?? 'none'}';
       } else {
         _error = null; // Clear error if everything is working
         _selected = offerings.current!.availablePackages.first;
@@ -68,7 +72,8 @@ class _PaywallScreenState extends State<PaywallScreen> {
     final selected = _selected;
     if (selected == null) {
       setState(() {
-        _error = 'No package selected. Available packages: ${subs.offerings?.current?.availablePackages.length ?? 0}';
+        _error =
+            'No package selected. Available packages: ${subs.offerings?.current?.availablePackages.length ?? 0}';
       });
       return;
     }
@@ -83,7 +88,9 @@ class _PaywallScreenState extends State<PaywallScreen> {
       if (auth.uid == null || auth.uid!.isEmpty) {
         final isIOS = Platform.isIOS;
         setState(() {
-          _error = isIOS ? 'Starting Sign in with Apple...' : 'Starting Google Sign-In...';
+          _error = isIOS
+              ? 'Starting Sign in with Apple...'
+              : 'Starting Google Sign-In...';
         });
 
         if (isIOS) {
@@ -110,7 +117,8 @@ class _PaywallScreenState extends State<PaywallScreen> {
         } else {
           setState(() {
             _busy = false;
-            _error = 'Sign-in failed: No UID received. Auth state: ${auth.isSignedIn}, UID: ${auth.uid}';
+            _error =
+                'Sign-in failed: No UID received. Auth state: ${auth.isSignedIn}, UID: ${auth.uid}';
           });
           return;
         }
@@ -120,13 +128,14 @@ class _PaywallScreenState extends State<PaywallScreen> {
       setState(() {
         _error = 'Initiating purchase for package: ${selected.identifier}';
       });
-      
+
       final result = await RevenueCatService.instance.purchasePackage(selected);
 
       setState(() {
         _busy = false;
         if (!result.success) {
-          _error = 'Purchase failed: ${result.errorMessage ?? 'Unknown error'}\n\nPackage: ${selected.identifier}\nUser: ${auth.uid}\nRevenueCat configured: ${RevenueCatService.instance.isConfigured}';
+          _error =
+              'Purchase failed: ${result.errorMessage ?? 'Unknown error'}\n\nPackage: ${selected.identifier}\nUser: ${auth.uid}\nRevenueCat configured: ${RevenueCatService.instance.isConfigured}';
         }
       });
 
@@ -136,7 +145,8 @@ class _PaywallScreenState extends State<PaywallScreen> {
     } catch (e) {
       setState(() {
         _busy = false;
-        _error = 'Purchase error: ${e.toString()}\n\nDebug info:\n- User signed in: ${auth.isSignedIn}\n- UID: ${auth.uid}\n- Selected package: ${selected?.identifier}\n- RevenueCat configured: ${RevenueCatService.instance.isConfigured}\n- Offerings available: ${subs.offerings?.current?.availablePackages.length ?? 0}';
+        _error =
+            'Purchase error: ${e.toString()}\n\nDebug info:\n- User signed in: ${auth.isSignedIn}\n- UID: ${auth.uid}\n- Selected package: ${selected?.identifier}\n- RevenueCat configured: ${RevenueCatService.instance.isConfigured}\n- Offerings available: ${subs.offerings?.current?.availablePackages.length ?? 0}';
       });
     }
   }
@@ -150,15 +160,16 @@ class _PaywallScreenState extends State<PaywallScreen> {
       setState(() {
         _error = 'Restoring purchases...';
       });
-      
+
       await RevenueCatService.instance.restorePurchases();
-      
+
       setState(() {
         _error = null;
       });
     } catch (e) {
       setState(() {
-        _error = 'Restore failed: ${e.toString()}\n\nDebug info:\n- RevenueCat configured: ${RevenueCatService.instance.isConfigured}\n- User: ${context.read<FirebaseAuthProvider>().uid}';
+        _error =
+            'Restore failed: ${e.toString()}\n\nDebug info:\n- RevenueCat configured: ${RevenueCatService.instance.isConfigured}\n- User: ${context.read<FirebaseAuthProvider>().uid}';
       });
     } finally {
       setState(() {
@@ -175,9 +186,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
     final packages = offerings?.current?.availablePackages ?? [];
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Go Premium'),
-      ),
+      appBar: AppBar(title: const Text('Go Premium')),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -188,11 +197,13 @@ class _PaywallScreenState extends State<PaywallScreen> {
                 children: [
                   const Icon(Icons.star, size: 56),
                   const SizedBox(height: 12),
-                  Text('Unlock Premium',
-                      style: Theme.of(context).textTheme.headlineSmall),
+                  Text(
+                    'Unlock Premium',
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
                   const SizedBox(height: 8),
                   Text(
-                    'Secure your subscription to your account so you can restore it on any device.',
+                    'Secure your subscription to unlock ${AppSecrets.premiumRequestsPerMonth} premium AI requests every month and restore access on any device.',
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 24),
@@ -291,9 +302,12 @@ class _PaywallScreenState extends State<PaywallScreen> {
                           const SizedBox(height: 8),
                           Text(
                             'If this takes too long, please check your internet connection.',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
-                            ),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                ),
                             textAlign: TextAlign.center,
                           ),
                           const SizedBox(height: 16),
@@ -320,14 +334,20 @@ class _PaywallScreenState extends State<PaywallScreen> {
                               width: double.infinity,
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: Theme.of(context).colorScheme.surfaceVariant,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.surfaceVariant,
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text('Keep your access safe',
-                                      style: TextStyle(fontWeight: FontWeight.bold)),
+                                  Text(
+                                    'Keep your access safe',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                                   SizedBox(height: 6),
                                   Text(
                                     Platform.isIOS
@@ -350,17 +370,22 @@ class _PaywallScreenState extends State<PaywallScreen> {
                                           _error = null;
                                         });
                                         try {
-                                          final auth = context.read<FirebaseAuthProvider>();
+                                          final auth = context
+                                              .read<FirebaseAuthProvider>();
                                           if (Platform.isIOS) {
                                             await auth.signInWithApple();
                                           } else {
                                             await auth.signInWithGoogle();
                                           }
                                           // After sign-in, identify with RevenueCat using the UID
-                                          if (auth.uid != null && auth.uid!.isNotEmpty) {
-                                            await RevenueCatService.instance.identify(auth.uid!);
+                                          if (auth.uid != null &&
+                                              auth.uid!.isNotEmpty) {
+                                            await RevenueCatService.instance
+                                                .identify(auth.uid!);
                                             // Refresh offerings to show correct packages
-                                            await context.read<SubscriptionProvider>().refreshOfferings();
+                                            await context
+                                                .read<SubscriptionProvider>()
+                                                .refreshOfferings();
                                             await _loadOfferings();
                                           }
                                         } catch (e) {
@@ -376,7 +401,13 @@ class _PaywallScreenState extends State<PaywallScreen> {
                                         }
                                       },
                                 icon: const Icon(Icons.login),
-                                label: Text(_busy ? 'Signing in...' : (Platform.isIOS ? 'Continue with Apple' : 'Continue with Google')),
+                                label: Text(
+                                  _busy
+                                      ? 'Signing in...'
+                                      : (Platform.isIOS
+                                            ? 'Continue with Apple'
+                                            : 'Continue with Google'),
+                                ),
                               ),
                             ),
                             const SizedBox(height: 8),
@@ -389,32 +420,31 @@ class _PaywallScreenState extends State<PaywallScreen> {
                         );
                       },
                     ),
-                  if (packages.isNotEmpty)
-                    ...[
-                      for (final pkg in packages)
-                        RadioListTile<Package>(
-                          value: pkg,
-                          groupValue: _selected,
-                          onChanged: (v) => setState(() => _selected = v),
-                          title: Text(pkg.storeProduct.title),
-                          subtitle: Text(pkg.storeProduct.description),
-                        ),
-                      const SizedBox(height: 16),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 48,
-                        child: ElevatedButton.icon(
-                          onPressed: _busy ? null : _purchase,
-                          icon: const Icon(Icons.lock_open),
-                          label: Text(_busy ? 'Processing...' : 'Continue'),
-                        ),
+                  if (packages.isNotEmpty) ...[
+                    for (final pkg in packages)
+                      RadioListTile<Package>(
+                        value: pkg,
+                        groupValue: _selected,
+                        onChanged: (v) => setState(() => _selected = v),
+                        title: Text(pkg.storeProduct.title),
+                        subtitle: Text(pkg.storeProduct.description),
                       ),
-                      const SizedBox(height: 8),
-                      TextButton(
-                        onPressed: _busy ? null : _restore,
-                        child: const Text('Restore Purchases'),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: ElevatedButton.icon(
+                        onPressed: _busy ? null : _purchase,
+                        icon: const Icon(Icons.lock_open),
+                        label: Text(_busy ? 'Processing...' : 'Continue'),
                       ),
-                    ],
+                    ),
+                    const SizedBox(height: 8),
+                    TextButton(
+                      onPressed: _busy ? null : _restore,
+                      child: const Text('Restore Purchases'),
+                    ),
+                  ],
                 ],
               ),
             ),

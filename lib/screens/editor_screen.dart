@@ -52,8 +52,7 @@ import '../widgets/unified_settings_modal.dart';
 import '../widgets/model_quick_switcher_modal.dart';
 import '../widgets/model_capabilities_bottom_sheet.dart';
 import 'model_selection_screen.dart';
-import 'vibration_stub.dart'
-    if (dart.library.io) 'vibration_impl.dart';
+import 'vibration_stub.dart' if (dart.library.io) 'vibration_impl.dart';
 
 class EditorScreen extends StatefulWidget {
   final String? conversationId;
@@ -74,7 +73,6 @@ class EditorScreen extends StatefulWidget {
   @override
   State<EditorScreen> createState() => _EditorScreenState();
 }
-
 
 class _EditorScreenState extends State<EditorScreen> {
   late final UnifiedApiService _apiService;
@@ -129,7 +127,7 @@ class _EditorScreenState extends State<EditorScreen> {
   // Mode dropdown variables
   bool _showModeDropdown = false;
   late GlobalKey _modeDropdownKey;
-  
+
   // Cost service stream subscription
   StreamSubscription<SessionCostData>? _costSubscription;
 
@@ -141,18 +139,20 @@ class _EditorScreenState extends State<EditorScreen> {
     final theme = Theme.of(context);
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: widget.showAppBar ? ModernAppHeader(
-        showBackButton: false,
-        showLogo: true,
-        centerTitle: false,
-        title: _buildHeaderTitle(),
-        showNewChatButton: true,
-        onMenuItemSelected: (value) {
-          if (value == 'settings') {
-            _showSettings();
-          }
-        },
-      ) : null,
+      appBar: widget.showAppBar
+          ? ModernAppHeader(
+              showBackButton: false,
+              showLogo: true,
+              centerTitle: false,
+              title: _buildHeaderTitle(),
+              showNewChatButton: true,
+              onMenuItemSelected: (value) {
+                if (value == 'settings') {
+                  _showSettings();
+                }
+              },
+            )
+          : null,
       body: GestureDetector(
         onTap: () {
           if (_showModeDropdown) {
@@ -177,9 +177,10 @@ class _EditorScreenState extends State<EditorScreen> {
     super.didChangeDependencies();
     // If a prompt is provided, show it as a system message and pre-fill the input box
     if (widget.prompt != null && widget.prompt!.trim().isNotEmpty) {
-      final alreadyHasPrompt = _messages.isNotEmpty &&
-        _messages.first.type == 'system' &&
-        _messages.first.textContent == widget.prompt;
+      final alreadyHasPrompt =
+          _messages.isNotEmpty &&
+          _messages.first.type == 'system' &&
+          _messages.first.textContent == widget.prompt;
       if (!alreadyHasPrompt) {
         setState(() {
           _messages.insert(
@@ -195,7 +196,9 @@ class _EditorScreenState extends State<EditorScreen> {
         });
       }
       // Auto-send the prompt as the first message if not already sent
-      if (!_hasSentInitialPrompt && _messages.length == 1 && _messages.first.type == 'system') {
+      if (!_hasSentInitialPrompt &&
+          _messages.length == 1 &&
+          _messages.first.type == 'system') {
         _hasSentInitialPrompt = true;
         Future.delayed(const Duration(milliseconds: 200), () {
           if (mounted) {
@@ -208,7 +211,10 @@ class _EditorScreenState extends State<EditorScreen> {
 
   @override
   void dispose() {
-    final modeConfigProvider = Provider.of<ModeConfigProvider>(context, listen: false);
+    final modeConfigProvider = Provider.of<ModeConfigProvider>(
+      context,
+      listen: false,
+    );
     modeConfigProvider.removeListener(_onModeConfigChanged);
     _messageController.dispose();
     _scrollController.dispose();
@@ -245,7 +251,9 @@ class _EditorScreenState extends State<EditorScreen> {
     // Check if services are ready
     _checkServicesReady();
 
-    _currentConversationId = widget.conversationId ?? DateTime.now().millisecondsSinceEpoch.toString();
+    _currentConversationId =
+        widget.conversationId ??
+        DateTime.now().millisecondsSinceEpoch.toString();
     _role = widget.role;
     _contextInfo = widget.contextInfo;
     _modeDropdownKey = GlobalKey();
@@ -263,9 +271,11 @@ class _EditorScreenState extends State<EditorScreen> {
 
     // Listen to mode config changes for real-time updates
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final modeConfigProvider = Provider.of<ModeConfigProvider>(context, listen: false);
+      final modeConfigProvider = Provider.of<ModeConfigProvider>(
+        context,
+        listen: false,
+      );
       modeConfigProvider.addListener(_onModeConfigChanged);
-      
     });
 
     // Load conversation if conversationId is provided via route
@@ -280,7 +290,9 @@ class _EditorScreenState extends State<EditorScreen> {
   void didUpdateWidget(covariant EditorScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     final newId = widget.conversationId;
-    if (newId != null && newId.isNotEmpty && newId != oldWidget.conversationId) {
+    if (newId != null &&
+        newId.isNotEmpty &&
+        newId != oldWidget.conversationId) {
       setState(() {
         _currentConversationId = newId;
       });
@@ -314,8 +326,12 @@ class _EditorScreenState extends State<EditorScreen> {
               icon,
               size: 16,
               color: isSelected
-                  ? (isDark ? AppColors.darkButtonText : AppColors.lightButtonText)
-                  : (isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted),
+                  ? (isDark
+                        ? AppColors.darkButtonText
+                        : AppColors.lightButtonText)
+                  : (isDark
+                        ? AppColors.darkTextMuted
+                        : AppColors.lightTextMuted),
             ),
             const SizedBox(width: 4),
             Text(
@@ -323,8 +339,12 @@ class _EditorScreenState extends State<EditorScreen> {
               style: theme.textTheme.labelSmall?.copyWith(
                 fontWeight: FontWeight.w600,
                 color: isSelected
-                    ? (isDark ? AppColors.darkButtonText : AppColors.lightButtonText)
-                    : (isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted),
+                    ? (isDark
+                          ? AppColors.darkButtonText
+                          : AppColors.lightButtonText)
+                    : (isDark
+                          ? AppColors.darkTextMuted
+                          : AppColors.lightTextMuted),
                 fontSize: 11,
               ),
             ),
@@ -334,7 +354,10 @@ class _EditorScreenState extends State<EditorScreen> {
     );
   }
 
-  Widget _buildExpandedImagesContent(List<Map<String, dynamic>> images, ThemeData theme) {
+  Widget _buildExpandedImagesContent(
+    List<Map<String, dynamic>> images,
+    ThemeData theme,
+  ) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -356,11 +379,7 @@ class _EditorScreenState extends State<EditorScreen> {
         children: [
           Row(
             children: [
-              Icon(
-                Icons.image,
-                size: 16,
-                color: theme.colorScheme.primary,
-              ),
+              Icon(Icons.image, size: 16, color: theme.colorScheme.primary),
               const SizedBox(width: 6),
               Text(
                 'Images (${images.length})',
@@ -402,7 +421,10 @@ class _EditorScreenState extends State<EditorScreen> {
     );
   }
 
-  Widget _buildExpandedSourcesContent(List<ChatSource> sources, ThemeData theme) {
+  Widget _buildExpandedSourcesContent(
+    List<ChatSource> sources,
+    ThemeData theme,
+  ) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -424,11 +446,7 @@ class _EditorScreenState extends State<EditorScreen> {
         children: [
           Row(
             children: [
-              Icon(
-                Icons.source,
-                size: 16,
-                color: theme.colorScheme.primary,
-              ),
+              Icon(Icons.source, size: 16, color: theme.colorScheme.primary),
               const SizedBox(width: 6),
               Text(
                 'Sources (${sources.length})',
@@ -485,7 +503,7 @@ class _EditorScreenState extends State<EditorScreen> {
     final isDark = theme.brightness == Brightness.dark;
     final modelName = _formatModelName(_selectedModel);
     final isFree = _isModelFree(_selectedModel);
-    
+
     return GestureDetector(
       onTap: () => _showModelQuickSwitcher(),
       child: Container(
@@ -505,8 +523,12 @@ class _EditorScreenState extends State<EditorScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
                 color: isFree
-                    ? (isDark ? AppColors.darkSuccess.withValues(alpha: 0.2) : AppColors.lightSuccess.withValues(alpha: 0.15))
-                    : (isDark ? AppColors.darkWarning.withValues(alpha: 0.2) : AppColors.lightWarning.withValues(alpha: 0.15)),
+                    ? (isDark
+                          ? AppColors.darkSuccess.withValues(alpha: 0.2)
+                          : AppColors.lightSuccess.withValues(alpha: 0.15))
+                    : (isDark
+                          ? AppColors.darkWarning.withValues(alpha: 0.2)
+                          : AppColors.lightWarning.withValues(alpha: 0.15)),
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Text(
@@ -515,8 +537,12 @@ class _EditorScreenState extends State<EditorScreen> {
                   fontSize: 10,
                   fontWeight: FontWeight.w500,
                   color: isFree
-                      ? (isDark ? AppColors.darkSuccess : AppColors.lightSuccess)
-                      : (isDark ? AppColors.darkWarning : AppColors.lightWarning),
+                      ? (isDark
+                            ? AppColors.darkSuccess
+                            : AppColors.lightSuccess)
+                      : (isDark
+                            ? AppColors.darkWarning
+                            : AppColors.lightWarning),
                 ),
               ),
             ),
@@ -533,7 +559,9 @@ class _EditorScreenState extends State<EditorScreen> {
             Icon(
               Icons.keyboard_arrow_down,
               size: 16,
-              color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+              color: isDark
+                  ? AppColors.darkTextSecondary
+                  : AppColors.lightTextSecondary,
             ),
           ],
         ),
@@ -553,12 +581,12 @@ class _EditorScreenState extends State<EditorScreen> {
   }
 
   bool _isModelFree(String modelId) {
-    return modelId.endsWith(':free') || 
-           modelId.contains('gpt-3.5-turbo') ||
-           modelId.contains('claude-3-haiku') ||
-           modelId.contains('gemini-pro') ||
-           modelId.contains('llama-2-7b') ||
-           modelId.contains('mistral-7b');
+    return modelId.endsWith(':free') ||
+        modelId.contains('gpt-3.5-turbo') ||
+        modelId.contains('claude-3-haiku') ||
+        modelId.contains('gemini-pro') ||
+        modelId.contains('llama-2-7b') ||
+        modelId.contains('mistral-7b');
   }
 
   void _showModelQuickSwitcher() {
@@ -575,13 +603,14 @@ class _EditorScreenState extends State<EditorScreen> {
     );
   }
 
-  Widget _buildImageCard(Map<String, dynamic> image, int index, ThemeData theme) {
+  Widget _buildImageCard(
+    Map<String, dynamic> image,
+    int index,
+    ThemeData theme,
+  ) {
     return Container(
       width: 140,
-      margin: EdgeInsets.only(
-        left: index == 0 ? 0 : 8,
-        right: 8,
-      ),
+      margin: EdgeInsets.only(left: index == 0 ? 0 : 8, right: 8),
       child: Container(
         height: 80,
         decoration: BoxDecoration(
@@ -610,7 +639,9 @@ class _EditorScreenState extends State<EditorScreen> {
                       child: Center(
                         child: Icon(
                           Icons.broken_image_outlined,
-                          color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.5),
+                          color: theme.textTheme.bodyMedium?.color?.withValues(
+                            alpha: 0.5,
+                          ),
                           size: 20,
                         ),
                       ),
@@ -618,8 +649,10 @@ class _EditorScreenState extends State<EditorScreen> {
                   ),
                 ),
                 // Text Overlay with Gradient Background
-                if ((image['title'] != null && image['title'].toString().isNotEmpty) ||
-                    (image['description'] != null && image['description'].toString().isNotEmpty))
+                if ((image['title'] != null &&
+                        image['title'].toString().isNotEmpty) ||
+                    (image['description'] != null &&
+                        image['description'].toString().isNotEmpty))
                   Positioned(
                     bottom: 0,
                     left: 0,
@@ -641,7 +674,8 @@ class _EditorScreenState extends State<EditorScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           // Title text
-                          if (image['title'] != null && image['title'].toString().isNotEmpty)
+                          if (image['title'] != null &&
+                              image['title'].toString().isNotEmpty)
                             Text(
                               image['title'],
                               style: const TextStyle(
@@ -653,7 +687,8 @@ class _EditorScreenState extends State<EditorScreen> {
                               overflow: TextOverflow.ellipsis,
                             ),
                           // Description text
-                          if (image['description'] != null && image['description'].toString().isNotEmpty)
+                          if (image['description'] != null &&
+                              image['description'].toString().isNotEmpty)
                             Text(
                               image['description'],
                               style: TextStyle(
@@ -695,17 +730,11 @@ class _EditorScreenState extends State<EditorScreen> {
             padding: const EdgeInsets.all(AppColors.spacingMd),
             decoration: BoxDecoration(
               color: theme.colorScheme.primaryContainer.withValues(alpha: 0.1),
-              border: Border(
-                bottom: BorderSide(color: theme.dividerColor),
-              ),
+              border: Border(bottom: BorderSide(color: theme.dividerColor)),
             ),
             child: Row(
               children: [
-                Icon(
-                  Icons.folder,
-                  size: 18,
-                  color: theme.colorScheme.primary,
-                ),
+                Icon(Icons.folder, size: 18, color: theme.colorScheme.primary),
                 const SizedBox(width: AppColors.spacingSm),
                 Text(
                   'Using sources:',
@@ -722,57 +751,442 @@ class _EditorScreenState extends State<EditorScreen> {
                       return Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: AppColors.spacingSm,
-                            vertical: 2,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: theme.cardColor,
+                          borderRadius: BorderRadius.circular(
+                            AppColors.borderRadiusSm,
                           ),
-                          decoration: BoxDecoration(
-                            color: theme.cardColor,
-                            borderRadius: BorderRadius.circular(AppColors.borderRadiusSm),
-                            border: Border.all(color: theme.dividerColor),
+                          border: Border.all(color: theme.dividerColor),
+                        ),
+                        child: Text(
+                          source.title ?? source.filename,
+                          style: theme.textTheme.bodySmall,
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+        // Session Info
+        StreamBuilder<SessionCostData>(
+          stream: SessionCostService().costUpdates,
+          builder: (context, snapshot) {
+            final costData = snapshot.data;
+
+            final finalSessionCost = costData?.sessionCost ?? _sessionCost;
+            final finalLastCost =
+                costData?.lastMessageCost ?? _lastOperationCost;
+
+            return Consumer<ModeConfigProvider>(
+              builder: (context, modeConfigProvider, child) {
+                return SessionInfoWidget(
+                  llmUsed: _lastUsedLLM,
+                  modelName: _lastUsedModel ?? _getModelForCurrentMode(),
+                  cost: finalLastCost,
+                  sessionCost: finalSessionCost,
+                  toolResults: _lastToolResults,
+                  messageCount:
+                      costData?.messageCount ??
+                      SessionCostService().messageCount,
+                  modelCapabilities: _currentModelCapabilities,
+                  mode: _currentMode,
+                  onModelSwitched: (modelId) {
+                    setState(() {
+                      _selectedModel = modelId;
+                    });
+                    // Save the selected model
+                    _saveSelectedModel(modelId);
+                    // Update provider for the current mode
+                    final provider = Provider.of<ModeConfigProvider>(
+                      context,
+                      listen: false,
+                    );
+                    final currentConfig = provider.getConfigForMode(
+                      _currentMode,
+                    );
+                    if (currentConfig != null) {
+                      provider.updateConfig(
+                        _currentMode,
+                        currentConfig.copyWith(model: modelId),
+                      );
+                    }
+                    // Update LLM service
+                    LLMService().setCurrentModel(modelId);
+                    _checkModelCapabilities();
+                  },
+                );
+              },
+            );
+          },
+        ),
+
+        // Messages List (fills available space, avoids extra bottom space)
+        Expanded(
+          child: Stack(
+            children: [
+              _messages.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            _selectedSourceIds.isNotEmpty
+                                ? Icons.auto_awesome_outlined
+                                : Icons.chat_bubble_outline,
+                            size: 48,
+                            color: theme.colorScheme.onSurface.withValues(
+                              alpha: 0.4,
+                            ),
                           ),
-                          child: Text(
-                            source.title ?? source.filename,
-                            style: theme.textTheme.bodySmall,
+                          const SizedBox(height: AppColors.spacingMd),
+                          Text(
+                            _selectedSourceIds.isNotEmpty
+                                ? 'Quick actions for your sources:'
+                                : 'Start a conversation...',
+                            style: theme.textTheme.bodyLarge?.copyWith(
+                              color: theme.colorScheme.onSurface.withValues(
+                                alpha: 0.6,
+                              ),
+                            ),
                           ),
+
+                          // Quick action buttons for source grounded chat
+                          if (_selectedSourceIds.isNotEmpty ||
+                              _selectedSources.isNotEmpty) ...[
+                            const SizedBox(height: AppColors.spacingLg),
+                            Container(
+                              constraints: const BoxConstraints(maxWidth: 400),
+                              child: Wrap(
+                                spacing: 12,
+                                runSpacing: 12,
+                                alignment: WrapAlignment.center,
+                                children: [
+                                  _buildQuickActionButton(
+                                    icon: Icons.summarize_outlined,
+                                    label: 'Concise Summary',
+                                    onPressed: () => _sendMessage(
+                                      'Provide a concise summary of the key points from the selected sources.',
+                                    ),
+                                    theme: theme,
+                                  ),
+                                  _buildQuickActionButton(
+                                    icon: Icons.article_outlined,
+                                    label: 'Detailed Summary',
+                                    onPressed: () => _sendMessage(
+                                      'Provide a detailed summary with comprehensive analysis of the selected sources.',
+                                    ),
+                                    theme: theme,
+                                  ),
+                                  _buildQuickActionButton(
+                                    icon: Icons.quiz_outlined,
+                                    label: 'Key Points',
+                                    onPressed: () => _sendMessage(
+                                      'Extract and list the key points from the selected sources in bullet format.',
+                                    ),
+                                    theme: theme,
+                                  ),
+                                  _buildQuickActionButton(
+                                    icon: Icons.lightbulb_outline,
+                                    label: 'Insights',
+                                    onPressed: () => _sendMessage(
+                                      'What are the main insights and takeaways from the selected sources?',
+                                    ),
+                                    theme: theme,
+                                  ),
+                                  _buildQuickActionButton(
+                                    icon: Icons.help_outline,
+                                    label: 'Explain Concepts',
+                                    onPressed: () => _sendMessage(
+                                      'Explain the main concepts covered in the selected sources.',
+                                    ),
+                                    theme: theme,
+                                  ),
+                                  _buildQuickActionButton(
+                                    icon: Icons.school_outlined,
+                                    label: 'Learning Guide',
+                                    onPressed: () => _sendMessage(
+                                      'Create a learning guide based on the selected sources with recommended study approach.',
+                                    ),
+                                    theme: theme,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    )
+                  : ListView.builder(
+                      controller: _scrollController,
+                      padding: const EdgeInsets.all(AppColors.spacingMd),
+                      itemCount: _messages.length,
+                      itemBuilder: (context, index) {
+                        final message = _messages[index];
+                        return KeyedSubtree(
+                          key: ValueKey(message.id),
+                          child: _buildMessageWidget(message, theme),
                         );
-                      }).toList(),
+                      },
+                    ),
+
+              // Minimal scroll-to-bottom button inside messages area
+              if (_showScrollToBottom)
+                Positioned(
+                  right: 12,
+                  bottom: 12,
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () => _scrollToBottom(force: true),
+                      borderRadius: BorderRadius.circular(16),
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.surface.withValues(
+                            alpha: 0.95,
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: theme.dividerColor.withValues(alpha: 0.4),
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.06),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Icon(
+                          Icons.keyboard_arrow_down,
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.8,
+                          ),
+                          size: 18,
+                        ),
+                      ),
                     ),
                   ),
-                ],
+                ),
+            ],
+          ),
+        ),
+
+        // Compact attachment preview
+        if (_attachments.isNotEmpty)
+          Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surfaceContainerHighest.withValues(
+                alpha: 0.5,
+              ),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: theme.dividerColor.withValues(alpha: 0.3),
               ),
             ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.attach_file,
+                      size: 16,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${_attachments.length} attachment${_attachments.length > 1 ? 's' : ''}',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        fontWeight: FontWeight.w500,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  height: 60,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _attachments.length,
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(width: 8),
+                    itemBuilder: (context, index) {
+                      final attachment = _attachments[index];
+                      return Container(
+                        width: 80,
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.surface,
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: theme.dividerColor.withValues(alpha: 0.5),
+                          ),
+                        ),
+                        child: Stack(
+                          children: [
+                            // Preview content
+                            Positioned.fill(
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(6),
+                                child: attachment.type == 'image'
+                                    ? Image.memory(
+                                        attachment.bytes,
+                                        fit: BoxFit.cover,
+                                        errorBuilder:
+                                            (context, error, stackTrace) =>
+                                                Container(
+                                                  color: theme
+                                                      .colorScheme
+                                                      .errorContainer,
+                                                  child: Icon(
+                                                    Icons.broken_image,
+                                                    color: theme
+                                                        .colorScheme
+                                                        .onErrorContainer,
+                                                    size: 20,
+                                                  ),
+                                                ),
+                                      )
+                                    : Container(
+                                        color: theme
+                                            .colorScheme
+                                            .surfaceContainerHighest,
+                                        child: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Icon(
+                                              attachment.type == 'pdf'
+                                                  ? Icons.picture_as_pdf
+                                                  : Icons.description,
+                                              color: theme
+                                                  .colorScheme
+                                                  .onSurfaceVariant,
+                                              size: 20,
+                                            ),
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              attachment.extension
+                                                  .toUpperCase(),
+                                              style: theme.textTheme.bodySmall
+                                                  ?.copyWith(
+                                                    fontSize: 8,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: theme
+                                                        .colorScheme
+                                                        .onSurfaceVariant,
+                                                  ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                              ),
+                            ),
+                            // Remove button
+                            Positioned(
+                              top: 2,
+                              right: 2,
+                              child: GestureDetector(
+                                onTap: () => _removeAttachment(attachment.id),
+                                child: Container(
+                                  padding: const EdgeInsets.all(2),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withValues(alpha: 0.6),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.close,
+                                    size: 12,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
 
-          // Session Info
-          StreamBuilder<SessionCostData>(
-            stream: SessionCostService().costUpdates,
-            builder: (context, snapshot) {
-              final costData = snapshot.data;
-              
-              final finalSessionCost = costData?.sessionCost ?? _sessionCost;
-              final finalLastCost = costData?.lastMessageCost ?? _lastOperationCost;
-              
-              
-              return Consumer<ModeConfigProvider>(
-                builder: (context, modeConfigProvider, child) {
-                  return SessionInfoWidget(
-                    llmUsed: _lastUsedLLM,
-                    modelName: _lastUsedModel ?? _getModelForCurrentMode(),
-                    cost: finalLastCost,
-                    sessionCost: finalSessionCost,
-                    toolResults: _lastToolResults,
-                    messageCount: costData?.messageCount ?? SessionCostService().messageCount,
-                    modelCapabilities: _currentModelCapabilities,
+        // Model selector layer (NEW)
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: theme.brightness == Brightness.dark
+                ? AppColors.darkBackgroundAlt
+                : AppColors.lightBackgroundAlt,
+            border: Border(
+              bottom: BorderSide(
+                color: theme.brightness == Brightness.dark
+                    ? AppColors.darkBorder
+                    : AppColors.lightBorder,
+                width: 0.5,
+              ),
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.memory,
+                size: 14,
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => _showModelCapabilitiesBottomSheet(context),
+                  child: MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: Text(
+                      _getModelDisplayTextForSelector(),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        fontSize: 11,
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.8,
+                        ),
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
+              ),
+              GestureDetector(
+                onTap: () {
+                  showModelQuickSwitcher(
+                    context: context,
                     mode: _currentMode,
-                    onModelSwitched: (modelId) {
+                    selectedModel: _selectedModel,
+                    onModelSelected: (modelId) {
                       setState(() {
                         _selectedModel = modelId;
                       });
                       // Save the selected model
                       _saveSelectedModel(modelId);
                       // Update provider for the current mode
-                      final provider = Provider.of<ModeConfigProvider>(context, listen: false);
-                      final currentConfig = provider.getConfigForMode(_currentMode);
+                      final provider = Provider.of<ModeConfigProvider>(
+                        context,
+                        listen: false,
+                      );
+                      final currentConfig = provider.getConfigForMode(
+                        _currentMode,
+                      );
                       if (currentConfig != null) {
-                        provider.updateConfig(_currentMode, currentConfig.copyWith(model: modelId));
+                        provider.updateConfig(
+                          _currentMode,
+                          currentConfig.copyWith(model: modelId),
+                        );
                       }
                       // Update LLM service
                       LLMService().setCurrentModel(modelId);
@@ -780,651 +1194,447 @@ class _EditorScreenState extends State<EditorScreen> {
                     },
                   );
                 },
-              );
-            },
-          ),
-
-          // Messages List (fills available space, avoids extra bottom space)
-          Expanded(
-            child: Stack(
-              children: [
-                _messages.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          _selectedSourceIds.isNotEmpty
-                              ? Icons.auto_awesome_outlined
-                              : Icons.chat_bubble_outline,
-                          size: 48,
-                          color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(
+                      color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                      width: 0.5,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.swap_horiz,
+                        size: 12,
+                        color: theme.colorScheme.primary,
+                      ),
+                      const SizedBox(width: 3),
+                      Text(
+                        'Switch',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w600,
+                          color: theme.colorScheme.primary,
                         ),
-                        const SizedBox(height: AppColors.spacingMd),
-                        Text(
-                          _selectedSourceIds.isNotEmpty
-                              ? 'Quick actions for your sources:'
-                              : 'Start a conversation...',
-                          style: theme.textTheme.bodyLarge?.copyWith(
-                            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // Input Section
+        Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 8,
+            vertical: AppColors.spacingSm,
+          ),
+          decoration: BoxDecoration(
+            color: theme.brightness == Brightness.dark
+                ? AppColors.darkBackgroundAlt
+                : AppColors.lightBackgroundAlt,
+          ),
+          child: Column(
+            children: [
+              // Unified input container with separated text and controls
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 1, vertical: 1),
+                decoration: BoxDecoration(
+                  color: theme.brightness == Brightness.dark
+                      ? AppColors.darkInput
+                      : AppColors.lightInput,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: theme.brightness == Brightness.dark
+                        ? AppColors.darkInputBorder
+                        : AppColors.lightInputBorder,
+                    width: 0.5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color:
+                          (theme.brightness == Brightness.dark
+                                  ? Colors.black
+                                  : Colors.grey)
+                              .withValues(alpha: 0.03),
+                      blurRadius: 1,
+                      offset: const Offset(0, 1),
+                    ),
+                  ],
+                ),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    // Prevent input area from forcing overflow by capping height
+                    maxHeight: 240,
+                  ),
+                  child: SingleChildScrollView(
+                    physics: const ClampingScrollPhysics(),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Text input area (top section)
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          constraints: const BoxConstraints(
+                            minHeight: 36,
+                            maxHeight: 100,
+                          ),
+                          child: TextField(
+                            controller: _messageController,
+                            focusNode: _messageFocusNode,
+                            maxLines: null,
+                            minLines: 1,
+                            keyboardType: TextInputType.multiline,
+                            textInputAction: TextInputAction.newline,
+                            style: theme.textTheme.bodyLarge?.copyWith(
+                              color: theme.brightness == Brightness.dark
+                                  ? AppColors.darkInputText
+                                  : AppColors.lightInputText,
+                              fontSize: 16,
+                              height: 1.4,
+                            ),
+                            decoration: InputDecoration(
+                              hintText: 'What do you want to know?',
+                              hintStyle: theme.textTheme.bodyLarge?.copyWith(
+                                color: theme.brightness == Brightness.dark
+                                    ? AppColors.darkInputPlaceholder
+                                    : AppColors.lightInputPlaceholder,
+                                fontSize: 16,
+                              ),
+                              filled: false,
+                              border: InputBorder.none,
+                              enabledBorder: InputBorder.none,
+                              focusedBorder: InputBorder.none,
+                              contentPadding: const EdgeInsets.all(0),
+                            ),
+                            onSubmitted: (_) => _sendMessage(),
                           ),
                         ),
 
-                        // Quick action buttons for source grounded chat
-                        if (_selectedSourceIds.isNotEmpty || _selectedSources.isNotEmpty) ...[
-                          const SizedBox(height: AppColors.spacingLg),
+                        // Controls row (bottom section)
+                        const SizedBox(height: 2),
+
+                        // Services status indicator
+                        if (!_servicesReady)
                           Container(
-                            constraints: const BoxConstraints(maxWidth: 400),
-                            child: Wrap(
-                              spacing: 12,
-                              runSpacing: 12,
-                              alignment: WrapAlignment.center,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            margin: const EdgeInsets.only(bottom: 4),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.surface.withValues(
+                                alpha: 0.8,
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: theme.colorScheme.outline.withValues(
+                                  alpha: 0.3,
+                                ),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
                               children: [
-                                _buildQuickActionButton(
-                                  icon: Icons.summarize_outlined,
-                                  label: 'Concise Summary',
-                                  onPressed: () => _sendMessage('Provide a concise summary of the key points from the selected sources.'),
-                                  theme: theme,
+                                SizedBox(
+                                  width: 12,
+                                  height: 12,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      theme.colorScheme.primary,
+                                    ),
+                                  ),
                                 ),
-                                _buildQuickActionButton(
-                                  icon: Icons.article_outlined,
-                                  label: 'Detailed Summary',
-                                  onPressed: () => _sendMessage('Provide a detailed summary with comprehensive analysis of the selected sources.'),
-                                  theme: theme,
-                                ),
-                                _buildQuickActionButton(
-                                  icon: Icons.quiz_outlined,
-                                  label: 'Key Points',
-                                  onPressed: () => _sendMessage('Extract and list the key points from the selected sources in bullet format.'),
-                                  theme: theme,
-                                ),
-                                _buildQuickActionButton(
-                                  icon: Icons.lightbulb_outline,
-                                  label: 'Insights',
-                                  onPressed: () => _sendMessage('What are the main insights and takeaways from the selected sources?'),
-                                  theme: theme,
-                                ),
-                                _buildQuickActionButton(
-                                  icon: Icons.help_outline,
-                                  label: 'Explain Concepts',
-                                  onPressed: () => _sendMessage('Explain the main concepts covered in the selected sources.'),
-                                  theme: theme,
-                                ),
-                                _buildQuickActionButton(
-                                  icon: Icons.school_outlined,
-                                  label: 'Learning Guide',
-                                  onPressed: () => _sendMessage('Create a learning guide based on the selected sources with recommended study approach.'),
-                                  theme: theme,
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Initializing services...',
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme.colorScheme.onSurface
+                                        .withValues(alpha: 0.7),
+                                  ),
                                 ),
                               ],
                             ),
                           ),
-                        ],
-                      ],
-                    ),
-                  )
-                : ListView.builder(
-                    controller: _scrollController,
-                    padding: const EdgeInsets.all(AppColors.spacingMd),
-                    itemCount: _messages.length,
-                    itemBuilder: (context, index) {
-                      final message = _messages[index];
-                      return KeyedSubtree(
-                        key: ValueKey(message.id),
-                        child: _buildMessageWidget(message, theme),
-                      );
-                    },
-                  ),
-
-                // Minimal scroll-to-bottom button inside messages area
-                if (_showScrollToBottom)
-                  Positioned(
-                    right: 12,
-                    bottom: 12,
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: () => _scrollToBottom(force: true),
-                        borderRadius: BorderRadius.circular(16),
-                        child: Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.surface.withValues(alpha: 0.95),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: theme.dividerColor.withValues(alpha: 0.4)),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.06),
-                                blurRadius: 6,
-                                offset: const Offset(0, 2),
+                        Row(
+                          children: [
+                            // Left side controls: attachment and mode dropdown
+                            IconButton(
+                              icon: Icon(
+                                Icons.attach_file,
+                                size: 20,
+                                color: theme.brightness == Brightness.dark
+                                    ? AppColors.darkText
+                                    : AppColors.lightText,
                               ),
-                            ],
-                          ),
-                          child: Icon(
-                            Icons.keyboard_arrow_down,
-                            color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
-                            size: 18,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
+                              onPressed: () {
+                                Logger.debug(
+                                  '📎 Attachment button pressed',
+                                  tag: 'EditorScreen',
+                                );
+                                Logger.debug(
+                                  '📎 Current model capabilities: supportsFiles=${_currentModelCapabilities?.supportsFiles}, supportsImages=${_currentModelCapabilities?.supportsImages}',
+                                  tag: 'EditorScreen',
+                                );
+                                _showAttachmentOptions();
+                              },
+                              tooltip: 'Attach files',
+                              style: IconButton.styleFrom(
+                                padding: const EdgeInsets.all(4),
+                                minimumSize: const Size(28, 28),
+                              ),
+                            ),
 
-          // Compact attachment preview
-          if (_attachments.isNotEmpty)
-            Container(
-              margin: const EdgeInsets.only(bottom: 8),
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: theme.dividerColor.withValues(alpha: 0.3)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.attach_file,
-                        size: 16,
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${_attachments.length} attachment${_attachments.length > 1 ? 's' : ''}',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          fontWeight: FontWeight.w500,
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  SizedBox(
-                    height: 60,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: _attachments.length,
-                      separatorBuilder: (context, index) => const SizedBox(width: 8),
-                      itemBuilder: (context, index) {
-                        final attachment = _attachments[index];
-                        return Container(
-                          width: 80,
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.surface,
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(color: theme.dividerColor.withValues(alpha: 0.5)),
-                          ),
-                          child: Stack(
-                            children: [
-                              // Preview content
-                              Positioned.fill(
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(6),
-                                  child: attachment.type == 'image'
-                                      ? Image.memory(
-                                          attachment.bytes,
-                                          fit: BoxFit.cover,
-                                          errorBuilder: (context, error, stackTrace) => Container(
-                                            color: theme.colorScheme.errorContainer,
-                                            child: Icon(
-                                              Icons.broken_image,
-                                              color: theme.colorScheme.onErrorContainer,
-                                              size: 20,
-                                            ),
-                                          ),
-                                        )
-                                      : Container(
-                                          color: theme.colorScheme.surfaceContainerHighest,
-                                          child: Column(
-                                            mainAxisAlignment: MainAxisAlignment.center,
-                                            children: [
-                                              Icon(
-                                                attachment.type == 'pdf' ? Icons.picture_as_pdf : Icons.description,
-                                                color: theme.colorScheme.onSurfaceVariant,
-                                                size: 20,
+                            // Mode dropdown
+                            if (_selectedSourceIds.isEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(left: 4),
+                                child: _buildModeDropdown(),
+                              ),
+
+                            // Globe toggle (only in normal chat mode) - PREMIUM FEATURE
+                            if (_selectedSourceIds.isEmpty &&
+                                FeatureAccess.canShow('search_agents'))
+                              Builder(
+                                builder: (context) {
+                                  final hasAccess =
+                                      FeatureAccess.isEnabledForUser(
+                                        context,
+                                        'search_agents',
+                                      );
+
+                                  return GestureDetector(
+                                    onTap: () async {
+                                      if (hasAccess) {
+                                        // Check if trying to turn off globe in DeepSearch mode
+                                        if (!_isOfflineMode &&
+                                            _isDeepSearchMode) {
+                                          // Show warning toast when turning off globe in DeepSearch mode
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                'DeepSearch requires globe search to be enabled',
                                               ),
-                                              const SizedBox(height: 2),
-                                              Text(
-                                                attachment.extension.toUpperCase(),
-                                                style: theme.textTheme.bodySmall?.copyWith(
-                                                  fontSize: 8,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: theme.colorScheme.onSurfaceVariant,
+                                              backgroundColor: Colors.orange,
+                                              behavior:
+                                                  SnackBarBehavior.floating,
+                                            ),
+                                          );
+                                          return;
+                                        }
+
+                                        setState(() {
+                                          _isOfflineMode = !_isOfflineMode;
+                                        });
+                                      } else {
+                                        // Direct RevenueCat purchase flow
+                                        try {
+                                          final ok =
+                                              await PaywallCoordinator.showNativePurchaseFlow(
+                                                context,
+                                              );
+                                          if (ok) {
+                                            // Flip the globe or refresh UI as premium is now active
+                                            setState(() {
+                                              _isOfflineMode =
+                                                  false; // enable online tools
+                                            });
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              SnackBar(
+                                                content: Text(
+                                                  'Premium unlocked',
                                                 ),
                                               ),
-                                            ],
+                                            );
+                                          }
+                                        } catch (e) {
+                                          // Optional: show a small toast/snackbar on fail
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                'Purchase failed: $e',
+                                              ),
+                                            ),
+                                          );
+                                        }
+                                      }
+                                    },
+                                    child: Tooltip(
+                                      message: hasAccess
+                                          ? (_isOfflineMode
+                                                ? 'Offline Mode (No Internet Tools)'
+                                                : 'Online Mode (All Tools Available)')
+                                          : 'Web Search - Premium Feature',
+                                      child: Stack(
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.all(4),
+                                            margin: const EdgeInsets.only(
+                                              left: 6,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color:
+                                                  hasAccess && !_isOfflineMode
+                                                  ? (theme.brightness ==
+                                                            Brightness.dark
+                                                        ? AppColors.darkAccent
+                                                              .withValues(
+                                                                alpha: 0.2,
+                                                              )
+                                                        : AppColors.lightAccent
+                                                              .withValues(
+                                                                alpha: 0.2,
+                                                              ))
+                                                  : Colors.transparent,
+                                              borderRadius:
+                                                  BorderRadius.circular(6),
+                                              border:
+                                                  hasAccess && !_isOfflineMode
+                                                  ? Border.all(
+                                                      color:
+                                                          theme.brightness ==
+                                                              Brightness.dark
+                                                          ? AppColors.darkAccent
+                                                                .withValues(
+                                                                  alpha: 0.3,
+                                                                )
+                                                          : AppColors
+                                                                .lightAccent
+                                                                .withValues(
+                                                                  alpha: 0.3,
+                                                                ),
+                                                      width: 1,
+                                                    )
+                                                  : null,
+                                            ),
+                                            child: Icon(
+                                              Icons.public,
+                                              size: 16,
+                                              color:
+                                                  hasAccess && !_isOfflineMode
+                                                  ? (theme.brightness ==
+                                                            Brightness.dark
+                                                        ? AppColors.darkAccent
+                                                        : AppColors.lightAccent)
+                                                  : (theme.brightness ==
+                                                            Brightness.dark
+                                                        ? AppColors
+                                                              .darkTextMuted
+                                                        : AppColors
+                                                              .lightTextMuted),
+                                            ),
                                           ),
-                                        ),
-                                ),
+                                          if (!hasAccess)
+                                            Positioned(
+                                              right: 0,
+                                              top: 0,
+                                              child: Container(
+                                                width: 8,
+                                                height: 8,
+                                                decoration: BoxDecoration(
+                                                  color: Colors.orange,
+                                                  borderRadius:
+                                                      BorderRadius.circular(4),
+                                                ),
+                                                child: const Icon(
+                                                  Icons.lock,
+                                                  size: 6,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
                               ),
-                              // Remove button
-                              Positioned(
-                                top: 2,
-                                right: 2,
-                                child: GestureDetector(
-                                  onTap: () => _removeAttachment(attachment.id),
-                                  child: Container(
-                                    padding: const EdgeInsets.all(2),
-                                    decoration: BoxDecoration(
-                                      color: Colors.black.withValues(alpha: 0.6),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Icon(
-                                      Icons.close,
-                                      size: 12,
-                                      color: Colors.white,
-                                    ),
+
+                            const Spacer(),
+
+                            // Right side: Send button
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                right: 4,
+                                bottom: 4,
+                              ),
+                              child: IconButton(
+                                onPressed: _isProcessing
+                                    ? () => _cancelMessage()
+                                    : (_servicesReady
+                                          ? () => _sendMessage()
+                                          : null),
+                                icon: _isProcessing
+                                    ? Icon(
+                                        Icons.close,
+                                        size: 20,
+                                        color: theme.colorScheme.error,
+                                      )
+                                    : Icon(
+                                        Icons.keyboard_arrow_up,
+                                        size: 26,
+                                        color:
+                                            theme.brightness == Brightness.dark
+                                            ? AppColors.darkButtonText
+                                            : AppColors.lightButtonText,
+                                      ),
+                                style: IconButton.styleFrom(
+                                  backgroundColor: _isProcessing
+                                      ? theme.colorScheme.surface
+                                      : (theme.brightness == Brightness.dark
+                                            ? AppColors.darkAccent
+                                            : AppColors.lightAccent),
+                                  padding: const EdgeInsets.all(8),
+                                  minimumSize: const Size(38, 38),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(19),
                                   ),
                                 ),
                               ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-          // Model selector layer (NEW)
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: theme.brightness == Brightness.dark ? AppColors.darkBackgroundAlt : AppColors.lightBackgroundAlt,
-              border: Border(
-                bottom: BorderSide(
-                  color: theme.brightness == Brightness.dark ? AppColors.darkBorder : AppColors.lightBorder,
-                  width: 0.5,
-                ),
-              ),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.memory,
-                  size: 14,
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => _showModelCapabilitiesBottomSheet(context),
-                    child: MouseRegion(
-                      cursor: SystemMouseCursors.click,
-                      child: Text(
-                        _getModelDisplayTextForSelector(),
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          fontSize: 11,
-                          color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () {
-                    showModelQuickSwitcher(
-                      context: context,
-                      mode: _currentMode,
-                      selectedModel: _selectedModel,
-                      onModelSelected: (modelId) {
-                        setState(() {
-                          _selectedModel = modelId;
-                        });
-                        // Save the selected model
-                        _saveSelectedModel(modelId);
-                        // Update provider for the current mode
-                        final provider = Provider.of<ModeConfigProvider>(context, listen: false);
-                        final currentConfig = provider.getConfigForMode(_currentMode);
-                        if (currentConfig != null) {
-                          provider.updateConfig(_currentMode, currentConfig.copyWith(model: modelId));
-                        }
-                        // Update LLM service
-                        LLMService().setCurrentModel(modelId);
-                        _checkModelCapabilities();
-                      },
-                    );
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(4),
-                      border: Border.all(
-                        color: theme.colorScheme.primary.withValues(alpha: 0.3),
-                        width: 0.5,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.swap_horiz,
-                          size: 12,
-                          color: theme.colorScheme.primary,
-                        ),
-                        const SizedBox(width: 3),
-                        Text(
-                          'Switch',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            fontSize: 9,
-                            fontWeight: FontWeight.w600,
-                            color: theme.colorScheme.primary,
-                          ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
                   ),
                 ),
-              ],
-            ),
-          ),
-
-          // Input Section
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: AppColors.spacingSm),
-            decoration: BoxDecoration(
-              color: theme.brightness == Brightness.dark ? AppColors.darkBackgroundAlt : AppColors.lightBackgroundAlt,
-            ),
-            child: Column(
-              children: [                // Unified input container with separated text and controls
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 1, vertical: 1),
-                  decoration: BoxDecoration(
-                    color: theme.brightness == Brightness.dark ? AppColors.darkInput : AppColors.lightInput,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: theme.brightness == Brightness.dark ? AppColors.darkInputBorder : AppColors.lightInputBorder,
-                      width: 0.5,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: (theme.brightness == Brightness.dark ? Colors.black : Colors.grey).withValues(alpha: 0.03),
-                        blurRadius: 1,
-                        offset: const Offset(0, 1),
-                      ),
-                    ],
-                  ),
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(
-                      // Prevent input area from forcing overflow by capping height
-                      maxHeight: 240,
-                    ),
-                    child: SingleChildScrollView(
-                      physics: const ClampingScrollPhysics(),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                      // Text input area (top section)
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        constraints: const BoxConstraints(
-                          minHeight: 36,
-                          maxHeight: 100,
-                        ),
-                        child: TextField(
-                          controller: _messageController,
-                          focusNode: _messageFocusNode,
-                          maxLines: null,
-                          minLines: 1,
-                          keyboardType: TextInputType.multiline,
-                          textInputAction: TextInputAction.newline,
-                          style: theme.textTheme.bodyLarge?.copyWith(
-                            color: theme.brightness == Brightness.dark ? AppColors.darkInputText : AppColors.lightInputText,
-                            fontSize: 16,
-                            height: 1.4,
-                          ),
-                          decoration: InputDecoration(
-                            hintText: 'What do you want to know?',
-                            hintStyle: theme.textTheme.bodyLarge?.copyWith(
-                              color: theme.brightness == Brightness.dark ? AppColors.darkInputPlaceholder : AppColors.lightInputPlaceholder,
-                              fontSize: 16,
-                            ),
-                            filled: false,
-                            border: InputBorder.none,
-                            enabledBorder: InputBorder.none,
-                            focusedBorder: InputBorder.none,
-                            contentPadding: const EdgeInsets.all(0),
-                          ),
-                          onSubmitted: (_) => _sendMessage(),
-                        ),
-                      ),
-
-                      // Controls row (bottom section)
-                      const SizedBox(height: 2),
-
-                      // Services status indicator
-                      if (!_servicesReady)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          margin: const EdgeInsets.only(bottom: 4),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.surface.withValues(alpha: 0.8),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: theme.colorScheme.outline.withValues(alpha: 0.3),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              SizedBox(
-                                width: 12,
-                                height: 12,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    theme.colorScheme.primary,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                'Initializing services...',
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      Row(
-                        children: [
-                          // Left side controls: attachment and mode dropdown
-                          IconButton(
-                            icon: Icon(
-                              Icons.attach_file,
-                              size: 20,
-                              color: theme.brightness == Brightness.dark
-                                  ? AppColors.darkText
-                                  : AppColors.lightText,
-                            ),
-                            onPressed: () {
-                              Logger.debug('📎 Attachment button pressed', tag: 'EditorScreen');
-                              Logger.debug('📎 Current model capabilities: supportsFiles=${_currentModelCapabilities?.supportsFiles}, supportsImages=${_currentModelCapabilities?.supportsImages}', tag: 'EditorScreen');
-                              _showAttachmentOptions();
-                            },
-                            tooltip: 'Attach files',
-                            style: IconButton.styleFrom(
-                              padding: const EdgeInsets.all(4),
-                              minimumSize: const Size(28, 28),
-                            ),
-                          ),
-
-                          // Mode dropdown
-                          if (_selectedSourceIds.isEmpty)
-                            Padding(
-                              padding: const EdgeInsets.only(left: 4),
-                              child: _buildModeDropdown(),
-                            ),
-
-                          // Globe toggle (only in normal chat mode) - PREMIUM FEATURE
-                          if (_selectedSourceIds.isEmpty && FeatureAccess.canShow('search_agents'))
-                            Builder(
-                              builder: (context) {
-                                final hasAccess = FeatureAccess.isEnabledForUser(context, 'search_agents');
-
-                                return GestureDetector(
-                                  onTap: () async {
-                                    if (hasAccess) {
-                                      // Check if trying to turn off globe in DeepSearch mode
-                                      if (!_isOfflineMode && _isDeepSearchMode) {
-                                        // Show warning toast when turning off globe in DeepSearch mode
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(
-                                            content: Text('DeepSearch requires globe search to be enabled'),
-                                            backgroundColor: Colors.orange,
-                                            behavior: SnackBarBehavior.floating,
-                                          ),
-                                        );
-                                        return;
-                                      }
-                                      
-                                      setState(() {
-                                        _isOfflineMode = !_isOfflineMode;
-                                      });
-                                    } else {
-                                      // Direct RevenueCat purchase flow
-                                      try {
-                                        final ok = await PaywallCoordinator.showNativePurchaseFlow(context);
-                                        if (ok) {
-                                          // Flip the globe or refresh UI as premium is now active
-                                          setState(() {
-                                            _isOfflineMode = false; // enable online tools
-                                          });
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(content: Text('Premium unlocked')),
-                                          );
-                                        }
-                                      } catch (e) {
-                                        // Optional: show a small toast/snackbar on fail
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(content: Text('Purchase failed: $e')),
-                                        );
-                                      }
-                                    }
-                                  },
-                                  child: Tooltip(
-                                    message: hasAccess
-                                        ? (_isOfflineMode ? 'Offline Mode (No Internet Tools)' : 'Online Mode (All Tools Available)')
-                                        : 'Web Search - Premium Feature',
-                                    child: Stack(
-                                      children: [
-                                        Container(
-                                          padding: const EdgeInsets.all(4),
-                                          margin: const EdgeInsets.only(left: 6),
-                                          decoration: BoxDecoration(
-                                            color: hasAccess && !_isOfflineMode
-                                                ? (theme.brightness == Brightness.dark ? AppColors.darkAccent.withValues(alpha: 0.2) : AppColors.lightAccent.withValues(alpha: 0.2))
-                                                : Colors.transparent,
-                                            borderRadius: BorderRadius.circular(6),
-                                            border: hasAccess && !_isOfflineMode ? Border.all(
-                                              color: theme.brightness == Brightness.dark ? AppColors.darkAccent.withValues(alpha: 0.3) : AppColors.lightAccent.withValues(alpha: 0.3),
-                                              width: 1,
-                                            ) : null,
-                                          ),
-                                          child: Icon(
-                                            Icons.public,
-                                            size: 16,
-                                            color: hasAccess && !_isOfflineMode
-                                                ? (theme.brightness == Brightness.dark ? AppColors.darkAccent : AppColors.lightAccent)
-                                                : (theme.brightness == Brightness.dark ? AppColors.darkTextMuted : AppColors.lightTextMuted),
-                                          ),
-                                        ),
-                                        if (!hasAccess)
-                                          Positioned(
-                                            right: 0,
-                                            top: 0,
-                                            child: Container(
-                                              width: 8,
-                                              height: 8,
-                                              decoration: BoxDecoration(
-                                                color: Colors.orange,
-                                                borderRadius: BorderRadius.circular(4),
-                                              ),
-                                              child: const Icon(
-                                                Icons.lock,
-                                                size: 6,
-                                                color: Colors.white,
-                                              ),
-                                            ),
-                                          ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-
-                          const Spacer(),
-
-                          // Right side: Send button
-                          Padding(
-                            padding: const EdgeInsets.only(right: 4, bottom: 4),
-                            child: IconButton(
-                              onPressed: _isProcessing 
-                                  ? () => _cancelMessage()
-                                  : (_servicesReady ? () => _sendMessage() : null),
-                              icon: _isProcessing
-                                  ? Icon(
-                                      Icons.close,
-                                      size: 20,
-                                      color: theme.colorScheme.error,
-                                    )
-                                  : Icon(
-                                      Icons.keyboard_arrow_up,
-                                      size: 26,
-                                      color: theme.brightness == Brightness.dark ? AppColors.darkButtonText : AppColors.lightButtonText,
-                                    ),
-                              style: IconButton.styleFrom(
-                                backgroundColor: _isProcessing
-                                    ? theme.colorScheme.surface
-                                    : (theme.brightness == Brightness.dark ? AppColors.darkAccent : AppColors.lightAccent),
-                                padding: const EdgeInsets.all(8),
-                                minimumSize: const Size(38, 38),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(19),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
               ),
-            ),
-
-
-             ],
-           ),
-         ),
-       ],
-     );
-   }
+            ],
+          ),
+        ),
+      ],
+    );
+  }
 
   Widget _buildMessageWidget(Message message, ThemeData theme) {
     final isUser = message.type == 'user';
     final isSystem = message.type == 'system';
     final messageTime = DateTime.parse(message.timestamp);
-    final timeString = '${messageTime.hour}:${messageTime.minute.toString().padLeft(2, '0')}';
-    
+    final timeString =
+        '${messageTime.hour}:${messageTime.minute.toString().padLeft(2, '0')}';
+
     // Debug print for assistant messages to track content updates
-    if (message.type == 'assistant') {
-      
-      
-      
-      
-    }
+    if (message.type == 'assistant') {}
 
     if (isSystem) {
       return Container(
@@ -1518,7 +1728,9 @@ class _EditorScreenState extends State<EditorScreen> {
                     ),
                     tooltip: 'Switch model and retry',
                     style: IconButton.styleFrom(
-                      foregroundColor: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                      foregroundColor: theme.colorScheme.onSurface.withValues(
+                        alpha: 0.4,
+                      ),
                     ),
                   ),
                 ),
@@ -1530,7 +1742,10 @@ class _EditorScreenState extends State<EditorScreen> {
           // Attachments
           if (message.attachments != null && message.attachments!.isNotEmpty)
             Container(
-              margin: const EdgeInsets.only(left: 40, bottom: AppColors.spacingSm),
+              margin: const EdgeInsets.only(
+                left: 40,
+                bottom: AppColors.spacingSm,
+              ),
               child: Wrap(
                 spacing: AppColors.spacingSm,
                 children: message.attachments!.map((attachment) {
@@ -1541,7 +1756,9 @@ class _EditorScreenState extends State<EditorScreen> {
                     ),
                     decoration: BoxDecoration(
                       color: theme.colorScheme.surface,
-                      borderRadius: BorderRadius.circular(AppColors.borderRadiusSm),
+                      borderRadius: BorderRadius.circular(
+                        AppColors.borderRadiusSm,
+                      ),
                       border: Border.all(color: theme.dividerColor),
                     ),
                     child: Row(
@@ -1551,16 +1768,15 @@ class _EditorScreenState extends State<EditorScreen> {
                           attachment.type == 'pdf'
                               ? Icons.picture_as_pdf
                               : attachment.type == 'image'
-                                  ? Icons.image
-                                  : Icons.description,
+                              ? Icons.image
+                              : Icons.description,
                           size: 14,
-                          color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.6,
+                          ),
                         ),
                         const SizedBox(width: 4),
-                        Text(
-                          attachment.name,
-                          style: theme.textTheme.bodySmall,
-                        ),
+                        Text(attachment.name, style: theme.textTheme.bodySmall),
                       ],
                     ),
                   );
@@ -1573,10 +1789,7 @@ class _EditorScreenState extends State<EditorScreen> {
             margin: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
             alignment: Alignment.centerLeft,
             child: isUser
-                ? Text(
-                    message.textContent,
-                    style: theme.textTheme.bodyMedium,
-                  )
+                ? Text(message.textContent, style: theme.textTheme.bodyMedium)
                 : Builder(
                     builder: (context) {
                       // Always show streaming content for assistant, even if isProcessing is true
@@ -1584,7 +1797,9 @@ class _EditorScreenState extends State<EditorScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           // Sources and Images at the top of the message bubble
-                          if ((message.sources != null && message.sources!.isNotEmpty) || _getMessageImages(message).isNotEmpty)
+                          if ((message.sources != null &&
+                                  message.sources!.isNotEmpty) ||
+                              _getMessageImages(message).isNotEmpty)
                             Padding(
                               padding: const EdgeInsets.only(bottom: 12.0),
                               child: Align(
@@ -1595,32 +1810,53 @@ class _EditorScreenState extends State<EditorScreen> {
                                   onExpandedChanged: (isSources, isImages) {
                                     setState(() {
                                       if (isSources) {
-                                        _expandedSourcesMessageId = _expandedSourcesMessageId == message.id ? null : message.id;
+                                        _expandedSourcesMessageId =
+                                            _expandedSourcesMessageId ==
+                                                message.id
+                                            ? null
+                                            : message.id;
                                         _expandedImagesMessageId = null;
                                       } else if (isImages) {
-                                        _expandedImagesMessageId = _expandedImagesMessageId == message.id ? null : message.id;
+                                        _expandedImagesMessageId =
+                                            _expandedImagesMessageId ==
+                                                message.id
+                                            ? null
+                                            : message.id;
                                         _expandedSourcesMessageId = null;
                                       }
                                     });
                                   },
-                                  areSourcesExpanded: _expandedSourcesMessageId == message.id,
-                                  areImagesExpanded: _expandedImagesMessageId == message.id,
+                                  areSourcesExpanded:
+                                      _expandedSourcesMessageId == message.id,
+                                  areImagesExpanded:
+                                      _expandedImagesMessageId == message.id,
                                 ),
                               ),
                             ),
 
                           // Full-width expanded content inside the message bubble
-                          if ((message.sources != null && message.sources!.isNotEmpty) || _getMessageImages(message).isNotEmpty) ...[
-                            if (_expandedSourcesMessageId == message.id && message.sources != null && message.sources!.isNotEmpty)
+                          if ((message.sources != null &&
+                                  message.sources!.isNotEmpty) ||
+                              _getMessageImages(message).isNotEmpty) ...[
+                            if (_expandedSourcesMessageId == message.id &&
+                                message.sources != null &&
+                                message.sources!.isNotEmpty)
                               Container(
                                 margin: const EdgeInsets.only(bottom: 12),
-                                child: _buildExpandedSourcesContent(message.sources!, theme),
+                                child: _buildExpandedSourcesContent(
+                                  message.sources!,
+                                  theme,
+                                ),
                               ),
 
-                            if (_expandedImagesMessageId == message.id && _getMessageImages(message).isNotEmpty)
+                            if (_expandedImagesMessageId == message.id &&
+                                _getMessageImages(message).isNotEmpty)
                               Container(
                                 margin: const EdgeInsets.only(bottom: 12),
-                                child: _buildExpandedImagesContent(_getMessageImages(message), theme),
+                                child: _buildExpandedImagesContent(
+                                  _getMessageImages(message),
+                                  theme,
+                                ),
                               ),
                           ],
 
@@ -1628,9 +1864,15 @@ class _EditorScreenState extends State<EditorScreen> {
                             message: message,
                             theme: theme,
                           ),
-                          if (message.isProcessing == true || (_isProcessing && _messages.last.id == message.id))
+                          if (message.isProcessing == true ||
+                              (_isProcessing &&
+                                  _messages.last.id == message.id))
                             Padding(
-                              padding: const EdgeInsets.only(left: 0, top: 4.0, bottom: 4.0),
+                              padding: const EdgeInsets.only(
+                                left: 0,
+                                top: 4.0,
+                                bottom: 4.0,
+                              ),
                               child: EnhancedLoadingIndicator(
                                 currentMilestone: _currentMilestone,
                                 progress: _currentProgress,
@@ -1643,11 +1885,11 @@ class _EditorScreenState extends State<EditorScreen> {
                   ),
           ),
 
-
-
           // Organized post-message content (follow-up questions, images, quick actions)
           // Only show when the answer is finalized and non-empty
-          if (!isUser && message.isProcessing != true && message.textContent.trim().isNotEmpty)
+          if (!isUser &&
+              message.isProcessing != true &&
+              message.textContent.trim().isNotEmpty)
             OrganizedPostMessageContent(
               message: message,
               getModelForCurrentMode: _getModelForCurrentMode,
@@ -1658,7 +1900,9 @@ class _EditorScreenState extends State<EditorScreen> {
             ),
 
           // Cost display for assistant messages
-          if (!isUser && message.isProcessing != true && (message.messageCost != null || message.sessionCost != null))
+          if (!isUser &&
+              message.isProcessing != true &&
+              (message.messageCost != null || message.sessionCost != null))
             Container(
               margin: const EdgeInsets.only(top: AppColors.spacingSm),
               child: CostDisplayWidget(
@@ -1675,7 +1919,6 @@ class _EditorScreenState extends State<EditorScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-
                   // Standard action buttons
                   Wrap(
                     spacing: 8,
@@ -1743,7 +1986,9 @@ class _EditorScreenState extends State<EditorScreen> {
             decoration: BoxDecoration(
               color: isSelected
                   ? (isDark ? AppColors.darkAccent : AppColors.lightAccent)
-                  : (isDark ? AppColors.darkBackgroundAlt : AppColors.lightBackgroundAlt),
+                  : (isDark
+                        ? AppColors.darkBackgroundAlt
+                        : AppColors.lightBackgroundAlt),
               borderRadius: BorderRadius.circular(AppColors.borderRadiusMd),
               border: Border.all(
                 color: isSelected
@@ -1751,13 +1996,19 @@ class _EditorScreenState extends State<EditorScreen> {
                     : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
                 width: isSelected ? 2 : 1,
               ),
-              boxShadow: isSelected ? [
-                BoxShadow(
-                  color: (isDark ? AppColors.darkAccent : AppColors.lightAccent).withValues(alpha: 0.3),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ] : null,
+              boxShadow: isSelected
+                  ? [
+                      BoxShadow(
+                        color:
+                            (isDark
+                                    ? AppColors.darkAccent
+                                    : AppColors.lightAccent)
+                                .withValues(alpha: 0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ]
+                  : null,
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -1766,16 +2017,24 @@ class _EditorScreenState extends State<EditorScreen> {
                   icon,
                   size: 18,
                   color: isSelected
-                      ? (isDark ? AppColors.darkButtonText : AppColors.lightButtonText)
-                      : (isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary),
+                      ? (isDark
+                            ? AppColors.darkButtonText
+                            : AppColors.lightButtonText)
+                      : (isDark
+                            ? AppColors.darkTextSecondary
+                            : AppColors.lightTextSecondary),
                 ),
                 const SizedBox(width: AppColors.spacingXs),
                 Text(
                   label,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: isSelected
-                        ? (isDark ? AppColors.darkButtonText : AppColors.lightButtonText)
-                        : (isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary),
+                        ? (isDark
+                              ? AppColors.darkButtonText
+                              : AppColors.lightButtonText)
+                        : (isDark
+                              ? AppColors.darkTextSecondary
+                              : AppColors.lightTextSecondary),
                     fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                     letterSpacing: 0.5,
                   ),
@@ -1822,7 +2081,9 @@ class _EditorScreenState extends State<EditorScreen> {
               child: Icon(
                 _isDeepSearchMode ? Icons.manage_search : Icons.flash_on,
                 size: 14,
-                color: isDark ? AppColors.darkButtonText : AppColors.lightButtonText,
+                color: isDark
+                    ? AppColors.darkButtonText
+                    : AppColors.lightButtonText,
               ),
             ),
             const SizedBox(width: 8),
@@ -1838,7 +2099,9 @@ class _EditorScreenState extends State<EditorScreen> {
             Icon(
               Icons.keyboard_arrow_down,
               size: 16,
-              color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
+              color: isDark
+                  ? AppColors.darkTextMuted
+                  : AppColors.lightTextMuted,
             ),
           ],
         ),
@@ -1877,7 +2140,9 @@ class _EditorScreenState extends State<EditorScreen> {
                 child: Icon(
                   icon,
                   size: 14,
-                  color: isDark ? AppColors.darkButtonText : AppColors.lightButtonText,
+                  color: isDark
+                      ? AppColors.darkButtonText
+                      : AppColors.lightButtonText,
                 ),
               ),
               const SizedBox(width: 12),
@@ -1889,7 +2154,9 @@ class _EditorScreenState extends State<EditorScreen> {
                       title,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w600,
-                        color: isDark ? AppColors.darkText : AppColors.lightText,
+                        color: isDark
+                            ? AppColors.darkText
+                            : AppColors.lightText,
                         fontSize: 13,
                       ),
                     ),
@@ -1897,7 +2164,9 @@ class _EditorScreenState extends State<EditorScreen> {
                     Text(
                       description,
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
+                        color: isDark
+                            ? AppColors.darkTextMuted
+                            : AppColors.lightTextMuted,
                         fontSize: 11,
                         height: 1.3,
                       ),
@@ -1910,22 +2179,29 @@ class _EditorScreenState extends State<EditorScreen> {
                 Container(
                   padding: const EdgeInsets.all(2),
                   decoration: BoxDecoration(
-                    color: isDark ? AppColors.darkAccent : AppColors.lightAccent,
+                    color: isDark
+                        ? AppColors.darkAccent
+                        : AppColors.lightAccent,
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     Icons.check,
                     size: 12,
-                    color: isDark ? AppColors.darkButtonText : AppColors.lightButtonText,
+                    color: isDark
+                        ? AppColors.darkButtonText
+                        : AppColors.lightButtonText,
                   ),
                 )
-              else if (requiresPremium && !isPremiumUnlocked(context, listen: false))
+              else if (requiresPremium &&
+                  !isPremiumUnlocked(context, listen: false))
                 Container(
                   padding: const EdgeInsets.all(3),
                   child: Icon(
                     Icons.lock_outline,
                     size: 14,
-                    color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
+                    color: isDark
+                        ? AppColors.darkTextMuted
+                        : AppColors.lightTextMuted,
                   ),
                 ),
             ],
@@ -2003,7 +2279,10 @@ class _EditorScreenState extends State<EditorScreen> {
                   if (!isPremiumUnlocked(context, listen: false)) {
                     // Direct RevenueCat purchase flow (same as globe toggle)
                     try {
-                      final ok = await PaywallCoordinator.showNativePurchaseFlow(context);
+                      final ok =
+                          await PaywallCoordinator.showNativePurchaseFlow(
+                            context,
+                          );
                       if (ok) {
                         // Enable DeepSearch and globe as premium is now active
                         setState(() {
@@ -2017,7 +2296,11 @@ class _EditorScreenState extends State<EditorScreen> {
                         // Update model capabilities when mode changes
                         _checkModelCapabilities();
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Premium unlocked - DeepSearch enabled')),
+                          SnackBar(
+                            content: Text(
+                              'Premium unlocked - DeepSearch enabled',
+                            ),
+                          ),
                         );
                       } else {
                         setState(() {
@@ -2056,7 +2339,6 @@ class _EditorScreenState extends State<EditorScreen> {
     );
   }
 
-
   Widget _buildQuickActionButton({
     required IconData icon,
     required String label,
@@ -2084,10 +2366,7 @@ class _EditorScreenState extends State<EditorScreen> {
           onTap: onPressed,
           borderRadius: BorderRadius.circular(AppColors.borderRadiusSm),
           child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 8,
-              vertical: 6,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -2100,7 +2379,9 @@ class _EditorScreenState extends State<EditorScreen> {
                 Text(
                   label,
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: isDark ? AppColors.darkAccent : AppColors.lightAccent,
+                    color: isDark
+                        ? AppColors.darkAccent
+                        : AppColors.lightAccent,
                     fontWeight: FontWeight.w500,
                     fontSize: 12,
                   ),
@@ -2119,20 +2400,23 @@ class _EditorScreenState extends State<EditorScreen> {
 
     return Container(
       width: 200,
-      margin: EdgeInsets.only(
-        left: index == 0 ? 0 : 8,
-        right: 8,
-      ),
+      margin: EdgeInsets.only(left: index == 0 ? 0 : 8, right: 8),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: () async {
             try {
-              Logger.debug('🔗 Attempting to open source URL from expanded card: ${source.url}', tag: 'EditorScreen');
+              Logger.debug(
+                '🔗 Attempting to open source URL from expanded card: ${source.url}',
+                tag: 'EditorScreen',
+              );
               final uri = Uri.parse(source.url);
 
               if (await canLaunchUrl(uri)) {
-                Logger.debug('🔗 URL can be launched, opening in external browser...', tag: 'EditorScreen');
+                Logger.debug(
+                  '🔗 URL can be launched, opening in external browser...',
+                  tag: 'EditorScreen',
+                );
                 await launchUrl(
                   uri,
                   mode: LaunchMode.externalApplication,
@@ -2140,9 +2424,15 @@ class _EditorScreenState extends State<EditorScreen> {
                     enableJavaScript: true,
                   ),
                 );
-                Logger.debug('🔗 URL launched successfully', tag: 'EditorScreen');
+                Logger.debug(
+                  '🔗 URL launched successfully',
+                  tag: 'EditorScreen',
+                );
               } else {
-                Logger.warn('❌ Cannot launch URL: ${source.url}', tag: 'EditorScreen');
+                Logger.warn(
+                  '❌ Cannot launch URL: ${source.url}',
+                  tag: 'EditorScreen',
+                );
                 // Show user feedback
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -2198,7 +2488,9 @@ class _EditorScreenState extends State<EditorScreen> {
                         borderRadius: BorderRadius.circular(8),
                         boxShadow: [
                           BoxShadow(
-                            color: _getSourceColor(source).withValues(alpha: 0.3),
+                            color: _getSourceColor(
+                              source,
+                            ).withValues(alpha: 0.3),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),
@@ -2215,7 +2507,9 @@ class _EditorScreenState extends State<EditorScreen> {
                       child: Text(
                         domain,
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.7,
+                          ),
                           fontSize: 11,
                         ),
                         overflow: TextOverflow.ellipsis,
@@ -2246,22 +2540,35 @@ class _EditorScreenState extends State<EditorScreen> {
   Future<void> _checkModelCapabilities() async {
     try {
       final currentModel = _getModelForCurrentMode();
-      Logger.debug('🔍 Checking capabilities for model: $currentModel', tag: 'EditorScreen');
+      Logger.debug(
+        '🔍 Checking capabilities for model: $currentModel',
+        tag: 'EditorScreen',
+      );
 
       try {
-        final capabilities = await ModelService.getModelCapabilities(currentModel);
+        final capabilities = await ModelService.getModelCapabilities(
+          currentModel,
+        );
         setState(() {
           _currentModelCapabilities = capabilities;
         });
-        Logger.debug('🔍 Model capabilities: supportsImages=${capabilities.supportsImages}, supportsFiles=${capabilities.supportsFiles}, inputModalities=${capabilities.inputModalities}', tag: 'EditorScreen');
-        
+        Logger.debug(
+          '🔍 Model capabilities: supportsImages=${capabilities.supportsImages}, supportsFiles=${capabilities.supportsFiles}, inputModalities=${capabilities.inputModalities}',
+          tag: 'EditorScreen',
+        );
+
         // Check context size for DeepSearch mode
         _checkContextSizeForDeepSearch(capabilities);
       } catch (e) {
-        Logger.warn('🔍 Failed to get capabilities from API: $e', tag: 'EditorScreen');
+        Logger.warn(
+          '🔍 Failed to get capabilities from API: $e',
+          tag: 'EditorScreen',
+        );
         // Fallback: if it's a Gemini model, assume it supports images and files
         final supportsImages = currentModel.contains('gemini');
-        final supportsFiles = currentModel.contains('gemini'); // Gemini models typically support both
+        final supportsFiles = currentModel.contains(
+          'gemini',
+        ); // Gemini models typically support both
         setState(() {
           _currentModelCapabilities = ModelCapabilities(
             inputModalities: supportsImages ? ['text', 'image'] : ['text'],
@@ -2271,10 +2578,12 @@ class _EditorScreenState extends State<EditorScreen> {
             isMultimodal: supportsImages || supportsFiles,
           );
         });
-        Logger.debug('🔍 Using fallback capabilities: supportsImages=$supportsImages, supportsFiles=$supportsFiles', tag: 'EditorScreen');
+        Logger.debug(
+          '🔍 Using fallback capabilities: supportsImages=$supportsImages, supportsFiles=$supportsFiles',
+          tag: 'EditorScreen',
+        );
       }
     } catch (e) {
-      
       setState(() {
         _currentModelCapabilities = const ModelCapabilities(
           inputModalities: ['text'],
@@ -2291,7 +2600,7 @@ class _EditorScreenState extends State<EditorScreen> {
   void _checkContextSizeForDeepSearch(ModelCapabilities capabilities) {
     // Only check if we're in DeepSearch mode
     if (!_isDeepSearchMode) return;
-    
+
     final contextLength = capabilities.contextLength;
     if (contextLength != null && contextLength < 150000) {
       // Show warning toast for low context size
@@ -2299,7 +2608,9 @@ class _EditorScreenState extends State<EditorScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('DeepSearch works best with models having 160k+ context. Current model: ${(contextLength / 1000).round()}k context'),
+              content: Text(
+                'DeepSearch works best with models having 160k+ context. Current model: ${(contextLength / 1000).round()}k context',
+              ),
               backgroundColor: Colors.orange,
               behavior: SnackBarBehavior.floating,
               duration: Duration(seconds: 4),
@@ -2323,18 +2634,14 @@ class _EditorScreenState extends State<EditorScreen> {
       });
 
       if (!_servicesReady) {
-        
         // Continue retrying if not ready
         Future.delayed(const Duration(milliseconds: 1000), () {
           if (mounted && !_servicesReady) {
             _checkServicesReady();
           }
         });
-      } else {
-        
-      }
+      } else {}
     } else {
-      
       // Retry after a short delay
       Future.delayed(const Duration(milliseconds: 500), () {
         if (mounted) {
@@ -2385,34 +2692,20 @@ class _EditorScreenState extends State<EditorScreen> {
     }
   }
 
-
-
   // Debug function to check current model state
   void _debugModelState() {
-    
-    
-    
-    
-    
-    
-    
-    
-    
     // Check provider state
     try {
       final provider = Provider.of<ModeConfigProvider>(context, listen: false);
-      
-      
-      
-    } catch (e) {
-      
-    }
+    } catch (e) {}
   }
 
   String _getChatModeModel() {
     final chatConfig = _modeConfigs[ChatMode.chat];
-    final model = chatConfig?.model ?? ModeConfigManager.getDefaultConfigForMode(ChatMode.chat).model;
-    
+    final model =
+        chatConfig?.model ??
+        ModeConfigManager.getDefaultConfigForMode(ChatMode.chat).model;
+
     return model;
   }
 
@@ -2427,14 +2720,17 @@ class _EditorScreenState extends State<EditorScreen> {
 
   String _getDeepSearchModeModel() {
     final deepsearchConfig = _modeConfigs[ChatMode.deepsearch];
-    final model = deepsearchConfig?.model ?? ModeConfigManager.getDefaultConfigForMode(ChatMode.deepsearch).model;
-    
+    final model =
+        deepsearchConfig?.model ??
+        ModeConfigManager.getDefaultConfigForMode(ChatMode.deepsearch).model;
+
     return model;
   }
 
   // Helper method to get message images
   List<Map<String, dynamic>> _getMessageImages(Message message) {
-    return (message.images as List<dynamic>? ?? []).cast<Map<String, dynamic>>();
+    return (message.images as List<dynamic>? ?? [])
+        .cast<Map<String, dynamic>>();
   }
 
   String _getModelForCurrentMode() {
@@ -2478,28 +2774,33 @@ class _EditorScreenState extends State<EditorScreen> {
     return Icons.link;
   }
 
-
-
-
-
   // Helper method to validate if a URL is actually an image
   bool _isValidImageUrl(String url) {
     // Check for common image file extensions
-    final imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp', '.tiff'];
+    final imageExtensions = [
+      '.jpg',
+      '.jpeg',
+      '.png',
+      '.gif',
+      '.webp',
+      '.svg',
+      '.bmp',
+      '.tiff',
+    ];
     final lowerUrl = url.toLowerCase();
-    
+
     // Check if URL ends with image extension
     for (final ext in imageExtensions) {
       if (lowerUrl.endsWith(ext)) {
         return true;
       }
     }
-    
+
     // Check for data URLs (base64 images)
     if (lowerUrl.startsWith('data:image/')) {
       return true;
     }
-    
+
     // Check for common image CDN patterns
     final imagePatterns = [
       'images.',
@@ -2514,18 +2815,18 @@ class _EditorScreenState extends State<EditorScreen> {
       '/media/',
       '/assets/',
     ];
-    
+
     for (final pattern in imagePatterns) {
       if (lowerUrl.contains(pattern)) {
         return true;
       }
     }
-    
+
     // If it's a Wikipedia media URL, it's likely an image
     if (lowerUrl.contains('wikipedia.org') && lowerUrl.contains('/media/')) {
       return true;
     }
-    
+
     return false;
   }
 
@@ -2541,13 +2842,14 @@ class _EditorScreenState extends State<EditorScreen> {
           _availableModels = models;
         });
       } else {
-        throw Exception('Failed to fetch models: ${modelsResponse['error'] ?? 'Unknown error'}');
+        throw Exception(
+          'Failed to fetch models: ${modelsResponse['error'] ?? 'Unknown error'}',
+        );
       }
 
       // Load saved model preference with better fallback logic
       await _loadSavedModel();
     } catch (e) {
-      
       // Set fallback models if API fails
       setState(() {
         _availableModels = [
@@ -2558,7 +2860,7 @@ class _EditorScreenState extends State<EditorScreen> {
           'google/gemini-2.0-flash-exp:free',
         ];
       });
-      
+
       // Try to load saved model even with fallback models
       await _loadSavedModel();
     }
@@ -2567,27 +2869,40 @@ class _EditorScreenState extends State<EditorScreen> {
   Future<void> _loadSavedModel() async {
     try {
       // Always load model from mode config (mode-specific models take precedence)
-      final modeConfigProvider = Provider.of<ModeConfigProvider>(context, listen: false);
+      final modeConfigProvider = Provider.of<ModeConfigProvider>(
+        context,
+        listen: false,
+      );
       final currentConfig = modeConfigProvider.getConfigForMode(_currentMode);
-      
+
       if (currentConfig != null && currentConfig.model.isNotEmpty) {
         setState(() {
           _selectedModel = currentConfig.model;
         });
-        Logger.info('🤖 Loaded model from mode config: ${currentConfig.model}', tag: 'EditorScreen');
+        Logger.info(
+          '🤖 Loaded model from mode config: ${currentConfig.model}',
+          tag: 'EditorScreen',
+        );
       } else {
         // Fallback to default model for current mode
-        final defaultModel = ModeConfigManager.getDefaultConfigForMode(_currentMode).model;
+        final defaultModel = ModeConfigManager.getDefaultConfigForMode(
+          _currentMode,
+        ).model;
         setState(() {
           _selectedModel = defaultModel;
         });
-        Logger.info('🤖 Using default model for mode: $defaultModel', tag: 'EditorScreen');
-        
+        Logger.info(
+          '🤖 Using default model for mode: $defaultModel',
+          tag: 'EditorScreen',
+        );
+
         // Save the default model to the mode config
-        await modeConfigProvider.updateConfig(_currentMode, 
-          ModeConfigManager.getDefaultConfigForMode(_currentMode));
+        await modeConfigProvider.updateConfig(
+          _currentMode,
+          ModeConfigManager.getDefaultConfigForMode(_currentMode),
+        );
       }
-      
+
       // Also update the LLM service with the selected model
       LLMService().setCurrentModel(_selectedModel);
     } catch (e) {
@@ -2599,20 +2914,32 @@ class _EditorScreenState extends State<EditorScreen> {
   Future<void> _saveSelectedModel(String modelId) async {
     try {
       // Save model to the current mode's config instead of global SharedPreferences
-      final modeConfigProvider = Provider.of<ModeConfigProvider>(context, listen: false);
+      final modeConfigProvider = Provider.of<ModeConfigProvider>(
+        context,
+        listen: false,
+      );
       final currentConfig = modeConfigProvider.getConfigForMode(_currentMode);
-      
+
       if (currentConfig != null) {
-        await modeConfigProvider.updateConfig(_currentMode, 
-          currentConfig.copyWith(model: modelId));
+        await modeConfigProvider.updateConfig(
+          _currentMode,
+          currentConfig.copyWith(model: modelId),
+        );
       } else {
         // Create new config if none exists
-        final defaultConfig = ModeConfigManager.getDefaultConfigForMode(_currentMode);
-        await modeConfigProvider.updateConfig(_currentMode, 
-          defaultConfig.copyWith(model: modelId));
+        final defaultConfig = ModeConfigManager.getDefaultConfigForMode(
+          _currentMode,
+        );
+        await modeConfigProvider.updateConfig(
+          _currentMode,
+          defaultConfig.copyWith(model: modelId),
+        );
       }
-      
-      Logger.info('🤖 Saved model for current mode ($_currentMode): $modelId', tag: 'EditorScreen');
+
+      Logger.info(
+        '🤖 Saved model for current mode ($_currentMode): $modelId',
+        tag: 'EditorScreen',
+      );
     } catch (e) {
       Logger.error('❌ Error saving selected model: $e', tag: 'EditorScreen');
     }
@@ -2621,28 +2948,42 @@ class _EditorScreenState extends State<EditorScreen> {
   Future<void> _loadModelForCurrentMode() async {
     try {
       // Get the model for the current mode from the provider
-      final modeConfigProvider = Provider.of<ModeConfigProvider>(context, listen: false);
+      final modeConfigProvider = Provider.of<ModeConfigProvider>(
+        context,
+        listen: false,
+      );
       final currentConfig = modeConfigProvider.getConfigForMode(_currentMode);
-      
+
       if (currentConfig != null && currentConfig.model.isNotEmpty) {
         setState(() {
           _selectedModel = currentConfig.model;
         });
-        Logger.info('🤖 Loaded model for current mode: ${currentConfig.model}', tag: 'EditorScreen');
+        Logger.info(
+          '🤖 Loaded model for current mode: ${currentConfig.model}',
+          tag: 'EditorScreen',
+        );
       } else {
         // Fallback to default model for the mode
-        final defaultModel = ModeConfigManager.getDefaultConfigForMode(_currentMode).model;
+        final defaultModel = ModeConfigManager.getDefaultConfigForMode(
+          _currentMode,
+        ).model;
         setState(() {
           _selectedModel = defaultModel;
         });
-        Logger.info('🤖 Using default model for current mode: $defaultModel', tag: 'EditorScreen');
+        Logger.info(
+          '🤖 Using default model for current mode: $defaultModel',
+          tag: 'EditorScreen',
+        );
       }
-      
+
       // Save the selected model and update LLM service
       await _saveSelectedModel(_selectedModel);
       LLMService().setCurrentModel(_selectedModel);
     } catch (e) {
-      Logger.error('❌ Error loading model for current mode: $e', tag: 'EditorScreen');
+      Logger.error(
+        '❌ Error loading model for current mode: $e',
+        tag: 'EditorScreen',
+      );
     }
   }
 
@@ -2650,30 +2991,42 @@ class _EditorScreenState extends State<EditorScreen> {
     if (_currentConversationId == null) return;
 
     try {
-      final conversationData = await ConversationService().loadConversation(_currentConversationId!);
+      final conversationData = await ConversationService().loadConversation(
+        _currentConversationId!,
+      );
 
       if (conversationData != null && conversationData.isNotEmpty) {
-        final messages = (conversationData['messages'] as List?)
-            ?.map((json) => Message.fromJson(json))
-            .toList() ?? [];
+        final messages =
+            (conversationData['messages'] as List?)
+                ?.map((json) => Message.fromJson(json))
+                .toList() ??
+            [];
 
         final metadata = conversationData['metadata'] as Map<String, dynamic>?;
 
         setState(() {
           _messages = messages;
-          _title = conversationData['title'] as String? ?? 'Untitled Conversation';
+          _title =
+              conversationData['title'] as String? ?? 'Untitled Conversation';
           _sessionCost = metadata?['sessionCost']?.toDouble() ?? 0.0;
           _isFirstMessage = false;
 
           // Restore other metadata if available
           if (metadata != null) {
-            _selectedModel = metadata['selectedModel'] as String? ?? _selectedModel;
-            _selectedPersonality = metadata['selectedPersonality'] as String? ?? _selectedPersonality;
-            _selectedLanguage = metadata['selectedLanguage'] as String? ?? _selectedLanguage;
+            _selectedModel =
+                metadata['selectedModel'] as String? ?? _selectedModel;
+            _selectedPersonality =
+                metadata['selectedPersonality'] as String? ??
+                _selectedPersonality;
+            _selectedLanguage =
+                metadata['selectedLanguage'] as String? ?? _selectedLanguage;
           }
         });
 
-        Logger.info('📖 [CONVERSATION] Loaded conversation: $_currentConversationId (${messages.length} messages)', tag: 'EditorScreen');
+        Logger.info(
+          '📖 [CONVERSATION] Loaded conversation: $_currentConversationId (${messages.length} messages)',
+          tag: 'EditorScreen',
+        );
       } else {
         // Set up empty conversation
         setState(() {
@@ -2683,7 +3036,10 @@ class _EditorScreenState extends State<EditorScreen> {
         });
       }
     } catch (e) {
-      Logger.error('❌ [CONVERSATION] Error loading conversation: $e', tag: 'EditorScreen');
+      Logger.error(
+        '❌ [CONVERSATION] Error loading conversation: $e',
+        tag: 'EditorScreen',
+      );
       // Set up empty conversation
       setState(() {
         _title = 'New Conversation';
@@ -2714,7 +3070,9 @@ class _EditorScreenState extends State<EditorScreen> {
           // Fetch source details for display
           try {
             final allSources = await _apiService.getSources();
-            final filtered = allSources.where((s) => sourceIds.contains(s.id)).toList();
+            final filtered = allSources
+                .where((s) => sourceIds.contains(s.id))
+                .toList();
             setState(() {
               _selectedSources = filtered;
             });
@@ -2726,14 +3084,17 @@ class _EditorScreenState extends State<EditorScreen> {
         // Handle topic context for roadmap learning
         if (initialData['topicContext'] != null) {
           setState(() {
-            _topicContext = Map<String, dynamic>.from(initialData['topicContext']);
+            _topicContext = Map<String, dynamic>.from(
+              initialData['topicContext'],
+            );
           });
         }
 
         if (initialData['conversationId'] != null) {
           final prefsConvId = initialData['conversationId'] as String;
           // If a route provided the same id, skip duplicate load
-          if (_currentConversationId != null && _currentConversationId == prefsConvId) {
+          if (_currentConversationId != null &&
+              _currentConversationId == prefsConvId) {
             // No-op
           } else {
             _currentConversationId = prefsConvId;
@@ -2754,31 +3115,31 @@ class _EditorScreenState extends State<EditorScreen> {
 
         await prefs.remove('editorInitialData');
       }
-    } catch (e) {
-      
-    }
+    } catch (e) {}
   }
 
   Future<void> _loadLanguageSettings() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final savedLanguage = prefs.getString('selectedLanguage') ?? 'English';
-      final savedPersonality = prefs.getString('selectedPersonality') ?? 'Default';
+      final savedPersonality =
+          prefs.getString('selectedPersonality') ?? 'Default';
       setState(() {
         _selectedLanguage = savedLanguage;
         _selectedPersonality = savedPersonality;
       });
-    } catch (e) {
-      
-    }
+    } catch (e) {}
   }
 
   Future<void> _loadModeConfigs() async {
     try {
       // Use the provider to get the latest configs that include any changes from the settings modal
-      final modeConfigProvider = Provider.of<ModeConfigProvider>(context, listen: false);
+      final modeConfigProvider = Provider.of<ModeConfigProvider>(
+        context,
+        listen: false,
+      );
       final configs = modeConfigProvider.configs;
-      
+
       // If provider doesn't have configs yet, load from storage as fallback
       if (configs.isEmpty) {
         final storageConfigs = await ModeConfigManager.loadConfigs();
@@ -2790,15 +3151,16 @@ class _EditorScreenState extends State<EditorScreen> {
           _modeConfigs = configs;
         });
       }
-      
-      
     } catch (e) {
-      
       // Fallback to defaults
       setState(() {
         _modeConfigs = {
-          ChatMode.chat: ModeConfigManager.getDefaultConfigForMode(ChatMode.chat),
-          ChatMode.deepsearch: ModeConfigManager.getDefaultConfigForMode(ChatMode.deepsearch),
+          ChatMode.chat: ModeConfigManager.getDefaultConfigForMode(
+            ChatMode.chat,
+          ),
+          ChatMode.deepsearch: ModeConfigManager.getDefaultConfigForMode(
+            ChatMode.deepsearch,
+          ),
         };
       });
     }
@@ -2831,10 +3193,12 @@ class _EditorScreenState extends State<EditorScreen> {
         setState(() {
           _toolsConfig = defaultConfig;
         });
-        Logger.info('🔧 Created default tools configuration to enable agent system', tag: 'EditorScreen');
+        Logger.info(
+          '🔧 Created default tools configuration to enable agent system',
+          tag: 'EditorScreen',
+        );
       }
     } catch (e) {
-      
       // Create default tools configuration as fallback
       const defaultConfig = ToolsConfig(
         braveSearch: true,
@@ -2852,7 +3216,10 @@ class _EditorScreenState extends State<EditorScreen> {
       setState(() {
         _toolsConfig = defaultConfig;
       });
-      Logger.info('🔧 Created fallback tools configuration to enable agent system', tag: 'EditorScreen');
+      Logger.info(
+        '🔧 Created fallback tools configuration to enable agent system',
+        tag: 'EditorScreen',
+      );
     }
   }
 
@@ -2862,7 +3229,9 @@ class _EditorScreenState extends State<EditorScreen> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final exploredTopicsJson = prefs.getString('explored_topics') ?? '{}';
-      final exploredTopics = Map<String, dynamic>.from(jsonDecode(exploredTopicsJson));
+      final exploredTopics = Map<String, dynamic>.from(
+        jsonDecode(exploredTopicsJson),
+      );
 
       final topicId = _topicContext!['topicId'] as String;
       exploredTopics[topicId] = {
@@ -2873,9 +3242,7 @@ class _EditorScreenState extends State<EditorScreen> {
       };
 
       await prefs.setString('explored_topics', jsonEncode(exploredTopics));
-    } catch (e) {
-      
-    }
+    } catch (e) {}
   }
 
   void _newChat() {
@@ -2890,26 +3257,24 @@ class _EditorScreenState extends State<EditorScreen> {
       _currentConversationId = DateTime.now().millisecondsSinceEpoch.toString();
       _topicContext = null; // Clear topic context on new chat
     });
-    
+
     // Reset session cost tracking
     SessionCostService().resetSession();
-    
+
     // Preserve the current model from mode config for new chat
     _loadModelForCurrentMode();
   }
-
-
 
   // Real-time mode config update handler
   void _onModeConfigChanged() {
     if (mounted) {
       final provider = Provider.of<ModeConfigProvider>(context, listen: false);
       final newConfigs = provider.configs;
-      
+
       setState(() {
         _modeConfigs = newConfigs;
       });
-      
+
       // Update the selected model based on current mode and new configs
       final currentConfig = newConfigs[_currentMode];
       if (currentConfig != null && currentConfig.model.isNotEmpty) {
@@ -2919,17 +3284,20 @@ class _EditorScreenState extends State<EditorScreen> {
         // Update LLM service immediately
         LLMService().setCurrentModel(_selectedModel);
       }
-      
+
       _checkModelCapabilities(); // Check capabilities when mode changes
-      
-      Logger.info('🔄 Mode config updated - Current mode: $_currentMode, Model: $_selectedModel', tag: 'EditorScreen');
+
+      Logger.info(
+        '🔄 Mode config updated - Current mode: $_currentMode, Model: $_selectedModel',
+        tag: 'EditorScreen',
+      );
     }
   }
 
   Future<void> _pickDocument() async {
     try {
       Logger.debug('📄 Starting document picker...', tag: 'EditorScreen');
-      
+
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['pdf', 'txt', 'doc', 'docx'],
@@ -2937,12 +3305,18 @@ class _EditorScreenState extends State<EditorScreen> {
         withData: true,
       );
 
-      Logger.debug('📄 Document picker result: ${result?.files.length ?? 0} files', tag: 'EditorScreen');
+      Logger.debug(
+        '📄 Document picker result: ${result?.files.length ?? 0} files',
+        tag: 'EditorScreen',
+      );
 
       if (result != null && result.files.isNotEmpty) {
         final file = result.files.first;
-        Logger.debug('📄 Selected file: ${file.name}, size: ${file.size}, extension: ${file.extension}', tag: 'EditorScreen');
-        
+        Logger.debug(
+          '📄 Selected file: ${file.name}, size: ${file.size}, extension: ${file.extension}',
+          tag: 'EditorScreen',
+        );
+
         if (file.bytes != null) {
           String mimeType;
           switch (file.extension?.toLowerCase()) {
@@ -2953,12 +3327,13 @@ class _EditorScreenState extends State<EditorScreen> {
               mimeType = 'application/msword';
               break;
             case 'docx':
-              mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+              mimeType =
+                  'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
               break;
             default:
               mimeType = 'text/plain';
           }
-          
+
           final attachment = FileAttachment.fromBytes(
             name: file.name,
             bytes: file.bytes!,
@@ -2968,9 +3343,12 @@ class _EditorScreenState extends State<EditorScreen> {
           setState(() {
             _attachments.add(attachment);
           });
-          
-          Logger.debug('📄 Document attached successfully: ${file.name}', tag: 'EditorScreen');
-          
+
+          Logger.debug(
+            '📄 Document attached successfully: ${file.name}',
+            tag: 'EditorScreen',
+          );
+
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -2981,7 +3359,10 @@ class _EditorScreenState extends State<EditorScreen> {
             );
           }
         } else {
-          Logger.warn('⚠️ File bytes are null for: ${file.name}', tag: 'EditorScreen');
+          Logger.warn(
+            '⚠️ File bytes are null for: ${file.name}',
+            tag: 'EditorScreen',
+          );
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -2992,7 +3373,10 @@ class _EditorScreenState extends State<EditorScreen> {
           }
         }
       } else {
-        Logger.debug('📄 No file selected or picker cancelled', tag: 'EditorScreen');
+        Logger.debug(
+          '📄 No file selected or picker cancelled',
+          tag: 'EditorScreen',
+        );
       }
     } catch (e) {
       Logger.error('❌ Error picking document: $e', tag: 'EditorScreen');
@@ -3029,9 +3413,9 @@ class _EditorScreenState extends State<EditorScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to pick image: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to pick image: $e')));
       }
     }
   }
@@ -3045,53 +3429,51 @@ class _EditorScreenState extends State<EditorScreen> {
   void _requestInsights(Message message) {
     // Debug logging for quick actions
     Logger.debug('🔍 Quick Action - Insights:', tag: 'EditorScreen');
-    
-    
 
     // If this was a source-grounded conversation, maintain the source context
     if (_selectedSourceIds.isNotEmpty || _selectedSources.isNotEmpty) {
-      
-      _sendMessage('What are the main insights and takeaways from the sources you just analyzed?');
+      _sendMessage(
+        'What are the main insights and takeaways from the sources you just analyzed?',
+      );
     } else {
-      
-      _sendMessage('What are the main insights and takeaways from your previous response?');
+      _sendMessage(
+        'What are the main insights and takeaways from your previous response?',
+      );
     }
   }
 
   void _requestKeyPoints(Message message) {
     // Debug logging for quick actions
     Logger.debug('🔍 Quick Action - Key Points:', tag: 'EditorScreen');
-    
-    
 
     // If this was a source-grounded conversation, maintain the source context
     if (_selectedSourceIds.isNotEmpty || _selectedSources.isNotEmpty) {
-      
-      _sendMessage('Extract and list the key points from the sources in bullet format.');
+      _sendMessage(
+        'Extract and list the key points from the sources in bullet format.',
+      );
     } else {
-      
-      _sendMessage('Extract and list the key points from your last answer in bullet format.');
+      _sendMessage(
+        'Extract and list the key points from your last answer in bullet format.',
+      );
     }
   }
 
   void _requestSummary(Message message, String type) {
     // Debug logging for quick actions
     Logger.debug('🔍 Quick Action - Summary ($type):', tag: 'EditorScreen');
-    
-    
 
     // If this was a source-grounded conversation, maintain the source context
     if (_selectedSourceIds.isNotEmpty || _selectedSources.isNotEmpty) {
       final prompt = type == 'concise'
           ? 'Provide a concise summary of the key points from the sources.'
           : 'Provide a detailed summary with comprehensive analysis of the sources.';
-      
+
       _sendMessage(prompt);
     } else {
       final prompt = type == 'concise'
           ? 'Provide a concise summary of the key points from your previous response.'
           : 'Provide a detailed summary with comprehensive analysis of your previous response.';
-      
+
       _sendMessage(prompt);
     }
   }
@@ -3127,10 +3509,18 @@ class _EditorScreenState extends State<EditorScreen> {
           });
 
           // Save model selection for this mode
-          final modeConfigProvider = Provider.of<ModeConfigProvider>(context, listen: false);
-          final currentConfig = modeConfigProvider.getConfigForMode(_currentMode);
+          final modeConfigProvider = Provider.of<ModeConfigProvider>(
+            context,
+            listen: false,
+          );
+          final currentConfig = modeConfigProvider.getConfigForMode(
+            _currentMode,
+          );
           if (currentConfig != null) {
-            modeConfigProvider.updateConfig(_currentMode, currentConfig.copyWith(model: modelId));
+            modeConfigProvider.updateConfig(
+              _currentMode,
+              currentConfig.copyWith(model: modelId),
+            );
           }
           // Update LLM service
           LLMService().setCurrentModel(modelId);
@@ -3138,26 +3528,26 @@ class _EditorScreenState extends State<EditorScreen> {
           // Set the text in the input field and send the message again
           _messageController.text = userMessage.textContent;
           await _sendMessage();
-          
+
           _checkModelCapabilities();
         }
       },
     );
   }
 
-
-
   void _onScroll() {
     if (!mounted || !_scrollController.hasClients) return;
 
     final position = _scrollController.position;
-    final isAtBottom = position.pixels >= (position.maxScrollExtent - 100); // 100px threshold
+    final isAtBottom =
+        position.pixels >= (position.maxScrollExtent - 100); // 100px threshold
     final shouldShow = !isAtBottom;
 
     if (_showScrollToBottom != shouldShow || _isUserScrolling == isAtBottom) {
       setState(() {
         _showScrollToBottom = shouldShow;
-        _isUserScrolling = !isAtBottom; // when not at bottom, treat as user scrolling/up
+        _isUserScrolling =
+            !isAtBottom; // when not at bottom, treat as user scrolling/up
       });
     }
   }
@@ -3182,15 +3572,17 @@ class _EditorScreenState extends State<EditorScreen> {
         _isProcessing = false;
         _showLoader = false;
       });
-      
+
       // Remove the processing message
-      final processingMessageIndex = _messages.indexWhere((m) => m.isProcessing == true);
+      final processingMessageIndex = _messages.indexWhere(
+        (m) => m.isProcessing == true,
+      );
       if (processingMessageIndex != -1) {
         setState(() {
           _messages.removeAt(processingMessageIndex);
         });
       }
-      
+
       print('🚫 Message cancelled by user');
     }
   }
@@ -3211,7 +3603,9 @@ class _EditorScreenState extends State<EditorScreen> {
               children: [
                 Icon(Icons.warning, color: Colors.white),
                 SizedBox(width: 8),
-                Text('Services are still initializing. Please wait a moment...'),
+                Text(
+                  'Services are still initializing. Please wait a moment...',
+                ),
               ],
             ),
             backgroundColor: Theme.of(context).colorScheme.error,
@@ -3244,17 +3638,15 @@ class _EditorScreenState extends State<EditorScreen> {
 
     // Add text content
     if (textToSend.isNotEmpty) {
-      messageContent.add({
-        'type': 'text',
-        'text': textToSend,
-      });
+      messageContent.add({'type': 'text', 'text': textToSend});
     }
 
     // Add attachment info for display
     if (_attachments.isNotEmpty) {
       messageContent.add({
         'type': 'text',
-        'text': '📎 Uploaded ${_attachments.length} file(s): ${_attachments.map((a) => a.name).join(', ')}',
+        'text':
+            '📎 Uploaded ${_attachments.length} file(s): ${_attachments.map((a) => a.name).join(', ')}',
       });
     }
 
@@ -3326,11 +3718,11 @@ class _EditorScreenState extends State<EditorScreen> {
       timestamp: DateTime.now().toIso8601String(),
       isProcessing: true,
     );
-    
 
     // Create streaming controller for real-time content updates
-    final streamingController = StreamingMessageRegistry().createController(streamingMessage.id);
-    
+    final streamingController = StreamingMessageRegistry().createController(
+      streamingMessage.id,
+    );
 
     try {
       // Prepare files for upload
@@ -3338,11 +3730,13 @@ class _EditorScreenState extends State<EditorScreen> {
       for (final fileAttachment in userMessage.fileAttachments ?? []) {
         // Convert FileAttachment to PlatformFile
         final bytes = base64Decode(fileAttachment.base64Data);
-        files.add(PlatformFile(
-          name: fileAttachment.name,
-          size: fileAttachment.size,
-          bytes: bytes,
-        ));
+        files.add(
+          PlatformFile(
+            name: fileAttachment.name,
+            size: fileAttachment.size,
+            bytes: bytes,
+          ),
+        );
       }
 
       // Replace processing message with streaming message
@@ -3368,30 +3762,19 @@ class _EditorScreenState extends State<EditorScreen> {
       final modelToUse = _getModelForCurrentMode();
       final currentMode = _getCurrentModeName();
       // Determine if this is a source grounded conversation
-      final isSourceGrounded = _selectedSourceIds.isNotEmpty || _selectedSources.isNotEmpty;
+      final isSourceGrounded =
+          _selectedSourceIds.isNotEmpty || _selectedSources.isNotEmpty;
       final sourceIdsToUse = _selectedSourceIds.isNotEmpty
           ? _selectedSourceIds
           : _selectedSources.map((s) => s.id).toList();
 
       // Debug logging for source grounded requests
-              Logger.debug('Quick Action Debug:', tag: 'EditorScreen');
-      
-      
-      
-      
-      
-      
-      
+      Logger.debug('Quick Action Debug:', tag: 'EditorScreen');
+
       // Debug logging for model selection
       final chatModel = _getChatModeModel();
       final deepsearchModel = _getDeepSearchModeModel();
-      
-      
-      
-      
-      
-      
-      
+
       // Debug current model state
       _debugModelState();
 
@@ -3429,30 +3812,28 @@ class _EditorScreenState extends State<EditorScreen> {
               isEntitled: context.read<AppAccessProvider>().hasPremiumAccess,
             );
 
-            await for (final event in stream) {
-              // Check if operation was cancelled
-              if (_isCancelled) {
-                print('🚫 Breaking stream loop due to cancellation');
-                break;
-              }
-              
+      await for (final event in stream) {
+        // Check if operation was cancelled
+        if (_isCancelled) {
+          print('🚫 Breaking stream loop due to cancellation');
+          break;
+        }
+
         // Handle both Map<String, dynamic> (legacy) and ChatStreamEvent (unified) formats
-         
+
         // Handle unified ChatStreamEvent
         switch (event.type) {
           case StreamEventType.milestone:
             // Handle milestone events
-            setState(() { 
+            setState(() {
               _currentMilestone = event.message;
               _currentPhase = event.metadata?['phase'];
               _currentProgress = event.metadata?['progress']?.toDouble();
             });
             // Only log milestone changes, not every event
-            if (_currentPhase != event.metadata?['phase']) {
-              
-            }
+            if (_currentPhase != event.metadata?['phase']) {}
             break;
-            
+
           case StreamEventType.sourcesReady:
             // Handle sources and images ready event - accumulate them progressively
             final newSources = event.sources ?? [];
@@ -3470,7 +3851,9 @@ class _EditorScreenState extends State<EditorScreen> {
             for (final newImage in newImages) {
               final imageUrl = newImage['url'] as String?;
               if (imageUrl != null) {
-                final isDuplicate = accumulatedImages.any((existing) => existing['url'] == imageUrl);
+                final isDuplicate = accumulatedImages.any(
+                  (existing) => existing['url'] == imageUrl,
+                );
                 if (!isDuplicate) {
                   accumulatedImages.add(newImage);
                 }
@@ -3480,7 +3863,9 @@ class _EditorScreenState extends State<EditorScreen> {
             }
 
             // Update the streaming message with accumulated sources and images
-            final index = _messages.indexWhere((m) => m.id == streamingMessage.id);
+            final index = _messages.indexWhere(
+              (m) => m.id == streamingMessage.id,
+            );
             if (index != -1) {
               setState(() {
                 _messages[index] = Message(
@@ -3489,21 +3874,27 @@ class _EditorScreenState extends State<EditorScreen> {
                   content: streamingContent,
                   timestamp: streamingMessage.timestamp,
                   isProcessing: true,
-                  sources: List.from(accumulatedSources), // Use accumulated sources
-                  images: List.from(accumulatedImages),   // Use accumulated images
+                  sources: List.from(
+                    accumulatedSources,
+                  ), // Use accumulated sources
+                  images: List.from(
+                    accumulatedImages,
+                  ), // Use accumulated images
                 );
               });
             }
-            Logger.debug('📋 Sources ready: +${newSources.length} new sources (${accumulatedSources.length} total), +${newImages.length} new images (${accumulatedImages.length} total)', tag: 'EditorScreen');
+            Logger.debug(
+              '📋 Sources ready: +${newSources.length} new sources (${accumulatedSources.length} total), +${newImages.length} new images (${accumulatedImages.length} total)',
+              tag: 'EditorScreen',
+            );
             break;
-            
+
           case StreamEventType.content:
             // Append streaming content
             final newContent = event.content ?? '';
 
             // Update streaming controller for real-time UI updates FIRST (no setState needed!)
             streamingController.addContent(newContent);
-            
 
             // Hide loader as soon as first content chunk arrives
             if (_showLoader) {
@@ -3519,36 +3910,33 @@ class _EditorScreenState extends State<EditorScreen> {
                 unawaited(onSSETextReceived(newContent));
               } catch (e) {
                 // Silently handle vibration errors to prevent crashes
-                
               }
             }
 
             // Check for sentence completion vibration triggers (non-blocking)
-            if (newContent.contains('.') || newContent.contains('!') || newContent.contains('?')) {
+            if (newContent.contains('.') ||
+                newContent.contains('!') ||
+                newContent.contains('?')) {
               try {
                 unawaited(onSSESentenceComplete());
-              } catch (e) {
-                
-              }
+              } catch (e) {}
             }
 
             // Check for paragraph completion vibration triggers (non-blocking)
-            if (newContent.contains('\n\n') || newContent.contains('\n---') || newContent.contains('\n##')) {
+            if (newContent.contains('\n\n') ||
+                newContent.contains('\n---') ||
+                newContent.contains('\n##')) {
               try {
                 unawaited(onSSEParagraphComplete());
-              } catch (e) {
-                
-              }
+              } catch (e) {}
             }
             break;
-            
+
           case StreamEventType.complete:
             // Stop vibration when stream completes
             try {
               stopVibration();
-            } catch (e) {
-              
-            }
+            } catch (e) {}
             // Finalize the message
             finalConversationId = event.conversationId;
             finalCost = event.metadata?['cost']?.toDouble();
@@ -3556,25 +3944,33 @@ class _EditorScreenState extends State<EditorScreen> {
             // Extract cost information
             final messageCost = event.metadata?['messageCost']?.toDouble();
             final sessionCost = event.metadata?['sessionCost']?.toDouble();
-            final costBreakdown = event.metadata?['costBreakdown'] as Map<String, dynamic>?;
+            final costBreakdown =
+                event.metadata?['costBreakdown'] as Map<String, dynamic>?;
 
             finalSources = event.sources;
-            finalFollowUpQuestions = event.metadata?['followUpQuestions'] as List<String>?;
+            finalFollowUpQuestions =
+                event.metadata?['followUpQuestions'] as List<String>?;
 
             // Extract images from completion event, but preserve existing ones if they exist
             List<Map<String, dynamic>>? finalImages = event.images;
 
-            final index = _messages.indexWhere((m) => m.id == streamingMessage.id);
+            final index = _messages.indexWhere(
+              (m) => m.id == streamingMessage.id,
+            );
             if (index != -1) {
-              final finalContent = event.message; // Use event.message directly for final content
+              final finalContent =
+                  event.message; // Use event.message directly for final content
               // Finalize the streaming controller with the final content
-              streamingController.setFinalContent(finalContent ?? ''); // Ensure it's not null
+              streamingController.setFinalContent(
+                finalContent ?? '',
+              ); // Ensure it's not null
 
               // Get the current message to preserve existing sources and images
               final currentMessage = _messages[index];
-              
+
               // Preserve sources and images from sources_ready event if they exist
-              final preservedSources = currentMessage.sources?.isNotEmpty == true
+              final preservedSources =
+                  currentMessage.sources?.isNotEmpty == true
                   ? currentMessage.sources
                   : finalSources;
               final preservedImages = currentMessage.images?.isNotEmpty == true
@@ -3612,13 +4008,19 @@ class _EditorScreenState extends State<EditorScreen> {
               // FollowUpQuestionsWidget will handle async loading and skeleton display.
 
               // Fetch accurate costs using generation IDs (async, like follow-up questions)
-              final generationIds = event.metadata?['generationIds'] as List<dynamic>?;
+              final generationIds =
+                  event.metadata?['generationIds'] as List<dynamic>?;
               final sessionId = event.metadata?['sessionId'] as String?;
               if (generationIds != null && generationIds.isNotEmpty) {
-                Logger.debug('🔗 Fetching accurate costs for ${generationIds.length} generation IDs', tag: 'EditorScreen');
+                Logger.debug(
+                  '🔗 Fetching accurate costs for ${generationIds.length} generation IDs',
+                  tag: 'EditorScreen',
+                );
                 final sessionCostService = SessionCostService();
                 await sessionCostService.addGenerationIds(
-                  generationIds.map((g) => Map<String, dynamic>.from(g)).toList(),
+                  generationIds
+                      .map((g) => Map<String, dynamic>.from(g))
+                      .toList(),
                   sessionId: sessionId ?? finalConversationId,
                 );
               }
@@ -3632,20 +4034,27 @@ class _EditorScreenState extends State<EditorScreen> {
               //   _lastOperationCost = finalCost;
               //   _sessionCost += finalCost;
               // }
-              
+
               // Update LLM and model info
               _lastUsedLLM = event.llmUsed;
               _lastUsedModel = event.model;
-              _lastToolResults = event.metadata?['toolResults'] as Map<String, dynamic>?;
+              _lastToolResults =
+                  event.metadata?['toolResults'] as Map<String, dynamic>?;
             });
             break;
-            
+
           case StreamEventType.status:
-            print('🐛 DEBUG: EditorScreen received StreamEventType.status: ${event.message}');
+            print(
+              '🐛 DEBUG: EditorScreen received StreamEventType.status: ${event.message}',
+            );
             // Check if this is an error status with classification metadata
-            if (event.message == 'writing_error' && event.metadata != null && event.metadata!['showModal'] == true) {
-              print('🐛 DEBUG: EditorScreen found error classification in status metadata, showing modal');
-              
+            if (event.message == 'writing_error' &&
+                event.metadata != null &&
+                event.metadata!['showModal'] == true) {
+              print(
+                '🐛 DEBUG: EditorScreen found error classification in status metadata, showing modal',
+              );
+
               // Clean up UI state
               setState(() {
                 _messages.removeWhere((m) => m.id == streamingMessage.id);
@@ -3656,31 +4065,35 @@ class _EditorScreenState extends State<EditorScreen> {
                 _currentProgress = null;
               });
               StreamingMessageRegistry().removeController(streamingMessage.id);
-              
+
               // Use the classification from AgentSystem
               final errorClassification = {
                 'type': event.metadata!['code'],
                 'showModal': true,
                 'title': 'Model Unavailable',
-                'message': 'The selected model is not available. Please choose a different model to continue.',
-                'suggestedModels': <String>[], // Don't show suggestions, use switcher instead
+                'message':
+                    'The selected model is not available. Please choose a different model to continue.',
+                'suggestedModels':
+                    <String>[], // Don't show suggestions, use switcher instead
               };
-              
+
               _showModelSwitchModal(errorClassification);
               break;
             }
             break;
-            
+
           case StreamEventType.error:
-            print('🐛 DEBUG: EditorScreen received StreamEventType.error: ${event.error}');
-            
+            print(
+              '🐛 DEBUG: EditorScreen received StreamEventType.error: ${event.error}',
+            );
+
             // Stop vibration on error
             try {
               stopVibration();
             } catch (e) {
               // Handle vibration error silently
             }
-            
+
             // ALWAYS clean up UI state first, regardless of error type
             setState(() {
               _messages.removeWhere((m) => m.id == streamingMessage.id);
@@ -3691,14 +4104,23 @@ class _EditorScreenState extends State<EditorScreen> {
               _currentProgress = null;
             });
             StreamingMessageRegistry().removeController(streamingMessage.id);
-            
+
             // Classify the error to determine if modal should be shown
-            print('🐛 DEBUG: EditorScreen calling _classifyStreamError with: ${event.error}');
-            final errorClassification = _classifyStreamError(event.error, _selectedModel);
-            print('🐛 DEBUG: EditorScreen _classifyStreamError result: $errorClassification');
-            
+            print(
+              '🐛 DEBUG: EditorScreen calling _classifyStreamError with: ${event.error}',
+            );
+            final errorClassification = _classifyStreamError(
+              event.error,
+              _selectedModel,
+            );
+            print(
+              '🐛 DEBUG: EditorScreen _classifyStreamError result: $errorClassification',
+            );
+
             if (errorClassification['showModal'] == true) {
-              print('🐛 DEBUG: EditorScreen about to show modal for error classification: $errorClassification');
+              print(
+                '🐛 DEBUG: EditorScreen about to show modal for error classification: $errorClassification',
+              );
               _showModelSwitchModal(errorClassification);
               break; // Don't rethrow - UI already cleaned up
             } else {
@@ -3708,10 +4130,10 @@ class _EditorScreenState extends State<EditorScreen> {
             break;
           default:
             // Handle any other event types
-            
+
             break;
         }
-            }
+      }
 
       setState(() {
         _isProcessing = false;
@@ -3726,13 +4148,10 @@ class _EditorScreenState extends State<EditorScreen> {
       // Stop vibration on error
       try {
         stopVibration();
-      } catch (vibrationError) {
-        
-      }
+      } catch (vibrationError) {}
 
       // Clean up streaming controller on error
       StreamingMessageRegistry().removeController(streamingMessage.id);
-      
 
       // Remove streaming message on error (no typing effect) and reset all UI state
       setState(() {
@@ -3740,7 +4159,7 @@ class _EditorScreenState extends State<EditorScreen> {
         _isProcessing = false;
         _showLoader = false; // Ensure loader is hidden
         _currentMilestone = null; // Clear milestone state
-        _currentPhase = null; // Clear phase state  
+        _currentPhase = null; // Clear phase state
         _currentProgress = null; // Clear progress state
       });
 
@@ -3749,14 +4168,15 @@ class _EditorScreenState extends State<EditorScreen> {
         String errorMessage;
         String actionMessage = '';
         Color backgroundColor = Theme.of(context).colorScheme.error;
-        
+
         final errorString = e.toString().toLowerCase();
-        
-        if (errorString.contains('openrouter api key not configured') || 
+
+        if (errorString.contains('openrouter api key not configured') ||
             errorString.contains('api key not configured')) {
           errorMessage = 'API key not configured';
-          actionMessage = 'Please configure your OpenRouter API key in settings to continue.';
-          
+          actionMessage =
+              'Please configure your OpenRouter API key in settings to continue.';
+
           // Show dialog to guide user
           showDialog(
             context: context,
@@ -3779,51 +4199,65 @@ class _EditorScreenState extends State<EditorScreen> {
                 ElevatedButton(
                   onPressed: () {
                     Navigator.of(context).pop();
-                    context.go('/oauth-onboarding'); // Navigate to onboarding
+                    context.go('/sign-in'); // Navigate to onboarding
                   },
                   child: const Text('Setup Now'),
                 ),
               ],
             ),
           );
-        } else if (errorString.contains('rate limit') || errorString.contains('429')) {
+        } else if (errorString.contains('rate limit') ||
+            errorString.contains('429')) {
           errorMessage = 'Rate limit exceeded';
           actionMessage = 'Please wait a moment before trying again.';
           backgroundColor = Colors.orange;
-        } else if (errorString.contains('network') || errorString.contains('connection')) {
+        } else if (errorString.contains('network') ||
+            errorString.contains('connection')) {
           errorMessage = 'Network error';
-          actionMessage = 'Please check your internet connection and try again.';
+          actionMessage =
+              'Please check your internet connection and try again.';
           backgroundColor = Colors.orange;
-        } else if (errorString.contains('401') || errorString.contains('unauthorized')) {
+        } else if (errorString.contains('401') ||
+            errorString.contains('unauthorized')) {
           errorMessage = 'Authentication failed';
-          actionMessage = 'Your API key may be invalid. Please check your settings.';
-        } else if (errorString.contains('insufficient') || errorString.contains('credits')) {
+          actionMessage =
+              'Your API key may be invalid. Please check your settings.';
+        } else if (errorString.contains('insufficient') ||
+            errorString.contains('credits')) {
           errorMessage = 'Insufficient credits';
-          actionMessage = 'You may have run out of API credits. Please check your OpenRouter account.';
+          actionMessage =
+              'You may have run out of API credits. Please check your OpenRouter account.';
           backgroundColor = Colors.orange;
-        } else if (errorString.contains('404') || 
-                   errorString.contains('model not found') ||
-                   (errorString.contains('not found') && errorString.contains('model'))) {
+        } else if (errorString.contains('404') ||
+            errorString.contains('model not found') ||
+            (errorString.contains('not found') &&
+                errorString.contains('model'))) {
           errorMessage = 'Model Unavailable';
-          actionMessage = 'The selected model is unavailable. Try switching to another model.';
+          actionMessage =
+              'The selected model is unavailable. Try switching to another model.';
           backgroundColor = Colors.orange;
-          
+
           // Show model switch modal for 404 errors
           if (mounted) {
             _showModelSwitchModal({
               'type': 'model_unavailable',
               'showModal': true,
               'title': 'Model Unavailable',
-              'message': 'The selected model is unavailable or not found. Try switching to another model.',
-              'suggestedModels': _getSuggestedModelsForError('model_unavailable', _selectedModel),
+              'message':
+                  'The selected model is unavailable or not found. Try switching to another model.',
+              'suggestedModels': _getSuggestedModelsForError(
+                'model_unavailable',
+                _selectedModel,
+              ),
             });
           }
         } else {
           // Generic error
           errorMessage = 'Something went wrong';
-          actionMessage = 'Please try again. If the problem persists, check your settings.';
+          actionMessage =
+              'Please try again. If the problem persists, check your settings.';
         }
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Column(
@@ -3836,10 +4270,7 @@ class _EditorScreenState extends State<EditorScreen> {
                 ),
                 if (actionMessage.isNotEmpty) ...[
                   const SizedBox(height: 4),
-                  Text(
-                    actionMessage,
-                    style: const TextStyle(fontSize: 12),
-                  ),
+                  Text(actionMessage, style: const TextStyle(fontSize: 12)),
                 ],
               ],
             ),
@@ -3875,7 +4306,9 @@ class _EditorScreenState extends State<EditorScreen> {
 
     // If there are assistant messages after this user message, don't show retry
     // (the assistant response was successful)
-    if (messagesAfterUser.any((m) => m.type == 'assistant' && m.isProcessing != true)) {
+    if (messagesAfterUser.any(
+      (m) => m.type == 'assistant' && m.isProcessing != true,
+    )) {
       return false;
     }
 
@@ -3890,7 +4323,7 @@ class _EditorScreenState extends State<EditorScreen> {
   void _showAttachmentOptions() {
     final capabilities = _currentModelCapabilities;
     final List<Widget> options = [];
-    
+
     Logger.debug('📎 Showing attachment options modal', tag: 'EditorScreen');
     Logger.debug('📎 Model capabilities: $capabilities', tag: 'EditorScreen');
 
@@ -3949,7 +4382,7 @@ class _EditorScreenState extends State<EditorScreen> {
       ListTile(
         leading: const Icon(Icons.picture_as_pdf),
         title: const Text('Choose Document (PDF, DOC, TXT)'),
-        subtitle: capabilities?.supportsFiles != true 
+        subtitle: capabilities?.supportsFiles != true
             ? const Text('May not be supported by current model')
             : null,
         onTap: () {
@@ -3977,7 +4410,9 @@ class _EditorScreenState extends State<EditorScreen> {
             Text(
               'Current model: ${_selectedModel}',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.6),
+                color: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.color?.withOpacity(0.6),
               ),
             ),
           ],
@@ -3996,8 +4431,9 @@ class _EditorScreenState extends State<EditorScreen> {
         final imageUrl = image['url'] ?? image['thumbnail'] ?? '';
         final title = image['title']?.toString() ?? '';
         final description = image['description']?.toString() ?? '';
-        final source = image['source']?.toString() ?? image['sourceUrl']?.toString() ?? '';
-        
+        final source =
+            image['source']?.toString() ?? image['sourceUrl']?.toString() ?? '';
+
         return Dialog(
           backgroundColor: Colors.transparent,
           insetPadding: const EdgeInsets.all(16),
@@ -4026,15 +4462,24 @@ class _EditorScreenState extends State<EditorScreen> {
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: IconButton(
-                                icon: const Icon(Icons.copy, color: Colors.white, size: 20),
+                                icon: const Icon(
+                                  Icons.copy,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
                                 onPressed: () {
-                                  Clipboard.setData(ClipboardData(text: imageUrl));
+                                  Clipboard.setData(
+                                    ClipboardData(text: imageUrl),
+                                  );
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
-                                      content: const Text('Image URL copied to clipboard'),
+                                      content: const Text(
+                                        'Image URL copied to clipboard',
+                                      ),
                                       duration: const Duration(seconds: 2),
                                       behavior: SnackBarBehavior.floating,
-                                      backgroundColor: theme.colorScheme.primary,
+                                      backgroundColor:
+                                          theme.colorScheme.primary,
                                     ),
                                   );
                                 },
@@ -4050,17 +4495,26 @@ class _EditorScreenState extends State<EditorScreen> {
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: IconButton(
-                                icon: const Icon(Icons.open_in_new, color: Colors.white, size: 20),
+                                icon: const Icon(
+                                  Icons.open_in_new,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
                                 onPressed: () async {
                                   try {
                                     final uri = Uri.parse(source);
                                     if (await canLaunchUrl(uri)) {
-                                      await launchUrl(uri, mode: LaunchMode.externalApplication);
+                                      await launchUrl(
+                                        uri,
+                                        mode: LaunchMode.externalApplication,
+                                      );
                                     }
                                   } catch (e) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
-                                        content: Text('Could not open source: $e'),
+                                        content: Text(
+                                          'Could not open source: $e',
+                                        ),
                                         backgroundColor: Colors.red,
                                       ),
                                     );
@@ -4078,7 +4532,11 @@ class _EditorScreenState extends State<EditorScreen> {
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: IconButton(
-                          icon: const Icon(Icons.close, color: Colors.white, size: 24),
+                          icon: const Icon(
+                            Icons.close,
+                            color: Colors.white,
+                            size: 24,
+                          ),
                           onPressed: () => Navigator.of(context).pop(),
                           tooltip: 'Close',
                         ),
@@ -4108,37 +4566,43 @@ class _EditorScreenState extends State<EditorScreen> {
                         child: Image.network(
                           imageUrl,
                           fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) => Container(
-                            width: 300,
-                            height: 300,
-                            color: theme.colorScheme.surface,
-                            child: Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.broken_image_outlined,
-                                    color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.5),
-                                    size: 48,
+                          errorBuilder: (context, error, stackTrace) =>
+                              Container(
+                                width: 300,
+                                height: 300,
+                                color: theme.colorScheme.surface,
+                                child: Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.broken_image_outlined,
+                                        color: theme.textTheme.bodyMedium?.color
+                                            ?.withValues(alpha: 0.5),
+                                        size: 48,
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        'Failed to load image',
+                                        style: theme.textTheme.bodyMedium
+                                            ?.copyWith(
+                                              color: theme.colorScheme.onSurface
+                                                  .withValues(alpha: 0.5),
+                                            ),
+                                      ),
+                                    ],
                                   ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    'Failed to load image',
-                                    style: theme.textTheme.bodyMedium?.copyWith(
-                                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-                                    ),
-                                  ),
-                                ],
+                                ),
                               ),
-                            ),
-                          ),
                         ),
                       ),
                     ),
                   ),
                 ),
                 // Image information panel
-                if (title.isNotEmpty || description.isNotEmpty || source.isNotEmpty)
+                if (title.isNotEmpty ||
+                    description.isNotEmpty ||
+                    source.isNotEmpty)
                   Container(
                     margin: const EdgeInsets.only(top: 16),
                     padding: const EdgeInsets.all(16),
@@ -4205,10 +4669,7 @@ class _EditorScreenState extends State<EditorScreen> {
                             ],
                           ),
                           const SizedBox(height: 4),
-                          Text(
-                            description,
-                            style: theme.textTheme.bodyMedium,
-                          ),
+                          Text(description, style: theme.textTheme.bodyMedium),
                           const SizedBox(height: 12),
                         ],
                         // Source
@@ -4236,7 +4697,10 @@ class _EditorScreenState extends State<EditorScreen> {
                               try {
                                 final uri = Uri.parse(source);
                                 if (await canLaunchUrl(uri)) {
-                                  await launchUrl(uri, mode: LaunchMode.externalApplication);
+                                  await launchUrl(
+                                    uri,
+                                    mode: LaunchMode.externalApplication,
+                                  );
                                 }
                               } catch (e) {
                                 ScaffoldMessenger.of(context).showSnackBar(
@@ -4280,10 +4744,12 @@ class _EditorScreenState extends State<EditorScreen> {
     );
   }
 
-
-
-
-  void _showMarkdownImage(BuildContext context, String imageUrl, String? title, String? alt) {
+  void _showMarkdownImage(
+    BuildContext context,
+    String imageUrl,
+    String? title,
+    String? alt,
+  ) {
     showDialog(
       context: context,
       barrierDismissible: true,
@@ -4319,15 +4785,24 @@ class _EditorScreenState extends State<EditorScreen> {
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: IconButton(
-                                icon: const Icon(Icons.copy, color: Colors.white, size: 20),
+                                icon: const Icon(
+                                  Icons.copy,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
                                 onPressed: () {
-                                  Clipboard.setData(ClipboardData(text: imageUrl));
+                                  Clipboard.setData(
+                                    ClipboardData(text: imageUrl),
+                                  );
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
-                                      content: const Text('Image URL copied to clipboard'),
+                                      content: const Text(
+                                        'Image URL copied to clipboard',
+                                      ),
                                       duration: const Duration(seconds: 2),
                                       behavior: SnackBarBehavior.floating,
-                                      backgroundColor: theme.colorScheme.primary,
+                                      backgroundColor:
+                                          theme.colorScheme.primary,
                                     ),
                                   );
                                 },
@@ -4343,7 +4818,11 @@ class _EditorScreenState extends State<EditorScreen> {
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: IconButton(
-                          icon: const Icon(Icons.close, color: Colors.white, size: 20),
+                          icon: const Icon(
+                            Icons.close,
+                            color: Colors.white,
+                            size: 20,
+                          ),
                           onPressed: () => Navigator.of(context).pop(),
                           tooltip: 'Close',
                         ),
@@ -4374,29 +4853,32 @@ class _EditorScreenState extends State<EditorScreen> {
                         child: Image.network(
                           imageUrl,
                           fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) => Container(
-                            width: 200,
-                            height: 200,
-                            color: Colors.grey[900],
-                            child: Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(
-                                    Icons.broken_image_outlined,
-                                    color: Colors.white,
-                                    size: 48,
+                          errorBuilder: (context, error, stackTrace) =>
+                              Container(
+                                width: 200,
+                                height: 200,
+                                color: Colors.grey[900],
+                                child: Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      const Icon(
+                                        Icons.broken_image_outlined,
+                                        color: Colors.white,
+                                        size: 48,
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        alt ?? 'Failed to load image',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ],
                                   ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    alt ?? 'Failed to load image',
-                                    style: const TextStyle(color: Colors.white),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ],
+                                ),
                               ),
-                            ),
-                          ),
                         ),
                       ),
                     ),
@@ -4404,7 +4886,8 @@ class _EditorScreenState extends State<EditorScreen> {
                 ),
 
                 // Image info (title/alt text)
-                if ((title != null && title.isNotEmpty) || (alt != null && alt.isNotEmpty))
+                if ((title != null && title.isNotEmpty) ||
+                    (alt != null && alt.isNotEmpty))
                   Container(
                     margin: const EdgeInsets.only(top: 12),
                     padding: const EdgeInsets.all(16),
@@ -4444,8 +4927,6 @@ class _EditorScreenState extends State<EditorScreen> {
     );
   }
 
-
-
   void _showModelCapabilityWarning(String capabilityType) {
     final theme = Theme.of(context);
     showDialog(
@@ -4455,8 +4936,8 @@ class _EditorScreenState extends State<EditorScreen> {
           children: [
             Icon(
               Icons.warning_amber_rounded,
-              color: theme.brightness == Brightness.dark 
-                  ? AppColors.darkWarning 
+              color: theme.brightness == Brightness.dark
+                  ? AppColors.darkWarning
                   : AppColors.lightWarning,
             ),
             const SizedBox(width: 8),
@@ -4518,9 +4999,12 @@ class _EditorScreenState extends State<EditorScreen> {
     ).then((_) async {
       // Reload model configs and update current model based on current mode
       await _loadModeConfigs();
-      
+
       // Update the selected model from the current mode's config
-      final modeConfigProvider = Provider.of<ModeConfigProvider>(context, listen: false);
+      final modeConfigProvider = Provider.of<ModeConfigProvider>(
+        context,
+        listen: false,
+      );
       final currentConfig = modeConfigProvider.getConfigForMode(_currentMode);
       if (currentConfig != null && currentConfig.model.isNotEmpty) {
         setState(() {
@@ -4528,10 +5012,10 @@ class _EditorScreenState extends State<EditorScreen> {
         });
         LLMService().setCurrentModel(_selectedModel);
       }
-      
+
       // Ensure services are still ready after settings close
       _checkServicesReady();
-      
+
       // Reload the API key from storage to ensure it's still available
       await _apiService.initialize();
     });
@@ -4548,7 +5032,10 @@ class _EditorScreenState extends State<EditorScreen> {
         return Dialog(
           elevation: 0,
           backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 24,
+          ),
           child: LayoutBuilder(
             builder: (context, constraints) {
               final maxWidth = constraints.maxWidth;
@@ -4562,7 +5049,9 @@ class _EditorScreenState extends State<EditorScreen> {
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: isDark ? 0.5 : 0.08),
+                        color: Colors.black.withValues(
+                          alpha: isDark ? 0.5 : 0.08,
+                        ),
                         blurRadius: 24,
                         offset: const Offset(0, 8),
                       ),
@@ -4585,8 +5074,12 @@ class _EditorScreenState extends State<EditorScreen> {
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
                                 colors: [
-                                  theme.colorScheme.primary.withValues(alpha: 0.9),
-                                  theme.colorScheme.secondary.withValues(alpha: 0.9),
+                                  theme.colorScheme.primary.withValues(
+                                    alpha: 0.9,
+                                  ),
+                                  theme.colorScheme.secondary.withValues(
+                                    alpha: 0.9,
+                                  ),
                                 ],
                               ),
                             ),
@@ -4604,7 +5097,8 @@ class _EditorScreenState extends State<EditorScreen> {
                                   Container(
                                     padding: const EdgeInsets.all(8),
                                     decoration: BoxDecoration(
-                                      color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                                      color: theme.colorScheme.primary
+                                          .withValues(alpha: 0.12),
                                       borderRadius: BorderRadius.circular(10),
                                     ),
                                     child: Icon(
@@ -4617,17 +5111,20 @@ class _EditorScreenState extends State<EditorScreen> {
                                   Expanded(
                                     child: Text(
                                       'Unlock Web Search',
-                                      style: theme.textTheme.titleLarge?.copyWith(
-                                        fontWeight: FontWeight.w800,
-                                      ),
+                                      style: theme.textTheme.titleLarge
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w800,
+                                          ),
                                     ),
                                   ),
                                   IconButton(
                                     tooltip: 'Close',
-                                    onPressed: () => Navigator.of(context).pop(),
+                                    onPressed: () =>
+                                        Navigator.of(context).pop(),
                                     icon: Icon(
                                       Icons.close_rounded,
-                                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                                      color: theme.colorScheme.onSurface
+                                          .withValues(alpha: 0.6),
                                     ),
                                   ),
                                 ],
@@ -4636,7 +5133,9 @@ class _EditorScreenState extends State<EditorScreen> {
                               Text(
                                 'Web search integration is available in Premium. Get better, up‑to‑date answers with one toggle.',
                                 style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+                                  color: theme.colorScheme.onSurface.withValues(
+                                    alpha: 0.8,
+                                  ),
                                 ),
                               ),
                               const SizedBox(height: 16),
@@ -4644,22 +5143,51 @@ class _EditorScreenState extends State<EditorScreen> {
                               // Benefits list
                               Container(
                                 decoration: BoxDecoration(
-                                  color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                                  color: theme
+                                      .colorScheme
+                                      .surfaceContainerHighest
+                                      .withValues(alpha: 0.5),
                                   borderRadius: BorderRadius.circular(14),
                                   border: Border.all(
-                                    color: theme.colorScheme.outline.withValues(alpha: 0.12),
+                                    color: theme.colorScheme.outline.withValues(
+                                      alpha: 0.12,
+                                    ),
                                   ),
                                 ),
-                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 12,
+                                ),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: const [
-                                    _BenefitRow(icon: Icons.travel_explore, text: 'Online AI responses (real-time web)'),
-                                    _BenefitRow(icon: Icons.public, text: 'Internet globe toggle for live info'),
-                                    _BenefitRow(icon: Icons.trending_up, text: 'Access to trending topics'),
-                                    _BenefitRow(icon: Icons.picture_as_pdf, text: 'Export to PDF and Markdown'),
-                                    _BenefitRow(icon: Icons.color_lens, text: 'Custom themes and UI personalization'),
-                                    _BenefitRow(icon: Icons.support_agent, text: 'Priority support'),
+                                    _BenefitRow(
+                                      icon: Icons.travel_explore,
+                                      text:
+                                          'Online AI responses (real-time web)',
+                                    ),
+                                    _BenefitRow(
+                                      icon: Icons.public,
+                                      text:
+                                          'Internet globe toggle for live info',
+                                    ),
+                                    _BenefitRow(
+                                      icon: Icons.trending_up,
+                                      text: 'Access to trending topics',
+                                    ),
+                                    _BenefitRow(
+                                      icon: Icons.picture_as_pdf,
+                                      text: 'Export to PDF and Markdown',
+                                    ),
+                                    _BenefitRow(
+                                      icon: Icons.color_lens,
+                                      text:
+                                          'Custom themes and UI personalization',
+                                    ),
+                                    _BenefitRow(
+                                      icon: Icons.support_agent,
+                                      text: 'Priority support',
+                                    ),
                                   ],
                                 ),
                               ),
@@ -4667,28 +5195,47 @@ class _EditorScreenState extends State<EditorScreen> {
 
                               // Pricing pill
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 12,
+                                ),
                                 decoration: BoxDecoration(
-                                  color: theme.colorScheme.primary.withValues(alpha: 0.08),
+                                  color: theme.colorScheme.primary.withValues(
+                                    alpha: 0.08,
+                                  ),
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
-                                    color: theme.colorScheme.primary.withValues(alpha: 0.2),
+                                    color: theme.colorScheme.primary.withValues(
+                                      alpha: 0.2,
+                                    ),
                                   ),
                                 ),
                                 child: Row(
                                   children: [
-                                    Icon(Icons.price_check, color: theme.colorScheme.primary),
+                                    Icon(
+                                      Icons.price_check,
+                                      color: theme.colorScheme.primary,
+                                    ),
                                     const SizedBox(width: 10),
                                     RichText(
                                       text: TextSpan(
-                                        style: theme.textTheme.titleMedium?.copyWith(
-                                          color: theme.colorScheme.primary,
-                                          fontWeight: FontWeight.w700,
-                                        ),
+                                        style: theme.textTheme.titleMedium
+                                            ?.copyWith(
+                                              color: theme.colorScheme.primary,
+                                              fontWeight: FontWeight.w700,
+                                            ),
                                         children: const [
                                           TextSpan(text: 'Only '),
-                                          TextSpan(text: '\$7.99', style: TextStyle(fontSize: 18)),
-                                          TextSpan(text: '/month', style: TextStyle(fontWeight: FontWeight.w600)),
+                                          TextSpan(
+                                            text: '\$7.99',
+                                            style: TextStyle(fontSize: 18),
+                                          ),
+                                          TextSpan(
+                                            text: '/month',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
                                         ],
                                       ),
                                     ),
@@ -4702,10 +5249,17 @@ class _EditorScreenState extends State<EditorScreen> {
                                 children: [
                                   Expanded(
                                     child: OutlinedButton(
-                                      onPressed: () => Navigator.of(context).pop(),
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(),
                                       style: OutlinedButton.styleFrom(
-                                        padding: const EdgeInsets.symmetric(vertical: 14),
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 14,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
+                                        ),
                                       ),
                                       child: const Text('Maybe Later'),
                                     ),
@@ -4716,21 +5270,42 @@ class _EditorScreenState extends State<EditorScreen> {
                                       onPressed: () async {
                                         Navigator.of(context).pop();
                                         try {
-                                          final ok = await PaywallCoordinator.showNativePurchaseFlow(context);
+                                          final ok =
+                                              await PaywallCoordinator.showNativePurchaseFlow(
+                                                context,
+                                              );
                                           if (ok) {
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              SnackBar(content: Text('Premium unlocked')),
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              SnackBar(
+                                                content: Text(
+                                                  'Premium unlocked',
+                                                ),
+                                              ),
                                             );
                                           }
                                         } catch (e) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(content: Text('Purchase failed: $e')),
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                'Purchase failed: $e',
+                                              ),
+                                            ),
                                           );
                                         }
                                       },
                                       style: ElevatedButton.styleFrom(
-                                        padding: const EdgeInsets.symmetric(vertical: 14),
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 14,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
+                                        ),
                                       ),
                                       icon: const Icon(Icons.upgrade_rounded),
                                       label: const Text('Upgrade Now'),
@@ -4753,17 +5328,14 @@ class _EditorScreenState extends State<EditorScreen> {
     );
   }
 
-// Helper: subscribe to session cost updates (restored if missing)
+  // Helper: subscribe to session cost updates (restored if missing)
   void _subscribeToSessionCostUpdates() {
-    
     _costSubscription = SessionCostService().costUpdates.listen((costData) {
-      
       if (mounted) {
         setState(() {
           _sessionCost = costData.sessionCost;
           _lastOperationCost = costData.lastMessageCost;
         });
-        
       }
     });
   }
@@ -4790,9 +5362,9 @@ class _EditorScreenState extends State<EditorScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to take photo: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to take photo: $e')));
       }
     }
   }
@@ -4818,63 +5390,81 @@ class _EditorScreenState extends State<EditorScreen> {
 
       // Trigger knowledge graph refresh by updating a timestamp
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setInt('knowledge_graph_last_update', DateTime.now().millisecondsSinceEpoch);
-    } catch (e) {
-      
-    }
+      await prefs.setInt(
+        'knowledge_graph_last_update',
+        DateTime.now().millisecondsSinceEpoch,
+      );
+    } catch (e) {}
   }
 
   /// Classify stream errors to determine if modal should be shown
-  Map<String, dynamic> _classifyStreamError(String? error, String currentModel) {
+  Map<String, dynamic> _classifyStreamError(
+    String? error,
+    String currentModel,
+  ) {
     if (error == null) return {'showModal': false};
-    
+
     final errorLower = error.toLowerCase();
-    print('🐛 DEBUG: EditorScreen._classifyStreamError processing: $errorLower');
-    
+    print(
+      '🐛 DEBUG: EditorScreen._classifyStreamError processing: $errorLower',
+    );
+
     if (errorLower.contains('429') || errorLower.contains('rate limit')) {
       return {
         'type': 'rate_limit',
         'showModal': true,
         'title': 'Rate Limit Reached',
-        'message': 'The current model has reached its rate limit. Try switching to a different model to continue.',
-        'suggestedModels': _getSuggestedModelsForError('rate_limit', currentModel),
+        'message':
+            'The current model has reached its rate limit. Try switching to a different model to continue.',
+        'suggestedModels': _getSuggestedModelsForError(
+          'rate_limit',
+          currentModel,
+        ),
       };
     }
-    
+
     if (errorLower.contains('quota') || errorLower.contains('insufficient')) {
       return {
         'type': 'quota_exceeded',
         'showModal': true,
         'title': 'Usage Quota Exceeded',
-        'message': 'You\'ve reached the usage limit for this model. Switch to a free model or upgrade your plan.',
+        'message':
+            'You\'ve reached the usage limit for this model. Switch to a free model or upgrade your plan.',
         'suggestedModels': _getSuggestedModelsForError('quota', currentModel),
       };
     }
-    
+
     if (errorLower.contains('401') || errorLower.contains('unauthorized')) {
       return {
         'type': 'unauthorized',
         'showModal': true,
         'title': 'OpenRouter Authorization Error',
-        'message': 'We\'ve been receiving unauthorized errors from OpenRouter. Your API key may be expired, revoked, or your credits exhausted. Please reconfigure your OpenRouter account.',
+        'message':
+            'We\'ve been receiving unauthorized errors from OpenRouter. Your API key may be expired, revoked, or your credits exhausted. Please reconfigure your OpenRouter account.',
         'suggestedModels': [], // No model suggestions for auth errors
       };
     }
-    
+
     // Model unavailable / invalid endpoint
     if (errorLower.contains('404') ||
         errorLower.contains('model not found') ||
         (errorLower.contains('not found') && errorLower.contains('model'))) {
-      print('🐛 DEBUG: EditorScreen._classifyStreamError matched 404 pattern for: $errorLower');
+      print(
+        '🐛 DEBUG: EditorScreen._classifyStreamError matched 404 pattern for: $errorLower',
+      );
       return {
         'type': 'model_unavailable',
         'showModal': true,
         'title': 'Model Unavailable',
-        'message': 'The selected model is unavailable or not found. Try switching to another model.',
-        'suggestedModels': _getSuggestedModelsForError('model_unavailable', currentModel),
+        'message':
+            'The selected model is unavailable or not found. Try switching to another model.',
+        'suggestedModels': _getSuggestedModelsForError(
+          'model_unavailable',
+          currentModel,
+        ),
       };
     }
-    
+
     return {'showModal': false};
   }
 
@@ -4906,7 +5496,10 @@ class _EditorScreenState extends State<EditorScreen> {
   }
 
   /// Get suggested models for error types
-  List<String> _getSuggestedModelsForError(String errorType, String currentModel) {
+  List<String> _getSuggestedModelsForError(
+    String errorType,
+    String currentModel,
+  ) {
     try {
       // Use ModelRegistry to get intelligent suggestions
       switch (errorType) {
@@ -4934,23 +5527,26 @@ class _EditorScreenState extends State<EditorScreen> {
     setState(() {
       _selectedModel = modelId;
     });
-    
+
     // Save the selected model
     _saveSelectedModel(modelId);
-    
+
     // Update mode config provider
     final provider = Provider.of<ModeConfigProvider>(context, listen: false);
     final currentConfig = provider.getConfigForMode(_currentMode);
     if (currentConfig != null) {
-      provider.updateConfig(_currentMode, currentConfig.copyWith(model: modelId));
+      provider.updateConfig(
+        _currentMode,
+        currentConfig.copyWith(model: modelId),
+      );
     }
-    
+
     // Update LLM service
     LLMService().setCurrentModel(modelId);
-    
+
     // Check new model capabilities
     _checkModelCapabilities();
-    
+
     // Show success message
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -4977,31 +5573,35 @@ class _EditorScreenState extends State<EditorScreen> {
     final actualModelName = _selectedModel ?? 'Unknown';
 
     final displayName = actualModelName.contains('/')
-      ? actualModelName.split('/').last.replaceAll(':free', '')
-      : actualModelName;
+        ? actualModelName.split('/').last.replaceAll(':free', '')
+        : actualModelName;
     return 'Model: $displayName';
   }
 
   /// Get model display text for the model selector layer (syncs with session info)
   String _getModelDisplayTextForSelector() {
     // Use the selected model for immediate feedback, but fall back to last used model
-    final actualModelName = _selectedModel ?? _lastUsedModel ?? _getModelForCurrentMode() ?? 'Unknown';
+    final actualModelName =
+        _selectedModel ??
+        _lastUsedModel ??
+        _getModelForCurrentMode() ??
+        'Unknown';
 
     final displayName = actualModelName.contains('/')
-      ? actualModelName.split('/').last.replaceAll(':free', '')
-      : actualModelName;
-    
+        ? actualModelName.split('/').last.replaceAll(':free', '')
+        : actualModelName;
 
     return 'Model: $displayName';
   }
 
   /// Show model capabilities bottom sheet
   void _showModelCapabilitiesBottomSheet(BuildContext context) async {
-    final currentModel = _selectedModel ?? _lastUsedModel ?? _getModelForCurrentMode();
-    
+    final currentModel =
+        _selectedModel ?? _lastUsedModel ?? _getModelForCurrentMode();
+
     // Fetch the full model data including pricing
     final modelData = await ModelService.getModelData(currentModel);
-    
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -5040,9 +5640,7 @@ class _BenefitRow extends StatelessWidget {
           Expanded(
             child: Text(
               text,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                height: 1.3,
-              ),
+              style: theme.textTheme.bodyMedium?.copyWith(height: 1.3),
             ),
           ),
         ],
@@ -5053,18 +5651,18 @@ class _BenefitRow extends StatelessWidget {
 
 String _getModelShortName(String? modelName) {
   if (modelName == null) return 'Model';
-  
+
   // Extract short name from full model name
   final parts = modelName.split('/');
   final lastPart = parts.last;
-  
+
   // Handle common model name patterns
   if (lastPart.contains('mistral')) return 'Mistral';
   if (lastPart.contains('llama')) return 'Llama';
   if (lastPart.contains('gpt')) return 'GPT';
   if (lastPart.contains('claude')) return 'Claude';
   if (lastPart.contains('gemini')) return 'Gemini';
-  
+
   // Fallback: take first word or first 8 characters
   final shortName = lastPart.split('-').first;
   return shortName.length > 8 ? shortName.substring(0, 8) : shortName;

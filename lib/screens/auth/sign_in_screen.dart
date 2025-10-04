@@ -2,13 +2,17 @@ import 'dart:io' show Platform;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../config/app_secrets.dart';
 import '../../providers/firebase_auth_provider.dart';
 
 /// SignInScreen()
 class SignInScreen extends StatefulWidget {
-  const SignInScreen({super.key});
+  final String? pendingSharedUrl;
+
+  const SignInScreen({super.key, this.pendingSharedUrl});
 
   @override
   State<SignInScreen> createState() => _SignInScreenState();
@@ -25,10 +29,9 @@ class _SignInScreenState extends State<SignInScreen> {
     });
     final auth = context.read<FirebaseAuthProvider>();
     try {
-      await auth.initialize();
       await auth.signInWithGoogle();
       if (!mounted) return;
-      Navigator.of(context).maybePop();
+      _handlePostSignIn(context);
     } catch (e) {
       setState(() {
         _error = e.toString();
@@ -49,10 +52,9 @@ class _SignInScreenState extends State<SignInScreen> {
     });
     final auth = context.read<FirebaseAuthProvider>();
     try {
-      await auth.initialize();
       await auth.signInWithApple();
       if (!mounted) return;
-      Navigator.of(context).maybePop();
+      _handlePostSignIn(context);
     } catch (e) {
       setState(() {
         _error = e.toString();
@@ -70,31 +72,56 @@ class _SignInScreenState extends State<SignInScreen> {
   Widget build(BuildContext context) {
     final isIOS = Platform.isIOS;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Sign in'),
-      ),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 420),
             child: Padding(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(24),
               child: Column(
-                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.lock_open, size: 56),
-                  const SizedBox(height: 12),
+                  const Spacer(),
+                  // Cognify Logo
+                  Image.asset(
+                    'assets/images/cognify_robot_512x512.png',
+                    width: 120,
+                    height: 120,
+                  ),
+                  const SizedBox(height: 24),
+                  // App Title
+                  Text(
+                    'Cognify',
+                    style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                  const SizedBox(height: 16),
+                  // Project Pitch
+                  Text(
+                    'Your AI-powered writing assistant.\nCreate, edit, and enhance content with advanced language models.',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          color: Theme.of(context).textTheme.bodySmall?.color,
+                        ),
+                  ),
+                  const SizedBox(height: 32),
+                  // Sign-in prompt
+                  const Icon(Icons.lock_open, size: 48),
+                  const SizedBox(height: 16),
                   Text(
                     'Sign in to continue',
-                    style: Theme.of(context).textTheme.titleLarge,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Use a native sign-in provider to sync your subscription and restore across devices.',
+                    'Sync your subscription, restore purchases, and access your monthly quota of ${AppSecrets.freeRequestsPerMonth} free requests.',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 32),
                   if (_error != null) ...[
                     Container(
                       width: double.infinity,
@@ -105,7 +132,9 @@ class _SignInScreenState extends State<SignInScreen> {
                       ),
                       child: Text(
                         _error!,
-                        style: TextStyle(color: Theme.of(context).colorScheme.error),
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.error,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -126,6 +155,7 @@ class _SignInScreenState extends State<SignInScreen> {
                     ),
                   const SizedBox(height: 24),
                   if (_busy) const CircularProgressIndicator(),
+                  const Spacer(),
                 ],
               ),
             ),
@@ -155,11 +185,12 @@ class _SignInButton extends StatelessWidget {
       child: ElevatedButton.icon(
         onPressed: onPressed,
         icon: Icon(icon),
-        label: Text(
-          label,
-          style: const TextStyle(fontWeight: FontWeight.w600),
-        ),
+        label: Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
       ),
     );
   }
+}
+
+void _handlePostSignIn(BuildContext context) {
+  context.go('/editor');
 }

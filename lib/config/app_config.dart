@@ -1,14 +1,13 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../database/database_service.dart';
 import '../utils/logger.dart';
+import 'app_secrets.dart';
 
 /// Application configuration management
 class AppConfig {
   static final AppConfig _instance = AppConfig._internal();
   // Environment variables and settings
-  static const String _openRouterApiKeyKey = 'openrouter_api_key';
   static const String _openAiApiKeyKey = 'openai_api_key';
   static const String _braveSearchApiKeyKey = 'brave_search_api_key';
 
@@ -22,7 +21,8 @@ class AppConfig {
 
   static const String defaultLogLevel = 'info';
   static const bool defaultAutoExecuteAiTools = true;
-  static const bool defaultVerboseLogging = false; // Always disabled for performance
+  static const bool defaultVerboseLogging =
+      false; // Always disabled for performance
   // API endpoints
   static const String openRouterBaseUrl = 'https://openrouter.ai/api/v1';
   static const String openAiBaseUrl = 'https://api.openai.ai/v1';
@@ -55,20 +55,22 @@ class AppConfig {
   bool _initialized = false;
   final DatabaseService _db = DatabaseService();
 
-  // Cache for API key to avoid repeated secure storage reads
-  String? _cachedOpenRouterKey;
-
   factory AppConfig() => _instance;
   AppConfig._internal();
   // AI Tools Configuration
   Future<bool> get autoExecuteAiTools async {
     await _ensureInitialized();
-    return await _db.getSetting<bool>(_autoExecuteAiToolsKey, defaultValue: defaultAutoExecuteAiTools) ?? defaultAutoExecuteAiTools;
+    return await _db.getSetting<bool>(
+          _autoExecuteAiToolsKey,
+          defaultValue: defaultAutoExecuteAiTools,
+        ) ??
+        defaultAutoExecuteAiTools;
   }
 
-
-
   Future<String?> get braveSearchApiKey async {
+    if (AppSecrets.braveSearchApiKey.isNotEmpty) {
+      return AppSecrets.braveSearchApiKey;
+    }
     await _ensureInitialized();
     return await _db.getSetting<String>(_braveSearchApiKeyKey);
   }
@@ -76,18 +78,30 @@ class AppConfig {
   // Model Configuration
   Future<String> get currentModel async {
     await _ensureInitialized();
-    return await _db.getSetting<String>(_defaultModelKey, defaultValue: defaultModel) ?? defaultModel;
+    return await _db.getSetting<String>(
+          _defaultModelKey,
+          defaultValue: defaultModel,
+        ) ??
+        defaultModel;
   }
 
   // Logging Configuration
   Future<String> get logLevel async {
     await _ensureInitialized();
-    return await _db.getSetting<String>(_logLevelKey, defaultValue: defaultLogLevel) ?? defaultLogLevel;
+    return await _db.getSetting<String>(
+          _logLevelKey,
+          defaultValue: defaultLogLevel,
+        ) ??
+        defaultLogLevel;
   }
 
   Future<bool> get verboseLogging async {
     await _ensureInitialized();
-    return await _db.getSetting<bool>(_verboseLoggingKey, defaultValue: defaultVerboseLogging) ?? defaultVerboseLogging;
+    return await _db.getSetting<bool>(
+          _verboseLoggingKey,
+          defaultValue: defaultVerboseLogging,
+        ) ??
+        defaultVerboseLogging;
   }
 
   Future<String?> get openAiApiKey async {
@@ -97,40 +111,15 @@ class AppConfig {
 
   // API Keys
   Future<String?> get openRouterApiKey async {
-    // Return cached key if available
-    if (_cachedOpenRouterKey != null) {
-      return _cachedOpenRouterKey;
+    if (AppSecrets.openRouterApiKey.isNotEmpty) {
+      return AppSecrets.openRouterApiKey;
     }
 
-    // Try secure storage first (where OAuth provider stores keys)
-    try {
-      const storage = FlutterSecureStorage();
-      final secureKey = await storage.read(key: 'openrouter_api_key');
-      
-      if (secureKey != null && secureKey.isNotEmpty) {
-        // Cache the key for subsequent calls
-        _cachedOpenRouterKey = secureKey;
-        Logger.info('🔑 AppConfig: Got API key from secure storage: ${secureKey.substring(0, 10)}...', tag: 'AppConfig');
-        return secureKey;
-      }
-    } catch (e) {
-      Logger.error('Error getting secure storage API key: $e', tag: 'AppConfig');
-    }
-
-    // Fallback to database storage
-    await _ensureInitialized();
-    final dbKey = await _db.getSetting<String>(_openRouterApiKeyKey);
-    
-    // Cache the result (even if null)
-    _cachedOpenRouterKey = dbKey;
-    
-    if (dbKey != null) {
-      Logger.info('🔑 AppConfig: Got API key from database: ${dbKey.substring(0, 10)}...', tag: 'AppConfig');
-    } else {
-      Logger.info('🔑 AppConfig: No API key found in any source', tag: 'AppConfig');
-    }
-    
-    return dbKey;
+    Logger.warn(
+      '🔑 AppConfig: OPENROUTER_API_KEY not provided. Requests that depend on it will fail.',
+      tag: 'AppConfig',
+    );
+    return null;
   }
 
   Future<void> initialize() async {
@@ -150,7 +139,6 @@ class AppConfig {
     await setAutoExecuteAiTools(defaultAutoExecuteAiTools);
 
     // Clear API keys for security
-    await setOpenRouterApiKey(null);
     await setOpenAiApiKey(null);
     await setBraveSearchApiKey(null);
   }
@@ -159,8 +147,6 @@ class AppConfig {
     await _ensureInitialized();
     await _db.saveSetting(_autoExecuteAiToolsKey, enabled);
   }
-
-
 
   Future<void> setBraveSearchApiKey(String? apiKey) async {
     await _ensureInitialized();
@@ -180,20 +166,6 @@ class AppConfig {
   Future<void> setOpenAiApiKey(String? apiKey) async {
     await _ensureInitialized();
     await _db.saveSetting(_openAiApiKeyKey, apiKey);
-  }
-
-  Future<void> setOpenRouterApiKey(String? apiKey) async {
-    await _ensureInitialized();
-    await _db.saveSetting(_openRouterApiKeyKey, apiKey);
-    
-    // Clear cache when API key is updated
-    clearApiKeyCache();
-  }
-
-  /// Clear the API key cache to force fresh retrieval
-  void clearApiKeyCache() {
-    Logger.info('🔑 AppConfig: Clearing API key cache', tag: 'AppConfig');
-    _cachedOpenRouterKey = null;
   }
 
   Future<void> _ensureInitialized() async {

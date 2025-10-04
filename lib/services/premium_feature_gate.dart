@@ -1,13 +1,10 @@
-// A reusable, extensible premium gate for both screens and feature actions.
-// It relies on AppAccessProvider.hasPremiumAccess and routes to /paywall when locked.
-//
-// Helper API isPremiumUnlocked() provides a simple check for UI to gate features.
+// Legacy premium gate now acting as a thin feature-flag wrapper.
+// Premium subscriptions have been replaced with a token-based system, so all
+// entitlement checks return true when the feature is discoverable.
 
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
 import '../config/feature_flags.dart';
-import '../providers/app_access_provider.dart';
 
 /// FeatureAccess - Unified feature access control
 /// Centralized logic to answer "can show?" and "can execute?" for a feature name
@@ -23,42 +20,36 @@ class FeatureAccess {
   /// Returns true if canShow(featureName) is true AND the user is entitled
   static bool isEnabledForUser(BuildContext context, String featureName) {
     if (!canShow(featureName)) return false;
-    
-    final appAccess = context.read<AppAccessProvider>();
-    return appAccess.hasPremiumAccess;
+    return true;
   }
 
   /// Check if a feature is enabled (backend context-free)
   /// Same as isEnabledForUser but accepts entitlement boolean directly
   static bool isEnabled(bool isEntitled, String featureName) {
     if (!canShow(featureName)) return false;
-    return isEntitled;
+    return true;
   }
 
   /// Guard an action with feature access control
   /// Executes action if isEnabledForUser is true
   /// Otherwise triggers paywall flow, returns false
-  static Future<bool> guardAction(BuildContext context, String featureName, VoidCallback action) async {
-    if (isEnabledForUser(context, featureName)) {
-      action();
-      return true;
+  static Future<bool> guardAction(
+    BuildContext context,
+    String featureName,
+    VoidCallback action,
+  ) async {
+    if (!canShow(featureName)) {
+      return false;
     }
-    
-    // Trigger paywall flow
-    Navigator.of(context).pushNamed('/paywall');
-    return false;
+    action();
+    return true;
   }
 }
 
 /// isPremiumUnlocked()
 /// Tiny helper for widgets/viewmodels to gate UI or actions.
 /// Testers are already accounted for via AppAccessProvider.hasPremiumAccess.
-bool isPremiumUnlocked(BuildContext context, {bool listen = true}) {
-  final access = listen
-      ? context.watch<AppAccessProvider>().hasPremiumAccess
-      : context.read<AppAccessProvider>().hasPremiumAccess;
-  return access;
-}
+bool isPremiumUnlocked(BuildContext context, {bool listen = true}) => true;
 
 /// PremiumTier()
 /// Extensible enum for future tiers/entitlements. Currently a single 'premium' tier.
@@ -91,50 +82,19 @@ class PremiumGuard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final access = context.watch<AppAccessProvider>().hasPremiumAccess;
-
-    if (access) {
-      return child;
-    }
-
-    // If a locked builder is provided, show it to allow custom UI.
-    if (lockedBuilder != null) {
-      return lockedBuilder!(context);
-    }
-
-    // Default behavior: redirect to paywall and render a minimal placeholder.
-    if (redirectToPaywall) {
-      // Using addPostFrameCallback to avoid calling Navigator during build.
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!context.mounted) return;
-        if (Navigator.of(context).canPop()) {
-          Navigator.of(context).pushNamed('/paywall');
-        } else {
-          Navigator.of(context).pushReplacementNamed('/paywall');
-        }
-      });
-    }
-
-    // Placeholder while navigating
-    return const Scaffold(
-      body: Center(child: CircularProgressIndicator()),
-    );
+    return child;
   }
 }
 
 /// premiumGuardAction()
 /// Wrap any feature action with this guard. If locked, navigates to /paywall.
 /// Returns true if the action was executed, false if redirected.
-Future<bool> premiumGuardAction(BuildContext context, VoidCallback action,
-    {PremiumRequirement requirement = const PremiumRequirement(),
-    bool redirectToPaywall = true}) async {
-  final access = context.read<AppAccessProvider>().hasPremiumAccess;
-  if (access) {
-    action();
-    return true;
-  }
-  if (redirectToPaywall) {
-    Navigator.of(context).pushNamed('/paywall');
-  }
-  return false;
+Future<bool> premiumGuardAction(
+  BuildContext context,
+  VoidCallback action, {
+  PremiumRequirement requirement = const PremiumRequirement(),
+  bool redirectToPaywall = true,
+}) async {
+  action();
+  return true;
 }

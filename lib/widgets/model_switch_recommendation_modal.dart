@@ -37,9 +37,7 @@ class ModelSwitchRecommendationModal extends StatelessWidget {
 
     return Dialog(
       backgroundColor: colorScheme.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Container(
         constraints: const BoxConstraints(maxWidth: 400, maxHeight: 600),
         padding: const EdgeInsets.all(24),
@@ -90,9 +88,7 @@ class ModelSwitchRecommendationModal extends StatelessWidget {
               decoration: BoxDecoration(
                 color: colorScheme.surfaceVariant.withOpacity(0.5),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: colorScheme.outline.withOpacity(0.2),
-                ),
+                border: Border.all(color: colorScheme.outline.withOpacity(0.2)),
               ),
               child: Row(
                 children: [
@@ -124,8 +120,7 @@ class ModelSwitchRecommendationModal extends StatelessWidget {
                 child: ElevatedButton.icon(
                   onPressed: () {
                     onDismiss(); // Close this dialog
-                    // Navigate to OAuth onboarding using GoRouter
-                    context.go('/oauth-onboarding');
+                    context.go('/sign-in');
                   },
                   icon: const Icon(Icons.settings),
                   label: const Text('Reconfigure OpenRouter'),
@@ -165,7 +160,10 @@ class ModelSwitchRecommendationModal extends StatelessWidget {
                     _openModelSwitcher(context);
                   },
                   icon: const Icon(Icons.swap_horiz, color: Colors.white),
-                  label: const Text('Switch Model', style: TextStyle(color: Colors.white)),
+                  label: const Text(
+                    'Switch Model',
+                    style: TextStyle(color: Colors.white),
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: colorScheme.primary,
                     foregroundColor: colorScheme.onPrimary,
@@ -201,12 +199,12 @@ class ModelSwitchRecommendationModal extends StatelessWidget {
               const SizedBox(height: 12),
 
               // Suggested models list
-              ...suggestedModels.take(3).map((modelId) => _buildModelCard(
-                context,
-                modelId,
-                theme,
-                colorScheme,
-              )),
+              ...suggestedModels
+                  .take(3)
+                  .map(
+                    (modelId) =>
+                        _buildModelCard(context, modelId, theme, colorScheme),
+                  ),
 
               const SizedBox(height: 24),
 
@@ -266,9 +264,7 @@ class ModelSwitchRecommendationModal extends StatelessWidget {
       decoration: BoxDecoration(
         color: colorScheme.surfaceVariant.withOpacity(0.3),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: colorScheme.outline.withOpacity(0.2),
-        ),
+        border: Border.all(color: colorScheme.outline.withOpacity(0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -302,7 +298,7 @@ class ModelSwitchRecommendationModal extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: isFree 
+                  color: isFree
                       ? Colors.green.withOpacity(0.1)
                       : Colors.orange.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(4),
@@ -425,14 +421,17 @@ class ModelSwitchRecommendationModal extends StatelessWidget {
   }
 
   void _openModelSwitcher(BuildContext context) {
-    final modeConfigProvider = Provider.of<ModeConfigProvider>(context, listen: false);
-    
-    // For now, we'll default to chat mode. In a full implementation, 
+    final modeConfigProvider = Provider.of<ModeConfigProvider>(
+      context,
+      listen: false,
+    );
+
+    // For now, we'll default to chat mode. In a full implementation,
     // the modal would need to receive the current mode as a parameter.
     // Since this is called from EditorScreen where the mode is available,
     // it would be better to pass it as a parameter to the modal.
     final ChatMode mode = ChatMode.chat;
-    
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -443,17 +442,20 @@ class ModelSwitchRecommendationModal extends StatelessWidget {
         onModelSelected: (String modelId) {
           // Close the bottom sheet first
           Navigator.of(bottomSheetContext).pop();
-          
+
           // Update the model through the provider
           final config = modeConfigProvider.getConfigForMode(mode);
           if (config != null) {
-            modeConfigProvider.updateConfig(mode, config.copyWith(model: modelId));
+            modeConfigProvider.updateConfig(
+              mode,
+              config.copyWith(model: modelId),
+            );
           }
-          
+
           // Call the callback to update the parent
           onModelSelected(modelId);
         },
       ),
     );
   }
-} 
+}

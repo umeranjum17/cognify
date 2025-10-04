@@ -8,8 +8,6 @@ import 'package:go_router/go_router.dart';
 
 import '../config/app_config.dart';
 
-
-
 /// OpenRouter API client for direct LLM access
 class OpenRouterClient {
   static final OpenRouterClient _instance = OpenRouterClient._internal();
@@ -97,11 +95,7 @@ class OpenRouterClient {
 
         if (response.statusCode == 200) {
           if (stream) {
-            return {
-              'stream': response.data,
-              'model': model,
-              'streaming': true,
-            };
+            return {'stream': response.data, 'model': model, 'streaming': true};
           } else {
             // Extract generation ID and usage information from response
             final responseData = response.data as Map<String, dynamic>;
@@ -118,8 +112,10 @@ class OpenRouterClient {
             // Extract usage information (aligned with server-side)
             if (responseData.containsKey('usage')) {
               usage = responseData['usage'] as Map<String, dynamic>?;
-            } else if (responseData.containsKey('response_metadata') && responseData['response_metadata'] is Map<String, dynamic>) {
-              final metadata = responseData['response_metadata'] as Map<String, dynamic>;
+            } else if (responseData.containsKey('response_metadata') &&
+                responseData['response_metadata'] is Map<String, dynamic>) {
+              final metadata =
+                  responseData['response_metadata'] as Map<String, dynamic>;
               if (metadata.containsKey('usage')) {
                 usage = metadata['usage'] as Map<String, dynamic>?;
               }
@@ -207,11 +203,7 @@ class OpenRouterClient {
 
               try {
                 final json = jsonDecode(data);
-                yield {
-                  'chunk': json,
-                  'model': model,
-                  'streaming': true,
-                };
+                yield {'chunk': json, 'model': model, 'streaming': true};
               } catch (e) {
                 // Skip invalid JSON chunks
                 continue;
@@ -220,9 +212,10 @@ class OpenRouterClient {
           }
         }
       } else {
-        throw Exception('Streaming chat completion failed: ${response.statusCode}');
+        throw Exception(
+          'Streaming chat completion failed: ${response.statusCode}',
+        );
       }
-
     } on DioException catch (e) {
       print('🤖 Streaming chat completion failed: $e');
       try {
@@ -360,27 +353,37 @@ class OpenRouterClient {
                     print('🔗 Streaming generation ID from id: $generationId');
                   } else if (jsonData.containsKey('generation_id')) {
                     generationId = jsonData['generation_id'] as String?;
-                    print('🔗 Streaming generation ID from generation_id: $generationId');
+                    print(
+                      '🔗 Streaming generation ID from generation_id: $generationId',
+                    );
                   }
 
                   // Check multiple locations for usage (aligned with server-side)
                   if (jsonData.containsKey('usage')) {
                     usage = jsonData['usage'] as Map<String, dynamic>?;
                     if (usage != null) {
-                      print('💰 Streaming usage: ${usage['prompt_tokens'] ?? 0} input + ${usage['completion_tokens'] ?? 0} output = ${usage['total_tokens'] ?? 0} tokens');
+                      print(
+                        '💰 Streaming usage: ${usage['prompt_tokens'] ?? 0} input + ${usage['completion_tokens'] ?? 0} output = ${usage['total_tokens'] ?? 0} tokens',
+                      );
                     }
-                  } else if (jsonData.containsKey('response_metadata') && jsonData['response_metadata'] is Map<String, dynamic>) {
-                    final metadata = jsonData['response_metadata'] as Map<String, dynamic>;
+                  } else if (jsonData.containsKey('response_metadata') &&
+                      jsonData['response_metadata'] is Map<String, dynamic>) {
+                    final metadata =
+                        jsonData['response_metadata'] as Map<String, dynamic>;
                     if (metadata.containsKey('usage')) {
                       usage = metadata['usage'] as Map<String, dynamic>?;
                       if (usage != null) {
-                        print('💰 Streaming usage from response_metadata: ${usage['prompt_tokens'] ?? 0} input + ${usage['completion_tokens'] ?? 0} output = ${usage['total_tokens'] ?? 0} tokens');
+                        print(
+                          '💰 Streaming usage from response_metadata: ${usage['prompt_tokens'] ?? 0} input + ${usage['completion_tokens'] ?? 0} output = ${usage['total_tokens'] ?? 0} tokens',
+                        );
                       }
                     }
                     // Also check for generation ID in response_metadata
                     if (generationId == null && metadata.containsKey('id')) {
                       generationId = metadata['id'] as String?;
-                      print('🔗 Streaming generation ID from response_metadata.id: $generationId');
+                      print(
+                        '🔗 Streaming generation ID from response_metadata.id: $generationId',
+                      );
                     }
                   }
 
@@ -397,13 +400,12 @@ class OpenRouterClient {
                 }
 
                 // Process content chunks
-                if (jsonData.containsKey('choices') && jsonData['choices'].isNotEmpty) {
+                if (jsonData.containsKey('choices') &&
+                    jsonData['choices'].isNotEmpty) {
                   final delta = jsonData['choices'][0]['delta'];
-                  if (delta.containsKey('content') && delta['content'] != null) {
-                    yield {
-                      'content': delta['content'],
-                      'done': false,
-                    };
+                  if (delta.containsKey('content') &&
+                      delta['content'] != null) {
+                    yield {'content': delta['content'], 'done': false};
                   }
                 }
               } catch (e) {
@@ -414,16 +416,22 @@ class OpenRouterClient {
           }
         }
       } else {
-        throw Exception('Streaming chat completion failed: ${response.statusCode}');
+        throw Exception(
+          'Streaming chat completion failed: ${response.statusCode}',
+        );
       }
     } on DioException catch (e) {
       print('🚨 Streaming chat completion error: $e');
-      print('🐛 DEBUG: OpenRouterClient.chatCompletionStream about to yield error event with type=error');
+      print(
+        '🐛 DEBUG: OpenRouterClient.chatCompletionStream about to yield error event with type=error',
+      );
       _handleHttpError(e, context);
       yield {'type': 'error', 'error': e.toString(), 'done': true};
     } catch (e) {
       print('🚨 Streaming chat completion error: $e');
-      print('🐛 DEBUG: OpenRouterClient.chatCompletionStream about to yield error event with type=error');
+      print(
+        '🐛 DEBUG: OpenRouterClient.chatCompletionStream about to yield error event with type=error',
+      );
       yield {'type': 'error', 'error': e.toString(), 'done': true};
     }
   }
@@ -483,9 +491,7 @@ class OpenRouterClient {
 
           final response = await _dio.get(
             '/credits',
-            options: Options(
-              headers: {'Authorization': 'Bearer $apiKey'},
-            ),
+            options: Options(headers: {'Authorization': 'Bearer $apiKey'}),
           );
 
           if (response.statusCode == 200) {
@@ -497,7 +503,9 @@ class OpenRouterClient {
               return {
                 'total_credits': creditsData['total_credits'] ?? 0.0,
                 'total_usage': creditsData['total_usage'] ?? 0.0,
-                'remaining_credits': (creditsData['total_credits'] ?? 0.0) - (creditsData['total_usage'] ?? 0.0),
+                'remaining_credits':
+                    (creditsData['total_credits'] ?? 0.0) -
+                    (creditsData['total_usage'] ?? 0.0),
                 'fetched_at': DateTime.now().toIso8601String(),
               };
             }
@@ -528,9 +536,7 @@ class OpenRouterClient {
       final response = await _dio.get(
         '$baseUrl/generation',
         queryParameters: {'id': generationId},
-        options: Options(
-          headers: {'Authorization': 'Bearer $apiKey'},
-        ),
+        options: Options(headers: {'Authorization': 'Bearer $apiKey'}),
       );
 
       if (response.statusCode == 200) {
@@ -549,7 +555,8 @@ class OpenRouterClient {
             'created_at': generationData['created_at'],
             'usage': generationData['usage'] ?? 0,
             'cache_discount': generationData['cache_discount'] ?? 0,
-            'upstream_inference_cost': generationData['upstream_inference_cost'] ?? 0,
+            'upstream_inference_cost':
+                generationData['upstream_inference_cost'] ?? 0,
             'finish_reason': generationData['finish_reason'],
             'provider_name': generationData['provider_name'],
             'latency': generationData['latency'],
@@ -557,7 +564,9 @@ class OpenRouterClient {
           };
 
           final totalCost = (costData['total_cost'] ?? 0.0).toDouble();
-          print('✅ Fetched cost for generation $generationId: \$${totalCost.toStringAsFixed(6)}');
+          print(
+            '✅ Fetched cost for generation $generationId: \$${totalCost.toStringAsFixed(6)}',
+          );
 
           return costData;
         } else {
@@ -565,7 +574,9 @@ class OpenRouterClient {
           return null;
         }
       } else if (response.statusCode == 404) {
-        print('❌ Generation $generationId not found (404) - may be too recent or invalid');
+        print(
+          '❌ Generation $generationId not found (404) - may be too recent or invalid',
+        );
         return null;
       } else {
         print('❌ Failed to fetch generation cost: HTTP ${response.statusCode}');
@@ -578,7 +589,10 @@ class OpenRouterClient {
   }
 
   /// Get available models and their pricing
-  Future<Map<String, dynamic>> getModels({bool forceRefresh = false, BuildContext? context}) async {
+  Future<Map<String, dynamic>> getModels({
+    bool forceRefresh = false,
+    BuildContext? context,
+  }) async {
     await _ensureInitialized();
 
     // Check cache validity (refresh every hour)
@@ -607,9 +621,7 @@ class OpenRouterClient {
 
           final response = await _dio.get(
             modelsEndpoint,
-            options: Options(
-              headers: {'Authorization': 'Bearer $apiKey'},
-            ),
+            options: Options(headers: {'Authorization': 'Bearer $apiKey'}),
           );
 
           if (response.statusCode == 200) {
@@ -635,72 +647,83 @@ class OpenRouterClient {
                 // Handle pricing data with better error handling
                 final pricing = model['pricing'];
                 if (pricing != null) {
+                  // Handle different pricing structures
+                  double promptPrice = 0.0;
+                  double completionPrice = 0.0;
 
-              // Handle different pricing structures
-              double promptPrice = 0.0;
-              double completionPrice = 0.0;
+                  if (pricing is Map) {
+                    // Handle direct structure: pricing.prompt and pricing.completion
+                    if (pricing['prompt'] != null &&
+                        pricing['completion'] != null) {
+                      final promptData = pricing['prompt'];
+                      final completionData = pricing['completion'];
 
-              if (pricing is Map) {
-                // Handle direct structure: pricing.prompt and pricing.completion
-                if (pricing['prompt'] != null && pricing['completion'] != null) {
-                  final promptData = pricing['prompt'];
-                  final completionData = pricing['completion'];
+                      // Handle direct numeric values
+                      if (promptData is num) {
+                        promptPrice = promptData.toDouble();
+                      } else if (promptData is String) {
+                        promptPrice = double.tryParse(promptData) ?? 0.0;
+                      } else if (promptData is Map &&
+                          promptData['unit'] != null) {
+                        // Fallback for nested structure
+                        final promptPriceRaw = promptData['unit'];
+                        promptPrice = promptPriceRaw is num
+                            ? promptPriceRaw.toDouble()
+                            : double.tryParse(
+                                    promptPriceRaw?.toString() ?? '0',
+                                  ) ??
+                                  0.0;
+                      }
 
-                  // Handle direct numeric values
-                  if (promptData is num) {
-                    promptPrice = promptData.toDouble();
-                  } else if (promptData is String) {
-                    promptPrice = double.tryParse(promptData) ?? 0.0;
-                  } else if (promptData is Map && promptData['unit'] != null) {
-                    // Fallback for nested structure
-                    final promptPriceRaw = promptData['unit'];
-                    promptPrice = promptPriceRaw is num
-                        ? promptPriceRaw.toDouble()
-                        : double.tryParse(promptPriceRaw?.toString() ?? '0') ?? 0.0;
+                      if (completionData is num) {
+                        completionPrice = completionData.toDouble();
+                      } else if (completionData is String) {
+                        completionPrice =
+                            double.tryParse(completionData) ?? 0.0;
+                      } else if (completionData is Map &&
+                          completionData['unit'] != null) {
+                        // Fallback for nested structure
+                        final completionPriceRaw = completionData['unit'];
+                        completionPrice = completionPriceRaw is num
+                            ? completionPriceRaw.toDouble()
+                            : double.tryParse(
+                                    completionPriceRaw?.toString() ?? '0',
+                                  ) ??
+                                  0.0;
+                      }
+                    }
                   }
 
-                  if (completionData is num) {
-                    completionPrice = completionData.toDouble();
-                  } else if (completionData is String) {
-                    completionPrice = double.tryParse(completionData) ?? 0.0;
-                  } else if (completionData is Map && completionData['unit'] != null) {
-                    // Fallback for nested structure
-                    final completionPriceRaw = completionData['unit'];
-                    completionPrice = completionPriceRaw is num
-                        ? completionPriceRaw.toDouble()
-                        : double.tryParse(completionPriceRaw?.toString() ?? '0') ?? 0.0;
-                  }
+                  _modelPricing[modelId] = {
+                    'input': (promptPrice * 1000000)
+                        .toDouble(), // Convert per-token to per-million tokens
+                    'output': (completionPrice * 1000000).toDouble(),
+                  };
+                } else {
+                  // No pricing data available
+                  _modelPricing[modelId] = {'input': 0.0, 'output': 0.0};
                 }
-              }
 
-              _modelPricing[modelId] = {
-                'input': (promptPrice * 1000000).toDouble(), // Convert per-token to per-million tokens
-                'output': (completionPrice * 1000000).toDouble(),
-              };
-
-            } else {
-              // No pricing data available
-              _modelPricing[modelId] = {
-                'input': 0.0,
-                'output': 0.0,
-              };
-            }
-
-            // Build full model data for UI
-            final modelData = {
-              'id': modelId,
-              'name': _formatModelName(modelId),
-              'description': model['description'] ?? _getModelDescription(modelId),
-              'context_length': model['context_length'] ?? _getModelContextLength(modelId),
-              'pricing': _modelPricing[modelId]!,
-              'top_provider': _getModelProvider(modelId),
-              'per_request_limits': model['per_request_limits'] ?? {},
-              'architecture': model['architecture'] ?? {},
-            };
+                // Build full model data for UI
+                final modelData = {
+                  'id': modelId,
+                  'name': _formatModelName(modelId),
+                  'description':
+                      model['description'] ?? _getModelDescription(modelId),
+                  'context_length':
+                      model['context_length'] ??
+                      _getModelContextLength(modelId),
+                  'pricing': _modelPricing[modelId]!,
+                  'top_provider': _getModelProvider(modelId),
+                  'per_request_limits': model['per_request_limits'] ?? {},
+                  'architecture': model['architecture'] ?? {},
+                };
 
                 _cachedModelData.add(modelData);
               } catch (e) {
-                print('🤖 Error processing model ${model['id'] ?? 'unknown'}: $e');
+                print(
+                  '🤖 Error processing model ${model['id'] ?? 'unknown'}: $e',
+                );
                 // Continue processing other models
                 continue;
               }
@@ -708,7 +731,9 @@ class OpenRouterClient {
 
             _lastModelsFetch = DateTime.now();
 
-            print('🤖 Fetched ${_availableModels.length} models from OpenRouter');
+            print(
+              '🤖 Fetched ${_availableModels.length} models from OpenRouter',
+            );
 
             return {
               'success': true,
@@ -722,7 +747,6 @@ class OpenRouterClient {
           }
         },
       );
-
     } catch (e) {
       print('🤖 Failed to fetch models from OpenRouter: $e');
 
@@ -746,22 +770,23 @@ class OpenRouterClient {
   Future<void> initialize() async {
     if (_initialized) return;
 
-    _dio = Dio(BaseOptions(
-      baseUrl: baseUrl,
-      connectTimeout: AppConfig.connectTimeout,
-      receiveTimeout: AppConfig.receiveTimeout,
-      sendTimeout: AppConfig.sendTimeout,
-      headers: {
-        'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://cognify.app',
-        'X-Title': 'Cognify Flutter App',
-      },
-    ));
+    _dio = Dio(
+      BaseOptions(
+        baseUrl: baseUrl,
+        connectTimeout: AppConfig.connectTimeout,
+        receiveTimeout: AppConfig.receiveTimeout,
+        sendTimeout: AppConfig.sendTimeout,
+        headers: {
+          'Content-Type': 'application/json',
+          'HTTP-Referer': 'https://cognify.app',
+          'X-Title': 'Cognify Flutter App',
+        },
+      ),
+    );
 
     _initialized = true;
     print('🤖 OpenRouterClient initialized');
   }
-
 
   Future<void> _ensureInitialized() async {
     if (!_initialized) {
@@ -775,27 +800,29 @@ class OpenRouterClient {
     required BuildContext? context,
   }) async {
     int attemptCount = 0;
-    
+
     while (attemptCount < _maxRetries) {
       try {
         // Make the API call
         final result = await apiCall();
-        
+
         // Success! Reset the error counter
         if (_consecutive401Errors > 0) {
           print('✅ API call succeeded, resetting 401 error counter');
           _consecutive401Errors = 0;
         }
         _lastSuccessfulCall = DateTime.now();
-        
+
         return result;
       } on DioException catch (e) {
         if (e.response?.statusCode == 401) {
           attemptCount++;
           _consecutive401Errors++;
-          
-          print('🔄 401 Error (attempt $attemptCount/$_maxRetries, total consecutive: $_consecutive401Errors)');
-          
+
+          print(
+            '🔄 401 Error (attempt $attemptCount/$_maxRetries, total consecutive: $_consecutive401Errors)',
+          );
+
           if (attemptCount < _maxRetries) {
             // Still have retries left, wait with exponential backoff
             final delayMs = 500 * attemptCount; // 500ms, 1000ms, 1500ms
@@ -805,7 +832,7 @@ class OpenRouterClient {
           } else {
             // Out of retries for this call
             print('❌ 401 Error persisted after $_maxRetries attempts');
-            
+
             // Don't auto-clear the key, instead show popup for user to reconfigure
             print('⚠️ 401 error - prompting user to reconfigure OpenRouter');
             _show401ErrorDialog(context);
@@ -828,7 +855,7 @@ class OpenRouterClient {
         rethrow;
       }
     }
-    
+
     throw Exception('Retry logic failed - should not reach here');
   }
 
@@ -873,10 +900,7 @@ class OpenRouterClient {
     final parts = modelId.split('/');
     final provider = parts.isNotEmpty ? parts[0] : 'unknown';
 
-    return {
-      'name': provider,
-      'human_name': provider,
-    };
+    return {'name': provider, 'human_name': provider};
   }
 
   /// Show dialog for 401 errors prompting user to reconfigure OpenRouter
@@ -897,9 +921,9 @@ class OpenRouterClient {
         content: const Text(
           'We\'ve been receiving unauthorized errors from OpenRouter. This usually means:\n\n'
           '• Your API key has expired or been revoked\n'
-          '• Your account credits have been exhausted\n'
-          '• The key was deactivated externally\n\n'
-          'Please reconfigure your OpenRouter API key to continue.',
+          '• Your monthly request allotment has been exhausted\n'
+          '• Your session has expired\n\n'
+          'Sign in again or upgrade your plan to continue.',
         ),
         actions: [
           TextButton(
@@ -911,24 +935,17 @@ class OpenRouterClient {
           ElevatedButton(
             onPressed: () {
               Navigator.of(context).pop();
-              // Navigate to onboarding to reconfigure
               try {
-                final router = GoRouter.of(context);
-                router.go('/oauth-onboarding');
+                GoRouter.of(context).go('/paywall');
               } catch (e) {
-                print('❌ Error navigating to onboarding: $e');
-                // Fallback navigation
-                Navigator.of(context).pushNamedAndRemoveUntil(
-                  '/oauth-onboarding',
-                  (route) => false,
-                );
+                print('❌ Error navigating to paywall: $e');
               }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
               foregroundColor: Colors.white,
             ),
-            child: const Text('Reconfigure OpenRouter'),
+            child: const Text('Manage Subscription'),
           ),
         ],
       ),
@@ -969,7 +986,9 @@ class OpenRouterClient {
               // User can manually switch model using the model selector in the UI
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('Use the model selector at the bottom to switch models'),
+                  content: Text(
+                    'Use the model selector at the bottom to switch models',
+                  ),
                   duration: Duration(seconds: 3),
                 ),
               );
@@ -993,5 +1012,4 @@ class OpenRouterClient {
     }
     // 401 errors are handled by the retry logic
   }
-
 }

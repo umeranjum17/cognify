@@ -10,6 +10,7 @@ import '../models/message.dart';
 import '../models/source.dart';
 import '../models/tools_config.dart';
 import '../models/trending_topic.dart';
+import '../models/usage_quota.dart';
 import 'agent_service.dart';
 import 'agents/agent_system.dart';
 import 'brave_search_service.dart';
@@ -26,7 +27,7 @@ import 'trending_service.dart';
 /// Uses direct API calls to OpenRouter, Brave Search, etc.
 class UnifiedApiService {
   static final UnifiedApiService _instance = UnifiedApiService._internal();
-  
+
   // Direct service clients
   final LLMService _llmService = LLMService();
   final OpenRouterClient _openRouterClient = OpenRouterClient();
@@ -39,11 +40,12 @@ class UnifiedApiService {
   final AgentSystem _agentSystem = AgentSystem();
   final TrendingService _trendingService = TrendingService();
   final DailyQuotesService _dailyQuotesService = DailyQuotesService();
-  final GenerationCostCacheService _costCacheService = GenerationCostCacheService();
-  
+  final GenerationCostCacheService _costCacheService =
+      GenerationCostCacheService();
+
   bool _initialized = false;
   bool _useAgentSystem = true; // Flag to switch between old and new system
-  
+
   factory UnifiedApiService() => _instance;
   UnifiedApiService._internal();
 
@@ -115,18 +117,12 @@ class UnifiedApiService {
     required Map<String, dynamic> input,
   }) async {
     await _ensureInitialized();
-    
+
     if (!_useAgentSystem) {
-      return {
-        'success': false,
-        'error': 'Agent system is disabled',
-      };
+      return {'success': false, 'error': 'Agent system is disabled'};
     }
-    
-    return await _agentService.executeTool(
-      toolName: toolName,
-      input: input,
-    );
+
+    return await _agentService.executeTool(toolName: toolName, input: input);
   }
 
   /// Fetch roadmap data (mock implementation)
@@ -139,16 +135,10 @@ class UnifiedApiService {
 
       return {
         'success': true,
-        'data': {
-          'content': content['content'] ?? '',
-          'url': url,
-        },
+        'data': {'content': content['content'] ?? '', 'url': url},
       };
     } catch (e) {
-      return {
-        'success': false,
-        'error': e.toString(),
-      };
+      return {'success': false, 'error': e.toString()};
     }
   }
 
@@ -161,9 +151,10 @@ class UnifiedApiService {
     bool stream = false,
   }) async {
     await _ensureInitialized();
-    
+
     try {
-      final prompt = '''Based on this answer, generate 3-5 relevant follow-up questions that would help the user explore the topic deeper:
+      final prompt =
+          '''Based on this answer, generate 3-5 relevant follow-up questions that would help the user explore the topic deeper:
 
 Answer: ${answer.length > 2000 ? answer.substring(0, 2000) : answer}
 
@@ -178,7 +169,7 @@ Return only the questions, one per line, without numbering.''';
       final response = await _llmService.chatCompletion(
         model: model ?? 'mistralai/mistral-7b-instruct:free',
         messages: [
-          {'role': 'user', 'content': prompt}
+          {'role': 'user', 'content': prompt},
         ],
         temperature: 0.8,
         maxTokens: 300,
@@ -204,17 +195,16 @@ Return only the questions, one per line, without numbering.''';
           .map((q) => q.trim())
           .toList();
 
+      return {'success': true, 'questions': questions};
+    } on QuotaExceededException catch (e) {
       return {
-        'success': true,
-        'questions': questions,
+        'success': false,
+        'error': _quotaExceededMessage(e),
+        'questions': <String>[],
       };
     } catch (e) {
       print('🚨 Follow-up questions error: $e');
-      return {
-        'success': false,
-        'error': e.toString(),
-        'questions': [],
-      };
+      return {'success': false, 'error': e.toString(), 'questions': []};
     }
   }
 
@@ -225,17 +215,17 @@ Return only the questions, one per line, without numbering.''';
     int count = 5,
   }) async {
     await _ensureInitialized();
-    
+
     try {
       // Generate search query if not provided
       String searchQuery = query ?? answer;
-      
+
       // Use Brave Search to find images
       final searchResults = await _braveSearchService.searchImages(
         searchQuery,
         count: count,
       );
-      
+
       if (searchResults['success'] == true && searchResults['images'] != null) {
         return {
           'success': true,
@@ -265,24 +255,20 @@ Return only the questions, one per line, without numbering.''';
   /// Get agent system status
   Map<String, dynamic> getAgentSystemStatus() {
     if (!_useAgentSystem) {
-      return {
-        'enabled': false,
-        'message': 'Agent system is disabled',
-      };
+      return {'enabled': false, 'message': 'Agent system is disabled'};
     }
 
     if (!_initialized) {
-      return {
-        'enabled': false,
-        'message': 'UnifiedApiService not initialized',
-      };
+      return {'enabled': false, 'message': 'UnifiedApiService not initialized'};
     }
 
     final status = _agentService.getStatus();
     final isReady = status['initialized'] == true && _initialized;
     return {
       'enabled': isReady,
-      'message': isReady ? 'Agent system ready' : 'Agent system not initialized',
+      'message': isReady
+          ? 'Agent system ready'
+          : 'Agent system not initialized',
       'details': status,
     };
   }
@@ -292,7 +278,7 @@ Return only the questions, one per line, without numbering.''';
     if (!_useAgentSystem) {
       return [];
     }
-    
+
     return _agentService.getAllToolInfo();
   }
 
@@ -304,10 +290,7 @@ Return only the questions, one per line, without numbering.''';
       final creditsData = await _openRouterClient.getCredits();
 
       if (creditsData != null) {
-        return {
-          'success': true,
-          'credits': creditsData,
-        };
+        return {'success': true, 'credits': creditsData};
       } else {
         return {
           'success': false,
@@ -362,9 +345,11 @@ Return only the questions, one per line, without numbering.''';
   }
 
   /// Get generation costs using intelligent caching
-  Future<Map<String, dynamic>> getGenerationCosts(List<Map<String, dynamic>> generationIds) async {
+  Future<Map<String, dynamic>> getGenerationCosts(
+    List<Map<String, dynamic>> generationIds,
+  ) async {
     await _ensureInitialized();
-    
+
     // Delegate to the cache service for intelligent cost fetching
     return await _costCacheService.getGenerationCosts(generationIds);
   }
@@ -379,24 +364,20 @@ Return only the questions, one per line, without numbering.''';
         'type': 'concept',
         'data': {
           'name': 'Flutter',
-          'description': 'UI toolkit for building natively compiled applications',
+          'description':
+              'UI toolkit for building natively compiled applications',
         },
-        'metadata': {
-          'category': 'Technology',
-          'importance': 0.9,
-        },
+        'metadata': {'category': 'Technology', 'importance': 0.9},
       },
       {
         'id': '2',
         'type': 'concept',
         'data': {
           'name': 'Dart',
-          'description': 'Programming language optimized for client development',
+          'description':
+              'Programming language optimized for client development',
         },
-        'metadata': {
-          'category': 'Programming Language',
-          'importance': 0.8,
-        },
+        'metadata': {'category': 'Programming Language', 'importance': 0.8},
       },
       {
         'id': '3',
@@ -405,10 +386,7 @@ Return only the questions, one per line, without numbering.''';
           'name': 'Mobile Development',
           'description': 'Development of applications for mobile devices',
         },
-        'metadata': {
-          'category': 'Development',
-          'importance': 0.7,
-        },
+        'metadata': {'category': 'Development', 'importance': 0.7},
       },
     ];
   }
@@ -416,16 +394,12 @@ Return only the questions, one per line, without numbering.''';
   /// Get available models from OpenRouter
   Future<Map<String, dynamic>> getModels() async {
     await _ensureInitialized();
-    
+
     try {
       return await _openRouterClient.getModels();
     } catch (e) {
       print('🚨 Get models error: $e');
-      return {
-        'success': false,
-        'error': e.toString(),
-        'models': [],
-      };
+      return {'success': false, 'error': e.toString(), 'models': []};
     }
   }
 
@@ -456,15 +430,9 @@ Return only the questions, one per line, without numbering.''';
 
     final role = roles[roleId];
     if (role != null) {
-      return {
-        'success': true,
-        'data': role,
-      };
+      return {'success': true, 'data': role};
     } else {
-      return {
-        'success': false,
-        'error': 'Role not found',
-      };
+      return {'success': false, 'error': 'Role not found'};
     }
   }
 
@@ -521,23 +489,23 @@ Return only the questions, one per line, without numbering.''';
   /// Initialize all services
   Future<void> initialize() async {
     if (_initialized) return;
-    
+
     await _llmService.initialize();
     await _openRouterClient.initialize();
     await _braveSearchService.initialize();
     await _contentExtractor.initialize();
     await _databaseService.initialize();
     await _fileUploadService.initialize();
-    
+
     // Initialize cost cache service with OpenRouter client
     _costCacheService.initialize(_openRouterClient);
-    
+
     // Initialize agent system if enabled
     if (_useAgentSystem) {
       await _agentService.initialize();
       await _agentSystem.initialize();
     }
-    
+
     _initialized = true;
     print('🚀 UnifiedApiService initialized with direct API clients');
     if (_useAgentSystem) {
@@ -569,9 +537,21 @@ Return only the questions, one per line, without numbering.''';
     return {
       'success': true,
       'roles': [
-        {'id': '1', 'name': 'Frontend Developer', 'description': 'Build user interfaces'},
-        {'id': '2', 'name': 'Backend Developer', 'description': 'Build server-side logic'},
-        {'id': '3', 'name': 'Full Stack Developer', 'description': 'Build complete applications'},
+        {
+          'id': '1',
+          'name': 'Frontend Developer',
+          'description': 'Build user interfaces',
+        },
+        {
+          'id': '2',
+          'name': 'Backend Developer',
+          'description': 'Build server-side logic',
+        },
+        {
+          'id': '3',
+          'name': 'Full Stack Developer',
+          'description': 'Build complete applications',
+        },
       ],
     };
   }
@@ -603,8 +583,10 @@ Return only the questions, one per line, without numbering.''';
     await _ensureInitialized();
 
     try {
-      print('🔍 Source-grounded chat started with ${selectedSourceIds.length} sources');
-      
+      print(
+        '🔍 Source-grounded chat started with ${selectedSourceIds.length} sources',
+      );
+
       // Get the query from text input or last message
       String query = '';
       if (textInput != null && textInput.isNotEmpty) {
@@ -631,18 +613,15 @@ Return only the questions, one per line, without numbering.''';
         query: query,
         sourceIds: selectedSourceIds,
         mode: 'source_grounded',
-        attachments: attachments?.map((f) => {
-          'name': f.name,
-          'size': f.size,
-          'bytes': f.bytes,
-        }).toList(),
+        attachments: attachments
+            ?.map((f) => {'name': f.name, 'size': f.size, 'bytes': f.bytes})
+            .toList(),
         isIncognitoMode: isOfflineMode,
         personality: personality ?? 'Default',
         language: language ?? 'English',
         conversationHistory: messages,
         selectedModel: model,
       );
-
     } catch (e) {
       print('🚨 Source grounded chat streaming error: $e');
       yield ChatStreamEvent.error(
@@ -672,7 +651,7 @@ Return only the questions, one per line, without numbering.''';
     bool isEntitled = false,
   }) async* {
     await _ensureInitialized();
-    
+
     // Use agent system if enabled and tools are configured
     if (_useAgentSystem && enabledTools != null) {
       try {
@@ -692,56 +671,78 @@ Return only the questions, one per line, without numbering.''';
           );
           query = lastUserMessage.content;
         }
-        
+
         if (query.isNotEmpty) {
-          print('🤖 Using agent system for query: ${query.substring(0, math.min(50, query.length))}...');
-          print('🤖 UnifiedApiService: Model parameters - model: $model, chatModel: $chatModel, deepsearchModel: $deepsearchModel');
-          print('🤖 UnifiedApiService: Passing selectedModel to agent system: $model');
-          
+          print(
+            '🤖 Using agent system for query: ${query.substring(0, math.min(50, query.length))}...',
+          );
+          print(
+            '🤖 UnifiedApiService: Model parameters - model: $model, chatModel: $chatModel, deepsearchModel: $deepsearchModel',
+          );
+          print(
+            '🤖 UnifiedApiService: Passing selectedModel to agent system: $model',
+          );
+
           // Convert ToolsConfig to list of enabled tool names
           final enabledToolNames = <String>[];
-          if (enabledTools.braveSearch == true) enabledToolNames.add('brave_search');
+          if (enabledTools.braveSearch == true)
+            enabledToolNames.add('brave_search');
           if (enabledTools.webFetch == true) enabledToolNames.add('web_fetch');
-          if (enabledTools.youtubeProcessor == true) enabledToolNames.add('youtube_processor');
-          if (enabledTools.browserRoadmap == true) enabledToolNames.add('browser_roadmap');
-          if (enabledTools.imageSearch == true) enabledToolNames.add('image_search');
-          if (enabledTools.keywordExtraction == true) enabledToolNames.add('keyword_extraction');
-          if (enabledTools.memoryManager == true) enabledToolNames.add('memory_manager');
-          if (enabledTools.sourceQuery == true) enabledToolNames.add('source_query');
-          if (enabledTools.sourceContent == true) enabledToolNames.add('source_content');
+          if (enabledTools.youtubeProcessor == true)
+            enabledToolNames.add('youtube_processor');
+          if (enabledTools.browserRoadmap == true)
+            enabledToolNames.add('browser_roadmap');
+          if (enabledTools.imageSearch == true)
+            enabledToolNames.add('image_search');
+          if (enabledTools.keywordExtraction == true)
+            enabledToolNames.add('keyword_extraction');
+          if (enabledTools.memoryManager == true)
+            enabledToolNames.add('memory_manager');
+          if (enabledTools.sourceQuery == true)
+            enabledToolNames.add('source_query');
+          if (enabledTools.sourceContent == true)
+            enabledToolNames.add('source_content');
           if (enabledTools.timeTool == true) enabledToolNames.add('time_tool');
-          
+
           // Filter out search tools when offline mode is enabled
           if (isOfflineMode) {
             const searchTools = {
               'brave_search',
-              'brave_search_enhanced', 
+              'brave_search_enhanced',
               'web_fetch',
               'image_search',
               'youtube_processor',
               'sequential_thinking',
             };
             enabledToolNames.removeWhere((tool) => searchTools.contains(tool));
-            print('🔍 [Offline Mode] Filtered out search tools: ${enabledToolNames.join(', ')}');
+            print(
+              '🔍 [Offline Mode] Filtered out search tools: ${enabledToolNames.join(', ')}',
+            );
           }
-          
+
           // Convert attachments to the format expected by AgentSystem
-          final agentAttachments = attachments?.map((file) => {
-            'name': file.name,
-            'size': file.size,
-            'bytes': file.bytes,
-            'base64Data': file.bytes != null ? base64Encode(file.bytes!) : null,
-            'type': _determineFileType(file),
-            'mimeType': _determineMimeType(file),
-          }).toList();
-          
+          final agentAttachments = attachments
+              ?.map(
+                (file) => {
+                  'name': file.name,
+                  'size': file.size,
+                  'bytes': file.bytes,
+                  'base64Data': file.bytes != null
+                      ? base64Encode(file.bytes!)
+                      : null,
+                  'type': _determineFileType(file),
+                  'mimeType': _determineMimeType(file),
+                },
+              )
+              .toList();
+
           // Prepare options for offline mode
           Map<String, dynamic>? options;
           if (isOfflineMode) {
             options = {'forceBasicPlan': true};
             print('🔍 [Offline Mode] Forcing basic plan');
           }
-          
+
           // Pass through AgentSystem stream - NO YIELDING HERE
           yield* _agentSystem.processQuery(
             query: query,
@@ -769,24 +770,25 @@ Return only the questions, one per line, without numbering.''';
         return;
       }
     }
-    
+
     // Fallback to direct LLM service only if agent system is disabled
     if (!_useAgentSystem) {
       try {
         // Convert messages to OpenRouter format
-        final openRouterMessages = messages.map((msg) => {
-          'role': msg.type == 'user' ? 'user' : 'assistant',
-          'content': msg.content,
-        }).toList();
-        
+        final openRouterMessages = messages
+            .map(
+              (msg) => {
+                'role': msg.type == 'user' ? 'user' : 'assistant',
+                'content': msg.content,
+              },
+            )
+            .toList();
+
         // Add current text input if provided
         if (textInput != null && textInput.isNotEmpty) {
-          openRouterMessages.add({
-            'role': 'user',
-            'content': textInput,
-          });
+          openRouterMessages.add({'role': 'user', 'content': textInput});
         }
-        
+
         // Use direct LLM service for streaming
         await for (final chunk in _llmService.chatCompletionStream(
           messages: openRouterMessages,
@@ -801,6 +803,14 @@ Return only the questions, one per line, without numbering.''';
             llmUsed: 'direct-llm',
           );
         }
+      } on QuotaExceededException catch (e) {
+        final message = _quotaExceededMessage(e);
+        yield ChatStreamEvent.error(
+          error: message,
+          conversationId: conversationId,
+          model: model,
+          llmUsed: 'direct-llm',
+        );
       } catch (e) {
         print('🚨 Chat streaming error: $e');
         yield ChatStreamEvent.error(
@@ -827,14 +837,11 @@ Return only the questions, one per line, without numbering.''';
     Map<String, dynamic>? testInput,
   }) async {
     await _ensureInitialized();
-    
+
     if (!_useAgentSystem) {
-      return {
-        'success': false,
-        'error': 'Agent system is disabled',
-      };
+      return {'success': false, 'error': 'Agent system is disabled'};
     }
-    
+
     return await _agentService.testTool(
       toolName: toolName,
       testInput: testInput,
@@ -851,13 +858,13 @@ Return only the questions, one per line, without numbering.''';
     await _ensureInitialized();
 
     // Use the pick and upload method with a single file
-    return await _fileUploadService.pickAndUploadFiles(
-      allowMultiple: false,
-    );
+    return await _fileUploadService.pickAndUploadFiles(allowMultiple: false);
   }
 
   /// Convert ToolsConfig to list format expected by LLM service
-  List<Map<String, dynamic>>? _convertToolsConfigToList(ToolsConfig? toolsConfig) {
+  List<Map<String, dynamic>>? _convertToolsConfigToList(
+    ToolsConfig? toolsConfig,
+  ) {
     if (toolsConfig == null) return null;
 
     // Since ToolsConfig is empty in the current implementation,
@@ -865,45 +872,72 @@ Return only the questions, one per line, without numbering.''';
     return null;
   }
 
+  String _quotaExceededMessage(QuotaExceededException exception) {
+    return 'You have reached your monthly request quota of '
+        '${exception.limit} requests. Upgrade your plan to continue.';
+  }
+
   Future<void> _ensureInitialized() async {
     if (!_initialized) {
       await initialize();
     }
   }
-  
+
   /// Determine file type from PlatformFile
   String _determineFileType(PlatformFile file) {
     final extension = file.extension?.toLowerCase();
     final name = file.name.toLowerCase();
-    
+
     // Check for image files
-    if (extension != null && ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'tiff'].contains(extension)) {
+    if (extension != null &&
+        [
+          'jpg',
+          'jpeg',
+          'png',
+          'gif',
+          'webp',
+          'svg',
+          'bmp',
+          'tiff',
+        ].contains(extension)) {
       return 'image';
     }
-    
+
     // Check for PDF files
     if (extension == 'pdf') {
       return 'pdf';
     }
-    
+
     // Check for text files
-    if (extension != null && ['txt', 'md', 'json', 'csv', 'xml', 'yaml', 'yml'].contains(extension)) {
+    if (extension != null &&
+        [
+          'txt',
+          'md',
+          'json',
+          'csv',
+          'xml',
+          'yaml',
+          'yml',
+        ].contains(extension)) {
       return 'text';
     }
-    
+
     // Check by file name patterns
-    if (name.contains('.jpg') || name.contains('.jpeg') || name.contains('.png') || 
-        name.contains('.gif') || name.contains('.webp')) {
+    if (name.contains('.jpg') ||
+        name.contains('.jpeg') ||
+        name.contains('.png') ||
+        name.contains('.gif') ||
+        name.contains('.webp')) {
       return 'image';
     }
-    
+
     return 'file';
   }
-  
+
   /// Determine MIME type from PlatformFile
   String _determineMimeType(PlatformFile file) {
     final extension = file.extension?.toLowerCase();
-    
+
     if (extension != null) {
       switch (extension) {
         case 'jpg':
@@ -937,7 +971,7 @@ Return only the questions, one per line, without numbering.''';
           return 'application/octet-stream';
       }
     }
-    
+
     return 'application/octet-stream';
   }
 }
