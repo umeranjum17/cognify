@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../config/app_config.dart';
 import '../models/mode_config.dart';
 import '../theme/app_theme.dart';
 import '../services/session_cost_service.dart';
@@ -14,10 +15,13 @@ class SessionInfoWidget extends StatefulWidget {
   final Map<String, dynamic>? toolResults;
   final Map<String, dynamic>? costBreakdown;
   final int messageCount;
-  final dynamic modelCapabilities; // ModelCapabilities? - using dynamic to avoid import issues
+  final dynamic
+  modelCapabilities; // ModelCapabilities? - using dynamic to avoid import issues
   final ChatMode? mode; // NEW: Pass current mode for quick switcher
   final Function(String)? onModelSwitched; // NEW: Callback for model switch
   final Map<String, dynamic>? openRouterCredits; // NEW: OpenRouter credits data
+  final int? remainingRequests;
+  final bool isQuotaLoading;
 
   const SessionInfoWidget({
     super.key,
@@ -32,6 +36,8 @@ class SessionInfoWidget extends StatefulWidget {
     this.mode,
     this.onModelSwitched,
     this.openRouterCredits,
+    this.remainingRequests,
+    this.isQuotaLoading = false,
   });
 
   @override
@@ -50,33 +56,19 @@ class _SessionInfoWidgetState extends State<SessionInfoWidget> {
   }
 
   Future<void> _loadCreditsIfNeeded() async {
+    // Credits fetching is no longer needed
     if (widget.openRouterCredits != null) {
       _creditsData = widget.openRouterCredits;
-      return;
-    }
-
-    setState(() {
-      _isLoadingCredits = true;
-      _creditsError = null;
-    });
-
-    try {
-      final data = await UserService().getCredits();
-      setState(() {
-        _creditsData = data;
-        _isLoadingCredits = false;
-      });
-    } catch (e) {
-      setState(() {
-        _creditsError = e.toString();
-        _isLoadingCredits = false;
-      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final quotaText = _getQuotaDisplayText();
+    final quotaColor = _resolveQuotaDisplayColor(theme);
+    final iconColor =
+        quotaColor ?? theme.colorScheme.onSurface.withValues(alpha: 0.6);
 
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -85,9 +77,7 @@ class _SessionInfoWidgetState extends State<SessionInfoWidget> {
       ),
       decoration: BoxDecoration(
         color: theme.cardColor,
-        border: Border(
-          bottom: BorderSide(color: theme.dividerColor),
-        ),
+        border: Border(bottom: BorderSide(color: theme.dividerColor)),
       ),
       child: Row(
         children: [
@@ -103,14 +93,12 @@ class _SessionInfoWidgetState extends State<SessionInfoWidget> {
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
                   const SizedBox(width: 4),
-                  Expanded(
-                    child: _buildCreditsDisplay(theme),
-                  ),
+                  Expanded(child: _buildCreditsDisplay(theme)),
                 ],
               ),
             ),
           ),
-          
+
           // Cost info (simplified)
           GestureDetector(
             onTap: () => _showSessionCostPopup(context),
@@ -119,22 +107,20 @@ class _SessionInfoWidgetState extends State<SessionInfoWidget> {
               decoration: BoxDecoration(
                 color: theme.colorScheme.surface.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(4),
-                border: Border.all(color: theme.dividerColor.withValues(alpha: 0.3)),
+                border: Border.all(
+                  color: theme.dividerColor.withValues(alpha: 0.3),
+                ),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
-                    Icons.account_balance_wallet,
-                    size: 12,
-                    color: widget.llmUsed == 'local-ollama' ? Colors.green : theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                  ),
+                  Icon(Icons.message_outlined, size: 12, color: iconColor),
                   const SizedBox(width: 4),
                   Text(
-                    _getCostDisplayText(),
+                    quotaText,
                     style: theme.textTheme.bodySmall?.copyWith(
                       fontSize: 9,
-                      color: widget.llmUsed == 'local-ollama' ? Colors.green : null,
+                      color: quotaColor,
                     ),
                   ),
                 ],
@@ -170,7 +156,9 @@ class _SessionInfoWidgetState extends State<SessionInfoWidget> {
       );
     }
 
-    if (_creditsError != null || _creditsData == null || _creditsData!['success'] != true) {
+    if (_creditsError != null ||
+        _creditsData == null ||
+        _creditsData!['success'] != true) {
       return Text(
         'Credits unavailable',
         style: theme.textTheme.bodySmall?.copyWith(
@@ -181,12 +169,13 @@ class _SessionInfoWidgetState extends State<SessionInfoWidget> {
     }
 
     final credits = _creditsData!['credits'] as Map<String, dynamic>;
-    final remainingCredits = (credits['remaining_credits'] as num?)?.toDouble() ?? 0.0;
-    
-    final color = remainingCredits > 0 
+    final remainingCredits =
+        (credits['remaining_credits'] as num?)?.toDouble() ?? 0.0;
+
+    final color = remainingCredits > 0
         ? theme.colorScheme.onSurface.withValues(alpha: 0.8)
         : Colors.red;
-    
+
     return Text(
       'Balance: \$${remainingCredits.toStringAsFixed(2)}',
       style: theme.textTheme.bodySmall?.copyWith(
@@ -198,15 +187,74 @@ class _SessionInfoWidgetState extends State<SessionInfoWidget> {
     );
   }
 
-  String _getCostDisplayText() {
+  String _getQuotaDisplayText() {
     if (widget.llmUsed == 'local-ollama') {
       return 'Free (Local)';
     }
 
-    String sessionText = widget.sessionCost == 0.0 ? '\$0' : '\$${widget.sessionCost.toStringAsFixed(3)}';
-    String lastText = widget.cost == 0.0 ? '\$0' : '\$${widget.cost.toStringAsFixed(3)}';
+    if (widget.isQuotaLoading) {
+      return 'Messages: loading...';
+    }
 
-    return 'Session: $sessionText • Last: $lastText';
+    final remaining = widget.remainingRequests;
+
+    final fallback = AppSecrets.initialRequestAllocation;
+    final effectiveRemaining = ((remaining ?? fallback).clamp(
+      0,
+      1 << 30,
+    )).toInt();
+
+    if (remaining == null) {
+      // Still highlight that this is a default estimate until real quota loads.
+      return 'Messages available: ${_formatCount(effectiveRemaining)}';
+    }
+
+    if (effectiveRemaining <= 0) {
+      return 'No messages remaining';
+    }
+
+    if (effectiveRemaining == 1) {
+      return '1 message remaining';
+    }
+
+    return 'Messages remaining: ${_formatCount(effectiveRemaining)}';
+  }
+
+  Color? _resolveQuotaDisplayColor(ThemeData theme) {
+    if (widget.llmUsed == 'local-ollama') {
+      return Colors.green;
+    }
+
+    if (widget.isQuotaLoading) {
+      return theme.colorScheme.onSurface.withValues(alpha: 0.6);
+    }
+
+    final remaining = widget.remainingRequests;
+    if (remaining == null) {
+      return theme.colorScheme.onSurface.withValues(alpha: 0.7);
+    }
+
+    if (remaining <= 0) {
+      return Colors.redAccent;
+    }
+
+    return theme.colorScheme.onSurface.withValues(alpha: 0.75);
+  }
+
+  String _formatCount(int value) {
+    if (value >= 1000000) {
+      final formatted = (value / 1000000).toStringAsFixed(
+        value % 1000000 == 0 ? 0 : 1,
+      );
+      return '${formatted}M';
+    }
+    if (value >= 1000) {
+      final formatted = (value / 1000).toStringAsFixed(
+        value % 1000 == 0 ? 0 : 1,
+      );
+      return '${formatted}K';
+    }
+    return value.toString();
   }
 
   void _showSessionCostPopup(BuildContext context) {

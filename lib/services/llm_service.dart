@@ -11,6 +11,9 @@ import 'cost_service.dart';
 import 'usage_quota_service.dart';
 import 'access_service.dart';
 import '../models/message.dart';
+import '../models/mode_config.dart';
+import 'request_usage_estimator.dart';
+import 'tools.dart';
 
 /// Unified LLM service with automatic fallback and model selection
 class LLMService {
@@ -41,18 +44,29 @@ class LLMService {
     dynamic tools,
     dynamic toolChoice,
     BuildContext? context,
+    ChatMode? chatMode,
   }) async {
     await _ensureInitialized();
 
     final selectedModel = model ?? _currentModel ?? AppConfig.defaultModel;
-    final quotaUsage = await _reserveQuota(model: selectedModel);
+    final normalizedMessages = _normalizeMessages(messages);
+
+    // Inject Brave search context for supported modes before sending to provider
+    final augmentedMessages = await _maybeInjectSearchContext(
+      normalizedMessages,
+      chatMode,
+    );
+    final quotaUsage = await _reserveQuota(
+      model: selectedModel,
+      mode: chatMode,
+    );
 
     try {
       // Try primary provider first
       if (_preferredProvider == 'openrouter') {
         return await _openRouterClient.chatCompletion(
           model: selectedModel,
-          messages: _normalizeMessages(messages),
+          messages: augmentedMessages,
           temperature: temperature,
           maxTokens: maxTokens,
           stream: stream,
@@ -71,7 +85,7 @@ class LLMService {
         );
         return await _openRouterClient.chatCompletion(
           model: fallbackModel,
-          messages: _normalizeMessages(messages),
+          messages: augmentedMessages,
           temperature: temperature,
           maxTokens: maxTokens,
           stream: stream,
@@ -101,18 +115,27 @@ class LLMService {
     // Additional optional parameters accepted for compatibility; ignored here
     String? conversationId,
     bool? isDeepSearchMode,
-    bool? isOfflineMode,
     String? personality,
     String? language,
     dynamic mode,
     String? chatModel,
     String? deepsearchModel,
     bool? isEntitled,
+    ChatMode? chatMode,
   }) async* {
     await _ensureInitialized();
 
     final selectedModel = model ?? _currentModel ?? AppConfig.defaultModel;
-    final quotaUsage = await _reserveQuota(model: selectedModel);
+    final normalizedMessages = _normalizeMessages(messages);
+    final resolvedMode = chatMode ?? _resolveChatMode(mode);
+    final augmentedMessages = await _maybeInjectSearchContext(
+      normalizedMessages,
+      resolvedMode,
+    );
+    final quotaUsage = await _reserveQuota(
+      model: selectedModel,
+      mode: resolvedMode,
+    );
 
     try {
       // Try primary provider first
@@ -120,7 +143,7 @@ class LLMService {
         yield* _attachQuotaRefund(
           _openRouterClient.chatCompletionStream(
             model: selectedModel,
-            messages: _normalizeMessages(messages),
+            messages: augmentedMessages,
             temperature: temperature,
             maxTokens: maxTokens,
             tools: _convertTools(tools),
@@ -141,7 +164,7 @@ class LLMService {
         yield* _attachQuotaRefund(
           _openRouterClient.chatCompletionStream(
             model: fallbackModel,
-            messages: _normalizeMessages(messages),
+            messages: augmentedMessages,
             temperature: temperature,
             maxTokens: maxTokens,
             tools: _convertTools(tools),
@@ -185,6 +208,75 @@ class LLMService {
     }
     // Fallback empty
     return const [];
+  }
+
+  Future<List<Map<String, dynamic>>> _maybeInjectSearchContext(
+    List<Map<String, dynamic>> messages,
+    ChatMode? mode,
+  ) async {
+    if (mode == null) return messages;
+    final isSearch = mode == ChatMode.search;
+    final isAipedia = mode == ChatMode.aipedia;
+    if (!isSearch && !isAipedia) return messages;
+
+    // Derive the user query from the last user message
+    final userMessage = messages.lastWhere(
+      (m) => (m['role'] == 'user'),
+      orElse: () => const {'content': ''},
+    );
+    final query = (userMessage['content'] ?? '').toString().trim();
+    if (query.isEmpty) return messages;
+
+    try {
+      // Perform web search (and image search for AIpedia)
+      final braveTool = BraveSearchTool();
+      final imageTool = ImageSearchTool();
+
+      final webResult = await braveTool.invoke({
+        'query': query,
+        'count': isAipedia ? 6 : 5,
+      });
+
+      Map<String, dynamic>? imageResult;
+      if (isAipedia) {
+        imageResult = await imageTool.invoke({
+          'query': query,
+          'count': 3,
+        });
+      }
+
+      final contextPayload = <String, dynamic>{
+        'search': webResult,
+        if (imageResult != null) 'images': imageResult,
+        'mode': mode.name,
+        'note': 'These are pre-fetched Brave search results to ground the answer.',
+      };
+
+      final systemContextMessage = {
+        'role': 'system',
+        'content': 'Context:\n' + jsonEncode(contextPayload),
+      };
+
+      // Prepend the system context before the user message for maximal grounding
+      final augmented = <Map<String, dynamic>>[];
+      // Keep any existing system messages first
+      for (final m in messages) {
+        if (m['role'] == 'system') {
+          augmented.add(m);
+        }
+      }
+      augmented.add(systemContextMessage);
+      // Add the rest (non-system) preserving order
+      for (final m in messages) {
+        if (m['role'] != 'system') {
+          augmented.add(m);
+        }
+      }
+      return augmented;
+    } catch (e) {
+      // If search fails, proceed without augmentation
+      return messages;
+    }
   }
 
   Map<String, dynamic>? _convertTools(dynamic tools) {
@@ -309,9 +401,7 @@ class LLMService {
 
       print('🧠 Preferred provider set to: $provider');
     } else {
-      throw ArgumentError(
-        'Invalid provider: $provider. Must be "openrouter"',
-      );
+      throw ArgumentError('Invalid provider: $provider. Must be "openrouter"');
     }
   }
 
@@ -334,7 +424,10 @@ class LLMService {
     // Usage tracked silently
   }
 
-  Future<_QuotaUsage?> _reserveQuota({required String model}) async {
+  Future<_QuotaUsage?> _reserveQuota({
+    required String model,
+    ChatMode? mode,
+  }) async {
     if (AccessService.instance.isTester) {
       return null;
     }
@@ -344,38 +437,44 @@ class LLMService {
       throw StateError('No signed-in user available for quota tracking.');
     }
 
-    final tokens = await _tokensForModel(model);
-    if (tokens == 0) {
+    final estimate = await _estimateUsageForModel(model: model, mode: mode);
+
+    if (estimate.requestUnits == 0) {
       return null;
     }
 
-    print('🔒 Reserving $tokens token(s) for model $model');
+    print(
+      '🔒 Reserving ${estimate.requestUnits} request unit(s) for model $model '
+      '(≈\$${estimate.dollarCost.toStringAsFixed(4)})',
+    );
 
-    await UsageQuotaService.instance.consume(uid: user.uid, amount: tokens);
+    await UsageQuotaService.instance.consumeRequests(
+      uid: user.uid,
+      amount: estimate.requestUnits,
+      modelId: model,
+      dollarCost: estimate.dollarCost,
+      inputTokens: estimate.inputTokens,
+      outputTokens: estimate.outputTokens,
+    );
 
-    return _QuotaUsage(uid: user.uid, amount: tokens, model: model);
+    return _QuotaUsage(
+      uid: user.uid,
+      requestUnits: estimate.requestUnits,
+      model: model,
+      estimate: estimate,
+    );
   }
 
-  Future<int> _tokensForModel(String model) async {
+  Future<RequestUsageEstimate> _estimateUsageForModel({
+    required String model,
+    ChatMode? mode,
+  }) async {
     try {
       final pricing = await CostService.getModelPricingById(model);
-      if (pricing == null) {
-        return 1;
-      }
-
-      final inputPrice = (pricing['input'] ?? 0).toDouble();
-      final outputPrice = (pricing['output'] ?? 0).toDouble();
-      final totalPrice = inputPrice + outputPrice;
-
-      if (totalPrice <= 0) {
-        return 0;
-      }
-
-      final tokens = totalPrice.ceil();
-      return tokens <= 0 ? 1 : tokens;
+      return RequestUsageEstimator.estimate(pricing: pricing, mode: mode);
     } catch (e) {
-      print('⚠️ Failed to determine token cost for $model: $e');
-      return 1;
+      print('⚠️ Failed to determine request usage for $model: $e');
+      return const RequestUsageEstimate.free();
     }
   }
 
@@ -383,7 +482,7 @@ class LLMService {
     if (usage == null) return;
     await UsageQuotaService.instance.refund(
       uid: usage.uid,
-      amount: usage.amount,
+      amount: usage.requestUnits,
     );
   }
 
@@ -402,17 +501,42 @@ class LLMService {
           if (!refunded) {
             refunded = true;
             print(
-              '↩️ Refunding ${usage.amount} token(s) for model ${usage.model} '
+              '↩️ Refunding ${usage.requestUnits} request unit(s) for model ${usage.model} '
               'due to stream error: $error',
             );
             UsageQuotaService.instance
-                .refund(uid: usage.uid, amount: usage.amount)
+                .refund(uid: usage.uid, amount: usage.requestUnits)
                 .catchError((_) {});
           }
           sink.addError(error, stackTrace);
         },
       ),
     );
+  }
+
+  ChatMode? _resolveChatMode(dynamic mode) {
+    if (mode == null) {
+      return null;
+    }
+    if (mode is ChatMode) {
+      return mode;
+    }
+    if (mode is String) {
+      final normalized = mode.toLowerCase();
+      for (final candidate in ChatMode.values) {
+        final enumName = candidate.name.toLowerCase();
+        final enumString = candidate.toString().split('.').last.toLowerCase();
+        final displayName = ModeConfigManager.getModeDisplayName(
+          candidate,
+        ).toLowerCase();
+        if (normalized == enumName ||
+            normalized == enumString ||
+            normalized == displayName) {
+          return candidate;
+        }
+      }
+    }
+    return null;
   }
 
   Future<void> _ensureInitialized() async {
@@ -467,11 +591,13 @@ class LLMService {
 class _QuotaUsage {
   const _QuotaUsage({
     required this.uid,
-    required this.amount,
+    required this.requestUnits,
     required this.model,
+    required this.estimate,
   });
 
   final String uid;
-  final int amount;
+  final int requestUnits;
   final String model;
+  final RequestUsageEstimate estimate;
 }

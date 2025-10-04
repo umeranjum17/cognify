@@ -31,6 +31,7 @@ import '../config/model_registry.dart';
 import '../providers/subscription_provider.dart';
 import '../providers/app_access_provider.dart';
 import '../providers/tab_provider.dart';
+import '../providers/usage_quota_provider.dart';
 import '../theme/app_theme.dart';
 import '../utils/logger.dart';
 import '../widgets/cost_display_widget.dart';
@@ -108,7 +109,6 @@ class _EditorScreenState extends State<EditorScreen> {
   String _selectedLanguage = 'English';
 
   bool _isDeepSearchMode = false;
-  bool _isOfflineMode = true;
   String? _currentMilestone;
   String? _currentPhase;
   double? _currentProgress;
@@ -492,7 +492,9 @@ class _EditorScreenState extends State<EditorScreen> {
     final isDark = theme.brightness == Brightness.dark;
     final modelName = _formatModelName(_selectedModel);
     final isFree = _isModelFree(_selectedModel);
-    final allowModelSelection = ModeRegistry.getSpec(_currentMode).allowModelSelection;
+    final allowModelSelection = ModeRegistry.getSpec(
+      _currentMode,
+    ).allowModelSelection;
 
     return GestureDetector(
       onTap: allowModelSelection ? () => _showModelQuickSwitcher() : null,
@@ -771,8 +773,10 @@ class _EditorScreenState extends State<EditorScreen> {
             final finalLastCost =
                 costData?.lastMessageCost ?? _lastOperationCost;
 
-            return Consumer<ModeConfigProvider>(
-              builder: (context, modeConfigProvider, child) {
+            return Consumer2<ModeConfigProvider, UsageQuotaProvider>(
+              builder: (context, modeConfigProvider, quotaProvider, child) {
+                final usageQuota = quotaProvider.quota;
+
                 return SessionInfoWidget(
                   llmUsed: _lastUsedLLM,
                   modelName: _lastUsedModel ?? _getModelForCurrentMode(),
@@ -808,6 +812,8 @@ class _EditorScreenState extends State<EditorScreen> {
                     LLMService().setCurrentModel(modelId);
                     _checkModelCapabilities();
                   },
+                  remainingRequests: usageQuota?.remaining,
+                  isQuotaLoading: quotaProvider.isLoading,
                 );
               },
             );
@@ -1396,170 +1402,6 @@ class _EditorScreenState extends State<EditorScreen> {
                               Padding(
                                 padding: const EdgeInsets.only(left: 4),
                                 child: _buildModeDropdown(),
-                              ),
-
-                            // Globe toggle (only in normal chat mode) - PREMIUM FEATURE
-                            if (_selectedSourceIds.isEmpty &&
-                                FeatureAccess.canShow('search_agents'))
-                              Builder(
-                                builder: (context) {
-                                  final hasAccess =
-                                      FeatureAccess.isEnabledForUser(
-                                        context,
-                                        'search_agents',
-                                      );
-
-                                  return GestureDetector(
-                                    onTap: () async {
-                                      if (hasAccess) {
-                                        // Check if trying to turn off globe in DeepSearch mode
-                                        if (!_isOfflineMode &&
-                                            _isDeepSearchMode) {
-                                          // Show warning toast when turning off globe in DeepSearch mode
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            SnackBar(
-                                              content: Text(
-                                                'DeepSearch requires globe search to be enabled',
-                                              ),
-                                              backgroundColor: Colors.orange,
-                                              behavior:
-                                                  SnackBarBehavior.floating,
-                                            ),
-                                          );
-                                          return;
-                                        }
-
-                                        setState(() {
-                                          _isOfflineMode = !_isOfflineMode;
-                                        });
-                                      } else {
-                                        // Direct RevenueCat purchase flow
-                                        try {
-                                          final ok =
-                                              await PaywallCoordinator.showNativePurchaseFlow(
-                                                context,
-                                              );
-                                          if (ok) {
-                                            // Flip the globe or refresh UI as premium is now active
-                                            setState(() {
-                                              _isOfflineMode =
-                                                  false; // enable online tools
-                                            });
-                                            ScaffoldMessenger.of(
-                                              context,
-                                            ).showSnackBar(
-                                              SnackBar(
-                                                content: Text(
-                                                  'Premium unlocked',
-                                                ),
-                                              ),
-                                            );
-                                          }
-                                        } catch (e) {
-                                          // Optional: show a small toast/snackbar on fail
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            SnackBar(
-                                              content: Text(
-                                                'Purchase failed: $e',
-                                              ),
-                                            ),
-                                          );
-                                        }
-                                      }
-                                    },
-                                    child: Tooltip(
-                                      message: hasAccess
-                                          ? (_isOfflineMode
-                                                ? 'Offline Mode (No Internet Tools)'
-                                                : 'Online Mode (All Tools Available)')
-                                          : 'Web Search - Premium Feature',
-                                      child: Stack(
-                                        children: [
-                                          Container(
-                                            padding: const EdgeInsets.all(4),
-                                            margin: const EdgeInsets.only(
-                                              left: 6,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color:
-                                                  hasAccess && !_isOfflineMode
-                                                  ? (theme.brightness ==
-                                                            Brightness.dark
-                                                        ? AppColors.darkAccent
-                                                              .withValues(
-                                                                alpha: 0.2,
-                                                              )
-                                                        : AppColors.lightAccent
-                                                              .withValues(
-                                                                alpha: 0.2,
-                                                              ))
-                                                  : Colors.transparent,
-                                              borderRadius:
-                                                  BorderRadius.circular(6),
-                                              border:
-                                                  hasAccess && !_isOfflineMode
-                                                  ? Border.all(
-                                                      color:
-                                                          theme.brightness ==
-                                                              Brightness.dark
-                                                          ? AppColors.darkAccent
-                                                                .withValues(
-                                                                  alpha: 0.3,
-                                                                )
-                                                          : AppColors
-                                                                .lightAccent
-                                                                .withValues(
-                                                                  alpha: 0.3,
-                                                                ),
-                                                      width: 1,
-                                                    )
-                                                  : null,
-                                            ),
-                                            child: Icon(
-                                              Icons.public,
-                                              size: 16,
-                                              color:
-                                                  hasAccess && !_isOfflineMode
-                                                  ? (theme.brightness ==
-                                                            Brightness.dark
-                                                        ? AppColors.darkAccent
-                                                        : AppColors.lightAccent)
-                                                  : (theme.brightness ==
-                                                            Brightness.dark
-                                                        ? AppColors
-                                                              .darkTextMuted
-                                                        : AppColors
-                                                              .lightTextMuted),
-                                            ),
-                                          ),
-                                          if (!hasAccess)
-                                            Positioned(
-                                              right: 0,
-                                              top: 0,
-                                              child: Container(
-                                                width: 8,
-                                                height: 8,
-                                                decoration: BoxDecoration(
-                                                  color: Colors.orange,
-                                                  borderRadius:
-                                                      BorderRadius.circular(4),
-                                                ),
-                                                child: const Icon(
-                                                  Icons.lock,
-                                                  size: 6,
-                                                  color: Colors.white,
-                                                ),
-                                              ),
-                                            ),
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                },
                               ),
 
                             const Spacer(),
@@ -2265,14 +2107,14 @@ class _EditorScreenState extends State<EditorScreen> {
               _buildModeDropdownItem(
                 icon: Icons.search,
                 title: 'Search',
-                description: 'Perplexity-style quick answers (Gemini Flash, fixed)',
+                description:
+                    'Perplexity-style quick answers (Gemini Flash, fixed)',
                 isSelected: _currentMode == ChatMode.search,
                 onTap: () {
                   setState(() {
                     _isDeepSearchMode = false; // not deepsearch
                     _currentMode = ChatMode.search;
                     _showModeDropdown = false;
-                    _isOfflineMode = false; // ensure online tools
                   });
                   _applyModePresets(_currentMode);
                   _loadModelForCurrentMode();
@@ -2295,7 +2137,6 @@ class _EditorScreenState extends State<EditorScreen> {
                     _isDeepSearchMode = false; // not deepsearch
                     _currentMode = ChatMode.aipedia;
                     _showModeDropdown = false;
-                    _isOfflineMode = false; // ensure online tools
                   });
                   _applyModePresets(_currentMode);
                   _loadModelForCurrentMode();
@@ -2536,7 +2377,9 @@ class _EditorScreenState extends State<EditorScreen> {
         );
         // Fallback: use registry-provided capabilities (no model-specific heuristics)
         setState(() {
-          _currentModelCapabilities = ModelRegistry.getModelCapabilities(currentModel);
+          _currentModelCapabilities = ModelRegistry.getModelCapabilities(
+            currentModel,
+          );
         });
         Logger.debug(
           '🔍 Using registry fallback capabilities for model: $currentModel',
@@ -2817,9 +2660,7 @@ class _EditorScreenState extends State<EditorScreen> {
       // Set fallback models if API fails using registry
       setState(() {
         final registryModels = ModelRegistry.getAllModels();
-        _availableModels = registryModels.isNotEmpty
-            ? registryModels
-            : [];
+        _availableModels = registryModels.isNotEmpty ? registryModels : [];
       });
 
       // Try to load saved model even with fallback models
@@ -3199,7 +3040,10 @@ class _EditorScreenState extends State<EditorScreen> {
     });
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('toolsConfig', jsonEncode(spec.toolsPreset.toJson()));
+      await prefs.setString(
+        'toolsConfig',
+        jsonEncode(spec.toolsPreset.toJson()),
+      );
     } catch (_) {}
 
     // Enforce fixed model if specified
@@ -3790,28 +3634,29 @@ class _EditorScreenState extends State<EditorScreen> {
       _debugModelState();
 
       final stream = _llmService.chatCompletionStream(
-              model: modelToUse,
-              messages: _messages.where((m) => m.isProcessing != true).toList(),
-              tools: _toolsConfig,
-              conversationId: _currentConversationId,
-              isDeepSearchMode: _isDeepSearchMode,
-              isOfflineMode: _isOfflineMode,
-              personality: _selectedPersonality,
-              language: _selectedLanguage,
-              mode: currentMode,
-              chatModel: chatModel,
-              deepsearchModel: deepsearchModel,
-              isEntitled: context.read<AppAccessProvider>().hasPremiumAccess,
-            );
+        model: modelToUse,
+        messages: _messages.where((m) => m.isProcessing != true).toList(),
+        tools: _toolsConfig,
+        conversationId: _currentConversationId,
+        isDeepSearchMode: _isDeepSearchMode,
+        personality: _selectedPersonality,
+        language: _selectedLanguage,
+        mode: currentMode,
+        chatModel: chatModel,
+        deepsearchModel: deepsearchModel,
+        isEntitled: context.read<AppAccessProvider>().hasPremiumAccess,
+        chatMode: _currentMode,
+      );
 
-      await for (final event in stream) {
+      await for (final eventMap in stream) {
         // Check if operation was cancelled
         if (_isCancelled) {
           print('🚫 Breaking stream loop due to cancellation');
           break;
         }
 
-        // Handle both Map<String, dynamic> (legacy) and ChatStreamEvent (unified) formats
+        // Convert Map to ChatStreamEvent
+        final event = ChatStreamEvent.fromMap(eventMap);
 
         // Handle unified ChatStreamEvent
         switch (event.type) {
@@ -3985,7 +3830,6 @@ class _EditorScreenState extends State<EditorScreen> {
                   generationIds
                       .map((g) => Map<String, dynamic>.from(g))
                       .toList(),
-                  sessionId: sessionId ?? finalConversationId,
                 );
               }
             }

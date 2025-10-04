@@ -19,23 +19,6 @@ class UserService {
   factory UserService() => _instance;
   UserService._internal();
 
-  /// Fetch OpenRouter credits (wrapped for UI expectations)
-  Future<Map<String, dynamic>> getCredits() async {
-    try {
-      final client = OpenRouterClient();
-      final credits = await client.getCredits();
-      if (credits == null) {
-        return {'success': false};
-      }
-      return {
-        'success': true,
-        'credits': credits,
-      };
-    } catch (e) {
-      Logger.error('❌ [USER] Error fetching credits: $e', tag: 'UserService');
-      return {'success': false, 'error': e.toString()};
-    }
-  }
 
   /// Export user data (for backup/migration)
   Map<String, dynamic> exportUserData() {

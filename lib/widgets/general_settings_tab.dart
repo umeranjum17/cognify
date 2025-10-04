@@ -8,6 +8,7 @@ import '../providers/app_access_provider.dart';
 import '../providers/usage_quota_provider.dart';
 import '../config/app_config.dart';
 import '../theme/app_theme.dart';
+import '../services/data_deletion_service.dart';
 
 class GeneralSettingsTab extends StatefulWidget {
   const GeneralSettingsTab({super.key});

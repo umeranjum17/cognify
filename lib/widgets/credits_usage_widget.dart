@@ -246,22 +246,10 @@ class _CreditsUsageWidgetState extends State<CreditsUsageWidget> {
   }
 
   Future<void> _loadCredits() async {
+    // Credits fetching is no longer needed
     setState(() {
-      _isLoading = true;
-      _error = null;
+      _isLoading = false;
+      _creditsData = null;
     });
-
-    try {
-      final data = await UserService().getCredits();
-      setState(() {
-        _creditsData = data;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _error = e.toString();
-        _isLoading = false;
-      });
-    }
   }
 }

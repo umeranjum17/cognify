@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../models/mode_config.dart';
 import '../services/llm_service.dart'; // Added import for LLMService
 import '../services/model_service.dart';
+import '../services/request_usage_estimator.dart';
 import '../theme/app_theme.dart';
 
 class ModelSelectionScreen extends StatefulWidget {
@@ -48,9 +49,13 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: isDark ? AppColors.darkBackground : AppColors.lightBackground,
+      backgroundColor: isDark
+          ? AppColors.darkBackground
+          : AppColors.lightBackground,
       appBar: AppBar(
-        backgroundColor: isDark ? AppColors.darkBackground : AppColors.lightBackground,
+        backgroundColor: isDark
+            ? AppColors.darkBackground
+            : AppColors.lightBackground,
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
@@ -77,12 +82,14 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
               child: _isLoading
                   ? Center(
                       child: CircularProgressIndicator(
-                        color: isDark ? AppColors.darkAccent : AppColors.lightAccent,
+                        color: isDark
+                            ? AppColors.darkAccent
+                            : AppColors.lightAccent,
                       ),
                     )
                   : _error.isNotEmpty
-                    ? _buildErrorState(theme)
-                    : _buildModelsList(theme, isDark),
+                  ? _buildErrorState(theme)
+                  : _buildModelsList(theme, isDark),
             ),
           ],
         ),
@@ -113,17 +120,24 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
         final name = (model['name'] ?? '').toString().toLowerCase();
         final id = (model['id'] ?? '').toString().toLowerCase();
         final provider = (model['provider'] ?? '').toString().toLowerCase();
-        final description = (model['description'] ?? '').toString().toLowerCase();
+        final description = (model['description'] ?? '')
+            .toString()
+            .toLowerCase();
         final query = _searchQuery.toLowerCase();
 
-        return name.contains(query) || id.contains(query) || provider.contains(query) || description.contains(query);
+        return name.contains(query) ||
+            id.contains(query) ||
+            provider.contains(query) ||
+            description.contains(query);
       }).toList();
     }
 
     // Provider filter (multi-select)
     if (_selectedProviders.isNotEmpty) {
       filtered = filtered.where((model) {
-        final provider = model['provider']?.toString() ?? model['top_provider']?['name']?.toString();
+        final provider =
+            model['provider']?.toString() ??
+            model['top_provider']?['name']?.toString();
         return _selectedProviders.contains(provider);
       }).toList();
     }
@@ -145,8 +159,10 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
         // Additional fallback: check pricing if available
         final pricing = model['pricing'] as Map<String, dynamic>?;
         if (pricing != null) {
-          final inputCost = double.tryParse(pricing['input']?.toString() ?? '0') ?? 0;
-          final outputCost = double.tryParse(pricing['output']?.toString() ?? '0') ?? 0;
+          final inputCost =
+              double.tryParse(pricing['input']?.toString() ?? '0') ?? 0;
+          final outputCost =
+              double.tryParse(pricing['output']?.toString() ?? '0') ?? 0;
           if (inputCost == 0 && outputCost == 0) {
             return true;
           }
@@ -160,13 +176,17 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
     if (_selectedModalities.isNotEmpty) {
       filtered = filtered.where((model) {
         // Use the same improved modalities extraction as in _buildModelCard
-        final inputModalities = model['inputModalities'] as List<dynamic>? ?? 
-                               model['input_modalities'] as List<dynamic>? ?? 
-                               model['architecture']?['input_modalities'] as List<dynamic>? ?? [];
-        
+        final inputModalities =
+            model['inputModalities'] as List<dynamic>? ??
+            model['input_modalities'] as List<dynamic>? ??
+            model['architecture']?['input_modalities'] as List<dynamic>? ??
+            [];
+
         // Convert to string list and normalize
-        final modalities = inputModalities.map((modality) => modality.toString().toLowerCase()).toList();
-        
+        final modalities = inputModalities
+            .map((modality) => modality.toString().toLowerCase())
+            .toList();
+
         // If no modalities found, assume text-only
         final modelModalities = modalities.isEmpty ? ['text'] : modalities;
 
@@ -187,7 +207,9 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
 
     // Sorting by name
     filtered.sort((a, b) {
-      return (a['name'] ?? '').toString().compareTo((b['name'] ?? '').toString());
+      return (a['name'] ?? '').toString().compareTo(
+        (b['name'] ?? '').toString(),
+      );
     });
 
     setState(() {
@@ -206,7 +228,9 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: isDark ? AppColors.darkError.withValues(alpha: 0.1) : AppColors.lightError.withValues(alpha: 0.1),
+                color: isDark
+                    ? AppColors.darkError.withValues(alpha: 0.1)
+                    : AppColors.lightError.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Icon(
@@ -227,7 +251,9 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
             Text(
               _error,
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                color: isDark
+                    ? AppColors.darkTextSecondary
+                    : AppColors.lightTextSecondary,
                 fontSize: 16,
               ),
               textAlign: TextAlign.center,
@@ -238,9 +264,16 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
               icon: const Icon(Icons.refresh),
               label: const Text('Retry'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: isDark ? AppColors.darkAccent : AppColors.lightAccent,
-                foregroundColor: isDark ? AppColors.darkButtonText : AppColors.lightButtonText,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                backgroundColor: isDark
+                    ? AppColors.darkAccent
+                    : AppColors.lightAccent,
+                foregroundColor: isDark
+                    ? AppColors.darkButtonText
+                    : AppColors.lightButtonText,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 16,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -287,7 +320,9 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
               color: isDark ? AppColors.darkInput : AppColors.lightInput,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: isDark ? AppColors.darkInputBorder : AppColors.lightInputBorder,
+                color: isDark
+                    ? AppColors.darkInputBorder
+                    : AppColors.lightInputBorder,
                 width: 1,
               ),
             ),
@@ -295,16 +330,23 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
               decoration: InputDecoration(
                 hintText: 'Search models...',
                 hintStyle: TextStyle(
-                  color: isDark ? AppColors.darkInputPlaceholder : AppColors.lightInputPlaceholder,
+                  color: isDark
+                      ? AppColors.darkInputPlaceholder
+                      : AppColors.lightInputPlaceholder,
                   fontSize: 16,
                 ),
                 prefixIcon: Icon(
                   Icons.search,
                   size: 20,
-                  color: isDark ? AppColors.darkInputPlaceholder : AppColors.lightInputPlaceholder,
+                  color: isDark
+                      ? AppColors.darkInputPlaceholder
+                      : AppColors.lightInputPlaceholder,
                 ),
                 border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
+                ),
               ),
               style: TextStyle(
                 color: isDark ? AppColors.darkText : AppColors.lightText,
@@ -324,7 +366,9 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
               children: [
                 _buildModernFilterChip(
                   'Providers',
-                  _selectedProviders.isEmpty ? 'All' : '${_selectedProviders.length} selected',
+                  _selectedProviders.isEmpty
+                      ? 'All'
+                      : '${_selectedProviders.length} selected',
                   Icons.business,
                   () => _showProviderFilter(context, theme, isDark),
                   theme,
@@ -333,7 +377,9 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
                 const SizedBox(width: 12),
                 _buildModernFilterChip(
                   'Modalities',
-                  _selectedModalities.isEmpty ? 'All' : '${_selectedModalities.length} selected',
+                  _selectedModalities.isEmpty
+                      ? 'All'
+                      : '${_selectedModalities.length} selected',
                   Icons.category,
                   () => _showModalityFilter(context, theme, isDark),
                   theme,
@@ -363,7 +409,9 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
               child: Text(
                 'Showing ${_filteredModels.length} models',
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
+                  color: isDark
+                      ? AppColors.darkTextMuted
+                      : AppColors.lightTextMuted,
                   fontSize: 13,
                 ),
               ),
@@ -385,7 +433,9 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.darkAccent.withValues(alpha: 0.15) : AppColors.lightAccent.withValues(alpha: 0.1),
+                  color: isDark
+                      ? AppColors.darkAccent.withValues(alpha: 0.15)
+                      : AppColors.lightAccent.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
@@ -413,7 +463,9 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
                           ? 'Lightning fast responses with minimal search'
                           : 'Ultra-comprehensive research with enhanced visual content',
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
+                        color: theme.textTheme.bodyMedium?.color?.withValues(
+                          alpha: 0.6,
+                        ),
                         fontSize: 14,
                         height: 1.4,
                       ),
@@ -428,41 +480,50 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
     );
   }
 
-  Widget _buildModelCard(Map<String, dynamic> model, bool isSelected, ThemeData theme, bool isDark) {
+  Widget _buildModelCard(
+    Map<String, dynamic> model,
+    bool isSelected,
+    ThemeData theme,
+    bool isDark,
+  ) {
     // Improved modalities extraction - handle multiple possible field names and data structures
     List<String> modalities = [];
-    final inputModalities = model['inputModalities'] as List<dynamic>? ?? 
-                           model['input_modalities'] as List<dynamic>? ?? 
-                           model['architecture']?['input_modalities'] as List<dynamic>? ?? [];
-    
+    final inputModalities =
+        model['inputModalities'] as List<dynamic>? ??
+        model['input_modalities'] as List<dynamic>? ??
+        model['architecture']?['input_modalities'] as List<dynamic>? ??
+        [];
+
     // Convert to string list and normalize
-    modalities = inputModalities.map((modality) => modality.toString().toLowerCase()).toList();
-    
+    modalities = inputModalities
+        .map((modality) => modality.toString().toLowerCase())
+        .toList();
+
     // If no modalities found, assume text-only
     if (modalities.isEmpty) {
       modalities = ['text'];
     }
-    
+
     // Debug logging for modalities
-    final modelId = model['id'] ?? model['canonical_slug'] ?? model['name'] ?? 'unknown';
+    final modelId =
+        model['id'] ?? model['canonical_slug'] ?? model['name'] ?? 'unknown';
     print('🔍 Model $modelId modalities: $modalities (raw: $inputModalities)');
-    
+
     final pricing = model['pricing'] as Map<String, dynamic>?;
-    
-    // Debug logging for pricing
-    if (pricing != null) {
-      print('💰 Model $modelId pricing: $pricing');
-    }
-    
-    final isFree = model['isFree'] == true || 
-                  (pricing != null && 
-                   (pricing['input'] == 0.0 && pricing['output'] == 0.0) ||
-                   ((pricing?['prompt']?.toString() ?? '0') == '0' && (pricing?['completion']?.toString() ?? '0') == '0'));
-    final provider = model['provider'] as String? ?? model['top_provider']?['name'] as String?;
+    final usageEstimate = RequestUsageEstimator.estimate(
+      pricing: pricing,
+      mode: widget.mode,
+    );
+
+    final isFree = model['isFree'] == true || usageEstimate.isFree;
+    final provider =
+        model['provider'] as String? ??
+        model['top_provider']?['name'] as String?;
     final accentColor = isDark ? AppColors.darkAccent : AppColors.lightAccent;
 
     // Use the correct model identifier - try id first, then canonical_slug
-    final modelIdForSelection = model['id'] ?? model['canonical_slug'] ?? model['name'] ?? 'unknown';
+    final modelIdForSelection =
+        model['id'] ?? model['canonical_slug'] ?? model['name'] ?? 'unknown';
 
     return GestureDetector(
       onTap: () => _selectModel(modelIdForSelection),
@@ -471,16 +532,14 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
         decoration: BoxDecoration(
           color: isDark ? AppColors.darkCard : AppColors.lightCard,
           borderRadius: BorderRadius.circular(16),
-          border: isSelected
-              ? Border.all(color: accentColor, width: 2)
-              : null,
+          border: isSelected ? Border.all(color: accentColor, width: 2) : null,
           boxShadow: isSelected
               ? [
                   BoxShadow(
                     color: accentColor.withValues(alpha: 0.1),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
-                  )
+                  ),
                 ]
               : null,
         ),
@@ -549,7 +608,9 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
                 Text(
                   model['description'],
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                    color: isDark
+                        ? AppColors.darkTextSecondary
+                        : AppColors.lightTextSecondary,
                     height: 1.5,
                     fontSize: 14,
                   ),
@@ -565,39 +626,68 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
                   // Always show Text modality since all models support text
                   _buildFeatureChip(
                     'Text',
-                    bgColor: isDark ? AppColors.darkBackgroundLight : AppColors.lightBackgroundDark,
-                    textColor: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                    bgColor: isDark
+                        ? AppColors.darkBackgroundLight
+                        : AppColors.lightBackgroundDark,
+                    textColor: isDark
+                        ? AppColors.darkTextSecondary
+                        : AppColors.lightTextSecondary,
                   ),
                   // Show Images if model supports it
                   if (modalities.contains('image'))
                     _buildFeatureChip(
                       'Images',
-                      bgColor: isDark ? AppColors.darkInfo.withValues(alpha: 0.2) : AppColors.lightInfo.withValues(alpha: 0.15),
-                      textColor: isDark ? AppColors.darkInfo : AppColors.lightInfo,
+                      bgColor: isDark
+                          ? AppColors.darkInfo.withValues(alpha: 0.2)
+                          : AppColors.lightInfo.withValues(alpha: 0.15),
+                      textColor: isDark
+                          ? AppColors.darkInfo
+                          : AppColors.lightInfo,
                     ),
                   // Show Files if model supports it
                   if (modalities.contains('file'))
                     _buildFeatureChip(
                       'Files',
-                      bgColor: isDark ? AppColors.darkAccentTertiary.withValues(alpha: 0.2) : AppColors.lightAccentTertiary.withValues(alpha: 0.15),
-                      textColor: isDark ? AppColors.darkAccentTertiary : AppColors.lightAccentTertiary,
+                      bgColor: isDark
+                          ? AppColors.darkAccentTertiary.withValues(alpha: 0.2)
+                          : AppColors.lightAccentTertiary.withValues(
+                              alpha: 0.15,
+                            ),
+                      textColor: isDark
+                          ? AppColors.darkAccentTertiary
+                          : AppColors.lightAccentTertiary,
                     ),
                   // Show pricing
                   _buildFeatureChip(
                     _getPriceDisplay(pricing),
                     bgColor: isFree
-                        ? (isDark ? AppColors.darkSuccess.withValues(alpha: 0.2) : AppColors.lightSuccess.withValues(alpha: 0.15))
-                        : (isDark ? AppColors.darkWarning.withValues(alpha: 0.2) : AppColors.lightWarning.withValues(alpha: 0.15)),
+                        ? (isDark
+                              ? AppColors.darkSuccess.withValues(alpha: 0.2)
+                              : AppColors.lightSuccess.withValues(alpha: 0.15))
+                        : (isDark
+                              ? AppColors.darkWarning.withValues(alpha: 0.2)
+                              : AppColors.lightWarning.withValues(alpha: 0.15)),
                     textColor: isFree
-                        ? (isDark ? AppColors.darkSuccess : AppColors.lightSuccess)
-                        : (isDark ? AppColors.darkWarning : AppColors.lightWarning),
+                        ? (isDark
+                              ? AppColors.darkSuccess
+                              : AppColors.lightSuccess)
+                        : (isDark
+                              ? AppColors.darkWarning
+                              : AppColors.lightWarning),
                   ),
                   // Show context length if available
-                  if (model['contextLength'] != null || model['context_length'] != null)
+                  if (model['contextLength'] != null ||
+                      model['context_length'] != null)
                     _buildFeatureChip(
                       '${((model['contextLength'] ?? model['context_length'] ?? 0) / 1000).round()}K',
-                      bgColor: isDark ? AppColors.darkAccentSecondary.withValues(alpha: 0.2) : AppColors.lightAccentSecondary.withValues(alpha: 0.15),
-                      textColor: isDark ? AppColors.darkAccentSecondary : AppColors.lightAccentSecondary,
+                      bgColor: isDark
+                          ? AppColors.darkAccentSecondary.withValues(alpha: 0.2)
+                          : AppColors.lightAccentSecondary.withValues(
+                              alpha: 0.15,
+                            ),
+                      textColor: isDark
+                          ? AppColors.darkAccentSecondary
+                          : AppColors.lightAccentSecondary,
                     ),
                 ],
               ),
@@ -608,10 +698,6 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
     );
   }
 
-
-
-
-
   Widget _buildModelsList(ThemeData theme, bool isDark) {
     if (_filteredModels.isEmpty) {
       return Center(
@@ -621,13 +707,17 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: isDark ? AppColors.darkBackgroundLight : AppColors.lightBackgroundLight,
+                color: isDark
+                    ? AppColors.darkBackgroundLight
+                    : AppColors.lightBackgroundLight,
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Icon(
                 Icons.search_off,
                 size: 48,
-                color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
+                color: isDark
+                    ? AppColors.darkTextMuted
+                    : AppColors.lightTextMuted,
               ),
             ),
             const SizedBox(height: 24),
@@ -642,7 +732,9 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
             Text(
               'Try adjusting your search or filters',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                color: isDark
+                    ? AppColors.darkTextSecondary
+                    : AppColors.lightTextSecondary,
                 fontSize: 16,
               ),
             ),
@@ -660,7 +752,11 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
             itemCount: _filteredModels.length,
             itemBuilder: (context, index) {
               final model = _filteredModels[index];
-              final modelId = model['id'] ?? model['canonical_slug'] ?? model['name'] ?? 'unknown';
+              final modelId =
+                  model['id'] ??
+                  model['canonical_slug'] ??
+                  model['name'] ??
+                  'unknown';
               final isSelected = modelId == widget.selectedModel;
 
               return _buildModelCard(model, isSelected, theme, isDark);
@@ -699,7 +795,9 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
             Icon(
               icon,
               size: 16,
-              color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+              color: isDark
+                  ? AppColors.darkTextSecondary
+                  : AppColors.lightTextSecondary,
             ),
             const SizedBox(width: 8),
             Flexible(
@@ -714,7 +812,9 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
-                      color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
+                      color: isDark
+                          ? AppColors.darkTextMuted
+                          : AppColors.lightTextMuted,
                     ),
                   ),
                   Text(
@@ -733,7 +833,9 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
             Icon(
               Icons.keyboard_arrow_down,
               size: 16,
-              color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
+              color: isDark
+                  ? AppColors.darkTextMuted
+                  : AppColors.lightTextMuted,
             ),
           ],
         ),
@@ -757,7 +859,9 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           color: isActive
-              ? (isDark ? AppColors.darkAccent.withValues(alpha: 0.15) : AppColors.lightAccent.withValues(alpha: 0.1))
+              ? (isDark
+                    ? AppColors.darkAccent.withValues(alpha: 0.15)
+                    : AppColors.lightAccent.withValues(alpha: 0.1))
               : (isDark ? AppColors.darkCard : AppColors.lightCard),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
@@ -776,7 +880,9 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
               size: 16,
               color: isActive
                   ? (isDark ? AppColors.darkAccent : AppColors.lightAccent)
-                  : (isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary),
+                  : (isDark
+                        ? AppColors.darkTextSecondary
+                        : AppColors.lightTextSecondary),
             ),
             const SizedBox(width: 8),
             Text(
@@ -796,113 +902,46 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
   }
 
   String _getPriceDisplay(Map<String, dynamic>? pricing) {
-    if (pricing == null) return 'Free';
+    final estimate = RequestUsageEstimator.estimate(
+      pricing: pricing,
+      mode: widget.mode,
+    );
 
-    // Handle different pricing field names
-    final input = pricing['input'] ?? pricing['prompt'];
-    final output = pricing['output'] ?? pricing['completion'];
-
-    // Debug logging for pricing calculation
-
-    // Check if it's free (both input and output are 0)
-    if ((input == 0 || input == 0.0) && (output == 0 || output == 0.0)) {
-      return 'Free';
-    }
-
-    // Check if pricing is unavailable (-1 values)
-    if (input == -1 || output == -1) {
-      return 'Paid';
-    }
-
-    // Convert to per-million tokens for better readability
-    if (input is num && output is num) {
-      // The pricing values are now per million tokens from the API processing
-      final inputPerMillion = input.toStringAsFixed(2);
-      final outputPerMillion = output.toStringAsFixed(2);
-
-      print('💰 Calculated per-million - input: $inputPerMillion, output: $outputPerMillion');
-
-      // If both are the same, show single price
-      if (inputPerMillion == outputPerMillion) {
-        return '\$$inputPerMillion/M';
-      }
-
-      // Show input/output prices in a clearer format
-      return 'In: \$$inputPerMillion/M\nOut: \$$outputPerMillion/M';
-    }
-
-    // Handle string values (some APIs return strings)
-    if (input is String && output is String) {
-      final inputNum = double.tryParse(input) ?? 0.0;
-      final outputNum = double.tryParse(output) ?? 0.0;
-      
-      if (inputNum == 0.0 && outputNum == 0.0) {
-        return 'Free';
-      }
-      
-      // The pricing values are now per million tokens from the API processing
-      final inputPerMillion = inputNum.toStringAsFixed(2);
-      final outputPerMillion = outputNum.toStringAsFixed(2);
-      
-      
-      if (inputPerMillion == outputPerMillion) {
-        return '\$$inputPerMillion/M';
-      }
-      
-      return 'In: \$$inputPerMillion/M\nOut: \$$outputPerMillion/M';
-    }
-
-    // Handle mixed types
-    if (input is String || output is String) {
-      final inputNum = input is num ? input.toDouble() : double.tryParse(input.toString()) ?? 0.0;
-      final outputNum = output is num ? output.toDouble() : double.tryParse(output.toString()) ?? 0.0;
-      
-      if (inputNum == 0.0 && outputNum == 0.0) {
-        return 'Free';
-      }
-      
-      // The pricing values are now per million tokens from the API processing
-      final inputPerMillion = inputNum.toStringAsFixed(2);
-      final outputPerMillion = outputNum.toStringAsFixed(2);
-      
-      
-      if (inputPerMillion == outputPerMillion) {
-        return '\$$inputPerMillion/M';
-      }
-      
-      return 'In: \$$inputPerMillion/M\nOut: \$$outputPerMillion/M';
-    }
-
-    print('💰 Unknown pricing format: input=$input (${input.runtimeType}), output=$output (${output.runtimeType})');
-    return 'Paid';
+    return RequestUsageEstimator.formatLabel(estimate, compact: true);
   }
-
-
-
-
 
   String _getProviderIcon(String? provider) {
     if (provider == null) return '🤖';
 
     switch (provider.toLowerCase()) {
-      case 'openai': return '⚡';
-      case 'anthropic': return '🧠';
-      case 'google': return '🎯';
-      case 'meta': return '📘';
-      case 'mistral': case 'mistralai': return '🌊';
-      case 'deepseek': return '🔍';
-      case 'cohere': return '💫';
-      case 'perplexity': return '🌐';
-      case 'x-ai': case 'xai': return '🚀';
-      case 'qwen': return '🎨';
-      case 'nvidia': return '💚';
-      default: return '🤖';
+      case 'openai':
+        return '⚡';
+      case 'anthropic':
+        return '🧠';
+      case 'google':
+        return '🎯';
+      case 'meta':
+        return '📘';
+      case 'mistral':
+      case 'mistralai':
+        return '🌊';
+      case 'deepseek':
+        return '🔍';
+      case 'cohere':
+        return '💫';
+      case 'perplexity':
+        return '🌐';
+      case 'x-ai':
+      case 'xai':
+        return '🚀';
+      case 'qwen':
+        return '🎨';
+      case 'nvidia':
+        return '💚';
+      default:
+        return '🤖';
     }
   }
-
-
-
-
 
   Future<void> _loadModels() async {
     setState(() {
@@ -912,7 +951,9 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
 
     try {
       print('🔄 Loading models for mode: ${widget.mode}');
-      final modelsData = await ModelService.getEnhancedModelsByMode(widget.mode);
+      final modelsData = await ModelService.getEnhancedModelsByMode(
+        widget.mode,
+      );
       print('📦 Received models data: ${modelsData.keys}');
 
       List<Map<String, dynamic>> modelsList = [];
@@ -929,8 +970,12 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
       }
       // Fallback: Check if we have enhancedModels array (for backward compatibility)
       else if (modelsData['enhancedModels'] != null) {
-        final enhancedModels = List<Map<String, dynamic>>.from(modelsData['enhancedModels']);
-        print('✅ Found ${enhancedModels.length} models in enhancedModels array');
+        final enhancedModels = List<Map<String, dynamic>>.from(
+          modelsData['enhancedModels'],
+        );
+        print(
+          '✅ Found ${enhancedModels.length} models in enhancedModels array',
+        );
 
         for (Map<String, dynamic> model in enhancedModels) {
           // Only include models that are available
@@ -948,7 +993,9 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
       // Extract unique providers
       final providers = <String>{};
       for (final model in modelsList) {
-        final provider = model['provider']?.toString() ?? model['top_provider']?['name']?.toString();
+        final provider =
+            model['provider']?.toString() ??
+            model['top_provider']?['name']?.toString();
         if (provider != null && provider.isNotEmpty) {
           providers.add(provider);
         }
@@ -972,8 +1019,6 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
     }
   }
 
-
-
   void _onSearchChanged(String value) {
     _searchDebounce?.cancel();
     _searchDebounce = Timer(const Duration(milliseconds: 300), () {
@@ -984,15 +1029,15 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
     });
   }
 
-
-
   void _selectModel(String modelId) {
     print('🤖 ModelSelectionScreen: Model selected: $modelId');
     widget.onModelSelected(modelId);
-    
+
     // Also update the LLM service's current model to ensure API calls use the selected model
     LLMService().setCurrentModel(modelId);
-    print('🤖 ModelSelectionScreen: Updated LLM service current model to: $modelId');
+    print(
+      '🤖 ModelSelectionScreen: Updated LLM service current model to: $modelId',
+    );
     Navigator.of(context).pop();
   }
 
@@ -1028,7 +1073,9 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
                     child: Text(
                       'Clear All',
                       style: TextStyle(
-                        color: isDark ? AppColors.darkAccent : AppColors.lightAccent,
+                        color: isDark
+                            ? AppColors.darkAccent
+                            : AppColors.lightAccent,
                       ),
                     ),
                   ),
@@ -1051,7 +1098,9 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
                     _applyFilters();
                   },
                   title: Text(modality, style: theme.textTheme.bodyMedium),
-                  activeColor: isDark ? AppColors.darkAccent : AppColors.lightAccent,
+                  activeColor: isDark
+                      ? AppColors.darkAccent
+                      : AppColors.lightAccent,
                 );
               }),
             ],
@@ -1093,7 +1142,9 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
                     child: Text(
                       'Clear All',
                       style: TextStyle(
-                        color: isDark ? AppColors.darkAccent : AppColors.lightAccent,
+                        color: isDark
+                            ? AppColors.darkAccent
+                            : AppColors.lightAccent,
                       ),
                     ),
                   ),
@@ -1124,7 +1175,9 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
                         '${_getProviderIcon(provider)} $provider',
                         style: theme.textTheme.bodyMedium,
                       ),
-                      activeColor: isDark ? AppColors.darkAccent : AppColors.lightAccent,
+                      activeColor: isDark
+                          ? AppColors.darkAccent
+                          : AppColors.lightAccent,
                     );
                   },
                 ),
@@ -1135,6 +1188,4 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
       ),
     );
   }
-
-
 }

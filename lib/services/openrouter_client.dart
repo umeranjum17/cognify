@@ -483,50 +483,6 @@ class OpenRouterClient {
     return List<double>.filled(1536, 0.0);
   }
 
-  /// Get credits information from OpenRouter
-  Future<Map<String, dynamic>?> getCredits({BuildContext? context}) async {
-    await _ensureInitialized();
-
-    try {
-      return await _retryOn401(
-        context: context,
-        apiCall: () async {
-          final apiKey = await AppConfig().openRouterApiKey;
-          if (apiKey == null || apiKey.isEmpty) {
-            throw Exception('OpenRouter API key not configured');
-          }
-
-          final response = await _dio.get(
-            '/credits',
-            options: Options(headers: {'Authorization': 'Bearer $apiKey'}),
-          );
-
-          if (response.statusCode == 200) {
-            final data = response.data as Map<String, dynamic>;
-            print('🤖 Credits API Response: $data');
-
-            if (data['data'] != null) {
-              final creditsData = data['data'] as Map<String, dynamic>;
-              return {
-                'total_credits': creditsData['total_credits'] ?? 0.0,
-                'total_usage': creditsData['total_usage'] ?? 0.0,
-                'remaining_credits':
-                    (creditsData['total_credits'] ?? 0.0) -
-                    (creditsData['total_usage'] ?? 0.0),
-                'fetched_at': DateTime.now().toIso8601String(),
-              };
-            }
-          } else {
-            throw Exception('Failed to fetch credits: ${response.statusCode}');
-          }
-          return null;
-        },
-      );
-    } catch (e) {
-      print('🤖 Failed to fetch credits from OpenRouter: $e');
-      return null;
-    }
-  }
 
   /// Get cost data for a specific generation ID
   Future<Map<String, dynamic>?> getGenerationCost(String generationId) async {

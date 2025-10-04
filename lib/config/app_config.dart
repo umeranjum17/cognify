@@ -67,10 +67,7 @@ class AppSecrets {
     defaultValue: 1000,
   );
 
-  static const double dollarsPerRequestUnit = double.fromEnvironment(
-    'DOLLARS_PER_REQUEST',
-    defaultValue: 0.01,
-  );
+  static const double dollarsPerRequestUnit = 0.01;
 }
 
 // ========== APP CONFIG ==========
@@ -98,6 +95,10 @@ class AppConfig {
   // API endpoints
   static const String openRouterBaseUrl = 'https://openrouter.ai/api/v1';
   static const String openAiBaseUrl = 'https://api.openai.ai/v1';
+  static const String backendBaseUrl = String.fromEnvironment(
+    'BACKEND_BASE_URL',
+    defaultValue: '',
+  );
 
   // App information
   static String get appName => EnvironmentConfig.appName;

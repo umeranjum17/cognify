@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:cognify_flutter/config/app_config.dart';
 import '../config/model_registry.dart';
 import 'package:http/http.dart' as http;
+import 'remote_config_service.dart';
 
 class CostService {
   static final String baseUrl = AppConfig.apiUrl;
@@ -31,7 +32,7 @@ class CostService {
       final costResponse = {'success': false};
 
       if (costResponse['success'] == true) {
-        final totalApiCost = (costResponse['totalApiCost'] ?? 0.0).toDouble();
+        final totalApiCost = (costResponse['totalApiCost'] as num?)?.toDouble() ?? 0.0;
         final generations = costResponse['generations'] as List<dynamic>? ?? [];
         
         // Create detailed breakdown by stage and model
@@ -166,6 +167,22 @@ class CostService {
       return _cachedPricing!;
     }
 
+    // Try remote config service first
+    try {
+      final remoteConfig = RemoteConfigService();
+      final remotePricing = await remoteConfig.fetchPricing();
+
+      if (remotePricing != null && remotePricing.isNotEmpty) {
+        _cachedPricing = remotePricing;
+        _cacheTimestamp = DateTime.now();
+        print('✅ Using pricing from remote config');
+        return _cachedPricing!;
+      }
+    } catch (e) {
+      print('⚠️ Failed to fetch pricing from remote config: $e');
+    }
+
+    // Fallback to legacy endpoint (deprecated)
     try {
       final response = await http.get(
         Uri.parse('$baseUrl/chat/pricing'),
@@ -189,7 +206,7 @@ class CostService {
         throw Exception('HTTP ${response.statusCode}: ${response.body}');
       }
     } catch (e) {
-      print('Error fetching model pricing: $e');
+      print('Error fetching model pricing from legacy endpoint: $e');
       // Return fallback pricing if API fails
       return _getFallbackPricing();
     }

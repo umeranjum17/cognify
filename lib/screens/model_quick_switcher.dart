@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/mode_config.dart';
 import '../services/llm_service.dart';
 import '../services/model_service.dart';
+import '../services/request_usage_estimator.dart';
 import '../theme/app_theme.dart';
 
 class ModelQuickSwitcher extends StatefulWidget {
@@ -58,13 +59,17 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
     });
 
     try {
-      final modelsData = await ModelService.getEnhancedModelsByMode(widget.mode);
+      final modelsData = await ModelService.getEnhancedModelsByMode(
+        widget.mode,
+      );
       List<Map<String, dynamic>> modelsList = [];
       if (modelsData['data'] != null) {
         final models = List<Map<String, dynamic>>.from(modelsData['data']);
         modelsList = models;
       } else if (modelsData['enhancedModels'] != null) {
-        final enhancedModels = List<Map<String, dynamic>>.from(modelsData['enhancedModels']);
+        final enhancedModels = List<Map<String, dynamic>>.from(
+          modelsData['enhancedModels'],
+        );
         for (Map<String, dynamic> model in enhancedModels) {
           if (model['isAvailable'] == true) {
             modelsList.add(model);
@@ -91,7 +96,14 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
     _freeModels.clear();
     for (final model in models) {
       final provider = _normalizeProvider(model);
-      final isFree = _isFree(model);
+      final estimate = RequestUsageEstimator.estimate(
+        pricing: model['pricing'] as Map<String, dynamic>?,
+        mode: widget.mode,
+      );
+      final isFree =
+          model['isFree'] == true ||
+          (model['id']?.toString().endsWith(':free') ?? false) ||
+          estimate.isFree;
       if (isFree) {
         _freeModels.add(model);
       } else {
@@ -101,135 +113,89 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
     if (_freeModels.isNotEmpty) {
       _providersIndexed['Free'] = _freeModels;
     }
-    
+
     // Sort providers by number of models in descending order
     final sortedProviders = _providersIndexed.entries.toList()
       ..sort((a, b) => b.value.length.compareTo(a.value.length));
-    
+
     // Create a new map with sorted order
     _providersIndexed = Map.fromEntries(sortedProviders);
   }
 
   String _normalizeProvider(Map<String, dynamic> model) {
-    String? provider = model['provider'] as String? ?? model['top_provider']?['name'] as String?;
+    String? provider =
+        model['provider'] as String? ??
+        model['top_provider']?['name'] as String?;
     if (provider == null) return 'Other';
     final normalized = _providerNormalization[provider.toLowerCase()];
     if (normalized != null) return normalized;
-    return provider.split(' ').map((word) => word.isNotEmpty ? '${word[0].toUpperCase()}${word.substring(1).toLowerCase()}' : '').join(' ');
-  }
-
-  bool _isFree(Map<String, dynamic> model) {
-    if (model['isFree'] == true) return true;
-    final modelId = model['id'] as String? ?? '';
-    if (modelId.endsWith(':free')) return true;
-    final pricing = model['pricing'] as Map<String, dynamic>?;
-    if (pricing != null) {
-      final input = pricing['input'] ?? pricing['prompt'];
-      final output = pricing['output'] ?? pricing['completion'];
-      if (input == 0 || input == 0.0 || input == '0') {
-        if (output == 0 || output == 0.0 || output == '0') {
-          return true;
-        }
-      }
-    }
-    return false;
+    return provider
+        .split(' ')
+        .map(
+          (word) => word.isNotEmpty
+              ? '${word[0].toUpperCase()}${word.substring(1).toLowerCase()}'
+              : '',
+        )
+        .join(' ');
   }
 
   String _getProviderIcon(String? provider) {
     if (provider == null) return '🤖';
     switch (provider.toLowerCase()) {
-      case 'openai': return '⚡';
-      case 'anthropic': case 'claude': return '🧠';
-      case 'google': case 'gemini': return '🎯';
-      case 'meta': case 'llama': return '📘';
-      case 'mistral': case 'mistralai': return '🌊';
-      case 'deepseek': return '🔍';
-      case 'cohere': return '💫';
-      case 'perplexity': return '🌐';
-      case 'x-ai': case 'xai': case 'grok': return '🚀';
-      case 'qwen': return '🎨';
-      case 'nvidia': return '💚';
-      case 'free': return '🆓';
-      default: return '🤖';
+      case 'openai':
+        return '⚡';
+      case 'anthropic':
+      case 'claude':
+        return '🧠';
+      case 'google':
+      case 'gemini':
+        return '🎯';
+      case 'meta':
+      case 'llama':
+        return '📘';
+      case 'mistral':
+      case 'mistralai':
+        return '🌊';
+      case 'deepseek':
+        return '🔍';
+      case 'cohere':
+        return '💫';
+      case 'perplexity':
+        return '🌐';
+      case 'x-ai':
+      case 'xai':
+      case 'grok':
+        return '🚀';
+      case 'qwen':
+        return '🎨';
+      case 'nvidia':
+        return '💚';
+      case 'free':
+        return '🆓';
+      default:
+        return '🤖';
     }
   }
 
   String _getPriceDisplay(Map<String, dynamic>? pricing) {
-    if (pricing == null) return 'Free';
-    final input = pricing['input'] ?? pricing['prompt'];
-    final output = pricing['output'] ?? pricing['completion'];
-    
-    if ((input == 0 || input == 0.0) && (output == 0 || output == 0.0)) return 'Free';
-    if (input == -1 || output == -1) return 'Paid';
-    
-    // Convert to numbers for calculation
-    double inputNum = 0.0;
-    double outputNum = 0.0;
-    
-    if (input is num) {
-      inputNum = input.toDouble();
-    } else if (input is String) {
-      inputNum = double.tryParse(input) ?? 0.0;
-    }
-    
-    if (output is num) {
-      outputNum = output.toDouble();
-    } else if (output is String) {
-      outputNum = double.tryParse(output) ?? 0.0;
-    }
-    
-    if (inputNum == 0.0 && outputNum == 0.0) return 'Free';
-    
-    // The pricing values are now per million tokens from the API processing
-    final inputPerMillion = inputNum.toStringAsFixed(2);
-    final outputPerMillion = outputNum.toStringAsFixed(2);
-    
-    if (inputPerMillion == outputPerMillion) {
-      return '\$$inputPerMillion/M';
-    }
-    return 'In: \$$inputPerMillion/M\nOut: \$$outputPerMillion/M';
-  }
+    final estimate = RequestUsageEstimator.estimate(
+      pricing: pricing,
+      mode: widget.mode,
+    );
 
-  String _getInputPrice(Map<String, dynamic>? pricing) {
-    if (pricing == null) return '0.00';
-    final input = pricing['input'] ?? pricing['prompt'];
-    
-    if (input == 0 || input == 0.0 || input == '0') return '0.00';
-    if (input == -1) return '0.00';
-    
-    double inputNum = 0.0;
-    if (input is num) {
-      inputNum = input.toDouble();
-    } else if (input is String) {
-      inputNum = double.tryParse(input) ?? 0.0;
-    }
-    
-    return inputNum.toStringAsFixed(2);
-  }
-
-  String _getOutputPrice(Map<String, dynamic>? pricing) {
-    if (pricing == null) return '0.00';
-    final output = pricing['output'] ?? pricing['completion'];
-    
-    if (output == 0 || output == 0.0 || output == '0') return '0.00';
-    if (output == -1) return '0.00';
-    
-    double outputNum = 0.0;
-    if (output is num) {
-      outputNum = output.toDouble();
-    } else if (output is String) {
-      outputNum = double.tryParse(output) ?? 0.0;
-    }
-    
-    return outputNum.toStringAsFixed(2);
+    return RequestUsageEstimator.formatLabel(estimate, compact: true);
   }
 
   List<String> _getModalities(Map<String, dynamic> model) {
     List<String> modalities = [];
-    final inputModalities = model['inputModalities'] as List<dynamic>? ??
+    final inputModalities =
+        model['inputModalities'] as List<dynamic>? ??
         model['input_modalities'] as List<dynamic>? ??
-        model['architecture']?['input_modalities'] as List<dynamic>? ?? [];
-    modalities = inputModalities.map((modality) => modality.toString().toLowerCase()).toList();
+        model['architecture']?['input_modalities'] as List<dynamic>? ??
+        [];
+    modalities = inputModalities
+        .map((modality) => modality.toString().toLowerCase())
+        .toList();
     if (modalities.isEmpty) modalities = ['text'];
     return modalities;
   }
@@ -286,15 +252,13 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
             child: _isLoading
                 ? _buildLoadingState(theme, isDark)
                 : _error.isNotEmpty
-                    ? _buildErrorState(theme, isDark)
-                    : Row(
-                        children: [
-                          _buildLeftRail(theme, isDark),
-                          Expanded(
-                            child: _buildRightPanel(theme, isDark),
-                          ),
-                        ],
-                      ),
+                ? _buildErrorState(theme, isDark)
+                : Row(
+                    children: [
+                      _buildLeftRail(theme, isDark),
+                      Expanded(child: _buildRightPanel(theme, isDark)),
+                    ],
+                  ),
           ),
         ],
       ),
@@ -326,7 +290,9 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
           Text(
             'Loading models...',
             style: theme.textTheme.bodySmall?.copyWith(
-              color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+              color: isDark
+                  ? AppColors.darkTextSecondary
+                  : AppColors.lightTextSecondary,
             ),
           ),
         ],
@@ -355,7 +321,9 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
           Text(
             _error,
             style: theme.textTheme.bodySmall?.copyWith(
-              color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+              color: isDark
+                  ? AppColors.darkTextSecondary
+                  : AppColors.lightTextSecondary,
             ),
             textAlign: TextAlign.center,
           ),
@@ -363,8 +331,12 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
           ElevatedButton(
             onPressed: _loadModelsByMode,
             style: ElevatedButton.styleFrom(
-              backgroundColor: isDark ? AppColors.darkAccent : AppColors.lightAccent,
-              foregroundColor: isDark ? AppColors.darkButtonText : AppColors.lightButtonText,
+              backgroundColor: isDark
+                  ? AppColors.darkAccent
+                  : AppColors.lightAccent,
+              foregroundColor: isDark
+                  ? AppColors.darkButtonText
+                  : AppColors.lightButtonText,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               textStyle: theme.textTheme.bodySmall,
             ),
@@ -397,7 +369,9 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
               decoration: BoxDecoration(
                 color: isSelected
-                    ? (isDark ? AppColors.darkAccent.withValues(alpha: 0.08) : AppColors.lightAccent.withValues(alpha: 0.05))
+                    ? (isDark
+                          ? AppColors.darkAccent.withValues(alpha: 0.08)
+                          : AppColors.lightAccent.withValues(alpha: 0.05))
                     : Colors.transparent,
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -411,10 +385,16 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
                   Text(
                     provider,
                     style: theme.textTheme.bodySmall?.copyWith(
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                      fontWeight: isSelected
+                          ? FontWeight.w600
+                          : FontWeight.w500,
                       color: isSelected
-                          ? (isDark ? AppColors.darkAccent : AppColors.lightAccent)
-                          : (isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary),
+                          ? (isDark
+                                ? AppColors.darkAccent
+                                : AppColors.lightAccent)
+                          : (isDark
+                                ? AppColors.darkTextSecondary
+                                : AppColors.lightTextSecondary),
                       fontSize: 10,
                     ),
                     textAlign: TextAlign.center,
@@ -423,15 +403,22 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
                   ),
                   const SizedBox(height: 2),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 4,
+                      vertical: 1,
+                    ),
                     decoration: BoxDecoration(
-                      color: isDark ? AppColors.darkBackground.withValues(alpha: 0.6) : AppColors.lightBackground.withValues(alpha: 0.6),
+                      color: isDark
+                          ? AppColors.darkBackground.withValues(alpha: 0.6)
+                          : AppColors.lightBackground.withValues(alpha: 0.6),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
                       '${models.length}',
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
+                        color: isDark
+                            ? AppColors.darkTextMuted
+                            : AppColors.lightTextMuted,
                         fontSize: 8,
                         fontWeight: FontWeight.w600,
                       ),
@@ -463,7 +450,9 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
               hintText: 'Search models...',
               prefixIcon: Icon(
                 Icons.search,
-                color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                color: isDark
+                    ? AppColors.darkTextSecondary
+                    : AppColors.lightTextSecondary,
                 size: 18,
               ),
               border: OutlineInputBorder(
@@ -478,8 +467,13 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
                 ),
               ),
               filled: true,
-              fillColor: isDark ? AppColors.darkBackground.withValues(alpha: 0.4) : AppColors.lightBackground.withValues(alpha: 0.4),
-              contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+              fillColor: isDark
+                  ? AppColors.darkBackground.withValues(alpha: 0.4)
+                  : AppColors.lightBackground.withValues(alpha: 0.4),
+              contentPadding: const EdgeInsets.symmetric(
+                vertical: 10,
+                horizontal: 16,
+              ),
               isDense: true,
             ),
           ),
@@ -491,25 +485,35 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(
-                        _searchQuery.isEmpty ? Icons.model_training : Icons.search_off,
+                        _searchQuery.isEmpty
+                            ? Icons.model_training
+                            : Icons.search_off,
                         size: 36,
-                        color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
+                        color: isDark
+                            ? AppColors.darkTextMuted
+                            : AppColors.lightTextMuted,
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        _searchQuery.isEmpty ? 'No models available' : 'No models found',
+                        _searchQuery.isEmpty
+                            ? 'No models available'
+                            : 'No models found',
                         style: theme.textTheme.titleSmall?.copyWith(
-                          color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                          color: isDark
+                              ? AppColors.darkTextSecondary
+                              : AppColors.lightTextSecondary,
                           fontSize: 16,
                         ),
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        _searchQuery.isEmpty 
+                        _searchQuery.isEmpty
                             ? 'Try selecting a different provider'
                             : 'Try adjusting your search terms',
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
+                          color: isDark
+                              ? AppColors.darkTextMuted
+                              : AppColors.lightTextMuted,
                           fontSize: 13,
                         ),
                         textAlign: TextAlign.center,
@@ -530,14 +534,29 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
     );
   }
 
-
-
-  Widget _buildModelCard(Map<String, dynamic> model, ThemeData theme, bool isDark) {
-    final modelId = model['id'] ?? model['canonical_slug'] ?? model['name'] ?? 'unknown';
+  Widget _buildModelCard(
+    Map<String, dynamic> model,
+    ThemeData theme,
+    bool isDark,
+  ) {
+    final modelId =
+        model['id'] ?? model['canonical_slug'] ?? model['name'] ?? 'unknown';
     final isSelected = modelId == widget.selectedModel;
     final modalities = _getModalities(model);
     final pricing = model['pricing'] as Map<String, dynamic>?;
     final contextLength = model['contextLength'] ?? model['context_length'];
+    final usageEstimate = RequestUsageEstimator.estimate(
+      pricing: pricing,
+      mode: widget.mode,
+    );
+    final isFree =
+        model['isFree'] == true ||
+        (modelId is String && modelId.endsWith(':free')) ||
+        usageEstimate.isFree;
+    final priceLabel = RequestUsageEstimator.formatLabel(
+      usageEstimate,
+      compact: true,
+    );
 
     return GestureDetector(
       onTap: () => _selectModel(modelId),
@@ -548,8 +567,12 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: isSelected
-                  ? (isDark ? AppColors.darkAccent.withValues(alpha: 0.06) : AppColors.lightAccent.withValues(alpha: 0.04))
-                  : (isDark ? AppColors.darkBackground.withValues(alpha: 0.3) : AppColors.lightBackground.withValues(alpha: 0.3)),
+                  ? (isDark
+                        ? AppColors.darkAccent.withValues(alpha: 0.06)
+                        : AppColors.lightAccent.withValues(alpha: 0.04))
+                  : (isDark
+                        ? AppColors.darkBackground.withValues(alpha: 0.3)
+                        : AppColors.lightBackground.withValues(alpha: 0.3)),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(
@@ -565,13 +588,17 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
                           fontWeight: FontWeight.w700,
                           fontSize: 14,
                           color: isSelected
-                              ? (isDark ? AppColors.darkAccent : AppColors.lightAccent)
-                              : (isDark ? AppColors.darkText : AppColors.lightText),
+                              ? (isDark
+                                    ? AppColors.darkAccent
+                                    : AppColors.lightAccent)
+                              : (isDark
+                                    ? AppColors.darkText
+                                    : AppColors.lightText),
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      
+
                       // Description if available
                       if (model['description'] != null) ...[
                         const SizedBox(height: 3),
@@ -581,7 +608,9 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
                               child: Text(
                                 model['description'],
                                 style: theme.textTheme.bodySmall?.copyWith(
-                                  color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                                  color: isDark
+                                      ? AppColors.darkTextSecondary
+                                      : AppColors.lightTextSecondary,
                                   fontSize: 11,
                                   height: 1.2,
                                 ),
@@ -591,19 +620,27 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
                             ),
                             const SizedBox(width: 4),
                             GestureDetector(
-                              onTap: () => _showDescriptionDialog(context, model['description'], model['name']?.toString() ?? modelId, theme, isDark),
+                              onTap: () => _showDescriptionDialog(
+                                context,
+                                model['description'],
+                                model['name']?.toString() ?? modelId,
+                                theme,
+                                isDark,
+                              ),
                               child: Icon(
                                 Icons.info_outline,
                                 size: 14,
-                                color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
+                                color: isDark
+                                    ? AppColors.darkTextMuted
+                                    : AppColors.lightTextMuted,
                               ),
                             ),
                           ],
                         ),
                       ],
-                      
+
                       const SizedBox(height: 6),
-                      
+
                       // Features row
                       Wrap(
                         spacing: 6,
@@ -612,29 +649,51 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
                           // Text modality (always present)
                           _buildCompactFeatureChip(
                             Icons.text_fields,
-                            isDark ? AppColors.darkBackground : AppColors.lightBackground,
-                            isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                            isDark
+                                ? AppColors.darkBackground
+                                : AppColors.lightBackground,
+                            isDark
+                                ? AppColors.darkTextSecondary
+                                : AppColors.lightTextSecondary,
                           ),
                           // Images if supported
                           if (modalities.contains('image'))
                             _buildCompactFeatureChip(
                               Icons.image,
-                              isDark ? AppColors.darkInfo.withValues(alpha: 0.2) : AppColors.lightInfo.withValues(alpha: 0.15),
+                              isDark
+                                  ? AppColors.darkInfo.withValues(alpha: 0.2)
+                                  : AppColors.lightInfo.withValues(alpha: 0.15),
                               isDark ? AppColors.darkInfo : AppColors.lightInfo,
                             ),
                           // Files if supported
                           if (modalities.contains('file'))
                             _buildCompactFeatureChip(
                               Icons.attach_file,
-                              isDark ? AppColors.darkAccentSecondary.withValues(alpha: 0.2) : AppColors.lightAccentSecondary.withValues(alpha: 0.15),
-                              isDark ? AppColors.darkAccentSecondary : AppColors.lightAccentSecondary,
+                              isDark
+                                  ? AppColors.darkAccentSecondary.withValues(
+                                      alpha: 0.2,
+                                    )
+                                  : AppColors.lightAccentSecondary.withValues(
+                                      alpha: 0.15,
+                                    ),
+                              isDark
+                                  ? AppColors.darkAccentSecondary
+                                  : AppColors.lightAccentSecondary,
                             ),
                           // Context length if available
                           if (contextLength != null)
                             _buildCompactFeatureChip(
                               Icons.memory,
-                              isDark ? AppColors.darkAccentTertiary.withValues(alpha: 0.2) : AppColors.lightAccentTertiary.withValues(alpha: 0.15),
-                              isDark ? AppColors.darkAccentTertiary : AppColors.lightAccentTertiary,
+                              isDark
+                                  ? AppColors.darkAccentTertiary.withValues(
+                                      alpha: 0.2,
+                                    )
+                                  : AppColors.lightAccentTertiary.withValues(
+                                      alpha: 0.15,
+                                    ),
+                              isDark
+                                  ? AppColors.darkAccentTertiary
+                                  : AppColors.lightAccentTertiary,
                               label: '${(contextLength / 1000).round()}K',
                             ),
                         ],
@@ -642,62 +701,55 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
                     ],
                   ),
                 ),
-                
+
                 const SizedBox(width: 24),
-                
+
                 // Price chip
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
-                    color: _isFree(model)
-                        ? (isDark ? AppColors.darkSuccess.withValues(alpha: 0.2) : AppColors.lightSuccess.withValues(alpha: 0.15))
-                        : (isDark ? AppColors.darkAccent.withValues(alpha: 0.2) : AppColors.lightAccent.withValues(alpha: 0.15)),
+                    color: isFree
+                        ? (isDark
+                              ? AppColors.darkSuccess.withValues(alpha: 0.2)
+                              : AppColors.lightSuccess.withValues(alpha: 0.15))
+                        : (isDark
+                              ? AppColors.darkAccent.withValues(alpha: 0.2)
+                              : AppColors.lightAccent.withValues(alpha: 0.15)),
                     borderRadius: BorderRadius.circular(6),
                     border: Border.all(
-                      color: _isFree(model)
-                          ? (isDark ? AppColors.darkSuccess : AppColors.lightSuccess)
-                          : (isDark ? AppColors.darkAccent : AppColors.lightAccent),
+                      color: isFree
+                          ? (isDark
+                                ? AppColors.darkSuccess
+                                : AppColors.lightSuccess)
+                          : (isDark
+                                ? AppColors.darkAccent
+                                : AppColors.lightAccent),
                       width: 0.5,
                     ),
                   ),
-                  child: _isFree(model)
-                      ? Text(
-                          'Free',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            color: isDark ? AppColors.darkSuccess : AppColors.lightSuccess,
-                          ),
-                          textAlign: TextAlign.center,
-                        )
-                      : Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              'In: \$${_getInputPrice(pricing)}/M',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                fontSize: 9,
-                                fontWeight: FontWeight.w600,
-                                color: isDark ? AppColors.darkAccent : AppColors.lightAccent,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                            Text(
-                              'Out: \$${_getOutputPrice(pricing)}/M',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                fontSize: 9,
-                                fontWeight: FontWeight.w600,
-                                color: isDark ? AppColors.darkAccent : AppColors.lightAccent,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
-                        ),
+                  child: Text(
+                    priceLabel,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: isFree
+                          ? (isDark
+                                ? AppColors.darkSuccess
+                                : AppColors.lightSuccess)
+                          : (isDark
+                                ? AppColors.darkAccent
+                                : AppColors.lightAccent),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
                 ),
               ],
             ),
           ),
-          
+
           // Selection indicator in top-right corner
           if (isSelected)
             Positioned(
@@ -709,11 +761,7 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
                   color: isDark ? AppColors.darkAccent : AppColors.lightAccent,
                   borderRadius: BorderRadius.circular(4),
                 ),
-                child: const Icon(
-                  Icons.check,
-                  color: Colors.white,
-                  size: 8,
-                ),
+                child: const Icon(Icons.check, color: Colors.white, size: 8),
               ),
             ),
         ],
@@ -721,7 +769,12 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
     );
   }
 
-  Widget _buildCompactFeatureChip(IconData icon, Color bgColor, Color textColor, {String? label}) {
+  Widget _buildCompactFeatureChip(
+    IconData icon,
+    Color bgColor,
+    Color textColor, {
+    String? label,
+  }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
       decoration: BoxDecoration(
@@ -731,11 +784,7 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            icon,
-            size: 9,
-            color: textColor,
-          ),
+          Icon(icon, size: 9, color: textColor),
           if (label != null) ...[
             const SizedBox(width: 2),
             Text(
@@ -752,7 +801,13 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
     );
   }
 
-  void _showDescriptionDialog(BuildContext context, String? description, String modelName, ThemeData theme, bool isDark) {
+  void _showDescriptionDialog(
+    BuildContext context,
+    String? description,
+    String modelName,
+    ThemeData theme,
+    bool isDark,
+  ) {
     if (description == null || description.isEmpty) {
       return;
     }
