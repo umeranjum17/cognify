@@ -22,12 +22,17 @@ class UsageQuotaService {
     if (jsonStr != null && jsonStr.isNotEmpty) {
       try {
         final data = json.decode(jsonStr) as Map<String, dynamic>;
-        return UsageQuota.fromJson(data, allocation: AppSecrets.initialTokenAllocation);
+        return UsageQuota.fromJson(
+          data,
+          allocation: AppSecrets.initialRequestAllocation,
+        );
       } catch (_) {}
     }
 
     // Initialize with default allocation
-    final initial = UsageQuota.initial(allocation: AppSecrets.initialTokenAllocation);
+    final initial = UsageQuota.initial(
+      allocation: AppSecrets.initialRequestAllocation,
+    );
     await _save(uid, initial);
     return initial;
   }
@@ -55,21 +60,70 @@ class UsageQuotaService {
   }
 
   Future<UsageQuota> consume({required String uid, int amount = 1}) async {
+    // Backward-compatible consume method (no logging). Prefer consumeRequests.
     final current = await _load(uid);
     final requested = amount.clamp(0, 1 << 30);
-    if (current.tokensConsumed + requested > current.totalTokens) {
+    if (current.requestsConsumed + requested > current.totalRequests) {
       throw QuotaExceededException(
-        limit: current.totalTokens,
-        used: current.tokensConsumed,
+        limit: current.totalRequests,
+        used: current.requestsConsumed,
         requested: requested,
       );
     }
 
     final updated = UsageQuota(
-      totalTokens: current.totalTokens,
-      tokensConsumed: current.tokensConsumed + requested,
+      totalRequests: current.totalRequests,
+      requestsConsumed: current.requestsConsumed + requested,
       createdAt: current.createdAt,
       updatedAt: DateTime.now().toUtc(),
+      usageHistory: current.usageHistory,
+    );
+    await _save(uid, updated);
+    _controllersByUid[uid]?.add(updated);
+    return updated;
+  }
+
+  Future<UsageQuota> consumeRequests({
+    required String uid,
+    int amount = 1,
+    String? modelId,
+    double? dollarCost,
+    int? inputTokens,
+    int? outputTokens,
+    String? conversationId,
+  }) async {
+    final current = await _load(uid);
+    final requested = amount.clamp(0, 1 << 30);
+    if (current.requestsConsumed + requested > current.totalRequests) {
+      throw QuotaExceededException(
+        limit: current.totalRequests,
+        used: current.requestsConsumed,
+        requested: requested,
+      );
+    }
+
+    final entry = RequestUsageEntry(
+      timestamp: DateTime.now().toUtc(),
+      modelId: modelId ?? 'unknown',
+      requestUnits: requested,
+      dollarCost: dollarCost,
+      inputTokens: inputTokens,
+      outputTokens: outputTokens,
+      conversationId: conversationId,
+    );
+    final updatedHistory = List<RequestUsageEntry>.from(current.usageHistory)
+      ..insert(0, entry);
+    // Keep last 200 entries to bound storage
+    if (updatedHistory.length > 200) {
+      updatedHistory.removeRange(200, updatedHistory.length);
+    }
+
+    final updated = UsageQuota(
+      totalRequests: current.totalRequests,
+      requestsConsumed: current.requestsConsumed + requested,
+      createdAt: current.createdAt,
+      updatedAt: DateTime.now().toUtc(),
+      usageHistory: updatedHistory,
     );
     await _save(uid, updated);
     _controllersByUid[uid]?.add(updated);
@@ -78,15 +132,37 @@ class UsageQuotaService {
 
   Future<void> refund({required String uid, int amount = 1}) async {
     final current = await _load(uid);
-    final refunded = (current.tokensConsumed - amount).clamp(0, current.totalTokens);
+    final refunded =
+        (current.requestsConsumed - amount).clamp(0, current.totalRequests);
     final updated = UsageQuota(
-      totalTokens: current.totalTokens,
-      tokensConsumed: refunded,
+      totalRequests: current.totalRequests,
+      requestsConsumed: refunded,
       createdAt: current.createdAt,
       updatedAt: DateTime.now().toUtc(),
+      usageHistory: current.usageHistory,
+    );
+    await _save(uid, updated);
+    _controllersByUid[uid]?.add(updated);
+  }
+
+  Future<void> logUsageEntry({
+    required String uid,
+    required RequestUsageEntry entry,
+  }) async {
+    final current = await _load(uid);
+    final updatedHistory = List<RequestUsageEntry>.from(current.usageHistory)
+      ..insert(0, entry);
+    if (updatedHistory.length > 200) {
+      updatedHistory.removeRange(200, updatedHistory.length);
+    }
+    final updated = UsageQuota(
+      totalRequests: current.totalRequests,
+      requestsConsumed: current.requestsConsumed,
+      createdAt: current.createdAt,
+      updatedAt: DateTime.now().toUtc(),
+      usageHistory: updatedHistory,
     );
     await _save(uid, updated);
     _controllersByUid[uid]?.add(updated);
   }
 }
-

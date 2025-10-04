@@ -9,6 +9,7 @@ import '../database/database_service.dart';
 import 'openrouter_client.dart';
 import 'cost_service.dart';
 import 'usage_quota_service.dart';
+import 'access_service.dart';
 import '../models/message.dart';
 
 /// Unified LLM service with automatic fallback and model selection

@@ -4,6 +4,8 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/message.dart';
+import '../models/source.dart';
+import 'file_upload_service.dart';
 
 /// Service for managing conversation history and automatic saving
 class ConversationService {
@@ -129,6 +131,17 @@ class ConversationService {
       print('🧹 [CONVERSATION] Cleared all conversations');
     } catch (e) {
       print('❌ [CONVERSATION] Error clearing conversations: $e');
+    }
+  }
+
+  /// Return uploaded sources (proxy to FileUploadService)
+  Future<List<Source>> getSources() async {
+    try {
+      return await FileUploadService().getAllSources();
+    } catch (e) {
+      // ignore: avoid_print
+      print('❌ [CONVERSATION] Error getting sources: $e');
+      return [];
     }
   }
 

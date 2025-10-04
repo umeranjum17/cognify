@@ -212,7 +212,7 @@ class FileUploadService {
         'wordCount': wordCount,
         'url': url,
         'extractedAt': DateTime.now().toIso8601String(),
-        'metadata': contentResult['metadata'] ?? {},
+        'metadata': {},
       });
       
       // Update source with successful processing

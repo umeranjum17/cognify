@@ -9,6 +9,7 @@ import '../screens/model_selection_screen.dart';
 import '../services/llm_service.dart'; // Added import for LLMService
 import '../theme/app_theme.dart';
 import 'general_settings_tab.dart';
+import '../services/premium_feature_gate.dart';
 
 class UnifiedSettingsModal extends StatefulWidget {
   final String selectedModel;
