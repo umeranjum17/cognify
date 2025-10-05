@@ -25,10 +25,17 @@ class ModeApiService {
   /// Fetch mode configurations from backend
   Future<void> loadConfigurations() async {
     try {
+      print('🌐 ModeApiService baseUrl: ${AppConfig.backendBaseUrl}');
       final response = await _dio.get('/api/config/modes');
-      _modeConfigs = response.data['data'] as Map<String, dynamic>?;
+      final data = response.data is Map ? response.data as Map : {};
+      final raw = data['data'];
+      if (raw is Map) {
+        _modeConfigs = Map<String, dynamic>.from(raw);
+      } else {
+        _modeConfigs = {};
+      }
     } catch (e) {
-      print('⚠️ Failed to load mode configs, using defaults: $e');
+      print('⚠️ Failed to load mode configs, using defaults: $e (baseUrl=${AppConfig.backendBaseUrl})');
     }
   }
 
@@ -36,13 +43,18 @@ class ModeApiService {
   Future<Map<String, dynamic>?> loadModelsConfig() async {
     try {
       if (_modelsConfig != null) return _modelsConfig;
+      print('🌐 ModelsConfig fetch baseUrl: ${AppConfig.backendBaseUrl}');
       final response = await _dio.get('/api/config/models');
       if (response.statusCode == 200 && response.data is Map) {
-        _modelsConfig = (response.data['data'] as Map).cast<String, dynamic>();
+        final data = response.data as Map;
+        final raw = data['data'];
+        if (raw is Map) {
+          _modelsConfig = Map<String, dynamic>.from(raw);
+        }
         return _modelsConfig;
       }
     } catch (e) {
-      print('⚠️ Failed to load models config: $e');
+      print('⚠️ Failed to load models config: $e (baseUrl=${AppConfig.backendBaseUrl})');
     }
     return null;
   }
@@ -101,10 +113,19 @@ class ModeApiService {
     int? maxTokens,
     bool stream = false,
   }) async {
+    print('🚀 [CHAT] Starting chat request...');
+    print('📋 [CHAT] Mode: $mode');
+    print('🎯 [CHAT] Model: $model');
+    print('💬 [CHAT] Messages: ${messages?.length ?? 0}');
+    print('❓ [CHAT] Query: ${query?.substring(0, query.length > 50 ? 50 : query.length)}');
+    
     await _ensureConfigLoaded();
 
     final endpoint = _getEndpoint(mode);
     final modeId = mode.toString().split('.').last;
+    
+    print('🌐 [CHAT] Endpoint: ${AppConfig.backendBaseUrl}$endpoint');
+    print('🏷️  [CHAT] Mode ID: $modeId');
 
     final body = <String, dynamic>{
       'mode': modeId, // Backend uses this to determine behavior
@@ -114,22 +135,43 @@ class ModeApiService {
       if (temperature != null) 'temperature': temperature,
       if (maxTokens != null) 'maxTokens': maxTokens,
     };
+    
+    print('📦 [CHAT] Request body keys: ${body.keys.join(', ')}');
+    print('📤 [CHAT] Sending POST request...');
 
-    final resp = await _dio.post(
-      endpoint,
-      data: jsonEncode(body),
-      options: Options(headers: {
-        'Content-Type': 'application/json',
-      }),
-    );
+    try {
+      final resp = await _dio.post(
+        endpoint,
+        data: jsonEncode(body),
+        options: Options(headers: {
+          'Content-Type': 'application/json',
+        }),
+      );
 
-    if (resp.statusCode == 200) {
-      return {
-        'response': resp.data,
-        'streaming': false,
-      };
+      print('✅ [CHAT] Response received: ${resp.statusCode}');
+      
+      if (resp.statusCode == 200) {
+        print('✅ [CHAT] Success! Response data type: ${resp.data.runtimeType}');
+        return {
+          'response': resp.data,
+          'streaming': false,
+        };
+      }
+      
+      print('❌ [CHAT] Non-200 status: ${resp.statusCode}');
+      throw Exception('API failed: HTTP ${resp.statusCode}');
+    } catch (e, stackTrace) {
+      print('❌❌❌ [CHAT] REQUEST FAILED!');
+      print('❌ [CHAT] Error type: ${e.runtimeType}');
+      print('❌ [CHAT] Error message: $e');
+      if (e is DioException) {
+        print('❌ [CHAT] DioException type: ${e.type}');
+        print('❌ [CHAT] DioException response: ${e.response?.statusCode} - ${e.response?.data}');
+        print('❌ [CHAT] DioException message: ${e.message}');
+      }
+      print('❌ [CHAT] Stack trace: $stackTrace');
+      rethrow;
     }
-    throw Exception('API failed: HTTP ${resp.statusCode}');
   }
 
   /// Stream chat responses - Backend handles everything

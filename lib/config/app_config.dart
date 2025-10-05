@@ -99,26 +99,9 @@ class AppConfig {
   static const String openAiBaseUrl = 'https://api.openai.ai/v1';
 
   static String get backendBaseUrl {
-    // First try compile-time environment variables
-    final compileTimeValue = String.fromEnvironment('BACKEND_BASE_URL', defaultValue: '');
-    if (compileTimeValue.isNotEmpty) {
-      return compileTimeValue;
-    }
-
-    // Fallback to .env file
-    final envValue = dotenv.get('API_BASE_URL', fallback: '');
-    if (envValue.isNotEmpty) {
-      return envValue;
-    }
-
-    // Final fallback for development
-    // If running on Android emulator, map host localhost via 10.0.2.2
-    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
-      return 'http://10.0.2.2:3000';
-    }
-
-    // Otherwise, use hosted default
-    return 'https://cognify-backend.fly.dev';
+    // TEMP: Hardcoded for local development per request
+    // Use Android emulator host mapping (10.0.2.2 -> localhost)
+    return 'http://10.0.2.2:3000';
   }
 
   // App information

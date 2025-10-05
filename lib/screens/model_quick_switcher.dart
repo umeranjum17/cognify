@@ -64,8 +64,13 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
       );
       List<Map<String, dynamic>> modelsList = [];
       if (modelsData['data'] != null) {
-        final models = List<Map<String, dynamic>>.from(modelsData['data']);
-        modelsList = models;
+        final raw = modelsData['data'];
+        if (raw is List) {
+          modelsList = raw
+              .whereType<Map>()
+              .map((m) => Map<String, dynamic>.from(m))
+              .toList();
+        }
       } else if (modelsData['enhancedModels'] != null) {
         final enhancedModels = List<Map<String, dynamic>>.from(
           modelsData['enhancedModels'],

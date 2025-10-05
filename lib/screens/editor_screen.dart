@@ -69,6 +69,7 @@ class EditorScreen extends StatefulWidget {
 class _EditorScreenState extends State<EditorScreen> {
   late final LLMService _llmService;
   late final ConversationService _conversationService;
+  ModeConfigProvider? _modeConfigProvider;
 
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
@@ -203,11 +204,8 @@ class _EditorScreenState extends State<EditorScreen> {
 
   @override
   void dispose() {
-    final modeConfigProvider = Provider.of<ModeConfigProvider>(
-      context,
-      listen: false,
-    );
-    modeConfigProvider.removeListener(_onModeConfigChanged);
+    // Remove listener using stored reference to avoid accessing context during disposal
+    _modeConfigProvider?.removeListener(_onModeConfigChanged);
     _messageController.dispose();
     _scrollController.dispose();
     _messageFocusNode.dispose();
@@ -256,11 +254,11 @@ class _EditorScreenState extends State<EditorScreen> {
 
     // Listen to mode config changes for real-time updates
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final modeConfigProvider = Provider.of<ModeConfigProvider>(
+      _modeConfigProvider = Provider.of<ModeConfigProvider>(
         context,
         listen: false,
       );
-      modeConfigProvider.addListener(_onModeConfigChanged);
+      _modeConfigProvider?.addListener(_onModeConfigChanged);
     });
 
     // Load conversation if conversationId is provided via route
@@ -3951,34 +3949,36 @@ class _EditorScreenState extends State<EditorScreen> {
               'Please configure your OpenRouter API key in settings to continue.';
 
           // Show dialog to guide user
-          showDialog(
-            context: context,
-            builder: (context) => AlertDialog(
-              title: const Row(
-                children: [
-                  Icon(Icons.key_off, color: Colors.orange),
-                  SizedBox(width: 8),
-                  Text('API Key Required'),
+          if (mounted) {
+            showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: const Row(
+                  children: [
+                    Icon(Icons.key_off, color: Colors.orange),
+                    SizedBox(width: 8),
+                    Text('API Key Required'),
+                  ],
+                ),
+                content: const Text(
+                  'Your OpenRouter API key is not configured. Would you like to set it up now?',
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Later'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      _showSettings(); // Open settings to configure API key
+                    },
+                    child: const Text('Setup Now'),
+                  ),
                 ],
               ),
-              content: const Text(
-                'Your OpenRouter API key is not configured. Would you like to set it up now?',
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Later'),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    _showSettings(); // Open settings to configure API key
-                  },
-                  child: const Text('Setup Now'),
-                ),
-              ],
-            ),
-          );
+            );
+          }
         } else if (errorString.contains('rate limit') ||
             errorString.contains('429')) {
           errorMessage = 'Rate limit exceeded';
@@ -4031,31 +4031,33 @@ class _EditorScreenState extends State<EditorScreen> {
               'Please try again. If the problem persists, check your settings.';
         }
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  errorMessage,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                if (actionMessage.isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  Text(actionMessage, style: const TextStyle(fontSize: 12)),
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    errorMessage,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  if (actionMessage.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(actionMessage, style: const TextStyle(fontSize: 12)),
+                  ],
                 ],
-              ],
+              ),
+              backgroundColor: backgroundColor,
+              duration: const Duration(seconds: 5),
+              action: SnackBarAction(
+                label: 'Settings',
+                textColor: Colors.white,
+                onPressed: () => _showSettings(),
+              ),
             ),
-            backgroundColor: backgroundColor,
-            duration: const Duration(seconds: 5),
-            action: SnackBarAction(
-              label: 'Settings',
-              textColor: Colors.white,
-              onPressed: () => _showSettings(),
-            ),
-          ),
-        );
+          );
+        }
       }
     }
   }
@@ -4244,17 +4246,19 @@ class _EditorScreenState extends State<EditorScreen> {
                                   Clipboard.setData(
                                     ClipboardData(text: imageUrl),
                                   );
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: const Text(
-                                        'Image URL copied to clipboard',
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: const Text(
+                                          'Image URL copied to clipboard',
+                                        ),
+                                        duration: const Duration(seconds: 2),
+                                        behavior: SnackBarBehavior.floating,
+                                        backgroundColor:
+                                            theme.colorScheme.primary,
                                       ),
-                                      duration: const Duration(seconds: 2),
-                                      behavior: SnackBarBehavior.floating,
-                                      backgroundColor:
-                                          theme.colorScheme.primary,
-                                    ),
-                                  );
+                                    );
+                                  }
                                 },
                                 tooltip: 'Copy Image URL',
                               ),
@@ -4283,14 +4287,16 @@ class _EditorScreenState extends State<EditorScreen> {
                                       );
                                     }
                                   } catch (e) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          'Could not open source: $e',
+                                    if (mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            'Could not open source: $e',
+                                          ),
+                                          backgroundColor: Colors.red,
                                         ),
-                                        backgroundColor: Colors.red,
-                                      ),
-                                    );
+                                      );
+                                    }
                                   }
                                 },
                                 tooltip: 'Visit Source',
@@ -4476,12 +4482,14 @@ class _EditorScreenState extends State<EditorScreen> {
                                   );
                                 }
                               } catch (e) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Could not open source: $e'),
-                                    backgroundColor: Colors.red,
-                                  ),
-                                );
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Could not open source: $e'),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
                               }
                             },
                             child: Row(
@@ -4567,17 +4575,19 @@ class _EditorScreenState extends State<EditorScreen> {
                                   Clipboard.setData(
                                     ClipboardData(text: imageUrl),
                                   );
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: const Text(
-                                        'Image URL copied to clipboard',
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: const Text(
+                                          'Image URL copied to clipboard',
+                                        ),
+                                        duration: const Duration(seconds: 2),
+                                        behavior: SnackBarBehavior.floating,
+                                        backgroundColor:
+                                            theme.colorScheme.primary,
                                       ),
-                                      duration: const Duration(seconds: 2),
-                                      behavior: SnackBarBehavior.floating,
-                                      backgroundColor:
-                                          theme.colorScheme.primary,
-                                    ),
-                                  );
+                                    );
+                                  }
                                 },
                                 tooltip: 'Copy URL',
                               ),
@@ -5042,14 +5052,16 @@ class _EditorScreenState extends State<EditorScreen> {
                                     child: ElevatedButton.icon(
                                       onPressed: () async {
                                         Navigator.of(context).pop();
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(
-                                            content: Text(
-                                              'Quota-based access: add or manage your API key/quota in settings.',
+                                        if (mounted) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Quota-based access: add or manage your API key/quota in settings.',
+                                              ),
+                                              duration: Duration(seconds: 3),
                                             ),
-                                            duration: Duration(seconds: 3),
-                                          ),
-                                        );
+                                          );
+                                        }
                                       },
                                       style: ElevatedButton.styleFrom(
                                         padding: const EdgeInsets.symmetric(
@@ -5300,12 +5312,14 @@ class _EditorScreenState extends State<EditorScreen> {
     _checkModelCapabilities();
 
     // Show success message
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Switched to ${ModelRegistry.formatModelName(modelId)}'),
-        backgroundColor: Theme.of(context).colorScheme.primary,
-      ),
-    );
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Switched to ${ModelRegistry.formatModelName(modelId)}'),
+          backgroundColor: Theme.of(context).colorScheme.primary,
+        ),
+      );
+    }
   }
 
   /// Retry the last user message

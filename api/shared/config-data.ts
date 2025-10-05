@@ -36,11 +36,8 @@ export const MODE_CONFIGS = {
     icon: '💬',
     color: '#4A90E2', // UI color hint
     defaultModel: 'google/gemini-2.5-flash-lite',
-    availableModels: [
-      'google/gemini-2.5-flash-lite',
-      'google/gemini-flash-1.5',
-      'mistralai/mistral-7b-instruct:free',
-    ],
+    // Empty list means: allow all models from unified models config
+    availableModels: [],
     capabilities: ['text'],
     temperature: 0.7,
     // UI hints - backend tells frontend how to display

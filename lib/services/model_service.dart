@@ -154,28 +154,47 @@ class ModelService {
           final resp = await http.get(url);
           if (resp.statusCode == 200) {
             final decoded = jsonDecode(resp.body) as Map<String, dynamic>;
-            modelsConfig = (decoded['data'] as Map).cast<String, dynamic>();
+            final raw = decoded['data'];
+            if (raw is Map) {
+              modelsConfig = Map<String, dynamic>.from(raw);
+            }
           }
         } catch (_) {}
       }
       List<String> ids = await _modeApi.getAvailableModelsForMode(mode);
       if (modelsConfig != null) {
-        final pricing = (modelsConfig['pricing'] as Map?)?.cast<String, dynamic>() ?? {};
-        final capabilities = (modelsConfig['capabilities'] as Map?)?.cast<String, dynamic>() ?? {};
-        // If mode has no explicit ids, use all available
+        final dynamic pricingDyn = modelsConfig['pricing'];
+        final dynamic capsDyn = modelsConfig['capabilities'];
+        final Map<String, dynamic> pricing =
+            pricingDyn is Map ? Map<String, dynamic>.from(pricingDyn) : {};
+        final Map<String, dynamic> capabilities =
+            capsDyn is Map ? Map<String, dynamic>.from(capsDyn) : {};
+        // If mode has no explicit ids, use all available → else derive from capabilities keys
         if (ids.isEmpty) {
-          ids = List<String>.from(modelsConfig['available'] ?? []);
+          final availDyn = modelsConfig['available'];
+          if (availDyn is List) {
+            ids = availDyn.whereType<String>().toList();
+          }
+          if (ids.isEmpty && capabilities.isNotEmpty) {
+            ids = capabilities.keys.whereType<String>().toList();
+          }
         }
-        final models = ids.map((id) => {
+        final models = ids.map((id) {
+          final cap = capabilities[id];
+          final price = pricing[id];
+          Map<String, dynamic> safeCap = cap is Map ? Map<String, dynamic>.from(cap) : {};
+          Map<String, dynamic> safePrice = price is Map ? Map<String, dynamic>.from(price) : {};
+          return {
           'id': id,
           'name': _formatModelName(id),
-          'description': _getModelDescription(id),
-          'pricing': pricing[id] ?? {},
-          'provider': (capabilities[id]?['provider']) ?? id.split('/').first,
-          'isFree': (pricing[id]?['input'] ?? 0.0) == 0.0 && (pricing[id]?['output'] ?? 0.0) == 0.0,
-          'context_length': capabilities[id]?['maxTokens'] ?? 8192,
-          'inputModalities': capabilities[id]?['inputModalities'] ?? ['text'],
-          'outputModalities': capabilities[id]?['outputModalities'] ?? ['text'],
+          'description': safeCap['description'] ?? _getModelDescription(id),
+          'pricing': safePrice,
+          'provider': (safeCap['provider']) ?? id.split('/').first,
+          'isFree': ((safePrice['input'] ?? 0.0) == 0.0) && ((safePrice['output'] ?? 0.0) == 0.0),
+          'context_length': safeCap['maxTokens'] ?? 8192,
+          'inputModalities': safeCap['inputModalities'] ?? ['text'],
+          'outputModalities': safeCap['outputModalities'] ?? ['text'],
+        };
         }).toList();
         return {'success': true, 'data': models};
       }

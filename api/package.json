@@ -5,11 +5,12 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "vercel dev --listen 3000",
+    "vercel:dev": "vercel dev --listen 3000",
     "start": "node -e \"console.log('Edge handlers served via Vercel dev');\"",
     "build": "echo edge"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^2.0.42",
     "@openrouter/ai-sdk-provider": "^1.2.0",
     "@vercel/edge": "^1.1.1",
     "ai": "^5.0.60",

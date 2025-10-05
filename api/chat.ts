@@ -1,6 +1,7 @@
 import { streamText, tool } from 'ai';
-import { z } from 'zod';
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
+import { z } from 'zod';
+// Manual SSE streaming to OpenRouter to guarantee streaming regardless of SDK helpers
 
 export const config = { runtime: 'edge' };
 
@@ -87,25 +88,16 @@ export default async function handler(req: Request) {
     // Build tools based on mode capabilities
     const tools = await buildToolsForMode(mode, modeConfig);
 
-    // Stream response
-    const result = await streamText({
-      model: openrouter.chat(model),
+    // Use AI SDK streaming helpers
+    const result = streamText({
+      model: openrouter(model),
       messages: [...systemMessages, ...messages],
       temperature: modeConfig.temperature ?? temperature,
       ...(maxTokens ? { maxTokens } : {}),
       ...(tools ? { tools, toolChoice: modeConfig.toolChoice || 'auto' } : {}),
     });
-
-    const res = result.toDataStreamResponse();
-    return new Response(res.body, {
-      status: res.status,
-      headers: {
-        ...Object.fromEntries(res.headers.entries()),
-        ...CORS_HEADERS,
-        'X-Mode': mode,
-        'X-Model': model,
-      },
-    });
+    await result.consumeStream();
+    return result.text;
   } catch (err) {
     console.error('Unified chat endpoint error:', err);
     return new Response(
@@ -239,3 +231,5 @@ async function buildToolsForMode(mode: string, config: any) {
 
   return Object.keys(toolSet).length > 0 ? toolSet : undefined;
 }
+
+// removed manual SSE fallback per request

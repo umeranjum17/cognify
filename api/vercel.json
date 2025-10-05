@@ -2,13 +2,12 @@
   "version": 2,
   "installCommand": "npm --prefix api ci || npm --prefix api install",
   "buildCommand": "echo 'No build needed for Edge Functions'",
-  "outputDirectory": "web",
   "rewrites": [
     { "source": "/callback", "destination": "/api/oauth/callback" }
   ],
   "headers": [
     {
-      "source": "/api/(.*)",
+      "source": "/(.*)",
       "headers": [
         {
           "key": "Access-Control-Allow-Credentials",
