@@ -1,4 +1,4 @@
-import { MODE_CONFIGS, CACHE_CONFIG } from '../shared/config-data';
+import { MODE_CONFIGS, CACHE_CONFIG } from '../../shared/config-data.js';
 
 export const config = {
   runtime: 'edge',

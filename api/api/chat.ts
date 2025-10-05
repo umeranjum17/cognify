@@ -97,11 +97,31 @@ export default async function handler(req: Request) {
       ...(tools ? { tools, toolChoice: modeConfig.toolChoice || 'auto' } : {}),
     });
     
-    // Return proper streaming response
-    return result.toTextStreamResponse({
+    // Convert to SSE format that Flutter expects
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          for await (const textPart of result.textStream) {
+            // Send each chunk in SSE format with data: prefix
+            const sseMessage = `data: ${JSON.stringify({ content: textPart })}\n\n`;
+            controller.enqueue(encoder.encode(sseMessage));
+          }
+          // Send completion marker
+          controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+          controller.close();
+        } catch (error) {
+          controller.error(error);
+        }
+      },
+    });
+
+    return new Response(stream, {
       headers: {
         ...CORS_HEADERS,
-        'Content-Type': 'text/plain; charset=utf-8',
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
       },
     });
   } catch (err) {

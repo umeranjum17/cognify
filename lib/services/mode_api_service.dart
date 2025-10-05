@@ -26,16 +26,36 @@ class ModeApiService {
   Future<void> loadConfigurations() async {
     try {
       print('🌐 ModeApiService baseUrl: ${AppConfig.backendBaseUrl}');
+      print('📡 [MODE_CONFIG] Making GET request to /api/config/modes');
+      print('🔗 [MODE_CONFIG] Full URL: ${AppConfig.backendBaseUrl}/api/config/modes');
+      
       final response = await _dio.get('/api/config/modes');
+      
+      print('✅ [MODE_CONFIG] Response received - Status: ${response.statusCode}');
+      print('📦 [MODE_CONFIG] Response data type: ${response.data.runtimeType}');
+      print('📄 [MODE_CONFIG] Response data: ${response.data}');
+      
       final data = response.data is Map ? response.data as Map : {};
       final raw = data['data'];
       if (raw is Map) {
         _modeConfigs = Map<String, dynamic>.from(raw);
+        print('✅ [MODE_CONFIG] Successfully loaded ${_modeConfigs?.length} mode configs');
       } else {
         _modeConfigs = {};
+        print('⚠️ [MODE_CONFIG] No valid data found in response, using empty config');
       }
     } catch (e) {
-      print('⚠️ Failed to load mode configs, using defaults: $e (baseUrl=${AppConfig.backendBaseUrl})');
+      print('❌ [MODE_CONFIG] Failed to load mode configs: $e');
+      print('🔍 [MODE_CONFIG] Error type: ${e.runtimeType}');
+      if (e is DioException) {
+        print('🌐 [MODE_CONFIG] DioException details:');
+        print('   - Type: ${e.type}');
+        print('   - Message: ${e.message}');
+        print('   - Response status: ${e.response?.statusCode}');
+        print('   - Response data: ${e.response?.data}');
+        print('   - Request URL: ${e.requestOptions.uri}');
+      }
+      print('🔄 [MODE_CONFIG] Using defaults (baseUrl=${AppConfig.backendBaseUrl})');
     }
   }
 
@@ -44,17 +64,36 @@ class ModeApiService {
     try {
       if (_modelsConfig != null) return _modelsConfig;
       print('🌐 ModelsConfig fetch baseUrl: ${AppConfig.backendBaseUrl}');
+      print('📡 [MODELS_CONFIG] Making GET request to /api/config/models');
+      print('🔗 [MODELS_CONFIG] Full URL: ${AppConfig.backendBaseUrl}/api/config/models');
+      
       final response = await _dio.get('/api/config/models');
+      
+      print('✅ [MODELS_CONFIG] Response received - Status: ${response.statusCode}');
+      print('📦 [MODELS_CONFIG] Response data type: ${response.data.runtimeType}');
+      print('📄 [MODELS_CONFIG] Response data: ${response.data}');
+      
       if (response.statusCode == 200 && response.data is Map) {
         final data = response.data as Map;
         final raw = data['data'];
         if (raw is Map) {
           _modelsConfig = Map<String, dynamic>.from(raw);
+          print('✅ [MODELS_CONFIG] Successfully loaded models config with ${_modelsConfig?.length} entries');
         }
         return _modelsConfig;
       }
     } catch (e) {
-      print('⚠️ Failed to load models config: $e (baseUrl=${AppConfig.backendBaseUrl})');
+      print('❌ [MODELS_CONFIG] Failed to load models config: $e');
+      print('🔍 [MODELS_CONFIG] Error type: ${e.runtimeType}');
+      if (e is DioException) {
+        print('🌐 [MODELS_CONFIG] DioException details:');
+        print('   - Type: ${e.type}');
+        print('   - Message: ${e.message}');
+        print('   - Response status: ${e.response?.statusCode}');
+        print('   - Response data: ${e.response?.data}');
+        print('   - Request URL: ${e.requestOptions.uri}');
+      }
+      print('🔄 [MODELS_CONFIG] Using fallback (baseUrl=${AppConfig.backendBaseUrl})');
     }
     return null;
   }
@@ -246,9 +285,21 @@ class ModeApiService {
               return;
             }
             try {
-              final jsonData = jsonDecode(data);
-              print('📦 [STREAM] Yielding chunk data: ${jsonEncode(jsonData).substring(0, 100)}...');
-              yield { 'chunk': jsonData, 'streaming': true };
+              final jsonData = jsonDecode(data) as Map<String, dynamic>;
+              final jsonString = jsonEncode(jsonData);
+              final preview = jsonString.length > 100 ? jsonString.substring(0, 100) + '...' : jsonString;
+              print('📦 [STREAM] Yielding chunk data: $preview');
+              // Yield the parsed data directly (with type field if content is present)
+              if (jsonData.containsKey('content')) {
+                yield {
+                  'type': 'content',
+                  'content': jsonData['content'],
+                  'streaming': true,
+                };
+              } else {
+                // For other structured events, yield as-is
+                yield { ...jsonData, 'streaming': true };
+              }
             } catch (e) {
               print('⚠️  [STREAM] Failed to parse JSON from line: $line (error: $e)');
               // ignore non-JSON lines

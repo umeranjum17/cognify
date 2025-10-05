@@ -1,7 +1,7 @@
 import {
   MODEL_DEFAULTS,
   CACHE_CONFIG,
-} from '../shared/config-data';
+} from '../../shared/config-data.js';
 
 export const config = {
   runtime: 'edge',
@@ -26,6 +26,12 @@ export const config = {
  * }
  */
 export default async function handler(req: Request) {
+  console.log('[MODELS API] Request received:', {
+    method: req.method,
+    url: req.url,
+    headers: Array.from(req.headers.entries())
+  });
+
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, OPTIONS',
@@ -33,16 +39,20 @@ export default async function handler(req: Request) {
   } as const;
 
   if (req.method === 'OPTIONS') {
+    console.log('[MODELS API] Handling OPTIONS request');
     return new Response(null, { status: 204, headers: corsHeaders });
   }
 
   try {
+    console.log('[MODELS API] Fetching models from OpenRouter...');
     // Fetch model data from OpenRouter
     const response = await fetch('https://openrouter.ai/api/v1/models', {
       headers: {
         'Content-Type': 'application/json',
       },
     });
+
+    console.log('[MODELS API] OpenRouter response status:', response.status);
 
     if (!response.ok) {
       throw new Error(`OpenRouter API error: ${response.status}`);
