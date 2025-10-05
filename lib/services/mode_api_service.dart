@@ -183,10 +183,19 @@ class ModeApiService {
     double? temperature,
     int? maxTokens,
   }) async* {
+    print('🌊 [STREAM] Starting streaming chat request...');
+    print('📋 [STREAM] Mode: $mode');
+    print('🎯 [STREAM] Model: $model');
+    print('💬 [STREAM] Messages: ${messages?.length ?? 0}');
+    print('❓ [STREAM] Query: ${query?.substring(0, query != null && query.length > 50 ? 50 : query?.length ?? 0) ?? 'none'}');
+    
     await _ensureConfigLoaded();
 
     final endpoint = _getEndpoint(mode);
     final modeId = mode.toString().split('.').last;
+    
+    print('🌐 [STREAM] Full URL: ${AppConfig.backendBaseUrl}$endpoint');
+    print('🏷️  [STREAM] Mode ID: $modeId');
 
     final body = <String, dynamic>{
       'mode': modeId, // Backend uses this to route to correct logic
@@ -196,39 +205,72 @@ class ModeApiService {
       if (temperature != null) 'temperature': temperature,
       if (maxTokens != null) 'maxTokens': maxTokens,
     };
+    
+    print('📦 [STREAM] Request body: ${jsonEncode(body).substring(0, 200)}...');
+    print('📤 [STREAM] Sending streaming POST request...');
 
-    final resp = await _dio.post(
-      endpoint,
-      data: jsonEncode(body),
-      options: Options(
-        headers: { 'Content-Type': 'application/json' },
-        responseType: ResponseType.stream,
-      ),
-    );
+    try {
+      final resp = await _dio.post(
+        endpoint,
+        data: jsonEncode(body),
+        options: Options(
+          headers: { 'Content-Type': 'application/json' },
+          responseType: ResponseType.stream,
+        ),
+      );
 
-    if (resp.statusCode != 200) {
-      throw Exception('Streaming API failed: HTTP ${resp.statusCode}');
-    }
+      print('✅ [STREAM] Response received: ${resp.statusCode}');
+      
+      if (resp.statusCode != 200) {
+        print('❌ [STREAM] Non-200 status: ${resp.statusCode}');
+        print('❌ [STREAM] Response data: ${resp.data}');
+        throw Exception('Streaming API failed: HTTP ${resp.statusCode}');
+      }
 
-    final responseBody = resp.data as ResponseBody;
-    await for (final chunk in responseBody.stream) {
-      final text = utf8.decode(chunk);
-      final lines = text.split('\n');
-      for (final line in lines) {
-        if (line.startsWith('data: ')) {
-          final data = line.substring(6).trim();
-          if (data == '[DONE]') {
-            yield { 'done': true, 'streaming': true };
-            return;
-          }
-          try {
-            final jsonData = jsonDecode(data);
-            yield { 'chunk': jsonData, 'streaming': true };
-          } catch (_) {
-            // ignore non-JSON lines
+      print('✅ [STREAM] Stream connection established');
+      final responseBody = resp.data as ResponseBody;
+      int chunkCount = 0;
+      
+      await for (final chunk in responseBody.stream) {
+        chunkCount++;
+        final text = utf8.decode(chunk);
+        print('📨 [STREAM] Chunk #$chunkCount received (${text.length} bytes)');
+        
+        final lines = text.split('\n');
+        for (final line in lines) {
+          if (line.startsWith('data: ')) {
+            final data = line.substring(6).trim();
+            if (data == '[DONE]') {
+              print('✅ [STREAM] Stream completed [DONE] received');
+              yield { 'done': true, 'streaming': true };
+              return;
+            }
+            try {
+              final jsonData = jsonDecode(data);
+              print('📦 [STREAM] Yielding chunk data: ${jsonEncode(jsonData).substring(0, 100)}...');
+              yield { 'chunk': jsonData, 'streaming': true };
+            } catch (e) {
+              print('⚠️  [STREAM] Failed to parse JSON from line: $line (error: $e)');
+              // ignore non-JSON lines
+            }
+          } else if (line.trim().isNotEmpty) {
+            print('⚠️  [STREAM] Non-data line received: ${line.substring(0, line.length > 50 ? 50 : line.length)}');
           }
         }
       }
+      
+      print('✅ [STREAM] Stream ended naturally (no [DONE] marker)');
+    } catch (e, stackTrace) {
+      print('❌❌❌ [STREAM] STREAMING REQUEST FAILED!');
+      print('❌ [STREAM] Error type: ${e.runtimeType}');
+      print('❌ [STREAM] Error message: $e');
+      if (e is DioException) {
+        print('❌ [STREAM] DioException type: ${e.type}');
+        print('❌ [STREAM] DioException response: ${e.response?.statusCode} - ${e.response?.data}');
+        print('❌ [STREAM] DioException message: ${e.message}');
+      }
+      print('❌ [STREAM] Stack trace: $stackTrace');
+      rethrow;
     }
   }
 

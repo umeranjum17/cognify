@@ -45,10 +45,24 @@ class RequestUsageEntry {
 
   Map<String, dynamic> toJson() {
     return {
-      'timestamp': Timestamp.fromDate(timestamp.toUtc()),
+      'timestamp': timestamp.toUtc().toIso8601String(),
       'modelId': modelId,
       'requestUnits': requestUnits,
       // Legacy key for any older consumers (optional)
+      'tokens': requestUnits,
+      if (dollarCost != null) 'dollarCost': dollarCost,
+      if (inputTokens != null) 'inputTokens': inputTokens,
+      if (outputTokens != null) 'outputTokens': outputTokens,
+      if (conversationId != null) 'conversationId': conversationId,
+    };
+  }
+
+  /// For Firestore serialization (uses Timestamp objects)
+  Map<String, dynamic> toFirestoreJson() {
+    return {
+      'timestamp': Timestamp.fromDate(timestamp.toUtc()),
+      'modelId': modelId,
+      'requestUnits': requestUnits,
       'tokens': requestUnits,
       if (dollarCost != null) 'dollarCost': dollarCost,
       if (inputTokens != null) 'inputTokens': inputTokens,
@@ -158,11 +172,26 @@ class UsageQuota {
       'requestsConsumed': requestsConsumed,
       'requestsRemaining': remaining,
       'usageHistory': usageHistory.map((e) => e.toJson()).toList(),
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt?.toIso8601String(),
+      // Legacy keys for backward compatibility
+      'totalTokens': totalRequests,
+      'tokensConsumed': requestsConsumed,
+      'tokensRemaining': remaining,
+    };
+  }
+
+  /// For Firestore serialization (uses Timestamp objects)
+  Map<String, dynamic> toFirestoreJson() {
+    return {
+      'totalRequests': totalRequests,
+      'requestsConsumed': requestsConsumed,
+      'requestsRemaining': remaining,
+      'usageHistory': usageHistory.map((e) => e.toFirestoreJson()).toList(),
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': updatedAt != null
           ? Timestamp.fromDate(updatedAt!)
           : FieldValue.serverTimestamp(),
-      // Legacy keys for backward compatibility
       'totalTokens': totalRequests,
       'tokensConsumed': requestsConsumed,
       'tokensRemaining': remaining,

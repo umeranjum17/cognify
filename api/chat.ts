@@ -96,8 +96,14 @@ export default async function handler(req: Request) {
       ...(maxTokens ? { maxTokens } : {}),
       ...(tools ? { tools, toolChoice: modeConfig.toolChoice || 'auto' } : {}),
     });
-    await result.consumeStream();
-    return result.text;
+    
+    // Return proper streaming response
+    return result.toTextStreamResponse({
+      headers: {
+        ...CORS_HEADERS,
+        'Content-Type': 'text/plain; charset=utf-8',
+      },
+    });
   } catch (err) {
     console.error('Unified chat endpoint error:', err);
     return new Response(

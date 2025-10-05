@@ -3604,6 +3604,12 @@ class _EditorScreenState extends State<EditorScreen> {
       // Debug current model state
       _debugModelState();
 
+      print('🚀🚀🚀 [EDITOR] About to call chatCompletionStream');
+      print('🎯 [EDITOR] Model: $modelToUse');
+      print('🏷️  [EDITOR] Chat Mode: $_currentMode');
+      print('💬 [EDITOR] Message count: ${_messages.where((m) => m.isProcessing != true).length}');
+      print('🔧 [EDITOR] Has tools: ${_toolsConfig != null}');
+      
       final stream = _llmService.chatCompletionStream(
         model: modelToUse,
         messages: _messages.where((m) => m.isProcessing != true).toList(),
@@ -3619,7 +3625,9 @@ class _EditorScreenState extends State<EditorScreen> {
         chatMode: _currentMode,
       );
 
+      print('✅ [EDITOR] Stream created, starting to listen...');
       await for (final eventMap in stream) {
+        print('📨 [EDITOR] Received event from stream: ${eventMap.keys.join(', ')}');
         // Check if operation was cancelled
         if (_isCancelled) {
           print('🚫 Breaking stream loop due to cancellation');
@@ -3918,8 +3926,12 @@ class _EditorScreenState extends State<EditorScreen> {
       await _updateKnowledgeGraph();
 
       // Do not auto-scroll on completion
-    } catch (e) {
+    } catch (e, stackTrace) {
       // Error cleanup
+      print('❌❌❌ [EDITOR] CRITICAL ERROR IN STREAMING!');
+      print('❌ [EDITOR] Error type: ${e.runtimeType}');
+      print('❌ [EDITOR] Error message: $e');
+      print('❌ [EDITOR] Stack trace: $stackTrace');
 
       // Clean up streaming controller on error
       StreamingMessageRegistry().removeController(streamingMessage.id);
@@ -3941,6 +3953,7 @@ class _EditorScreenState extends State<EditorScreen> {
         Color backgroundColor = Theme.of(context).colorScheme.error;
 
         final errorString = e.toString().toLowerCase();
+        print('🔍 [EDITOR] Error string for matching: $errorString');
 
         if (errorString.contains('openrouter api key not configured') ||
             errorString.contains('api key not configured')) {

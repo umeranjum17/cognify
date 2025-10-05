@@ -99,9 +99,12 @@ class AppConfig {
   static const String openAiBaseUrl = 'https://api.openai.ai/v1';
 
   static String get backendBaseUrl {
-    // TEMP: Hardcoded for local development per request
-    // Use Android emulator host mapping (10.0.2.2 -> localhost)
-    return 'http://10.0.2.2:3000';
+    // Use production Vercel backend
+    // return 'https://cognify-backend.vercel.app';
+    
+    // For local development, uncomment below:
+    // return 'http://10.0.2.2:3000'; // Android emulator
+    return 'http://localhost:3000'; // iOS simulator / web
   }
 
   // App information
