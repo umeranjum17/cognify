@@ -31,8 +31,15 @@ import 'config/app_config.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Load environment variables
-  await dotenv.load(fileName: ".env");
+  // Load environment variables (optional)
+  try {
+    const compileTimeBackend = String.fromEnvironment('BACKEND_BASE_URL', defaultValue: '');
+    if (compileTimeBackend.isEmpty) {
+      await dotenv.load(fileName: ".env");
+    }
+  } catch (_) {
+    // Silent: we have sane fallbacks (Android emulator defaults to 10.0.2.2:3000)
+  }
 
   // Disable Provider debug checks to prevent subtype warnings
   Provider.debugCheckInvalidValueType = null;

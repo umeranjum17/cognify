@@ -112,6 +112,12 @@ class AppConfig {
     }
 
     // Final fallback for development
+    // If running on Android emulator, map host localhost via 10.0.2.2
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+      return 'http://10.0.2.2:3000';
+    }
+
+    // Otherwise, use hosted default
     return 'https://cognify-backend.fly.dev';
   }
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 
 import '../models/mode_config.dart';
 import '../services/mode_api_service.dart';
@@ -8,7 +9,10 @@ class ModeConfigProvider extends ChangeNotifier {
   bool _isLoading = false;
 
   ModeConfigProvider() {
-    _loadConfigs();
+    // Defer initial load to post-frame to avoid notify during build
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      _loadConfigs();
+    });
   }
   Map<ChatMode, ModeConfig> get configs => Map.unmodifiable(_configs);
 
@@ -29,17 +33,24 @@ class ModeConfigProvider extends ChangeNotifier {
 
   Future<void> updateConfig(ChatMode mode, ModeConfig config) async {
     _configs[mode] = config;
-    notifyListeners();
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      notifyListeners();
+    });
   }
 
   Future<void> updateConfigs(Map<ChatMode, ModeConfig> newConfigs) async {
     _configs = Map.from(newConfigs);
-    notifyListeners();
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      notifyListeners();
+    });
   }
 
   Future<void> _loadConfigs() async {
     _isLoading = true;
-    notifyListeners();
+    // Only notify if not in build phase; scheduling avoids build-time notify
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      notifyListeners();
+    });
 
     try {
       // Load backend configs per-mode; fall back to defaults when missing
@@ -71,6 +82,8 @@ class ModeConfigProvider extends ChangeNotifier {
     }
 
     _isLoading = false;
-    notifyListeners();
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      notifyListeners();
+    });
   }
 }

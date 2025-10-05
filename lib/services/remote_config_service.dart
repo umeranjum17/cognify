@@ -23,7 +23,7 @@ class RemoteConfigService {
     return 'http://localhost:3000/api/config';
   }
 
-  static const Duration _cacheExpiry = Duration(hours: 1);
+  static const Duration _cacheExpiry = Duration(minutes: 30);
   static const Duration _requestTimeout = Duration(seconds: 10);
 
   // Cache keys
@@ -51,8 +51,20 @@ class RemoteConfigService {
       _initialized = true;
       Logger.info('🔧 RemoteConfigService initialized', tag: 'RemoteConfig');
 
-      // Trigger background refresh if cache is stale
-      _refreshIfStale();
+      // Warm unified cache immediately (non-blocking), then schedule background refresh if stale
+      Future.delayed(Duration.zero, () async {
+        try {
+          final hadUnified = await _getCachedData<Map<String, dynamic>>(
+                _unifiedCacheKey,
+                _unifiedTimestampKey,
+              ) !=
+              null;
+          if (!hadUnified) {
+            await _fetchUnified(forceRefresh: true);
+          }
+        } catch (_) {}
+        _refreshIfStale();
+      });
     } catch (e) {
       Logger.error('Failed to initialize RemoteConfigService: $e', tag: 'RemoteConfig');
     }
@@ -66,7 +78,7 @@ class RemoteConfigService {
     bool forceRefresh = false,
   }) async {
     await _ensureInitialized();
-    // Attempt unified first
+    // Use unified payload; only fetch if forced or missing/expired
     final unified = await _fetchUnified(forceRefresh: forceRefresh);
     if (unified != null) {
       final pricingData = (unified['pricing'] as Map?)?.cast<String, dynamic>();
@@ -76,9 +88,9 @@ class RemoteConfigService {
         return _parsePricing(pricingData);
       }
     }
-
-    // Fallback: keep old behavior if unified failed
-    return await _fetchPricingLegacy(forceRefresh: forceRefresh);
+    // Do not fetch separately; rely on unified only
+    Logger.warn('Unified payload missing pricing; returning null', tag: 'RemoteConfig');
+    return null;
   }
 
   /// Fetch model configurations from backend
@@ -95,8 +107,8 @@ class RemoteConfigService {
         return modelsData;
       }
     }
-
-    return await _fetchModelsLegacy(forceRefresh: forceRefresh);
+    Logger.warn('Unified payload missing models; returning null', tag: 'RemoteConfig');
+    return null;
   }
 
   /// Fetch app configuration (feature flags, quotas, version)
@@ -113,8 +125,8 @@ class RemoteConfigService {
         return appData;
       }
     }
-
-    return await _fetchAppLegacy(forceRefresh: forceRefresh);
+    Logger.warn('Unified payload missing app config; returning null', tag: 'RemoteConfig');
+    return null;
   }
 
   /// Fetch mode configurations (chat, search, deepsearch, etc.)
@@ -162,7 +174,7 @@ class RemoteConfigService {
   Future<void> refreshAll() async {
     Logger.info('🔄 Refreshing all remote configs...', tag: 'RemoteConfig');
 
-    // Prefer unified refresh first, then modes
+    // Refresh unified only (single network call), then modes separately
     final unified = await _fetchUnified(forceRefresh: true);
     if (unified != null) {
       final pricingData = (unified['pricing'] as Map?)?.cast<String, dynamic>();
@@ -177,12 +189,6 @@ class RemoteConfigService {
       if (appData != null) {
         await _cacheData(_appCacheKey, _appTimestampKey, appData);
       }
-    } else {
-      await Future.wait([
-        fetchPricing(forceRefresh: true),
-        fetchModels(forceRefresh: true),
-        fetchAppConfig(forceRefresh: true),
-      ]);
     }
 
     await fetchModes(forceRefresh: true);
@@ -320,57 +326,5 @@ class RemoteConfigService {
       Logger.error('Error fetching unified config: $e', tag: 'RemoteConfig');
       return null;
     }
-  }
-
-  // Legacy fallbacks (can be removed after full migration)
-  Future<Map<String, Map<String, double>>?> _fetchPricingLegacy({ bool forceRefresh = false }) async {
-    try {
-      final response = await http
-          .get(Uri.parse('$baseUrl/pricing'))
-          .timeout(_requestTimeout);
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        if (data['success'] == true) {
-          final pricingData = data['data'] as Map<String, dynamic>;
-          await _cacheData(_pricingCacheKey, _pricingTimestampKey, pricingData);
-          return _parsePricing(pricingData);
-        }
-      }
-    } catch (_) {}
-    return null;
-  }
-
-  Future<Map<String, dynamic>?> _fetchModelsLegacy({ bool forceRefresh = false }) async {
-    try {
-      final response = await http
-          .get(Uri.parse('$baseUrl/models'))
-          .timeout(_requestTimeout);
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        if (data['success'] == true) {
-          final modelsData = data['data'] as Map<String, dynamic>;
-          await _cacheData(_modelsCacheKey, _modelsTimestampKey, modelsData);
-          return modelsData;
-        }
-      }
-    } catch (_) {}
-    return null;
-  }
-
-  Future<Map<String, dynamic>?> _fetchAppLegacy({ bool forceRefresh = false }) async {
-    try {
-      final response = await http
-          .get(Uri.parse('$baseUrl/app'))
-          .timeout(_requestTimeout);
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        if (data['success'] == true) {
-          final appData = data['data'] as Map<String, dynamic>;
-          await _cacheData(_appCacheKey, _appTimestampKey, appData);
-          return appData;
-        }
-      }
-    } catch (_) {}
-    return null;
   }
 }

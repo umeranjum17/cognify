@@ -20,6 +20,7 @@ class ModeApiService {
 
   // Cache for mode configurations from backend
   Map<String, dynamic>? _modeConfigs;
+  Map<String, dynamic>? _modelsConfig;
 
   /// Fetch mode configurations from backend
   Future<void> loadConfigurations() async {
@@ -29,6 +30,21 @@ class ModeApiService {
     } catch (e) {
       print('⚠️ Failed to load mode configs, using defaults: $e');
     }
+  }
+
+  /// Fetch models configuration (defaults, capabilities, available, pricing)
+  Future<Map<String, dynamic>?> loadModelsConfig() async {
+    try {
+      if (_modelsConfig != null) return _modelsConfig;
+      final response = await _dio.get('/api/config/models');
+      if (response.statusCode == 200 && response.data is Map) {
+        _modelsConfig = (response.data['data'] as Map).cast<String, dynamic>();
+        return _modelsConfig;
+      }
+    } catch (e) {
+      print('⚠️ Failed to load models config: $e');
+    }
+    return null;
   }
 
   /// Get raw mode config for a specific mode from backend cache

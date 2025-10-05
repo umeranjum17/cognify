@@ -2,6 +2,9 @@ import '../models/mode_config.dart';
 import '../models/file_attachment.dart';
 import '../config/model_registry.dart';
 import 'mode_api_service.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import '../config/app_config.dart';
 
 /// Service for managing AI models via backend
 class ModelService {
@@ -142,7 +145,43 @@ class ModelService {
   static Future<Map<String, dynamic>> getModelsByMode(ChatMode mode) async {
     try {
       print('🔄 ModelService: Getting models for mode: $mode');
-      final ids = await _modeApi.getAvailableModelsForMode(mode);
+      // Load models config from backend
+      Map<String, dynamic>? modelsConfig = await _modeApi.loadModelsConfig();
+      // Hard fallback: direct HTTP call if Dio path failed for any reason
+      if (modelsConfig == null) {
+        try {
+          final url = Uri.parse('${AppConfig.backendBaseUrl}/api/config/models');
+          final resp = await http.get(url);
+          if (resp.statusCode == 200) {
+            final decoded = jsonDecode(resp.body) as Map<String, dynamic>;
+            modelsConfig = (decoded['data'] as Map).cast<String, dynamic>();
+          }
+        } catch (_) {}
+      }
+      List<String> ids = await _modeApi.getAvailableModelsForMode(mode);
+      if (modelsConfig != null) {
+        final pricing = (modelsConfig['pricing'] as Map?)?.cast<String, dynamic>() ?? {};
+        final capabilities = (modelsConfig['capabilities'] as Map?)?.cast<String, dynamic>() ?? {};
+        // If mode has no explicit ids, use all available
+        if (ids.isEmpty) {
+          ids = List<String>.from(modelsConfig['available'] ?? []);
+        }
+        final models = ids.map((id) => {
+          'id': id,
+          'name': _formatModelName(id),
+          'description': _getModelDescription(id),
+          'pricing': pricing[id] ?? {},
+          'provider': (capabilities[id]?['provider']) ?? id.split('/').first,
+          'isFree': (pricing[id]?['input'] ?? 0.0) == 0.0 && (pricing[id]?['output'] ?? 0.0) == 0.0,
+          'context_length': capabilities[id]?['maxTokens'] ?? 8192,
+          'inputModalities': capabilities[id]?['inputModalities'] ?? ['text'],
+          'outputModalities': capabilities[id]?['outputModalities'] ?? ['text'],
+        }).toList();
+        return {'success': true, 'data': models};
+      }
+
+      // Fallback if config not available
+      ids = ids.isEmpty ? _getFallbackModels() : ids;
       final models = ids.map((id) => {
         'id': id,
         'name': _formatModelName(id),

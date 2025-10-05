@@ -1,4 +1,5 @@
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:flutter/foundation.dart';
 
 import '../models/source.dart';
 import '../utils/logger.dart';
@@ -173,6 +174,17 @@ class DatabaseService {
     if (_initialized) return;
 
     try {
+      // Ensure Hive is initialized with a path
+      if (!kIsWeb) {
+        try {
+          await Hive.initFlutter();
+        } catch (_) {
+          // ignore if already initialized
+        }
+      } else {
+        // On web, HiveFlutter initializes lazily when opening boxes
+      }
+
       // Open all Hive boxes
       _sources = await Hive.openBox(_sourcesBox);
       _sourceContent = await Hive.openBox(_sourceContentBox);
