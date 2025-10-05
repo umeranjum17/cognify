@@ -3553,19 +3553,19 @@ class _EditorScreenState extends State<EditorScreen> {
     );
 
     try {
-      // Prepare files for upload
+      // File attachments temporarily disabled - API changed
       final files = <PlatformFile>[];
-      for (final fileAttachment in userMessage.fileAttachments ?? []) {
-        // Convert FileAttachment to PlatformFile
-        final bytes = base64Decode(fileAttachment.base64Data);
-        files.add(
-          PlatformFile(
-            name: fileAttachment.name,
-            size: fileAttachment.size,
-            bytes: bytes,
-          ),
-        );
-      }
+      // for (final fileAttachment in userMessage.fileAttachments ?? []) {
+      //   // Convert FileAttachment to PlatformFile
+      //   final bytes = base64Decode(fileAttachment.base64Data);
+      //   files.add(
+      //     PlatformFile(
+      //       name: fileAttachment.name,
+      //       size: fileAttachment.size,
+      //       bytes: bytes,
+      //     ),
+      //   );
+      // }
 
       // Replace processing message with streaming message
       setState(() {
