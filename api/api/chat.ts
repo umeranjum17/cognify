@@ -53,7 +53,15 @@ export default async function handler(req: Request) {
       );
     }
 
-    const body = await req.json().catch(() => ({}));
+    type ChatRequestBody = {
+      messages?: any[];
+      mode?: string;
+      model?: string;
+      temperature?: number;
+      maxTokens?: number;
+      query?: string;
+    };
+    const body = (await req.json().catch(() => ({}))) as ChatRequestBody;
 
     // Extract parameters - backend determines defaults
     const mode = (body?.mode as string) || 'chat';
@@ -105,7 +113,7 @@ export default async function handler(req: Request) {
       model: openrouter(model),
       messages: [...systemMessages, ...messages],
       temperature: modeConfig.temperature ?? temperature,
-      ...(maxTokens ? { maxTokens } : {}),
+      ...(maxTokens ? { maxOutputTokens: maxTokens } : {}),
       ...(tools ? { tools, toolChoice: modeConfig.toolChoice || 'auto' } : {}),
     });
     
@@ -263,7 +271,7 @@ async function buildToolsForMode(mode: string, config: any) {
 
     toolSet.braveWebSearch = tool({
       description: 'Search the web using Brave and return top results',
-      parameters: z.object({
+      inputSchema: z.object({
         query: z.string().describe('The search query'),
       }),
       execute: async ({ query }) => {
@@ -297,7 +305,7 @@ async function buildToolsForMode(mode: string, config: any) {
 
     toolSet.braveImageSearch = tool({
       description: 'Find relevant images using Brave image search',
-      parameters: z.object({
+      inputSchema: z.object({
         query: z.string().describe('Image search query'),
       }),
       execute: async ({ query }) => {
