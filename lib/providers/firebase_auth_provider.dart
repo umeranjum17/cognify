@@ -8,6 +8,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../firebase_options.dart';
+import '../utils/logger.dart';
 
 /// FirebaseAuthProvider()
 /// Implements zero-friction start with anonymous auth by default.
@@ -27,45 +28,62 @@ class FirebaseAuthProvider extends ChangeNotifier {
   Object? get lastError => _lastError;
 
   Future<void> initialize() async {
-    if (_initialized || _initializing) return;
+    Logger.debug('🔐 FirebaseAuthProvider.initialize() called', tag: 'FirebaseAuth');
+    if (_initialized || _initializing) {
+      Logger.debug('🔐 Already initialized or initializing, skipping', tag: 'FirebaseAuth');
+      return;
+    }
     _initializing = true;
+    Logger.debug('🔐 Setting _initializing = true', tag: 'FirebaseAuth');
     
     // Use post-frame callback to avoid setState during build
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      Logger.debug('🔐 Notifying listeners (initializing = true)', tag: 'FirebaseAuth');
       notifyListeners();
     });
 
     try {
       // Initialize Firebase if not already
       if (Firebase.apps.isEmpty) {
+        Logger.debug('🔐 Firebase apps empty, initializing Firebase...', tag: 'FirebaseAuth');
         try {
           // Use the real Firebase options from firebase_options.dart
           await Firebase.initializeApp(
             options: DefaultFirebaseOptions.currentPlatform,
           );
+          Logger.debug('🔐 Firebase initialization successful', tag: 'FirebaseAuth');
         } catch (e) {
+          Logger.error('🔐 Firebase initialization failed: $e', tag: 'FirebaseAuth');
           debugPrint('❌ [FirebaseAuth] Firebase initialization failed: $e');
           debugPrint('⚠️ [FirebaseAuth] App will continue without Firebase - some features may be limited');
           _lastError = e;
           _initialized = true; // Mark as initialized to prevent retry loops
           _initializing = false;
+          Logger.debug('🔐 Setting _initialized = true, _initializing = false (Firebase failed)', tag: 'FirebaseAuth');
           WidgetsBinding.instance.addPostFrameCallback((_) {
+            Logger.debug('🔐 Notifying listeners (Firebase failed)', tag: 'FirebaseAuth');
             notifyListeners();
           });
           return; // Exit early if Firebase can't be initialized
         }
+      } else {
+        Logger.debug('🔐 Firebase already initialized', tag: 'FirebaseAuth');
       }
 
       _auth = fb.FirebaseAuth.instance;
+      Logger.debug('🔐 FirebaseAuth instance obtained', tag: 'FirebaseAuth');
 
       // Hydrate current user
       _user = _auth.currentUser;
+      Logger.debug('🔐 Current user: ${_user?.uid ?? "null"}', tag: 'FirebaseAuth');
 
       // Listen to auth state changes
       _auth.authStateChanges().listen((user) {
+        Logger.debug('🔐 Auth state changed: ${user?.uid ?? "null"}', tag: 'FirebaseAuth');
         _user = user;
         if (_initialized) { // Only notify if initialization is complete
           WidgetsBinding.instance.addPostFrameCallback((_) {
+            Logger.debug('🔐 Notifying listeners (auth state change)', tag: 'FirebaseAuth');
             notifyListeners();
           });
         }
@@ -73,24 +91,34 @@ class FirebaseAuthProvider extends ChangeNotifier {
 
       // Zero-friction start: sign in anonymously if no user
       if (_user == null) {
+        Logger.debug('🔐 No current user, signing in anonymously...', tag: 'FirebaseAuth');
         try {
           await _auth.signInAnonymously();
           _user = _auth.currentUser;
+          Logger.debug('🔐 Anonymous sign-in successful: ${_user?.uid}', tag: 'FirebaseAuth');
           debugPrint('✅ [FirebaseAuth] Anonymous sign-in successful');
         } catch (e) {
+          Logger.error('🔐 Anonymous sign-in failed: $e', tag: 'FirebaseAuth');
           debugPrint('⚠️ [FirebaseAuth] Anonymous sign-in failed: $e');
           // Continue without anonymous auth - user can still use the app
         }
+      } else {
+        Logger.debug('🔐 User already exists, skipping anonymous sign-in', tag: 'FirebaseAuth');
       }
 
       _initialized = true;
+      Logger.debug('🔐 Setting _initialized = true (success)', tag: 'FirebaseAuth');
     } catch (e) {
       _lastError = e;
+      Logger.error('🔐 Initialization error: $e', tag: 'FirebaseAuth');
       debugPrint('❌ [FirebaseAuth] Initialization error: $e');
       _initialized = true; // Mark as initialized even with error to prevent retry loops
+      Logger.debug('🔐 Setting _initialized = true (error)', tag: 'FirebaseAuth');
     } finally {
       _initializing = false;
+      Logger.debug('🔐 Setting _initializing = false (finally)', tag: 'FirebaseAuth');
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        Logger.debug('🔐 Notifying listeners (finally)', tag: 'FirebaseAuth');
         notifyListeners();
       });
     }

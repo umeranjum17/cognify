@@ -3634,6 +3634,44 @@ class _EditorScreenState extends State<EditorScreen> {
           break;
         }
 
+        // Check for done event before converting to ChatStreamEvent
+        if (eventMap['done'] == true) {
+          print('✅ [EDITOR] Stream done event received, hiding loader');
+          
+          // Find the processing message and update its isProcessing state
+          final processingMessageIndex = _messages.indexWhere(
+            (m) => m.isProcessing == true,
+          );
+          
+          print('🔍 [EDITOR] Processing message index: $processingMessageIndex');
+          if (processingMessageIndex != -1) {
+            print('📝 [EDITOR] Updating message.isProcessing to false');
+            final processingMessage = _messages[processingMessageIndex];
+            final updatedMessage = Message(
+              id: processingMessage.id,
+              type: processingMessage.type,
+              content: processingMessage.content,
+              timestamp: processingMessage.timestamp,
+              isProcessing: false, // Set to false
+              attachments: processingMessage.attachments,
+              sources: processingMessage.sources,
+              followUpQuestions: processingMessage.followUpQuestions,
+              additionalFollowUpQuestions: processingMessage.additionalFollowUpQuestions,
+              images: processingMessage.images,
+              messageCost: processingMessage.messageCost,
+              sessionCost: processingMessage.sessionCost,
+              costBreakdown: processingMessage.costBreakdown,
+            );
+            _messages[processingMessageIndex] = updatedMessage;
+          }
+          
+          setState(() {
+            _isProcessing = false;
+            _showLoader = false;
+          });
+          break; // Exit the stream loop
+        }
+
         // Convert Map to ChatStreamEvent
         final event = ChatStreamEvent.fromMap(eventMap);
 

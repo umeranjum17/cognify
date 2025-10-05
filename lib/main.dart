@@ -305,11 +305,14 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    Logger.debug('🏗️ Building CognifyApp - _isInitializing: $_isInitializing, _themeProvider: ${_themeProvider != null}, _firebaseAuthProvider: ${_firebaseAuthProvider != null}, _router: ${_router != null}', tag: 'AppInit');
+    
     // Show consistent loading screen while initializing
     if (_isInitializing ||
         _themeProvider == null ||
         _firebaseAuthProvider == null ||
         _router == null) {
+      Logger.debug('🔄 Showing loading screen', tag: 'AppInit');
       return MaterialApp(
         theme: lightTheme,
         darkTheme: darkTheme,
@@ -353,6 +356,7 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
       );
     }
 
+    Logger.debug('✅ All initialization complete, showing main app', tag: 'AppInit');
     return MultiProvider(
       providers: [
         ChangeNotifierProvider.value(value: _themeProvider!),
@@ -539,9 +543,13 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
 
       // Mark initialization complete
       if (mounted) {
+        Logger.info('🔄 Setting _isInitializing to false', tag: 'AppInit');
         setState(() {
           _isInitializing = false;
         });
+        Logger.info('✅ _isInitializing set to false, UI should rebuild', tag: 'AppInit');
+      } else {
+        Logger.warn('⚠️ Widget not mounted, cannot set _isInitializing to false', tag: 'AppInit');
       }
 
       Logger.info('✅ Core initialization complete', tag: 'AppInit');
@@ -570,9 +578,13 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
       }
 
       if (mounted) {
+        Logger.info('🔄 Setting _isInitializing to false (fallback)', tag: 'AppInit');
         setState(() {
           _isInitializing = false;
         });
+        Logger.info('✅ _isInitializing set to false (fallback), UI should rebuild', tag: 'AppInit');
+      } else {
+        Logger.warn('⚠️ Widget not mounted (fallback), cannot set _isInitializing to false', tag: 'AppInit');
       }
     }
   }
