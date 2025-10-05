@@ -3,14 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../providers/app_access_provider.dart';
 import '../providers/firebase_auth_provider.dart';
-import '../providers/subscription_provider.dart';
 
 import '../screens/auth/sign_in_screen.dart';
 import '../screens/conversation_history_screen.dart';
 import '../screens/editor_screen.dart';
-import '../screens/subscription/paywall_screen.dart';
 import '../screens/tabbed_editor_screen.dart';
 import '../widgets/auth_guard.dart';
 
@@ -79,13 +76,7 @@ class AppRouter {
           path: '/',
           pageBuilder: (context, state) {
             final firebaseAuth = context.read<FirebaseAuthProvider>();
-            final subs = context.read<SubscriptionProvider>();
             final sharedUrl = state.uri.queryParameters['sharedUrl'];
-
-            if (!subs.initialized && firebaseAuth.initialized) {
-              subs.initialize(appUserId: firebaseAuth.uid);
-              subs.wireAuth(firebaseAuth);
-            }
 
             if (!firebaseAuth.initialized || firebaseAuth.initializing) {
               return const MaterialPage(
@@ -145,11 +136,7 @@ class AppRouter {
             ),
           ),
         ),
-        GoRoute(
-          path: '/paywall',
-          pageBuilder: (context, state) =>
-              const MaterialPage(child: PaywallScreen()),
-        ),
+        // Paywall removed; access is quota/token based.
       ],
     );
   }

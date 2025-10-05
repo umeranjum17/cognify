@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 
 import '../providers/firebase_auth_provider.dart';
-import '../providers/app_access_provider.dart';
+import '../services/access_service.dart';
 import '../providers/usage_quota_provider.dart';
 import '../config/app_config.dart';
 import '../theme/app_theme.dart';
@@ -303,23 +303,23 @@ class _GeneralSettingsTabState extends State<GeneralSettingsTab> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final authProvider = context.watch<FirebaseAuthProvider>();
-    final accessProvider = context.watch<AppAccessProvider>();
     final quotaProvider = context.watch<UsageQuotaProvider>();
     final user = authProvider.user;
 
     final quota = quotaProvider.quota;
     final int totalTokens =
         quota?.totalTokens ?? AppSecrets.initialTokenAllocation;
-    final int remainingTokens = accessProvider.isTester
+    final bool isTester = AccessService.instance.isTester;
+    final int remainingTokens = isTester
         ? totalTokens
         : quota?.remaining ?? totalTokens;
-    final int consumedTokens = accessProvider.isTester
+    final int consumedTokens = isTester
         ? 0
         : quota?.tokensConsumed ?? (totalTokens - remainingTokens);
 
     String tokenValue;
     String tokenSubtitle;
-    if (accessProvider.isTester) {
+    if (isTester) {
       tokenValue = 'Unlimited';
       tokenSubtitle = 'Tester access • tokens are not limited';
     } else if (quotaProvider.isLoading && quota == null) {

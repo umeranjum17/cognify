@@ -270,7 +270,7 @@ class RevenueCatService {
     
     try {
       final customerInfo = await _withTimeout(
-          () => Purchases.purchase(PurchaseParams(package: pkg)), timeout);
+          () => Purchases.purchasePackage(pkg), timeout);
       _customerInfoCache = customerInfo;
       _customerInfoController.add(customerInfo);
       final entitled = customerInfo.entitlements.active.containsKey(

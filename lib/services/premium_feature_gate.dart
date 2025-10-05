@@ -1,17 +1,11 @@
 import 'package:flutter/widgets.dart';
-import 'package:provider/provider.dart';
-
-import '../providers/app_access_provider.dart';
 
 /// Top-level helper used throughout the app to check premium status.
+/// Premium gating has been removed; access is token-based now.
 bool isPremiumUnlocked(BuildContext context, {bool listen = true}) {
-  try {
-    final access = Provider.of<AppAccessProvider>(context, listen: listen);
-    return access.hasPremiumAccess;
-  } catch (_) {
-    // If provider isn't available in the tree, default to unlocked
-    return true;
-  }
+  // Always return true to avoid UI gating. Request sending is governed
+  // by token presence/limits elsewhere in the app.
+  return true;
 }
 
 /// Feature visibility/enablement helper for UI gating.
@@ -27,4 +21,3 @@ class FeatureAccess {
     return isPremiumUnlocked(context, listen: true);
   }
 }
-

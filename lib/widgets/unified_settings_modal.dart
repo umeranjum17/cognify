@@ -9,7 +9,7 @@ import '../screens/model_selection_screen.dart';
 import '../services/llm_service.dart'; // Added import for LLMService
 import '../theme/app_theme.dart';
 import 'general_settings_tab.dart';
-import '../services/premium_feature_gate.dart';
+// Premium gating removed; access is quota/token-based.
 
 class UnifiedSettingsModal extends StatefulWidget {
   final String selectedModel;
@@ -491,13 +491,6 @@ class _UnifiedSettingsModalState extends State<UnifiedSettingsModal>
   }
 
   void _showModelSelection(ChatMode mode) {
-    // Check if DeepSearch mode requires premium access
-    if (mode.requiresPremium && !isPremiumUnlocked(context, listen: false)) {
-      // Navigate to paywall for premium access
-      Navigator.of(context).pushNamed('/paywall');
-      return;
-    }
-
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => ModelSelectionScreen(

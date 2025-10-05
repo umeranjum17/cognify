@@ -28,8 +28,7 @@ import '../services/openrouter_client.dart';
 import '../services/services_manager.dart';
 import '../services/mode_engine.dart';
 import '../config/model_registry.dart';
-import '../providers/subscription_provider.dart';
-import '../providers/app_access_provider.dart';
+// Premium/subscription removed; using quota-based access.
 import '../providers/tab_provider.dart';
 import '../providers/usage_quota_provider.dart';
 import '../theme/app_theme.dart';
@@ -47,8 +46,7 @@ import '../widgets/model_quick_switcher_modal.dart';
 import '../widgets/model_capabilities_bottom_sheet.dart';
 import 'model_selection_screen.dart';
 import '../services/session_cost_service.dart';
-import '../services/premium_feature_gate.dart';
-import '../services/paywall_coordinator.dart';
+// Premium gating and paywall removed.
 
 class EditorScreen extends StatefulWidget {
   final String? conversationId;
@@ -2026,8 +2024,8 @@ class _EditorScreenState extends State<EditorScreen> {
                         : AppColors.lightButtonText,
                   ),
                 )
-              else if (requiresPremium &&
-                  !isPremiumUnlocked(context, listen: false))
+              // Lock icon removed (no premium gating)
+              else if (false)
                 Container(
                   padding: const EdgeInsets.all(3),
                   child: Icon(
@@ -2456,20 +2454,8 @@ class _EditorScreenState extends State<EditorScreen> {
 
   // Premium feature methods
   Future<bool> _checkWebSearchAccess() async {
-    try {
-      // Dev override: allow internet globe in development when the explicit dev flag is enabled.
-      // Production or dev without override: require active subscription entitlement.
-      try {
-        final sub = Provider.of<SubscriptionProvider>(context, listen: false);
-        // active -> access granted, otherwise locked (unknown/inactive fail-closed)
-        return sub.isEntitled;
-      } catch (_) {
-        // If provider not available, fail closed
-        return false;
-      }
-    } catch (_) {
-      return false;
-    }
+    // Access is quota/token based now; allow if signed in.
+    return true;
   }
 
   void _copyMessage(Message message) async {
@@ -3644,7 +3630,7 @@ class _EditorScreenState extends State<EditorScreen> {
         mode: currentMode,
         chatModel: chatModel,
         deepsearchModel: deepsearchModel,
-        isEntitled: context.read<AppAccessProvider>().hasPremiumAccess,
+        // Premium entitlement removed; quota system governs access
         chatMode: _currentMode,
       );
 
@@ -5069,33 +5055,14 @@ class _EditorScreenState extends State<EditorScreen> {
                                     child: ElevatedButton.icon(
                                       onPressed: () async {
                                         Navigator.of(context).pop();
-                                        try {
-                                          final ok =
-                                              await PaywallCoordinator.showNativePurchaseFlow(
-                                                context,
-                                              );
-                                          if (ok) {
-                                            ScaffoldMessenger.of(
-                                              context,
-                                            ).showSnackBar(
-                                              SnackBar(
-                                                content: Text(
-                                                  'Premium unlocked',
-                                                ),
-                                              ),
-                                            );
-                                          }
-                                        } catch (e) {
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            SnackBar(
-                                              content: Text(
-                                                'Purchase failed: $e',
-                                              ),
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(
+                                            content: Text(
+                                              'Quota-based access: add or manage your API key/quota in settings.',
                                             ),
-                                          );
-                                        }
+                                            duration: Duration(seconds: 3),
+                                          ),
+                                        );
                                       },
                                       style: ElevatedButton.styleFrom(
                                         padding: const EdgeInsets.symmetric(

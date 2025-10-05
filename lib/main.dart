@@ -351,20 +351,7 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
         ChangeNotifierProvider.value(value: _themeProvider!),
         ChangeNotifierProvider.value(value: _firebaseAuthProvider!),
         ChangeNotifierProvider(create: (_) => ModeConfigProvider()),
-        ChangeNotifierProvider(create: (_) => SubscriptionProvider()),
         ChangeNotifierProvider(create: (_) => TabProvider()),
-        ProxyProvider2<
-          FirebaseAuthProvider,
-          SubscriptionProvider,
-          AppAccessProvider
-        >(
-          update: (context, firebaseAuth, subscription, previous) {
-            return AppAccessProvider(
-              authProvider: firebaseAuth,
-              subscriptionProvider: subscription,
-            );
-          },
-        ),
         ChangeNotifierProxyProvider<FirebaseAuthProvider, UsageQuotaProvider>(
           create: (_) => UsageQuotaProvider(),
           update: (_, auth, quota) {
@@ -599,61 +586,7 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
         );
       }
 
-      // Initialize RevenueCat with Firebase auth (if available)
-      try {
-        final firebaseAuth = context.read<FirebaseAuthProvider>();
-        final subs = context.read<SubscriptionProvider>();
-
-        // Initialize subscription provider with Firebase UID only if Firebase is initialized
-        if (!subs.initialized) {
-          String? appUserId;
-
-          // Only try to get UID if Firebase is initialized to avoid Firebase Auth crashes
-          if (firebaseAuth.initialized && firebaseAuth.isSignedIn) {
-            appUserId = firebaseAuth.uid;
-            Logger.info(
-              '🔄 [RevenueCat] Using Firebase UID: $appUserId',
-              tag: 'RevenueCat',
-            );
-          } else {
-            Logger.info(
-              '🔄 [RevenueCat] Firebase not initialized, using anonymous mode',
-              tag: 'RevenueCat',
-            );
-          }
-
-          await subs.initialize(appUserId: appUserId);
-          // Wire auth to sync identity changes
-          subs.wireAuth(firebaseAuth);
-        }
-
-        Logger.info(
-          '✅ [RevenueCat] Initialized with Firebase auth',
-          tag: 'RevenueCat',
-        );
-      } catch (e) {
-        Logger.error(
-          '❌ [RevenueCat] Initialization error: $e',
-          tag: 'RevenueCat',
-        );
-
-        // Fallback: Initialize subscription provider without Firebase
-        try {
-          final subs = context.read<SubscriptionProvider>();
-          if (!subs.initialized) {
-            Logger.info(
-              '🔄 [RevenueCat] Fallback: initializing without Firebase',
-              tag: 'RevenueCat',
-            );
-            await subs.initialize();
-          }
-        } catch (fallbackError) {
-          Logger.error(
-            '❌ [RevenueCat] Fallback initialization also failed: $fallbackError',
-            tag: 'RevenueCat',
-          );
-        }
-      }
+      // RevenueCat/subscription initialization removed; access is quota/token-based.
     } catch (e) {
       Logger.error(
         '❌ Error initializing secondary services: $e',

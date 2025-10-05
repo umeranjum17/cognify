@@ -3,6 +3,8 @@ import 'dart:convert';
 import '../config/model_registry.dart';
 
 import 'openrouter_client.dart';
+import 'brave_search_service.dart';
+import 'content_extractor.dart';
 import '../utils/logger.dart';
 
 /// Enhanced Brave Search Tool

@@ -866,10 +866,10 @@ class OpenRouterClient {
         ),
         content: const Text(
           'We\'ve been receiving unauthorized errors from OpenRouter. This usually means:\n\n'
-          '• Your API key has expired or been revoked\n'
-          '• Your monthly request allotment has been exhausted\n'
+          '• Your API key is missing, expired, or revoked\n'
+          '• Your request quota has been exhausted\n'
           '• Your session has expired\n\n'
-          'Sign in again or upgrade your plan to continue.',
+          'Please check your API key and quota in settings.',
         ),
         actions: [
           TextButton(
@@ -881,17 +881,8 @@ class OpenRouterClient {
           ElevatedButton(
             onPressed: () {
               Navigator.of(context).pop();
-              try {
-                GoRouter.of(context).go('/paywall');
-              } catch (e) {
-                print('❌ Error navigating to paywall: $e');
-              }
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Manage Subscription'),
+            child: const Text('OK'),
           ),
         ],
       ),
