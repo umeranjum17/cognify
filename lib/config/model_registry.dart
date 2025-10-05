@@ -14,15 +14,15 @@ class ModelRegistry {
     'FOLLOWUP_QUESTIONS': 'google/gemini-2.5-flash-lite',
   };
 
-  // Static model information for fallback
+  // MINIMAL emergency fallback - only 1 free model when backend is completely down
+  // Backend (/api/config/models) is the source of truth
   static const Map<String, Map<String, dynamic>> fallbackModelInfo = {
-    // Only keep minimal fallback for when API is unavailable
     'mistralai/mistral-7b-instruct:free': {
       'provider': 'mistral',
       'isFree': true,
       'isReasoning': false,
       'maxTokens': 4096,
-      'description': 'Fast, lightweight model for quick responses',
+      'description': 'Emergency fallback - backend unavailable',
       'inputModalities': ['text'],
       'outputModalities': ['text'],
       'supportsImages': false,

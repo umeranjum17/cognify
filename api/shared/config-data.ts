@@ -26,44 +26,89 @@ export const MODEL_DEFAULTS = {
 
 export const MODE_CONFIGS = {
   chat: {
+    id: 'chat',
+    enabled: true, // Backend can enable/disable modes
+    order: 1, // Display order in UI
+    endpoint: '/api/chat', // Single unified endpoint
     model: 'google/gemini-2.5-flash-lite',
     displayName: 'Chat',
     description: 'Lightning fast responses with minimal search',
+    icon: '💬',
+    color: '#4A90E2', // UI color hint
     defaultModel: 'google/gemini-2.5-flash-lite',
     availableModels: [
       'google/gemini-2.5-flash-lite',
       'google/gemini-flash-1.5',
       'mistralai/mistral-7b-instruct:free',
     ],
+    capabilities: ['text'],
+    temperature: 0.7,
+    // UI hints - backend tells frontend how to display
+    showInMainMenu: true,
+    requiresPremium: false,
+    badge: null, // 'NEW', 'BETA', null
   },
   search: {
+    id: 'search',
+    enabled: true,
+    order: 2,
+    endpoint: '/api/chat', // Same endpoint, different mode parameter
     model: 'google/gemini-2.5-flash-lite',
     displayName: 'Search',
     description: 'Perplexity-style quick web answers',
+    icon: '🔍',
+    color: '#50C878',
     defaultModel: 'google/gemini-2.5-flash-lite',
     availableModels: [
       'google/gemini-2.5-flash-lite',
     ],
+    capabilities: ['text', 'web-search'],
+    temperature: 0.7,
+    showInMainMenu: true,
+    requiresPremium: false,
+    badge: null,
   },
   aipedia: {
+    id: 'aipedia',
+    enabled: true,
+    order: 3,
+    endpoint: '/api/chat', // Same endpoint, different mode parameter
     model: 'google/gemini-2.5-flash-lite',
     displayName: 'AIpedia',
     description: 'Wikipedia-style overviews with sources and images',
+    icon: '📚',
+    color: '#9B59B6',
     defaultModel: 'google/gemini-2.5-flash-lite',
     availableModels: [
       'google/gemini-2.5-flash-lite',
       'google/gemini-flash-1.5',
     ],
+    capabilities: ['text', 'web-search', 'image-search'],
+    temperature: 0.5,
+    showInMainMenu: true,
+    requiresPremium: false,
+    badge: null,
   },
   deepsearch: {
+    id: 'deepsearch',
+    enabled: false, // Can disable if quota issues or testing
+    order: 4,
+    endpoint: '/api/chat', // Same endpoint, different mode parameter
     model: 'deepseek/deepseek-r1:free',
     displayName: 'DeepSearch',
     description: 'Ultra-comprehensive research with enhanced visual content',
+    icon: '🔬',
+    color: '#E74C3C',
     defaultModel: 'deepseek/deepseek-r1:free',
     availableModels: [
       'deepseek/deepseek-r1:free',
       'deepseek/deepseek-chat:free',
     ],
+    capabilities: ['text', 'web-search', 'deep-research'],
+    temperature: 0.6,
+    showInMainMenu: true,
+    requiresPremium: true, // Backend can gate premium features
+    badge: 'BETA',
   },
 } as const;
 

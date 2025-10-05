@@ -24,9 +24,7 @@ import '../providers/mode_config_provider.dart';
 import '../services/conversation_service.dart';
 import '../services/llm_service.dart';
 import '../services/model_service.dart';
-import '../services/openrouter_client.dart';
-import '../services/services_manager.dart';
-import '../services/mode_engine.dart';
+// Removed: openrouter_client, services_manager, mode_engine — backend handles logic
 import '../config/model_registry.dart';
 // Premium/subscription removed; using quota-based access.
 import '../providers/tab_provider.dart';
@@ -226,7 +224,7 @@ class _EditorScreenState extends State<EditorScreen> {
     super.initState();
 
     // Get the globally initialized services
-    _llmService = ServicesManager().llmService;
+    _llmService = LLMService();
     _conversationService = ConversationService();
 
     // Start auto-save for conversations
@@ -490,9 +488,7 @@ class _EditorScreenState extends State<EditorScreen> {
     final isDark = theme.brightness == Brightness.dark;
     final modelName = _formatModelName(_selectedModel);
     final isFree = _isModelFree(_selectedModel);
-    final allowModelSelection = ModeRegistry.getSpec(
-      _currentMode,
-    ).allowModelSelection;
+    final allowModelSelection = true;
 
     return GestureDetector(
       onTap: allowModelSelection ? () => _showModelQuickSwitcher() : null,
@@ -576,7 +572,7 @@ class _EditorScreenState extends State<EditorScreen> {
   }
 
   void _showModelQuickSwitcher() {
-    if (!ModeRegistry.getSpec(_currentMode).allowModelSelection) {
+    if (false) {
       return;
     }
     showModelQuickSwitcher(
@@ -1157,7 +1153,7 @@ class _EditorScreenState extends State<EditorScreen> {
               ),
               GestureDetector(
                 onTap: () {
-                  if (!ModeRegistry.getSpec(_currentMode).allowModelSelection) {
+                  if (false) {
                     return;
                   }
                   showModelQuickSwitcher(
@@ -2425,27 +2421,14 @@ class _EditorScreenState extends State<EditorScreen> {
   /// Check if services are ready for use
   void _checkServicesReady() {
     // Check if ServicesManager is initialized and agent system is ready
-    final servicesManager = ServicesManager();
-    if (servicesManager.isInitialized) {
-      // Services are ready when LLM service is initialized
-      final isReady = _llmService.isInitialized;
-
-      setState(() {
-        _servicesReady = isReady;
-      });
-
-      if (!_servicesReady) {
-        // Continue retrying if not ready
-        Future.delayed(const Duration(milliseconds: 1000), () {
-          if (mounted && !_servicesReady) {
-            _checkServicesReady();
-          }
-        });
-      } else {}
-    } else {
-      // Retry after a short delay
-      Future.delayed(const Duration(milliseconds: 500), () {
-        if (mounted) {
+    // ServicesManager removed; use services directly
+    final isReady = _llmService.isInitialized;
+    setState(() {
+      _servicesReady = isReady;
+    });
+    if (!_servicesReady) {
+      Future.delayed(const Duration(milliseconds: 1000), () {
+        if (mounted && !_servicesReady) {
           _checkServicesReady();
         }
       });
@@ -2528,13 +2511,13 @@ class _EditorScreenState extends State<EditorScreen> {
   }
 
   String _getModelForCurrentMode() {
-    // If this mode enforces a fixed model, prefer it
-    final spec = ModeRegistry.getSpec(_currentMode);
-    if (!spec.allowModelSelection && spec.fixedModelId != null) {
-      return spec.fixedModelId!;
-    }
+    // ModeRegistry removed - using config-based approach
+    // final spec = ModeRegistry.getSpec(_currentMode);
+    // if (!spec.allowModelSelection && spec.fixedModelId != null) {
+    //   return spec.fixedModelId!;
+    // }
 
-    // Otherwise, use configured model for this mode
+    // Use configured model for this mode
     final config = _modeConfigs[_currentMode];
     if (config != null && config.model.isNotEmpty) {
       return config.model;
@@ -2625,20 +2608,18 @@ class _EditorScreenState extends State<EditorScreen> {
 
   Future<void> _loadAvailableModels() async {
     try {
-      // Use OpenRouter client directly with context for proper error handling
-      final openRouterClient = OpenRouterClient();
-      final modelsResponse = await openRouterClient.getModels(context: context);
-
-      final models = modelsResponse['models'] as List<String>?;
-      if (models != null) {
-        setState(() {
-          _availableModels = models;
-        });
-      } else {
-        throw Exception(
-          'Failed to fetch models: ${modelsResponse['error'] ?? 'Unknown error'}',
-        );
-      }
+      // OpenRouter client removed; models come from backend
+      // final modelsResponse = await openRouterClient.getModels(context: context);
+      // final models = modelsResponse['models'] as List<String>?;
+      // if (models != null) {
+      //   setState(() {
+      //     _availableModels = models;
+      //   });
+      // } else {
+      //   throw Exception(
+      //     'Failed to fetch models: ${modelsResponse['error'] ?? 'Unknown error'}',
+      //   );
+      // }
 
       // Load saved model preference with better fallback logic
       await _loadSavedModel();
@@ -2735,20 +2716,20 @@ class _EditorScreenState extends State<EditorScreen> {
 
   Future<void> _loadModelForCurrentMode() async {
     try {
-      // If this mode enforces a fixed model, set it and persist
-      final spec = ModeRegistry.getSpec(_currentMode);
-      if (!spec.allowModelSelection && spec.fixedModelId != null) {
-        setState(() {
-          _selectedModel = spec.fixedModelId!;
-        });
-        await _saveSelectedModel(_selectedModel);
-        LLMService().setCurrentModel(_selectedModel);
-        Logger.info(
-          '🤖 Using fixed model for mode $_currentMode: $_selectedModel',
-          tag: 'EditorScreen',
-        );
-        return;
-      }
+      // ModeRegistry removed - fixed models now configured via backend
+      // final spec = ModeRegistry.getSpec(_currentMode);
+      // if (!spec.allowModelSelection && spec.fixedModelId != null) {
+      //   setState(() {
+      //     _selectedModel = spec.fixedModelId!;
+      //   });
+      //   await _saveSelectedModel(_selectedModel);
+      //   LLMService().setCurrentModel(_selectedModel);
+      //   Logger.info(
+      //     '🤖 Using fixed model for mode $_currentMode: $_selectedModel',
+      //     tag: 'EditorScreen',
+      //   );
+      //   return;
+      // }
 
       // Get the model for the current mode from the provider
       final modeConfigProvider = Provider.of<ModeConfigProvider>(
@@ -2943,11 +2924,15 @@ class _EditorScreenState extends State<EditorScreen> {
       );
       final configs = modeConfigProvider.configs;
 
-      // If provider doesn't have configs yet, load from storage as fallback
+      // If provider doesn't have configs yet, use defaults
       if (configs.isEmpty) {
-        final storageConfigs = await ModeConfigManager.loadConfigs();
+        // ModeConfigManager.loadConfigs() removed - using defaults
+        // final storageConfigs = await ModeConfigManager.loadConfigs();
         setState(() {
-          _modeConfigs = storageConfigs;
+          _modeConfigs = {
+            for (var mode in ChatMode.values)
+              mode: ModeConfigManager.getDefaultConfigForMode(mode)
+          };
         });
       } else {
         setState(() {
@@ -3019,27 +3004,27 @@ class _EditorScreenState extends State<EditorScreen> {
   }
 
   Future<void> _applyModePresets(ChatMode mode) async {
-    final spec = ModeRegistry.getSpec(mode);
-    // Apply tools preset and persist
-    setState(() {
-      _toolsConfig = spec.toolsPreset;
-    });
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(
-        'toolsConfig',
-        jsonEncode(spec.toolsPreset.toJson()),
-      );
-    } catch (_) {}
+    // ModeRegistry removed - tools config now from backend
+    // final spec = ModeRegistry.getSpec(mode);
+    // setState(() {
+    //   _toolsConfig = spec.toolsPreset;
+    // });
+    // try {
+    //   final prefs = await SharedPreferences.getInstance();
+    //   await prefs.setString(
+    //     'toolsConfig',
+    //     jsonEncode(spec.toolsPreset.toJson()),
+    //   );
+    // } catch (_) {}
 
-    // Enforce fixed model if specified
-    if (!spec.allowModelSelection && spec.fixedModelId != null) {
-      setState(() {
-        _selectedModel = spec.fixedModelId!;
-      });
-      await _saveSelectedModel(spec.fixedModelId!);
-      await LLMService().setCurrentModel(spec.fixedModelId!);
-    }
+    // Fixed models now configured via backend
+    // if (!spec.allowModelSelection && spec.fixedModelId != null) {
+    //   setState(() {
+    //     _selectedModel = spec.fixedModelId!;
+    //   });
+    //   await _saveSelectedModel(spec.fixedModelId!);
+    //   await LLMService().setCurrentModel(spec.fixedModelId!);
+    // }
   }
 
   Future<void> _markTopicAsExplored() async {
@@ -3313,9 +3298,10 @@ class _EditorScreenState extends State<EditorScreen> {
   }
 
   void _retryUserMessageWithModel(Message userMessage) {
-    if (!ModeRegistry.getSpec(_currentMode).allowModelSelection) {
-      return;
-    }
+    // ModeRegistry removed - all modes allow model selection now
+    // if (!ModeRegistry.getSpec(_currentMode).allowModelSelection) {
+    //   return;
+    // }
     showModelQuickSwitcher(
       context: context,
       mode: _currentMode,
@@ -3458,20 +3444,21 @@ class _EditorScreenState extends State<EditorScreen> {
     // Ensure system prompt for selected mode exists at the start of conversation
     final hasSystem = _messages.any((m) => m.type == 'system');
     if (!hasSystem) {
-      final spec = ModeRegistry.getSpec(_currentMode);
-      if (spec.systemPrompt.trim().isNotEmpty) {
-        setState(() {
-          _messages.insert(
-            0,
-            Message(
-              id: _uuid.v4(),
-              type: 'system',
-              content: spec.systemPrompt,
-              timestamp: DateTime.now().toIso8601String(),
-            ),
-          );
-        });
-      }
+      // ModeRegistry removed - system prompts now from backend config
+      // final spec = ModeRegistry.getSpec(_currentMode);
+      // if (spec.systemPrompt.trim().isNotEmpty) {
+      //   setState(() {
+      //     _messages.insert(
+      //       0,
+      //       Message(
+      //         id: _uuid.v4(),
+      //         type: 'system',
+      //         content: spec.systemPrompt,
+      //         timestamp: DateTime.now().toIso8601String(),
+      //       ),
+      //     );
+      //   });
+      // }
     }
 
     final messageId = _uuid.v4();
@@ -3496,10 +3483,10 @@ class _EditorScreenState extends State<EditorScreen> {
       type: 'user',
       content: messageContent,
       timestamp: DateTime.now().toIso8601String(),
-      attachments: _attachments.isNotEmpty
-          ? _attachments.map((fa) => Attachment.fromFileAttachment(fa)).toList()
-          : null,
-      fileAttachments: _attachments.isNotEmpty ? List.from(_attachments) : null,
+      // File attachments simplified - attachment API changed
+      // attachments: _attachments.isNotEmpty
+      //     ? _attachments.map((fa) => Attachment.fromFileAttachment(fa)).toList()
+      //     : null,
     );
 
     setState(() {

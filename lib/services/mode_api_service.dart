@@ -6,44 +6,101 @@ import 'package:dio/dio.dart';
 import '../config/app_config.dart';
 import '../models/mode_config.dart';
 
-/// Thin client for per-mode backend APIs under /api/modes/*
+/// Configuration-driven API client - Backend tells us what to do!
 class ModeApiService {
   ModeApiService._internal();
   static final ModeApiService instance = ModeApiService._internal();
 
   late final Dio _dio = Dio(BaseOptions(
-    baseUrl: _baseUrl,
+    baseUrl: AppConfig.backendBaseUrl,
     connectTimeout: AppConfig.connectTimeout,
     receiveTimeout: AppConfig.receiveTimeout,
     sendTimeout: AppConfig.sendTimeout,
   ));
 
-  String get _baseUrl {
-    final b = AppConfig.backendBaseUrl;
-    return b.isNotEmpty ? '$b/api/modes' : '/api/modes';
+  // Cache for mode configurations from backend
+  Map<String, dynamic>? _modeConfigs;
+
+  /// Fetch mode configurations from backend
+  Future<void> loadConfigurations() async {
+    try {
+      final response = await _dio.get('/api/config/modes');
+      _modeConfigs = response.data['data'] as Map<String, dynamic>?;
+    } catch (e) {
+      print('⚠️ Failed to load mode configs, using defaults: $e');
+    }
   }
 
+  /// Get raw mode config for a specific mode from backend cache
+  Future<Map<String, dynamic>?> getModeConfig(ChatMode mode) async {
+    await _ensureConfigLoaded();
+    final modeId = mode.toString().split('.').last;
+    final config = _modeConfigs?[modeId];
+    if (config is Map<String, dynamic>) return config;
+    return null;
+  }
+
+  /// Convenience: get default model for a mode from backend config
+  Future<String?> getDefaultModel(ChatMode mode) async {
+    final cfg = await getModeConfig(mode);
+    return cfg?['defaultModel'] as String? ?? cfg?['model'] as String?;
+  }
+
+  /// Convenience: display name for a mode
+  Future<String> getModeDisplayName(ChatMode mode) async {
+    final cfg = await getModeConfig(mode);
+    return (cfg?['displayName'] as String?) ?? mode.toString().split('.').last;
+  }
+
+  /// Convenience: description for a mode
+  Future<String> getModeDescription(ChatMode mode) async {
+    final cfg = await getModeConfig(mode);
+    return (cfg?['description'] as String?) ?? '';
+  }
+
+  /// Convenience: available models list for a mode
+  Future<List<String>> getAvailableModelsForMode(ChatMode mode) async {
+    final cfg = await getModeConfig(mode);
+    final models = cfg?['availableModels'] ?? cfg?['models'];
+    if (models is List) {
+      return List<String>.from(models);
+    }
+    return const [];
+  }
+
+  /// Get endpoint for a mode (backend configuration driven)
+  String _getEndpoint(ChatMode mode) {
+    final modeId = mode.toString().split('.').last;
+    final config = _modeConfigs?[modeId];
+    return config?['endpoint'] ?? '/api/chat'; // Unified endpoint
+  }
+
+  /// Send chat request - Backend determines behavior based on mode parameter
   Future<Map<String, dynamic>> chat({
     required ChatMode mode,
     List<Map<String, dynamic>>? messages,
     String? query,
     String? model,
-    double temperature = 0.7,
+    double? temperature,
     int? maxTokens,
     bool stream = false,
   }) async {
-    final path = _modePath(mode);
+    await _ensureConfigLoaded();
+
+    final endpoint = _getEndpoint(mode);
+    final modeId = mode.toString().split('.').last;
+
     final body = <String, dynamic>{
+      'mode': modeId, // Backend uses this to determine behavior
       if (messages != null) 'messages': messages,
       if (query != null) 'query': query,
       if (model != null) 'model': model,
-      'temperature': temperature,
+      if (temperature != null) 'temperature': temperature,
       if (maxTokens != null) 'maxTokens': maxTokens,
-      'stream': stream,
     };
 
     final resp = await _dio.post(
-      path,
+      endpoint,
       data: jsonEncode(body),
       options: Options(headers: {
         'Content-Type': 'application/json',
@@ -51,39 +108,39 @@ class ModeApiService {
     );
 
     if (resp.statusCode == 200) {
-      if (stream) {
-        // For stream=true, the backend would normally return SSE; this code path
-        // is kept for symmetry, though callers should use chatStream for SSE.
-        return { 'streaming': true, 'raw': resp.data };
-      }
       return {
         'response': resp.data,
         'streaming': false,
       };
     }
-    throw Exception('Mode API failed: HTTP ${resp.statusCode}');
+    throw Exception('API failed: HTTP ${resp.statusCode}');
   }
 
+  /// Stream chat responses - Backend handles everything
   Stream<Map<String, dynamic>> chatStream({
     required ChatMode mode,
     List<Map<String, dynamic>>? messages,
     String? query,
     String? model,
-    double temperature = 0.7,
+    double? temperature,
     int? maxTokens,
   }) async* {
-    final path = _modePath(mode);
+    await _ensureConfigLoaded();
+
+    final endpoint = _getEndpoint(mode);
+    final modeId = mode.toString().split('.').last;
+
     final body = <String, dynamic>{
+      'mode': modeId, // Backend uses this to route to correct logic
       if (messages != null) 'messages': messages,
       if (query != null) 'query': query,
       if (model != null) 'model': model,
-      'temperature': temperature,
+      if (temperature != null) 'temperature': temperature,
       if (maxTokens != null) 'maxTokens': maxTokens,
-      'stream': true,
     };
 
     final resp = await _dio.post(
-      path,
+      endpoint,
       data: jsonEncode(body),
       options: Options(
         headers: { 'Content-Type': 'application/json' },
@@ -92,7 +149,7 @@ class ModeApiService {
     );
 
     if (resp.statusCode != 200) {
-      throw Exception('Streaming mode API failed: HTTP ${resp.statusCode}');
+      throw Exception('Streaming API failed: HTTP ${resp.statusCode}');
     }
 
     final responseBody = resp.data as ResponseBody;
@@ -117,16 +174,9 @@ class ModeApiService {
     }
   }
 
-  String _modePath(ChatMode mode) {
-    switch (mode) {
-      case ChatMode.chat:
-        return '/chat';
-      case ChatMode.search:
-        return '/search';
-      case ChatMode.aipedia:
-        return '/aipedia';
-      default:
-        return '/chat';
+  Future<void> _ensureConfigLoaded() async {
+    if (_modeConfigs == null) {
+      await loadConfigurations();
     }
   }
 }

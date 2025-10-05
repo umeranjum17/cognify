@@ -5,7 +5,7 @@ import '../config/app_config.dart';
 import 'package:uuid/uuid.dart';
 
 import '../utils/logger.dart';
-import 'openrouter_client.dart';
+// Removed OpenRouter client; backend handles provider integrations
 
 class UserService {
   static final UserService _instance = UserService._internal();

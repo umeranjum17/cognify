@@ -21,7 +21,6 @@ import 'services/revenuecat_service.dart';
 
 import 'providers/mode_config_provider.dart';
 import 'providers/tab_provider.dart';
-import 'services/services_manager.dart';
 import 'services/user_service.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_provider.dart';
@@ -41,9 +40,6 @@ void main() async {
 
   // Initialize logger with appropriate verbosity
   Logger.setLevel(LogLevel.info);
-
-  // Initialize services
-  await ServicesManager().initialize();
 
   // Ensure any previously running background service is stopped on launch
   // This prevents crashes if a lingering service tries to post a notification without permission

@@ -1,21 +1,19 @@
-import '../models/file_attachment.dart';
 import '../models/mode_config.dart';
+import '../models/file_attachment.dart';
 import '../config/model_registry.dart';
-import '../config/app_config.dart';
-import 'openrouter_client.dart';
+import 'mode_api_service.dart';
 
-/// Service for managing AI models using direct OpenRouter API integration
-/// No longer depends on backend server - uses OpenRouter directly
+/// Service for managing AI models via backend
 class ModelService {
-  // OpenRouter client for direct API access
-  static final OpenRouterClient _openRouterClient = OpenRouterClient();
+  // Use backend mode API; eliminate direct OpenRouter client from frontend
+  static final ModeApiService _modeApi = ModeApiService.instance;
   
   // Cache for models to avoid repeated API calls
   static Map<String, dynamic>? _cachedModels;
   static DateTime? _cacheTimestamp;
   static const Duration cacheExpiry = Duration(minutes: 30);
 
-  // Enhanced cache for OpenRouter models
+  // Enhanced cache for models
   static Map<String, dynamic>? _cachedEnhancedModels;
   static DateTime? _enhancedCacheTimestamp;
 
@@ -27,34 +25,15 @@ class ModelService {
     _enhancedCacheTimestamp = null;
   }
 
-  /// Clear OpenRouter models cache
-  static Future<void> clearOpenRouterCache() async {
-    try {
-      // Clear local cache
-      clearCache();
-      print('✅ OpenRouter models cache cleared successfully');
-    } catch (e) {
-      print('❌ Error clearing OpenRouter cache: $e');
-    }
-  }
-
   /// Get available models (simple list)
   static Future<List<String>> getAvailableModels() async {
     try {
-      await _openRouterClient.initialize();
-      final modelsResponse = await _openRouterClient.getModels();
-
-      // The getModels() method returns models as List<String> directly
-      final models = modelsResponse['models'] as List<String>?;
-      if (models != null) {
-        return models;
-      } else {
-        throw Exception('Failed to fetch models: ${modelsResponse['error'] ?? 'Unknown error'}');
-      }
+      final byMode = await _modeApi.getAvailableModelsForMode(ChatMode.chat);
+      if (byMode.isNotEmpty) return byMode;
     } catch (e) {
-      print('❌ Error fetching available models: $e');
-      return _getFallbackModels();
+      print('❌ Error fetching available models from backend: $e');
     }
+    return _getFallbackModels();
   }
 
   /// Get models with enhanced information
@@ -67,47 +46,22 @@ class ModelService {
     }
 
     try {
-      await _openRouterClient.initialize();
-      final modelsResponse = await _openRouterClient.getModels();
-
-      // Check if the response has the new data structure with full model objects
-      if (modelsResponse['success'] == true && modelsResponse['data'] != null) {
-        // New format: full model data is already available
-        final enhancedData = {
-          'success': true,
-          'data': modelsResponse['data'],
-        };
-
-        _cachedEnhancedModels = enhancedData;
-        _enhancedCacheTimestamp = DateTime.now();
-        return enhancedData;
-      } else {
-        // Fallback to old format for backward compatibility
-        final models = modelsResponse['models'] as List<String>?;
-        final pricing = modelsResponse['pricing'] as Map<String, Map<String, double>>?;
-
-        if (models != null) {
-          // Transform to enhanced format using available model IDs
-          final enhancedData = {
-            'success': true,
-            'data': models.map((modelId) => {
-              'id': modelId,
-              'name': _formatModelName(modelId),
-              'description': _getModelDescription(modelId),
-              'context_length': _getModelContextLength(modelId),
-              'pricing': pricing?[modelId] ?? {},
-              'top_provider': _getModelProvider(modelId),
-              'per_request_limits': {},
-            }).toList(),
-          };
-
-          _cachedEnhancedModels = enhancedData;
-          _enhancedCacheTimestamp = DateTime.now();
-          return enhancedData;
-        } else {
-          throw Exception('Failed to fetch models: ${modelsResponse['error'] ?? 'Unknown error'}');
-        }
-      }
+      final models = await _modeApi.getAvailableModelsForMode(ChatMode.chat);
+      final enhancedData = {
+        'success': true,
+        'data': models.map((modelId) => {
+          'id': modelId,
+          'name': _formatModelName(modelId),
+          'description': _getModelDescription(modelId),
+          'context_length': _getModelContextLength(modelId),
+          'pricing': {},
+          'top_provider': _getModelProvider(modelId),
+          'per_request_limits': {},
+        }).toList(),
+      };
+      _cachedEnhancedModels = enhancedData;
+      _enhancedCacheTimestamp = DateTime.now();
+      return enhancedData;
     } catch (e) {
       print('❌ Error fetching enhanced models: $e');
       return await getModels();
@@ -119,163 +73,29 @@ class ModelService {
     return await getModelsByMode(mode);
   }
 
-  /// Get free models only
-  static Future<List<String>> getFreeModels() async {
-    try {
-      await _openRouterClient.initialize();
-      final modelsResponse = await _openRouterClient.getModels();
-      
-      if (modelsResponse['success'] == true) {
-        final models = modelsResponse['models'] as List;
-        
-        // Filter for free models (those with :free suffix or zero pricing)
-        final freeModels = models.where((model) {
-          final id = model['id'] as String;
-          final pricing = model['pricing'] as Map<String, dynamic>?;
-          
-          // Check if model ID contains :free
-          if (id.contains(':free')) return true;
-          
-          // Check if pricing is zero or null
-          if (pricing != null) {
-            final prompt = pricing['prompt'];
-            final completion = pricing['completion'];
-            if (prompt == '0' || completion == '0') return true;
-          }
-          
-          return false;
-        }).toList();
-        
-        return freeModels.map((model) => model['id'] as String).toList();
-      } else {
-        throw Exception('Failed to fetch free models: ${modelsResponse['error']}');
-      }
-    } catch (e) {
-      print('❌ Error fetching free models: $e');
-      return _getFallbackFreeModels();
-    }
-  }
-
-  /// Get full model data including pricing from OpenRouter API
+  /// Get full model data including pricing from backend (not yet provided)
   static Future<Map<String, dynamic>?> getModelData(String modelId) async {
-    try {
-      print('🔍 ModelService: Getting data for model: $modelId');
-      await _openRouterClient.initialize();
-      final modelsResponse = await _openRouterClient.getModels();
-      
-      if (modelsResponse['success'] == true) {
-        final models = modelsResponse['data'] as List?;
-        if (models != null) {
-          // Try exact match first
-          var model = models.cast<Map<String, dynamic>>().firstWhere(
-            (m) => m['id'] == modelId,
-            orElse: () => <String, dynamic>{},
-          );
-          
-          // If not found, try matching without the :free suffix
-          if (model.isEmpty && modelId.contains(':free')) {
-            final baseModelId = modelId.replaceAll(':free', '');
-            print('🔍 ModelService: Trying base model ID: $baseModelId');
-            model = models.cast<Map<String, dynamic>>().firstWhere(
-              (m) => m['id'] == baseModelId,
-              orElse: () => <String, dynamic>{},
-            );
-          }
-          
-          // If still not found, try partial matching
-          if (model.isEmpty) {
-            print('🔍 ModelService: Trying partial match for: $modelId');
-            model = models.cast<Map<String, dynamic>>().firstWhere(
-              (m) => m['id'].toString().contains(modelId.split('/').last),
-              orElse: () => <String, dynamic>{},
-            );
-          }
-
-          if (model.isNotEmpty) {
-            print('🔍 ModelService: Found model data for $modelId');
-            return model;
-          }
-        }
-      }
-      
-      print('🔍 ModelService: Model data not found for $modelId');
-      return null;
-    } catch (e) {
-      print('❌ ModelService: Error getting model data for $modelId: $e');
-      return null;
-    }
+    // Defer to enhanced models cache for now
+    final enhanced = await getEnhancedModels();
+    final list = (enhanced['data'] as List).cast<Map<String, dynamic>>();
+    return list.firstWhere((m) => m['id'] == modelId, orElse: () => <String, dynamic>{});
   }
 
   /// Get model capabilities
   static Future<ModelCapabilities> getModelCapabilities(String modelId) async {
     try {
-      print('🔍 ModelService: Getting capabilities for model: $modelId');
-      await _openRouterClient.initialize();
-      final modelsResponse = await _openRouterClient.getModels();
-      
-      if (modelsResponse['success'] == true) {
-        final models = modelsResponse['data'] as List?;
-        if (models != null) {
-          print('🔍 ModelService: Found ${models.length} models');
-          // Debug: Print first few model IDs to see what's available
-          if (models.isNotEmpty) {
-            print('🔍 ModelService: First 5 model IDs: ${models.take(5).map((m) => m['id']).toList()}');
-          }
-          // Try exact match first
-          var model = models.cast<Map<String, dynamic>>().firstWhere(
-            (m) => m['id'] == modelId,
-            orElse: () => <String, dynamic>{},
-          );
-          
-          // If not found, try matching without the :free suffix
-          if (model.isEmpty && modelId.contains(':free')) {
-            final baseModelId = modelId.replaceAll(':free', '');
-            print('🔍 ModelService: Trying base model ID: $baseModelId');
-            model = models.cast<Map<String, dynamic>>().firstWhere(
-              (m) => m['id'] == baseModelId,
-              orElse: () => <String, dynamic>{},
-            );
-          }
-          
-          // If still not found, try partial matching
-          if (model.isEmpty) {
-            print('🔍 ModelService: Trying partial match for: $modelId');
-            model = models.cast<Map<String, dynamic>>().firstWhere(
-              (m) => m['id'].toString().contains(modelId.split('/').last),
-              orElse: () => <String, dynamic>{},
-            );
-          }
-
-          if (model.isNotEmpty) {
-            print('🔍 ModelService: Found model data: ${model.keys}');
-            final supportsImages = _modelSupportsImages(model);
-            final supportsFiles = _modelSupportsFiles(model);
-            print('🔍 ModelService: Final capabilities - supportsImages: $supportsImages, supportsFiles: $supportsFiles');
-            return ModelCapabilities(
-              inputModalities: supportsImages ? ['text', 'image'] : ['text'],
-              outputModalities: ['text'],
-              supportsImages: supportsImages,
-              supportsFiles: supportsFiles,
-              isMultimodal: supportsImages || supportsFiles,
-              contextLength: model['context_length'] ?? 4096,
-              maxCompletionTokens: model['context_length'] ?? 4096,
-              pricing: model['pricing'] as Map<String, dynamic>?,
-            );
-          } else {
-            print('🔍 ModelService: Model not found in API response');
-          }
-        }
-      }
-
-      // Return default capabilities if model not found
-      return const ModelCapabilities(
-        inputModalities: ['text'],
+      final model = await getModelData(modelId) ?? {};
+      final supportsImages = _modelSupportsImages(model);
+      final supportsFiles = _modelSupportsFiles(model);
+      return ModelCapabilities(
+        inputModalities: supportsImages ? ['text', 'image'] : ['text'],
         outputModalities: ['text'],
-        supportsImages: false,
-        supportsFiles: false,
-        isMultimodal: false,
-        contextLength: 4096,
-        maxCompletionTokens: 4096,
+        supportsImages: supportsImages,
+        supportsFiles: supportsFiles,
+        isMultimodal: supportsImages || supportsFiles,
+        contextLength: model['context_length'] ?? 4096,
+        maxCompletionTokens: model['context_length'] ?? 4096,
+        pricing: model['pricing'] as Map<String, dynamic>?,
       );
     } catch (e) {
       print('❌ Error fetching model capabilities: $e');
@@ -301,23 +121,14 @@ class ModelService {
     }
 
     try {
-      await _openRouterClient.initialize();
-      final modelsResponse = await _openRouterClient.getModels();
-      
-      if (modelsResponse['success'] == true) {
-        final models = modelsResponse['models'] as List;
-        
-        final basicData = {
-          'success': true,
-          'data': models.map((model) => model['id']).toList(),
-        };
-        
-        _cachedModels = basicData;
-        _cacheTimestamp = DateTime.now();
-        return basicData;
-      } else {
-        throw Exception('Failed to fetch models: ${modelsResponse['error']}');
-      }
+      final list = await getAvailableModels();
+      final basicData = {
+        'success': true,
+        'data': list,
+      };
+      _cachedModels = basicData;
+      _cacheTimestamp = DateTime.now();
+      return basicData;
     } catch (e) {
       print('❌ Error fetching models: $e');
       return {
@@ -331,23 +142,13 @@ class ModelService {
   static Future<Map<String, dynamic>> getModelsByMode(ChatMode mode) async {
     try {
       print('🔄 ModelService: Getting models for mode: $mode');
-      final allModels = await getEnhancedModels();
-
-      if (allModels['success'] == true) {
-        final models = allModels['data'] as List;
-        print('✅ ModelService: Found ${models.length} models from enhanced models');
-
-        // Filter models based on mode (for now, return all)
-        // In the future, we could filter based on model capabilities
-        final result = {
-          'success': true,
-          'data': models,
-        };
-        print('📦 ModelService: Returning ${models.length} models for mode $mode');
-        return result;
-      } else {
-        throw Exception('Failed to fetch models for mode');
-      }
+      final ids = await _modeApi.getAvailableModelsForMode(mode);
+      final models = ids.map((id) => {
+        'id': id,
+        'name': _formatModelName(id),
+        'description': _getModelDescription(id),
+      }).toList();
+      return {'success': true, 'data': models};
     } catch (e) {
       print('❌ ModelService: Error fetching models for mode: $e');
       return _getFallbackModelsForMode(mode);
@@ -355,9 +156,7 @@ class ModelService {
   }
 
   /// Initialize the service
-  static Future<void> initialize() async {
-    await _openRouterClient.initialize();
-  }
+  static Future<void> initialize() async {}
 
   /// Format model name from ID
   static String _formatModelName(String modelId) {
@@ -377,8 +176,8 @@ class ModelService {
   static List<String> _getFallbackModels() {
     final all = ModelRegistry.getAllModels();
     if (all.isNotEmpty) return all;
-    // If registry is minimal, fall back to default model
-    return [AppConfig.defaultModel];
+    // Minimal fallback
+    return ModelRegistry.getFreeModels();
   }
 
   /// Fallback models for specific mode
@@ -418,47 +217,29 @@ class ModelService {
 
   /// Check if model supports files
   static bool _modelSupportsFiles(Map<String, dynamic> model) {
-    final id = model['id'] as String;
-    print('🔍 Checking file support for model: $id');
+    final id = model['id'] as String? ?? '';
 
-    // Check input modalities from the model data first
     final inputModalities = model['input_modalities'] as List<dynamic>? ?? 
                            model['inputModalities'] as List<dynamic>? ?? 
                            model['architecture']?['input_modalities'] as List<dynamic>? ?? [];
-    
     if (inputModalities.isNotEmpty) {
       final modalities = inputModalities.map((modality) => modality.toString().toLowerCase()).toList();
-      final supportsFiles = modalities.contains('file');
-      print('🔍 Model has input modalities: $modalities, supportsFiles: $supportsFiles');
-      return supportsFiles;
+      return modalities.contains('file');
     }
-
-    // Fallback: use registry capabilities
-    final registrySupportsFiles = ModelRegistry.getModelCapabilities(id).supportsFiles;
-    print('🔍 Registry fallback for model $id: supportsFiles=$registrySupportsFiles');
-    return registrySupportsFiles;
+    return ModelRegistry.getModelCapabilities(id).supportsFiles;
   }
 
   /// Check if model supports images
   static bool _modelSupportsImages(Map<String, dynamic> model) {
-    final id = model['id'] as String;
-    print('🔍 Checking image support for model: $id');
+    final id = model['id'] as String? ?? '';
 
-    // Check input modalities from the model data first
     final inputModalities = model['input_modalities'] as List<dynamic>? ?? 
                            model['inputModalities'] as List<dynamic>? ?? 
                            model['architecture']?['input_modalities'] as List<dynamic>? ?? [];
-    
     if (inputModalities.isNotEmpty) {
       final modalities = inputModalities.map((modality) => modality.toString().toLowerCase()).toList();
-      final supportsImages = modalities.contains('image');
-      print('🔍 Model has input modalities: $modalities, supportsImages: $supportsImages');
-      return supportsImages;
+      return modalities.contains('image');
     }
-
-    // Fallback: use registry capabilities
-    final registrySupportsImages = ModelRegistry.getModelCapabilities(id).supportsImages;
-    print('🔍 Registry fallback for model $id: supportsImages=$registrySupportsImages');
-    return registrySupportsImages;
+    return ModelRegistry.getModelCapabilities(id).supportsImages;
   }
 }

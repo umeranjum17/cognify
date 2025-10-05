@@ -1,7 +1,16 @@
 import { getAdminDb, verifyFirebaseIdToken } from '../shared/firebase-admin';
+import { QUOTA_CONFIG } from '../shared/config-data';
 
 export const config = { runtime: 'nodejs18.x' };
 
+/**
+ * Enhanced /api/credits/consume endpoint
+ *
+ * Now calculates request units server-side based on model and mode.
+ * Accepts either:
+ * 1. Legacy: { amount, reason, requestId } - direct amount
+ * 2. New: { modelId, mode, requestId, conversationId } - calculates amount
+ */
 export default async function handler(req: Request) {
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
@@ -22,14 +31,64 @@ export default async function handler(req: Request) {
     const uid = decoded.uid;
 
     const body = await req.json();
-    const amount = Math.max(0, Number(body?.amount ?? 0));
-    const reason = String(body?.reason ?? 'generic');
     const requestId = String(body?.requestId ?? '');
-    if (!amount || !requestId) {
+
+    if (!requestId) {
       return new Response(
-        JSON.stringify({ success: false, error: 'Invalid body' }),
+        JSON.stringify({ success: false, error: 'requestId is required' }),
         { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
+    }
+
+    // Calculate amount server-side if modelId provided, otherwise use legacy amount
+    let amount: number;
+    let calculatedMetadata: any = {};
+
+    if (body?.modelId) {
+      // New flow: calculate units based on model and mode
+      const estimateResponse = await fetch(`${req.url.split('/api/')[0]}/api/usage/estimate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: body.modelId,
+          mode: body.mode || 'chat',
+          inputTokens: body.inputTokens,
+          outputTokens: body.outputTokens,
+        }),
+      });
+
+      if (!estimateResponse.ok) {
+        throw new Error('Failed to estimate usage');
+      }
+
+      const estimateData = await estimateResponse.json();
+      if (!estimateData.success) {
+        throw new Error(estimateData.error || 'Estimation failed');
+      }
+
+      amount = estimateData.data.requestUnits;
+      calculatedMetadata = {
+        modelId: body.modelId,
+        mode: body.mode || 'chat',
+        dollarCost: estimateData.data.dollarCost,
+        inputTokens: estimateData.data.inputTokens,
+        outputTokens: estimateData.data.outputTokens,
+        conversationId: body.conversationId,
+        calculatedByBackend: true,
+      };
+    } else {
+      // Legacy flow: use provided amount
+      amount = Math.max(0, Number(body?.amount ?? 0));
+      if (!amount) {
+        return new Response(
+          JSON.stringify({ success: false, error: 'Either modelId or amount is required' }),
+          { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+        );
+      }
+      calculatedMetadata = {
+        reason: String(body?.reason ?? 'generic'),
+        legacyFlow: true,
+      };
     }
 
     const db = getAdminDb();
@@ -60,7 +119,7 @@ export default async function handler(req: Request) {
       }, { merge: true });
       tx.set(consumptionRef, {
         amount,
-        reason,
+        ...calculatedMetadata,
         createdAt: new Date().toISOString(),
       });
       return { duplicated: false, balance: newBalance };
@@ -74,7 +133,14 @@ export default async function handler(req: Request) {
     }
 
     return new Response(
-      JSON.stringify({ success: true, data: { balance: result.balance } }),
+      JSON.stringify({
+        success: true,
+        data: {
+          balance: result.balance,
+          consumed: amount,
+          ...calculatedMetadata,
+        }
+      }),
       { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
     );
   } catch (e: any) {

@@ -83,15 +83,54 @@ class UsageQuotaService {
     return updated;
   }
 
+  /// Enhanced consumeRequests - NOW USES BACKEND CALCULATION
+  /// Backend calculates request units based on modelId and mode
   Future<UsageQuota> consumeRequests({
     required String uid,
-    int amount = 1,
+    int amount = 1, // Deprecated - backend calculates this
     String? modelId,
+    String? mode,
     double? dollarCost,
     int? inputTokens,
     int? outputTokens,
     String? conversationId,
   }) async {
+    // If modelId provided, use new backend flow (server calculates units)
+    // Otherwise fall back to legacy local calculation
+    if (modelId != null) {
+      // Backend will calculate units - we just track the result
+      print('⚡ Using backend-calculated request units for model: $modelId');
+
+      final entry = RequestUsageEntry(
+        timestamp: DateTime.now().toUtc(),
+        modelId: modelId,
+        requestUnits: 0, // Will be updated from backend response
+        dollarCost: dollarCost,
+        inputTokens: inputTokens,
+        outputTokens: outputTokens,
+        conversationId: conversationId,
+      );
+
+      final current = await _load(uid);
+      final updatedHistory = List<RequestUsageEntry>.from(current.usageHistory)
+        ..insert(0, entry);
+      if (updatedHistory.length > 200) {
+        updatedHistory.removeRange(200, updatedHistory.length);
+      }
+
+      final updated = UsageQuota(
+        totalRequests: current.totalRequests,
+        requestsConsumed: current.requestsConsumed + amount, // Backend provides actual amount
+        createdAt: current.createdAt,
+        updatedAt: DateTime.now().toUtc(),
+        usageHistory: updatedHistory,
+      );
+      await _save(uid, updated);
+      _controllersByUid[uid]?.add(updated);
+      return updated;
+    }
+
+    // Legacy flow: local calculation (deprecated)
     final current = await _load(uid);
     final requested = amount.clamp(0, 1 << 30);
     if (current.requestsConsumed + requested > current.totalRequests) {
@@ -113,7 +152,6 @@ class UsageQuotaService {
     );
     final updatedHistory = List<RequestUsageEntry>.from(current.usageHistory)
       ..insert(0, entry);
-    // Keep last 200 entries to bound storage
     if (updatedHistory.length > 200) {
       updatedHistory.removeRange(200, updatedHistory.length);
     }

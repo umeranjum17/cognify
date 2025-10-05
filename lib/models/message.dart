@@ -1,5 +1,4 @@
 import 'chat_source.dart';
-import 'file_attachment.dart';
 
 class Attachment {
   final String id;
@@ -22,17 +21,6 @@ class Attachment {
     this.metadata,
   });
 
-  factory Attachment.fromFileAttachment(FileAttachment fileAttachment) => Attachment(
-        id: fileAttachment.id,
-        type: fileAttachment.type,
-        name: fileAttachment.name,
-        content: fileAttachment.base64Data,
-        size: fileAttachment.size,
-        metadata: {
-          'mimeType': fileAttachment.mimeType,
-          'createdAt': fileAttachment.createdAt.toIso8601String(),
-        },
-      );
 
   factory Attachment.fromJson(Map<String, dynamic> json) => Attachment(
         id: json['id'] ?? '',
@@ -95,7 +83,6 @@ class Message {
   final String timestamp;
   final bool? isProcessing;
   final List<Attachment>? attachments;
-  final List<FileAttachment>? fileAttachments; // New: Enhanced file attachments
   final List<ChatSource>? sources;
   final List<String>? followUpQuestions;
   final List<String>? additionalFollowUpQuestions;
@@ -113,7 +100,6 @@ class Message {
     required this.timestamp,
     this.isProcessing,
     this.attachments,
-    this.fileAttachments,
     this.sources,
     this.followUpQuestions,
     this.additionalFollowUpQuestions,
@@ -132,11 +118,6 @@ class Message {
         attachments: json['attachments'] != null
             ? (json['attachments'] as List)
                 .map((a) => Attachment.fromJson(a))
-                .toList()
-            : null,
-        fileAttachments: json['fileAttachments'] != null
-            ? (json['fileAttachments'] as List)
-                .map((f) => FileAttachment.fromJson(f))
                 .toList()
             : null,
         sources: json['sources'] != null
@@ -158,44 +139,8 @@ class Message {
         costBreakdown: json['costBreakdown'] as Map<String, dynamic>?,
       );
 
-  /// Get all file attachments (both old and new format)
-  List<FileAttachment> get allFileAttachments {
-    List<FileAttachment> allAttachments = [];
-    
-    // Add new format file attachments
-    if (fileAttachments != null) {
-      allAttachments.addAll(fileAttachments!);
-    }
-    
-    // Convert old format attachments to new format
-    if (attachments != null) {
-      for (final attachment in attachments!) {
-        if (attachment.content != null) {
-          try {
-            allAttachments.add(FileAttachment(
-              id: attachment.id,
-              name: attachment.name,
-              type: attachment.type,
-              base64Data: attachment.content!,
-              size: attachment.size ?? 0,
-              mimeType: attachment.metadata?['mimeType'] ?? 'application/octet-stream',
-              createdAt: attachment.metadata?['createdAt'] != null
-                  ? DateTime.parse(attachment.metadata!['createdAt'])
-                  : DateTime.now(),
-            ));
-          } catch (e) {
-            print('Error converting attachment to FileAttachment: $e');
-          }
-        }
-      }
-    }
-    
-    return allAttachments;
-  }
-
   /// Check if message has any file attachments
-  bool get hasFileAttachments => 
-      (fileAttachments != null && fileAttachments!.isNotEmpty) ||
+  bool get hasFileAttachments =>
       (attachments != null && attachments!.isNotEmpty);
 
   // Legacy support for simple string content
@@ -214,37 +159,6 @@ class Message {
     return '';
   }
 
-  /// Create a copy of the message with new file attachments
-  Message copyWithFileAttachments(List<FileAttachment> newFileAttachments) {
-    return Message(
-      id: id,
-      type: type,
-      content: content,
-      timestamp: timestamp,
-      isProcessing: isProcessing,
-      attachments: attachments,
-      fileAttachments: newFileAttachments,
-      sources: sources,
-      followUpQuestions: followUpQuestions,
-      additionalFollowUpQuestions: additionalFollowUpQuestions,
-      images: images,
-      messageCost: messageCost,
-      sessionCost: sessionCost,
-      costBreakdown: costBreakdown,
-    );
-  }
-
-  /// Convert message to API format for sending to server
-  Map<String, dynamic> toApiJson() {
-    final json = toJson();
-    
-    // Include file attachments in API format
-    if (fileAttachments != null && fileAttachments!.isNotEmpty) {
-      json['attachments'] = fileAttachments!.map((f) => f.toJson()).toList();
-    }
-    
-    return json;
-  }
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -255,8 +169,6 @@ class Message {
         if (isProcessing != null) 'isProcessing': isProcessing,
         if (attachments != null)
           'attachments': attachments!.map((a) => a.toJson()).toList(),
-        if (fileAttachments != null)
-          'fileAttachments': fileAttachments!.map((f) => f.toJson()).toList(),
         if (sources != null)
           'sources': sources!.map((s) => s.toJson()).toList(),
         if (followUpQuestions != null) 'followUpQuestions': followUpQuestions,
@@ -274,28 +186,12 @@ class MessageBuilder {
   final String type;
   final String timestamp;
   final List<MessageContent> _contents = [];
-  final List<FileAttachment> _fileAttachments = [];
 
   MessageBuilder({
     required this.id,
     required this.type,
     String? timestamp,
   }) : timestamp = timestamp ?? DateTime.now().toIso8601String();
-
-  /// Add file attachment
-  MessageBuilder addFileAttachment(FileAttachment attachment) {
-    _fileAttachments.add(attachment);
-    _contents.add(MessageContent.fromFileAttachment(attachment));
-    return this;
-  }
-
-  /// Add multiple file attachments
-  MessageBuilder addFileAttachments(List<FileAttachment> attachments) {
-    for (final attachment in attachments) {
-      addFileAttachment(attachment);
-    }
-    return this;
-  }
 
   /// Add file URL
   MessageBuilder addFileUrl(String url, String mediaType) {
@@ -330,7 +226,6 @@ class MessageBuilder {
       type: type,
       content: content,
       timestamp: timestamp,
-      fileAttachments: _fileAttachments.isNotEmpty ? _fileAttachments : null,
     );
   }
 }
@@ -352,19 +247,6 @@ class MessageContent {
         type: 'file',
         fileUrl: FileUrl(url: url, mediaType: mediaType),
       );
-
-  /// Create MessageContent from FileAttachment
-  factory MessageContent.fromFileAttachment(FileAttachment attachment) {
-    if (attachment.isImage) {
-      // Create data URL for images
-      final dataUrl = 'data:${attachment.mimeType};base64,${attachment.base64Data}';
-      return MessageContent.imageUrl(dataUrl);
-    } else {
-      // Create file URL for other files
-      final dataUrl = 'data:${attachment.mimeType};base64,${attachment.base64Data}';
-      return MessageContent.fileUrl(dataUrl, attachment.mimeType);
-    }
-  }
 
   factory MessageContent.fromJson(Map<String, dynamic> json) => MessageContent(
         type: json['type'] ?? 'text',

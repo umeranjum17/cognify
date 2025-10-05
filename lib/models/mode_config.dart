@@ -1,9 +1,10 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+// Frontend no longer owns mode configuration; it is fetched from backend.
+// Keep only types and lightweight helpers. All dynamic data comes via ModeApiService.
 
-import '../services/model_service.dart';
+import '../services/mode_api_service.dart';
 import '../config/model_registry.dart';
 
 enum ChatMode {
@@ -70,50 +71,40 @@ class ModeConfig {
 
 class ModeConfigManager {
   static const String _storageKey = 'mode_configs';
-  
-  // Default configurations for each mode (will be updated from API)
+
+  // MINIMAL emergency fallback only - Backend (/api/config/modes) is the source of truth
   static final Map<ChatMode, ModeConfig> _defaultConfigs = {
     ChatMode.chat: const ModeConfig(
       mode: ChatMode.chat,
-      model: 'google/gemini-2.5-flash-lite',
+      model: 'mistralai/mistral-7b-instruct:free',
       displayName: 'Chat',
-      description: 'Lightning fast responses with minimal search',
-      defaultModel: 'google/gemini-2.5-flash-lite',
+      description: 'Emergency fallback - backend unavailable',
+      defaultModel: 'mistralai/mistral-7b-instruct:free',
     ),
     ChatMode.search: const ModeConfig(
       mode: ChatMode.search,
-      model: 'google/gemini-2.5-flash-lite',
+      model: 'mistralai/mistral-7b-instruct:free',
       displayName: 'Search',
-      description: 'Perplexity-style quick web answers (fixed model)',
-      defaultModel: 'google/gemini-2.5-flash-lite',
+      description: 'Emergency fallback - backend unavailable',
+      defaultModel: 'mistralai/mistral-7b-instruct:free',
     ),
     ChatMode.aipedia: const ModeConfig(
       mode: ChatMode.aipedia,
-      model: 'google/gemini-2.5-flash-lite',
+      model: 'mistralai/mistral-7b-instruct:free',
       displayName: 'AIpedia',
-      description: 'Wikipedia-style overviews with sources and images',
-      defaultModel: 'google/gemini-2.5-flash-lite',
+      description: 'Emergency fallback - backend unavailable',
+      defaultModel: 'mistralai/mistral-7b-instruct:free',
     ),
     ChatMode.deepsearch: const ModeConfig(
       mode: ChatMode.deepsearch,
-      model: 'deepseek/deepseek-r1:free',
+      model: 'mistralai/mistral-7b-instruct:free',
       displayName: 'DeepSearch',
-      description: 'Ultra-comprehensive research with enhanced visual content and 4x more detailed responses (10x resources)',
-      defaultModel: 'deepseek/deepseek-r1:free',
+      description: 'Emergency fallback - backend unavailable',
+      defaultModel: 'mistralai/mistral-7b-instruct:free',
     ),
   };
 
-  /// Clear all stored configurations (useful for fixing corruption)
-  static Future<void> clearConfigs() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(_storageKey);
-    } catch (e) {
-      print('Error clearing mode configs: $e');
-    }
-  }
-
-  // Models are now fetched from API via ModelService
+  // Models and mode details are now fetched from backend via ModeApiService
 
   static String formatModelName(String model) {
     // Extract the model name from the full path
@@ -126,27 +117,40 @@ class ModeConfigManager {
 
   static Future<List<String>> getAvailableModelsForMode(ChatMode mode) async {
     try {
-      final modelData = await ModelService.getModelsByMode(mode);
-      return List<String>.from(modelData['models'] ?? []);
+      final models = await ModeApiService.instance.getAvailableModelsForMode(mode);
+      if (models.isNotEmpty) return models;
     } catch (e) {
-      print('Error fetching models for mode: $e');
-      // Return only configured defaults per mode
-      switch (mode) {
-        case ChatMode.chat:
-          return [ModelRegistry.defaults['CHAT_MODE']!];
-        case ChatMode.search:
-          return [ModelRegistry.defaults['CHAT_MODE']!];
-        case ChatMode.aipedia:
-          return [ModelRegistry.defaults['CHAT_MODE']!];
-        case ChatMode.deepsearch:
-          return [ModelRegistry.defaults['DEEPSEARCH_MODE']!];
-      }
+      print('Error fetching models for mode from backend: $e');
+    }
+    // Fallback to minimal defaults
+    switch (mode) {
+      case ChatMode.chat:
+        return [ModelRegistry.defaults['CHAT_MODE']!];
+      case ChatMode.search:
+        return [ModelRegistry.defaults['CHAT_MODE']!];
+      case ChatMode.aipedia:
+        return [ModelRegistry.defaults['CHAT_MODE']!];
+      case ChatMode.deepsearch:
+        return [ModelRegistry.defaults['DEEPSEARCH_MODE']!];
     }
   }
 
   static Future<ModeConfig> getConfigForMode(ChatMode mode) async {
-    final configs = await loadConfigs();
-    return configs[mode] ?? _defaultConfigs[mode]!;
+    try {
+      final cfg = await ModeApiService.instance.getModeConfig(mode);
+      if (cfg != null) {
+        return ModeConfig(
+          mode: mode,
+          model: (cfg['model'] as String?) ?? (cfg['defaultModel'] as String?) ?? _defaultConfigs[mode]!.model,
+          displayName: (cfg['displayName'] as String?) ?? mode.toString(),
+          description: (cfg['description'] as String?) ?? '',
+          defaultModel: (cfg['defaultModel'] as String?) ?? _defaultConfigs[mode]!.defaultModel,
+        );
+      }
+    } catch (e) {
+      print('Error fetching mode config from backend: $e');
+    }
+    return _defaultConfigs[mode]!;
   }
 
   static ModeConfig getDefaultConfigForMode(ChatMode mode) {
@@ -154,10 +158,12 @@ class ModeConfigManager {
   }
 
   static String getModeDescription(ChatMode mode) {
+    // Synchronous helper for quick labels; backend-aware UIs should fetch via ModeApiService
     return _defaultConfigs[mode]?.description ?? '';
   }
 
   static String getModeDisplayName(ChatMode mode) {
+    // Synchronous helper for quick labels; backend-aware UIs should fetch via ModeApiService
     return _defaultConfigs[mode]?.displayName ?? mode.toString();
   }
 
@@ -223,55 +229,7 @@ class ModeConfigManager {
     return ModelRegistry.isReasoningModel(model);
   }
 
-  static Future<Map<ChatMode, ModeConfig>> loadConfigs() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final configsJson = prefs.getString(_storageKey);
-
-      if (configsJson == null) {
-        return Map.from(_defaultConfigs);
-      }
-
-      final configsMap = jsonDecode(configsJson) as Map<String, dynamic>;
-      final configs = <ChatMode, ModeConfig>{};
-      bool hasCorruptedData = false;
-
-      for (final mode in ChatMode.values) {
-        final modeKey = mode.toString();
-        if (configsMap.containsKey(modeKey)) {
-          try {
-            final config = ModeConfig.fromJson(configsMap[modeKey]);
-            // Validate model format - check for concatenated models
-            if (config.model.contains('google/gemini-2.5-flash-lite-preview-06-17google/gemini-2.0-flash-exp:free') ||
-                config.model.split('/').length > 2) {
-              hasCorruptedData = true;
-              configs[mode] = _defaultConfigs[mode]!;
-            } else {
-              configs[mode] = config;
-            }
-          } catch (e) {
-            hasCorruptedData = true;
-            configs[mode] = _defaultConfigs[mode]!;
-          }
-        } else {
-          configs[mode] = _defaultConfigs[mode]!;
-        }
-      }
-
-      // If corrupted data was found, save clean configs
-      if (hasCorruptedData) {
-        await saveConfigs(configs);
-      }
-
-      return configs;
-    } catch (e) {
-      print('Error loading mode configs: $e');
-      // Clear corrupted storage and return defaults
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(_storageKey);
-      return Map.from(_defaultConfigs);
-    }
-  }
+  // Local persistence removed; backend is the source of truth. Keep defaults only as fallback.
 
   static ChatMode parseModeFromString(String modeString) {
     switch (modeString.toLowerCase()) {
@@ -291,24 +249,11 @@ class ModeConfigManager {
   }
 
   static Future<void> saveConfigs(Map<ChatMode, ModeConfig> configs) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final configsMap = <String, dynamic>{};
-
-      for (final entry in configs.entries) {
-        configsMap[entry.key.toString()] = entry.value.toJson();
-      }
-
-      await prefs.setString(_storageKey, jsonEncode(configsMap));
-    } catch (e) {
-      print('Error saving mode configs: $e');
-    }
+    // Persistence removed; backend is source of truth.
   }
 
   static Future<void> updateConfigForMode(ChatMode mode, ModeConfig config) async {
-    final configs = await loadConfigs();
-    configs[mode] = config;
-    await saveConfigs(configs);
+    // Persistence removed; backend is source of truth.
   }
 }
 

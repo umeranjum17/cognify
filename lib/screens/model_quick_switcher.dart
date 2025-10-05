@@ -96,14 +96,11 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
     _freeModels.clear();
     for (final model in models) {
       final provider = _normalizeProvider(model);
-      final estimate = RequestUsageEstimator.estimate(
-        pricing: model['pricing'] as Map<String, dynamic>?,
-        mode: widget.mode,
-      );
+      final pricing = model['pricing'] as Map<String, dynamic>?;
       final isFree =
           model['isFree'] == true ||
           (model['id']?.toString().endsWith(':free') ?? false) ||
-          estimate.isFree;
+          pricing == null || pricing.isEmpty;
       if (isFree) {
         _freeModels.add(model);
       } else {
@@ -178,12 +175,12 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
   }
 
   String _getPriceDisplay(Map<String, dynamic>? pricing) {
-    final estimate = RequestUsageEstimator.estimate(
-      pricing: pricing,
-      mode: widget.mode,
-    );
-
-    return RequestUsageEstimator.formatLabel(estimate, compact: true);
+    // Pricing display simplified - backend calculates actual costs
+    if (pricing == null) return 'Free';
+    final inputPrice = (pricing['input'] ?? 0.0) as double;
+    final outputPrice = (pricing['output'] ?? 0.0) as double;
+    if (inputPrice == 0 && outputPrice == 0) return 'Free';
+    return 'Paid';
   }
 
   List<String> _getModalities(Map<String, dynamic> model) {
@@ -545,18 +542,12 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
     final modalities = _getModalities(model);
     final pricing = model['pricing'] as Map<String, dynamic>?;
     final contextLength = model['contextLength'] ?? model['context_length'];
-    final usageEstimate = RequestUsageEstimator.estimate(
-      pricing: pricing,
-      mode: widget.mode,
-    );
+    // Simplified pricing check - backend handles detailed calculations
     final isFree =
         model['isFree'] == true ||
         (modelId is String && modelId.endsWith(':free')) ||
-        usageEstimate.isFree;
-    final priceLabel = RequestUsageEstimator.formatLabel(
-      usageEstimate,
-      compact: true,
-    );
+        (pricing != null && (pricing['input'] ?? 0.0) == 0.0 && (pricing['output'] ?? 0.0) == 0.0);
+    final priceLabel = isFree ? 'Free' : 'Paid';
 
     return GestureDetector(
       onTap: () => _selectModel(modelId),

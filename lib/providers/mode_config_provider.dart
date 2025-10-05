@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/mode_config.dart';
+import '../services/mode_api_service.dart';
 
 class ModeConfigProvider extends ChangeNotifier {
   Map<ChatMode, ModeConfig> _configs = {};
@@ -29,23 +30,11 @@ class ModeConfigProvider extends ChangeNotifier {
   Future<void> updateConfig(ChatMode mode, ModeConfig config) async {
     _configs[mode] = config;
     notifyListeners();
-
-    try {
-      await ModeConfigManager.saveConfigs(_configs);
-    } catch (e) {
-      print('Error saving mode config: $e');
-    }
   }
 
   Future<void> updateConfigs(Map<ChatMode, ModeConfig> newConfigs) async {
     _configs = Map.from(newConfigs);
     notifyListeners();
-
-    try {
-      await ModeConfigManager.saveConfigs(_configs);
-    } catch (e) {
-      print('Error saving mode configs: $e');
-    }
   }
 
   Future<void> _loadConfigs() async {
@@ -53,7 +42,24 @@ class ModeConfigProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _configs = await ModeConfigManager.loadConfigs();
+      // Load backend configs per-mode; fall back to defaults when missing
+      final api = ModeApiService.instance;
+      final Map<ChatMode, ModeConfig> loaded = {};
+      for (final mode in ChatMode.values) {
+        final cfg = await api.getModeConfig(mode);
+        if (cfg != null) {
+          loaded[mode] = ModeConfig(
+            mode: mode,
+            model: (cfg['model'] as String?) ?? (cfg['defaultModel'] as String?) ?? ModeConfigManager.getDefaultConfigForMode(mode).model,
+            displayName: (cfg['displayName'] as String?) ?? mode.toString(),
+            description: (cfg['description'] as String?) ?? '',
+            defaultModel: (cfg['defaultModel'] as String?) ?? ModeConfigManager.getDefaultConfigForMode(mode).defaultModel,
+          );
+        } else {
+          loaded[mode] = ModeConfigManager.getDefaultConfigForMode(mode);
+        }
+      }
+      _configs = loaded;
     } catch (e) {
       print('Error loading mode configs: $e');
       _configs = {

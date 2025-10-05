@@ -25,8 +25,18 @@ class SessionCostBottomSheet extends StatelessWidget {
         child: StreamBuilder<SessionCostData>(
           stream: sessionCostService.costUpdates,
           builder: (context, snapshot) {
-            final data = snapshot.data ??
-                const SessionCostData(sessionCost: 0, lastMessageCost: 0, messageCount: 0);
+            if (!snapshot.hasData) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 24),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary.withValues(alpha: 0.8)),
+                  ),
+                ),
+              );
+            }
+            final data = snapshot.data!;
             return ListView(
               controller: scrollController,
               children: [

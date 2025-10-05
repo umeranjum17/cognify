@@ -21,9 +21,16 @@ class CostDisplayWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     
-    // Don't show anything if no cost data
+    // Show loader if no cost data yet
     if (messageCost == null && sessionCost == null && costBreakdown == null) {
-      return const SizedBox.shrink();
+      return SizedBox(
+        height: 16,
+        width: 16,
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary.withValues(alpha: 0.6)),
+        ),
+      );
     }
 
     // For free models, show "Free" badge
@@ -59,7 +66,17 @@ class CostDisplayWidget extends StatelessWidget {
 
   Widget _buildCompactDisplay(ThemeData theme) {
     final cost = showSessionCost ? sessionCost : messageCost;
-    if (cost == null || cost == 0) return const SizedBox.shrink();
+    if (cost == null) {
+      return SizedBox(
+        height: 14,
+        width: 14,
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary.withValues(alpha: 0.6)),
+        ),
+      );
+    }
+    if (cost == 0) return const SizedBox.shrink();
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),

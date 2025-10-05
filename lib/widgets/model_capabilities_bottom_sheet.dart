@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/file_attachment.dart';
 import '../theme/app_theme.dart';
 import '../config/model_registry.dart';
-import '../services/request_usage_estimator.dart';
+// Estimation handled by backend
 
 class ModelCapabilitiesBottomSheet extends StatelessWidget {
   final ModelCapabilities? modelCapabilities;
@@ -28,23 +28,20 @@ class ModelCapabilitiesBottomSheet extends StatelessWidget {
     return null;
   }
 
-  RequestUsageEstimate _getUsageEstimate() {
-    return RequestUsageEstimator.estimate(pricing: _resolvePricing());
+  String _getUsageEstimateLabel({bool compact = false}) {
+    final pricing = _resolvePricing();
+    if (pricing == null || pricing.isEmpty) return 'Free';
+    return compact ? '~1 req' : '≈1 request';
   }
 
   String _getRequestLabel({bool compact = false}) {
-    final estimate = _getUsageEstimate();
-    return RequestUsageEstimator.formatLabel(estimate, compact: compact);
+    return _getUsageEstimateLabel(compact: compact);
   }
 
   String _getEstimatedDollarCost() {
-    final estimate = _getUsageEstimate();
-    if (estimate.dollarCost <= 0) {
-      return 'Free';
-    }
-
-    final precision = estimate.dollarCost >= 0.01 ? 2 : 4;
-    return '\$${estimate.dollarCost.toStringAsFixed(precision)} est.';
+    final pricing = _resolvePricing();
+    if (pricing == null || pricing.isEmpty) return 'Free';
+    return 'Est. cost shown after request';
   }
 
   bool _isFree() {
@@ -55,10 +52,8 @@ class ModelCapabilitiesBottomSheet extends StatelessWidget {
       if (ModelRegistry.isModelFree(modelId)) return true;
     }
 
-    final estimate = _getUsageEstimate();
-    if (estimate.isFree) {
-      return true;
-    }
+    // If backend or model data indicates free
+    // Otherwise fall back to pricing presence
 
     // Default to true if no pricing data available
     return _resolvePricing() == null;

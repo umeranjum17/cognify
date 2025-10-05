@@ -10,9 +10,9 @@ import 'mode_api_service.dart';
 import 'cost_service.dart';
 import 'usage_quota_service.dart';
 import 'access_service.dart';
+import 'request_usage_estimator.dart';
 import '../models/message.dart';
 import '../models/mode_config.dart';
-import 'request_usage_estimator.dart';
 
 /// Unified LLM service that calls backend Mode APIs
 class LLMService {
@@ -108,7 +108,7 @@ class LLMService {
       // Call backend Mode API - it handles everything
       yield* _attachQuotaRefund(
         _modeApi.chatStream(
-          mode: resolvedMode,
+          mode: resolvedMode ?? ChatMode.chat,
           messages: normalizedMessages,
           model: selectedModel,
           temperature: temperature,
@@ -294,17 +294,20 @@ class LLMService {
       uid: user.uid,
       requestUnits: estimate.requestUnits,
       model: model,
-      estimate: estimate,
     );
   }
 
+  // Estimation now uses backend API
   Future<RequestUsageEstimate> _estimateUsageForModel({
     required String model,
     ChatMode? mode,
   }) async {
     try {
-      final pricing = await CostService.getModelPricingById(model);
-      return RequestUsageEstimator.estimate(pricing: pricing, mode: mode);
+      // Use backend API for estimation (no local pricing needed)
+      return await RequestUsageEstimator.estimate(
+        modelId: model,
+        mode: mode,
+      );
     } catch (e) {
       print('⚠️ Failed to determine request usage for $model: $e');
       return const RequestUsageEstimate.free();
@@ -426,11 +429,9 @@ class _QuotaUsage {
     required this.uid,
     required this.requestUnits,
     required this.model,
-    required this.estimate,
   });
 
   final String uid;
   final int requestUnits;
   final String model;
-  final RequestUsageEstimate estimate;
 }
