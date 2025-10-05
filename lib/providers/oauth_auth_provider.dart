@@ -21,8 +21,9 @@ class OAuthAuthProvider extends ChangeNotifier {
   static const String _oauthStateStorageKey = 'oauth_state';
   static const String _oauthCodeVerifierStorageKey = 'oauth_code_verifier';
 
-  // OpenRouter API endpoint for validation (using authenticated endpoint)
-  static const String _creditsUrl = 'https://openrouter.ai/api/v1/credits';
+  // Backend API endpoints (proxies OpenRouter)
+  String get _authKeysUrl => '${AppConfig.backendBaseUrl}/api/oauth/auth-keys';
+  String get _validateUrl => '${AppConfig.backendBaseUrl}/api/oauth/validate';
 
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
 
@@ -293,12 +294,12 @@ class OAuthAuthProvider extends ChangeNotifier {
   /// Exchange authorization code for API key
   Future<String?> _exchangeCodeForApiKey(String code, String codeVerifier) async {
     try {
-      print('🔄 Making token exchange request to OpenRouter...');
+      print('🔄 Making token exchange request to backend API...');
       print('🔄 Code: ${code.substring(0, 10)}..., Code verifier: ${codeVerifier.substring(0, 10)}...');
 
-      // Make POST request to OpenRouter's token endpoint
+      // Make POST request to backend's token exchange endpoint
       final response = await http.post(
-        Uri.parse('https://openrouter.ai/api/v1/auth/keys'),
+        Uri.parse(_authKeysUrl),
         headers: {
           'Content-Type': 'application/json',
         },
@@ -362,8 +363,21 @@ class OAuthAuthProvider extends ChangeNotifier {
   /// Launch OAuth flow using App Links / deep links
   Future<OAuthResult> _launchOAuthFlow(String codeChallenge, String randomState) async {
     try {
-      // Use the same Vercel callback for all platforms - it will handle mobile deep linking
-      final redirectUri = 'https://oauth-callback-deploy.vercel.app/callback';
+      // Compute callback URL. For web, use current origin; otherwise use configured backend base URL.
+      String redirectUri;
+      if (kIsWeb) {
+        final origin = Uri.base.origin;
+        redirectUri = '$origin/callback';
+      } else {
+        final base = AppConfig.backendBaseUrl;
+        if (base.isNotEmpty) {
+          final origin = base.replaceFirst(RegExp(r'/api/?$'), '');
+          redirectUri = '$origin/callback';
+        } else {
+          // Fallback public domain; replace with your deployed domain if needed
+          redirectUri = 'https://cognify.app/callback';
+        }
+      }
 
       // Build enhanced state that captures the initiator's origin (and platform)
       // Detect the current platform
@@ -479,9 +493,9 @@ class OAuthAuthProvider extends ChangeNotifier {
       }
       
       print('🔑 Validating API key: ${apiKey.substring(0, 10)}... [source: ${providedApiKey != null ? 'direct' : 'AppConfig'}]');
-      
+
       final response = await http.get(
-        Uri.parse(_creditsUrl),
+        Uri.parse(_validateUrl),
         headers: {
           'Authorization': 'Bearer $apiKey',
           'Content-Type': 'application/json',

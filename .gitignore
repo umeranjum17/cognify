@@ -18,6 +18,12 @@ migrate_working_dir/
 .env.production
 .env.development
 
+# Node.js / API dependencies
+node_modules/
+api/node_modules/
+package-lock.json
+api/package-lock.json
+
 # IntelliJ related
 *.iml
 *.ipr
@@ -49,3 +55,4 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+.vercel

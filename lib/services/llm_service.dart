@@ -6,19 +6,18 @@ import 'package:flutter/material.dart';
 
 import '../config/app_config.dart';
 import '../database/database_service.dart';
-import 'openrouter_client.dart';
+import 'mode_api_service.dart';
 import 'cost_service.dart';
 import 'usage_quota_service.dart';
 import 'access_service.dart';
 import '../models/message.dart';
 import '../models/mode_config.dart';
 import 'request_usage_estimator.dart';
-import 'tools.dart';
 
-/// Unified LLM service with automatic fallback and model selection
+/// Unified LLM service that calls backend Mode APIs
 class LLMService {
   static final LLMService _instance = LLMService._internal();
-  final OpenRouterClient _openRouterClient = OpenRouterClient();
+  final ModeApiService _modeApi = ModeApiService.instance;
 
   final DatabaseService _db = DatabaseService();
   bool _initialized = false;
@@ -34,7 +33,7 @@ class LLMService {
   LLMService._internal();
   bool get isInitialized => _initialized;
 
-  /// Send a chat completion request with automatic fallback
+  /// Send a chat completion request via Mode API
   Future<Map<String, dynamic>> chatCompletion({
     required List<dynamic> messages,
     String? model,
@@ -50,60 +49,31 @@ class LLMService {
 
     final selectedModel = model ?? _currentModel ?? AppConfig.defaultModel;
     final normalizedMessages = _normalizeMessages(messages);
+    final mode = chatMode ?? ChatMode.chat;
 
-    // Inject Brave search context for supported modes before sending to provider
-    final augmentedMessages = await _maybeInjectSearchContext(
-      normalizedMessages,
-      chatMode,
-    );
     final quotaUsage = await _reserveQuota(
       model: selectedModel,
-      mode: chatMode,
+      mode: mode,
     );
 
     try {
-      // Try primary provider first
-      if (_preferredProvider == 'openrouter') {
-        return await _openRouterClient.chatCompletion(
-          model: selectedModel,
-          messages: augmentedMessages,
-          temperature: temperature,
-          maxTokens: maxTokens,
-          stream: stream,
-          tools: _convertTools(tools),
-          toolChoice: toolChoice?.toString(),
-          context: context,
-        );
-      }
+      // Call backend Mode API - it handles search context injection
+      return await _modeApi.chat(
+        mode: mode,
+        messages: normalizedMessages,
+        model: selectedModel,
+        temperature: temperature,
+        maxTokens: maxTokens,
+        stream: stream,
+      );
     } catch (e) {
-      print('🧠 Primary provider failed, trying fallback: $e');
-
-      // Try fallback provider
-      try {
-        final fallbackModel = await _openRouterClient.getBestModel(
-          preferFree: true,
-        );
-        return await _openRouterClient.chatCompletion(
-          model: fallbackModel,
-          messages: augmentedMessages,
-          temperature: temperature,
-          maxTokens: maxTokens,
-          stream: stream,
-          tools: _convertTools(tools),
-          toolChoice: toolChoice?.toString(),
-          context: context,
-        );
-      } catch (fallbackError) {
-        await _refundQuota(quotaUsage);
-        print('🧠 Fallback provider failed: $fallbackError');
-        rethrow;
-      }
+      await _refundQuota(quotaUsage);
+      print('🧠 Mode API failed: $e');
+      rethrow;
     }
-    // If we reach here, no provider matched; throw to satisfy non-null contract
-    throw Exception('No LLM provider available');
   }
 
-  /// Send a streaming chat completion request
+  /// Send a streaming chat completion request via Mode API
   Stream<Map<String, dynamic>> chatCompletionStream({
     required List<dynamic> messages,
     String? model,
@@ -128,74 +98,40 @@ class LLMService {
     final selectedModel = model ?? _currentModel ?? AppConfig.defaultModel;
     final normalizedMessages = _normalizeMessages(messages);
     final resolvedMode = chatMode ?? _resolveChatMode(mode);
-    final augmentedMessages = await _maybeInjectSearchContext(
-      normalizedMessages,
-      resolvedMode,
-    );
+
     final quotaUsage = await _reserveQuota(
       model: selectedModel,
       mode: resolvedMode,
     );
 
     try {
-      // Try primary provider first
-      if (_preferredProvider == 'openrouter') {
-        yield* _attachQuotaRefund(
-          _openRouterClient.chatCompletionStream(
-            model: selectedModel,
-            messages: augmentedMessages,
-            temperature: temperature,
-            maxTokens: maxTokens,
-            tools: _convertTools(tools),
-            toolChoice: toolChoice?.toString(),
-            context: context,
-          ),
-          quotaUsage,
-        );
-      }
+      // Call backend Mode API - it handles everything
+      yield* _attachQuotaRefund(
+        _modeApi.chatStream(
+          mode: resolvedMode,
+          messages: normalizedMessages,
+          model: selectedModel,
+          temperature: temperature,
+          maxTokens: maxTokens,
+        ),
+        quotaUsage,
+      );
     } catch (e) {
-      print('🧠 Primary provider streaming failed, trying fallback: $e');
-
-      // Try fallback provider
-      try {
-        final fallbackModel = await _openRouterClient.getBestModel(
-          preferFree: true,
-        );
-        yield* _attachQuotaRefund(
-          _openRouterClient.chatCompletionStream(
-            model: fallbackModel,
-            messages: augmentedMessages,
-            temperature: temperature,
-            maxTokens: maxTokens,
-            tools: _convertTools(tools),
-            toolChoice: toolChoice?.toString(),
-            context: context,
-          ),
-          quotaUsage,
-        );
-      } catch (fallbackError) {
-        await _refundQuota(quotaUsage);
-        yield {
-          'error': 'Fallback provider failed: $fallbackError',
-          'streaming': true,
-        };
-      }
+      await _refundQuota(quotaUsage);
+      yield {
+        'error': 'Mode API streaming failed: $e',
+        'streaming': true,
+      };
     }
   }
 
-  /// Generate embeddings for text
+  /// Generate embeddings for text (placeholder - implement backend endpoint if needed)
   Future<List<double>> generateEmbeddings(String text) async {
     await _ensureInitialized();
 
-    try {
-      return await _openRouterClient.generateEmbeddings(text: text);
-    } catch (e) {
-      print('🧠 Embeddings generation failed: $e');
-
-      // Return a placeholder embedding vector
-      // In a real implementation, you might want to use a local embedding model
-      return List.filled(1536, 0.0); // OpenAI embedding dimension
-    }
+    // TODO: Create backend endpoint for embeddings if needed
+    print('⚠️ Embeddings not yet implemented in backend');
+    return List.filled(1536, 0.0); // Placeholder
   }
 
   List<Map<String, dynamic>> _normalizeMessages(List<dynamic> messages) {
@@ -210,128 +146,28 @@ class LLMService {
     return const [];
   }
 
-  Future<List<Map<String, dynamic>>> _maybeInjectSearchContext(
-    List<Map<String, dynamic>> messages,
-    ChatMode? mode,
-  ) async {
-    if (mode == null) return messages;
-    final isSearch = mode == ChatMode.search;
-    final isAipedia = mode == ChatMode.aipedia;
-    if (!isSearch && !isAipedia) return messages;
-
-    // Derive the user query from the last user message
-    final userMessage = messages.lastWhere(
-      (m) => (m['role'] == 'user'),
-      orElse: () => const {'content': ''},
-    );
-    final query = (userMessage['content'] ?? '').toString().trim();
-    if (query.isEmpty) return messages;
-
-    try {
-      // Perform web search (and image search for AIpedia)
-      final braveTool = BraveSearchTool();
-      final imageTool = ImageSearchTool();
-
-      final webResult = await braveTool.invoke({
-        'query': query,
-        'count': isAipedia ? 6 : 5,
-      });
-
-      Map<String, dynamic>? imageResult;
-      if (isAipedia) {
-        imageResult = await imageTool.invoke({
-          'query': query,
-          'count': 3,
-        });
-      }
-
-      final contextPayload = <String, dynamic>{
-        'search': webResult,
-        if (imageResult != null) 'images': imageResult,
-        'mode': mode.name,
-        'note': 'These are pre-fetched Brave search results to ground the answer.',
-      };
-
-      final systemContextMessage = {
-        'role': 'system',
-        'content': 'Context:\n' + jsonEncode(contextPayload),
-      };
-
-      // Prepend the system context before the user message for maximal grounding
-      final augmented = <Map<String, dynamic>>[];
-      // Keep any existing system messages first
-      for (final m in messages) {
-        if (m['role'] == 'system') {
-          augmented.add(m);
-        }
-      }
-      augmented.add(systemContextMessage);
-      // Add the rest (non-system) preserving order
-      for (final m in messages) {
-        if (m['role'] != 'system') {
-          augmented.add(m);
-        }
-      }
-      return augmented;
-    } catch (e) {
-      // If search fails, proceed without augmentation
-      return messages;
-    }
-  }
-
-  Map<String, dynamic>? _convertTools(dynamic tools) {
-    // Accept a pre-built tools map or ignore for now.
-    if (tools == null) return null;
-    if (tools is Map<String, dynamic>) return tools;
-    // ToolsConfig or others can be converted here if needed.
-    return null;
-  }
-
-  /// Get available models from all providers
+  /// Get available models from backend config
   Future<Map<String, dynamic>> getAvailableModels({
     BuildContext? context,
   }) async {
     await _ensureInitialized();
 
-    final openRouterModels = await _openRouterClient.getModels(
-      context: context,
-    );
-
+    // TODO: Fetch models from /api/config/models endpoint
     return {
-      'openrouter': {
-        'models': openRouterModels['models'],
-        'pricing': openRouterModels['pricing'],
-      },
+      'models': [],
+      'pricing': {},
     };
   }
 
-  /// Get the best available model across all providers
+  /// Get the best available model (from config or default)
   Future<String> getBestModel({
     bool preferFree = true,
     bool preferCheap = true,
   }) async {
     await _ensureInitialized();
 
-    try {
-      // Try OpenRouter first for free models
-      if (preferFree) {
-        final bestOpenRouter = await _openRouterClient.getBestModel(
-          preferFree: true,
-        );
-        return bestOpenRouter;
-      }
-
-      // Compare pricing across providers
-      final openRouterModel = await _openRouterClient.getBestModel(
-        preferFree: false,
-      );
-
-      // For simplicity, prefer OpenRouter for cost-effectiveness
-      return openRouterModel;
-    } catch (e) {
-      print('🧠 Failed to get best model: $e');
-      return AppConfig.defaultModel;
-    }
+    // Backend handles model selection, just return the default
+    return AppConfig.defaultModel;
   }
 
   /// Get usage statistics
@@ -349,7 +185,6 @@ class LLMService {
     if (_initialized) return;
 
     await _db.initialize();
-    await _openRouterClient.initialize();
 
     // Load current model from config
     _currentModel = await AppConfig().currentModel;
@@ -361,11 +196,9 @@ class LLMService {
     print('🧠 LLMService initialized with model: $_currentModel');
   }
 
-  /// Check if any LLM provider is configured
+  /// Check if backend is configured (always true for mode APIs)
   Future<bool> isConfigured() async {
-    final openRouterKey = await AppConfig().openRouterApiKey;
-
-    return (openRouterKey != null && openRouterKey.isNotEmpty);
+    return AppConfig.backendBaseUrl.isNotEmpty;
   }
 
   /// Reset usage statistics

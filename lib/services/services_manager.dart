@@ -3,8 +3,6 @@ import 'package:hive_flutter/hive_flutter.dart';
 import '../config/app_config.dart';
 import '../database/database_service.dart';
 import '../utils/logger.dart';
-import 'document_processor.dart';
-import 'file_upload_service.dart';
 import 'llm_service.dart';
 import 'prompt_service.dart';
 import 'user_service.dart';

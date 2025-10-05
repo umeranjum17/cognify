@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../services/secure_storage.dart';
 
 import '../database/database_service.dart';
 import '../utils/logger.dart';
@@ -134,6 +135,12 @@ class AppConfig {
 
   // API Keys
   Future<String?> get openRouterApiKey async {
+    // Prefer secure storage if the user has configured a key
+    final storedKey = await SecureStorage.getOpenRouterApiKey();
+    if (storedKey != null && storedKey.isNotEmpty) {
+      return storedKey;
+    }
+    // Fallback to bundled secret for dev/demo builds
     if (AppSecrets.openRouterApiKey.isNotEmpty) {
       return AppSecrets.openRouterApiKey;
     }

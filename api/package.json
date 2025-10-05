@@ -1,0 +1,22 @@
+{
+  "name": "cognify-api",
+  "version": "1.0.0",
+  "description": "Cognify Edge/Node API functions",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "@vercel/edge": "^1.1.1",
+    "firebase-admin": "^12.7.0",
+    "ai": "^5.0.60",
+    "@openrouter/ai-sdk-provider": "^1.2.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
+

@@ -36,7 +36,7 @@
   <script>
     // Handle client-side routing for Flutter web apps
     // This ensures that direct URL navigation works properly
-    if (window.location.pathname !== '/' && !window.location.pathname.startsWith('/oauth/callback')) {
+    if (window.location.pathname !== '/') {
       // For non-root paths, redirect to root and let Flutter handle routing
       window.location.href = '/';
     }

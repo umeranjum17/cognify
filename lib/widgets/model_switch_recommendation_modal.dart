@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'unified_settings_modal.dart';
 import '../config/model_registry.dart';
 import '../models/mode_config.dart';
 import '../providers/mode_config_provider.dart';
@@ -120,10 +121,16 @@ class ModelSwitchRecommendationModal extends StatelessWidget {
                 child: ElevatedButton.icon(
                   onPressed: () {
                     onDismiss(); // Close this dialog
-                    context.go('/sign-in');
+                    showDialog(
+                      context: context,
+                      builder: (ctx) => UnifiedSettingsModal(
+                        selectedModel: currentModel,
+                        onModelChanged: (_) {},
+                      ),
+                    );
                   },
                   icon: const Icon(Icons.settings),
-                  label: const Text('Reconfigure OpenRouter'),
+                  label: const Text('Open Settings'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red,
                     foregroundColor: Colors.white,

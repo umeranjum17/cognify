@@ -3985,7 +3985,7 @@ class _EditorScreenState extends State<EditorScreen> {
                 ElevatedButton(
                   onPressed: () {
                     Navigator.of(context).pop();
-                    context.go('/sign-in'); // Navigate to onboarding
+                    _showSettings(); // Open settings to configure API key
                   },
                   child: const Text('Setup Now'),
                 ),

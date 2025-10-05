@@ -1,11 +1,10 @@
 {
   "version": 2,
+  "installCommand": "npm --prefix api ci || npm --prefix api install",
   "buildCommand": "echo 'No build needed for Edge Functions'",
-  "routes": [
-    {
-      "src": "/api/config/(.*)",
-      "dest": "/api/config/$1"
-    }
+  "outputDirectory": "web",
+  "rewrites": [
+    { "source": "/callback", "destination": "/api/oauth/callback" }
   ],
   "headers": [
     {

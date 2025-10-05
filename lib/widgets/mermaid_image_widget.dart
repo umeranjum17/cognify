@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
+import '../config/app_config.dart';
 import '../utils/logger.dart';
 
 /// Image-based Mermaid widget that uses server-side generation
@@ -420,50 +421,28 @@ class _MermaidImageWidgetState extends State<MermaidImageWidget> {
       Logger.debug('  - isDarkMode: $isDarkMode', tag: 'MermaidWidget');
       Logger.debug('  - mermaidTheme: $mermaidTheme', tag: 'MermaidWidget');
 
-      // Create the mermaid configuration with theme
-      final mermaidConfig = {
-        'code': widget.mermaidCode,
-        'mermaid': {
-          'theme': mermaidTheme
-        }
-      };
-
-      // Encode the configuration as base64
-      final jsonString = jsonEncode(mermaidConfig);
-      final encodedConfig = base64Encode(utf8.encode(jsonString));
-
-      // Build URL - use /img/ for PNG and /svg/ for SVG
-      final endpoint = widget.format == 'svg' ? 'svg' : 'img';
-      String url = 'https://mermaid.ink/$endpoint/$encodedConfig';
-
-      // Add query parameters for PNG with background color
+      // Determine background color based on theme
+      String? bgColor;
       if (widget.format == 'png') {
-        final params = <String, String>{};
-
-        // Set background color based on theme
-        if (mermaidTheme == 'dark') {
-          params['theme'] = 'dark';
-          params['bgColor'] = '1b1b1f';
-        } else {
-          params['bgColor'] = 'ffffff';
-        }
-
-        if (params.isNotEmpty) {
-          final queryString = params.entries
-              .map((e) => '${Uri.encodeComponent(e.key)}=${Uri.encodeComponent(e.value)}')
-              .join('&');
-          url += '?$queryString';
-        }
+        bgColor = mermaidTheme == 'dark' ? '1b1b1f' : 'ffffff';
       }
 
-      Logger.info('🌐 Fetching ${widget.format.toUpperCase()} from mermaid.ink: ${url.substring(0, url.length > 100 ? 100 : url.length)}...', tag: 'MermaidWidget');
+      // Build request to backend API
+      final url = Uri.parse('${widget.baseUrl ?? AppConfig.backendBaseUrl}/api/mermaid/generate');
 
-      final response = await http.get(
-        Uri.parse(url),
+      Logger.info('🌐 Generating ${widget.format.toUpperCase()} via backend API...', tag: 'MermaidWidget');
+
+      final response = await http.post(
+        url,
         headers: {
-          'User-Agent': 'Cognify-Flutter/1.0',
-          'Accept': widget.format == 'png' ? 'image/png,*/*' : 'image/svg+xml,*/*'
+          'Content-Type': 'application/json',
         },
+        body: jsonEncode({
+          'code': widget.mermaidCode,
+          'theme': mermaidTheme,
+          'format': widget.format,
+          if (bgColor != null) 'bgColor': bgColor,
+        }),
       ).timeout(const Duration(seconds: 15));
 
       if (!mounted) return;
@@ -474,34 +453,10 @@ class _MermaidImageWidgetState extends State<MermaidImageWidget> {
           _isLoading = false;
           _error = null;
         });
-        
-        Logger.info('✅ ${widget.format.toUpperCase()} received from mermaid.ink (${response.bodyBytes.length} bytes)', tag: 'MermaidWidget');
+
+        Logger.info('✅ ${widget.format.toUpperCase()} received from backend (${response.bodyBytes.length} bytes)', tag: 'MermaidWidget');
       } else {
-        // Try fallback without query parameters
-        final fallbackUrl = 'https://mermaid.ink/$endpoint/$encodedConfig';
-        Logger.info('🔄 Trying fallback URL: ${fallbackUrl.substring(0, fallbackUrl.length > 100 ? 100 : fallbackUrl.length)}...', tag: 'MermaidWidget');
-
-        final fallbackResponse = await http.get(
-          Uri.parse(fallbackUrl),
-          headers: {
-            'User-Agent': 'Cognify-Flutter/1.0',
-            'Accept': widget.format == 'png' ? 'image/png,*/*' : 'image/svg+xml,*/*'
-          },
-        ).timeout(const Duration(seconds: 15));
-
-        if (!mounted) return;
-
-        if (fallbackResponse.statusCode == 200) {
-          setState(() {
-            _imageData = fallbackResponse.bodyBytes;
-            _isLoading = false;
-            _error = null;
-          });
-          
-          Logger.info('✅ ${widget.format.toUpperCase()} received from mermaid.ink fallback (${fallbackResponse.bodyBytes.length} bytes)', tag: 'MermaidWidget');
-        } else {
-          throw Exception('Mermaid.ink API error: ${response.statusCode} ${response.reasonPhrase}');
-        }
+        throw Exception('Backend API error: ${response.statusCode} ${response.reasonPhrase}');
       }
     } catch (e) {
       if (!mounted) return;
@@ -510,9 +465,9 @@ class _MermaidImageWidgetState extends State<MermaidImageWidget> {
       
       // Handle specific network errors
       if (e.toString().contains('ENOTFOUND') || e.toString().contains('ECONNREFUSED')) {
-        errorMessage = 'Unable to connect to mermaid.ink service';
+        errorMessage = 'Unable to connect to backend service';
       } else if (e.toString().contains('timeout')) {
-        errorMessage = 'Request timed out while connecting to mermaid.ink';
+        errorMessage = 'Request timed out while connecting to backend';
       }
       
       setState(() {

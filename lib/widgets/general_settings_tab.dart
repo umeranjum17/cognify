@@ -9,6 +9,7 @@ import '../providers/usage_quota_provider.dart';
 import '../config/app_config.dart';
 import '../theme/app_theme.dart';
 import '../services/data_deletion_service.dart';
+import '../services/secure_storage.dart';
 
 class GeneralSettingsTab extends StatefulWidget {
   const GeneralSettingsTab({super.key});
@@ -19,6 +20,29 @@ class GeneralSettingsTab extends StatefulWidget {
 
 class _GeneralSettingsTabState extends State<GeneralSettingsTab> {
   bool _signingOut = false;
+  final TextEditingController _openRouterKeyController = TextEditingController();
+  bool _obscureOpenRouterKey = true;
+  bool _savingKey = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadExistingKeys();
+  }
+
+  @override
+  void dispose() {
+    _openRouterKeyController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadExistingKeys() async {
+    final existing = await SecureStorage.getOpenRouterApiKey();
+    if (!mounted) return;
+    setState(() {
+      _openRouterKeyController.text = existing ?? '';
+    });
+  }
 
   Future<void> _logout() async {
     final confirm = await showDialog<bool>(
@@ -179,6 +203,47 @@ class _GeneralSettingsTabState extends State<GeneralSettingsTab> {
           );
         }
       }
+    }
+  }
+
+  Future<void> _saveOpenRouterKey() async {
+    setState(() => _savingKey = true);
+    try {
+      final value = _openRouterKeyController.text.trim();
+      if (value.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please enter an API key.')),
+        );
+        return;
+      }
+      await SecureStorage.storeOpenRouterApiKey(value);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('OpenRouter API key saved.')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to save key: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _savingKey = false);
+    }
+  }
+
+  Future<void> _clearOpenRouterKey() async {
+    try {
+      await SecureStorage.storeOpenRouterApiKey('');
+      if (!mounted) return;
+      _openRouterKeyController.clear();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('OpenRouter API key cleared.')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to clear key: $e')),
+      );
     }
   }
 
@@ -351,7 +416,7 @@ class _GeneralSettingsTabState extends State<GeneralSettingsTab> {
 
           const SizedBox(height: 24),
 
-          _buildSection(theme, isDark, 'Usage', [
+        _buildSection(theme, isDark, 'Usage', [
             _buildInfoCard(
               theme,
               isDark,
@@ -359,6 +424,113 @@ class _GeneralSettingsTabState extends State<GeneralSettingsTab> {
               title: 'Token Balance',
               value: tokenValue,
               subtitle: tokenSubtitle,
+            ),
+          ]),
+
+        const SizedBox(height: 24),
+
+          _buildSection(theme, isDark, 'API Keys', [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.darkCard : AppColors.lightCard,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isDark
+                      ? AppColors.darkDivider.withValues(alpha: 0.2)
+                      : AppColors.lightDivider.withValues(alpha: 0.2),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: (isDark
+                                  ? AppColors.darkTextSecondary
+                                  : AppColors.lightTextSecondary)
+                              .withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          Icons.vpn_key_outlined,
+                          size: 20,
+                          color: isDark
+                              ? AppColors.darkTextSecondary
+                              : AppColors.lightTextSecondary,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Text(
+                          'OpenRouter API Key',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _openRouterKeyController,
+                    obscureText: _obscureOpenRouterKey,
+                    enableSuggestions: false,
+                    autocorrect: false,
+                    decoration: InputDecoration(
+                      hintText: 'sk-or-... (paste your key)',
+                      suffixIcon: IconButton(
+                        tooltip: _obscureOpenRouterKey ? 'Show' : 'Hide',
+                        icon: Icon(
+                          _obscureOpenRouterKey
+                              ? Icons.visibility_off
+                              : Icons.visibility,
+                        ),
+                        onPressed: () => setState(
+                          () => _obscureOpenRouterKey = !_obscureOpenRouterKey,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      ElevatedButton.icon(
+                        onPressed: _savingKey ? null : _saveOpenRouterKey,
+                        icon: _savingKey
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : const Icon(Icons.save_alt),
+                        label: Text(_savingKey ? 'Saving…' : 'Save'),
+                      ),
+                      const SizedBox(width: 12),
+                      OutlinedButton.icon(
+                        onPressed: _clearOpenRouterKey,
+                        icon: const Icon(Icons.clear),
+                        label: const Text('Clear'),
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        tooltip: 'Paste',
+                        icon: const Icon(Icons.content_paste_go),
+                        onPressed: () async {
+                          final data = await Clipboard.getData('text/plain');
+                          if (data?.text != null) {
+                            _openRouterKeyController.text = data!.text!.trim();
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ]),
 
