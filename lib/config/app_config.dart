@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../services/secure_storage.dart';
 
 import '../database/database_service.dart';
@@ -96,10 +97,23 @@ class AppConfig {
   // API endpoints
   static const String openRouterBaseUrl = 'https://openrouter.ai/api/v1';
   static const String openAiBaseUrl = 'https://api.openai.ai/v1';
-  static const String backendBaseUrl = String.fromEnvironment(
-    'BACKEND_BASE_URL',
-    defaultValue: '',
-  );
+
+  static String get backendBaseUrl {
+    // First try compile-time environment variables
+    final compileTimeValue = String.fromEnvironment('BACKEND_BASE_URL', defaultValue: '');
+    if (compileTimeValue.isNotEmpty) {
+      return compileTimeValue;
+    }
+
+    // Fallback to .env file
+    final envValue = dotenv.get('API_BASE_URL', fallback: '');
+    if (envValue.isNotEmpty) {
+      return envValue;
+    }
+
+    // Final fallback for development
+    return 'https://cognify-backend.fly.dev';
+  }
 
   // App information
   static String get appName => EnvironmentConfig.appName;
