@@ -102,11 +102,68 @@ export default async function handler(req: Request) {
     const stream = new ReadableStream({
       async start(controller) {
         try {
-          for await (const textPart of result.textStream) {
-            // Send each chunk in SSE format with data: prefix
-            const sseMessage = `data: ${JSON.stringify({ content: textPart })}\n\n`;
-            controller.enqueue(encoder.encode(sseMessage));
+          let allSources: any[] = [];
+          let allImages: any[] = [];
+          
+          for await (const part of result.fullStream) {
+            if (part.type === 'text-delta') {
+              // Send text content chunks
+              const sseMessage = `data: ${JSON.stringify({ content: part.text })}\n\n`;
+              controller.enqueue(encoder.encode(sseMessage));
+            } else if (part.type === 'tool-result') {
+              // Capture tool results for sources
+              const toolOutput = part.output;
+              
+              if (part.toolName === 'braveWebSearch' && toolOutput && typeof toolOutput === 'object' && 'results' in toolOutput) {
+                // Add web search sources
+                const results = (toolOutput as any).results;
+                if (Array.isArray(results)) {
+                  const sources = results.map((result: any, index: number) => ({
+                    id: `search-${Date.now()}-${index}`,
+                    title: result.title || 'Untitled',
+                    url: result.url || '',
+                    description: result.description || '',
+                    type: 'web',
+                    query: (toolOutput as any).query || '',
+                  }));
+                  allSources.push(...sources);
+                }
+              } else if (part.toolName === 'braveImageSearch' && toolOutput && typeof toolOutput === 'object' && 'images' in toolOutput) {
+                // Add image search results
+                const images = (toolOutput as any).images;
+                if (Array.isArray(images)) {
+                  const imageResults = images.map((image: any, index: number) => ({
+                    id: `image-${Date.now()}-${index}`,
+                    title: image.title || 'Image',
+                    url: image.url || '',
+                    source: image.source || '',
+                    type: 'image',
+                    query: (toolOutput as any).query || '',
+                  }));
+                  allImages.push(...imageResults);
+                }
+              }
+            }
           }
+          
+          // Send sources if any were found
+          if (allSources.length > 0) {
+            const sourcesMessage = `data: ${JSON.stringify({ 
+              type: 'sourcesReady', 
+              sources: allSources 
+            })}\n\n`;
+            controller.enqueue(encoder.encode(sourcesMessage));
+          }
+          
+          // Send images if any were found
+          if (allImages.length > 0) {
+            const imagesMessage = `data: ${JSON.stringify({ 
+              type: 'imagesReady', 
+              images: allImages 
+            })}\n\n`;
+            controller.enqueue(encoder.encode(imagesMessage));
+          }
+          
           // Send completion marker
           controller.enqueue(encoder.encode('data: [DONE]\n\n'));
           controller.close();
@@ -194,9 +251,9 @@ async function buildToolsForMode(mode: string, config: any) {
       description: 'Search the web using Brave and return top results',
       parameters: z.object({
         query: z.string().describe('The search query'),
-        count: z.number().int().min(1).max(10).default(mode === 'aipedia' ? 6 : 5),
+        count: z.number().int().min(1).max(10).default(mode === 'aipedia' ? 6 : 5).optional(),
       }),
-      execute: async ({ query, count }) => {
+      execute: async ({ query, count = mode === 'aipedia' ? 6 : 5 }) => {
         const url = new URL('https://api.search.brave.com/res/v1/web/search');
         url.searchParams.set('q', query);
         url.searchParams.set('count', String(count));
@@ -229,9 +286,9 @@ async function buildToolsForMode(mode: string, config: any) {
       description: 'Find relevant images using Brave image search',
       parameters: z.object({
         query: z.string().describe('Image search query'),
-        count: z.number().int().min(1).max(10).default(4),
+        count: z.number().int().min(1).max(10).default(4).optional(),
       }),
-      execute: async ({ query, count }) => {
+      execute: async ({ query, count = 4 }) => {
         const url = new URL('https://api.search.brave.com/res/v1/images/search');
         url.searchParams.set('q', query);
         url.searchParams.set('count', String(count));
