@@ -57,7 +57,7 @@ export default async function handler(req: Request) {
 
     // Extract parameters - backend determines defaults
     const mode = (body?.mode as string) || 'chat';
-    const model = (body?.model as string) || 'google/gemini-2.5-flash-lite';
+    const model = (body?.model as string) || 'openai/gpt-4o-mini';
     const temperature = typeof body?.temperature === 'number' ? body.temperature : 0.7;
     const maxTokens = typeof body?.maxTokens === 'number' ? body.maxTokens : undefined;
     const providedMessages = Array.isArray(body?.messages) ? body.messages : [];
@@ -87,6 +87,18 @@ export default async function handler(req: Request) {
 
     // Build tools based on mode capabilities
     const tools = await buildToolsForMode(mode, modeConfig);
+
+    // Debug logging
+    console.log('=== DEBUG INFO ===');
+    console.log('Mode:', mode);
+    console.log('Model:', model);
+    console.log('Mode config:', JSON.stringify(modeConfig, null, 2));
+    console.log('Tools available:', tools ? Object.keys(tools) : 'none');
+    if (tools) {
+      console.log('Tool details:', JSON.stringify(tools, null, 2));
+    }
+    console.log('Messages:', JSON.stringify(messages, null, 2));
+    console.log('==================');
 
     // Use AI SDK streaming helpers
     const result = streamText({
@@ -247,16 +259,17 @@ async function buildToolsForMode(mode: string, config: any) {
       throw new Error('BRAVE_API_KEY required for search mode');
     }
 
+    const resultCount = mode === 'aipedia' ? 6 : 5;
+
     toolSet.braveWebSearch = tool({
       description: 'Search the web using Brave and return top results',
       parameters: z.object({
         query: z.string().describe('The search query'),
-        count: z.number().int().min(1).max(10).default(mode === 'aipedia' ? 6 : 5).optional(),
       }),
-      execute: async ({ query, count = mode === 'aipedia' ? 6 : 5 }) => {
+      execute: async ({ query }) => {
         const url = new URL('https://api.search.brave.com/res/v1/web/search');
         url.searchParams.set('q', query);
-        url.searchParams.set('count', String(count));
+        url.searchParams.set('count', String(resultCount));
         url.searchParams.set('safesearch', 'strict');
 
         const res = await fetch(url.toString(), {
@@ -266,7 +279,7 @@ async function buildToolsForMode(mode: string, config: any) {
           },
         });
         if (!res.ok) throw new Error(`Brave web search failed: ${res.status}`);
-        const json = await res.json();
+        const json: any = await res.json();
         const results = (json?.web?.results ?? []).map((r: any) => ({
           title: r?.title ?? r?.url ?? 'Untitled',
           url: r?.url ?? '',
@@ -286,12 +299,12 @@ async function buildToolsForMode(mode: string, config: any) {
       description: 'Find relevant images using Brave image search',
       parameters: z.object({
         query: z.string().describe('Image search query'),
-        count: z.number().int().min(1).max(10).default(4).optional(),
       }),
-      execute: async ({ query, count = 4 }) => {
+      execute: async ({ query }) => {
+        const imageCount = 4;
         const url = new URL('https://api.search.brave.com/res/v1/images/search');
         url.searchParams.set('q', query);
-        url.searchParams.set('count', String(count));
+        url.searchParams.set('count', String(imageCount));
         url.searchParams.set('safesearch', 'strict');
         const res = await fetch(url.toString(), {
           headers: {
@@ -300,7 +313,7 @@ async function buildToolsForMode(mode: string, config: any) {
           },
         });
         if (!res.ok) throw new Error(`Brave image search failed: ${res.status}`);
-        const json = await res.json();
+        const json: any = await res.json();
         const imgs = (json?.results ?? json?.images ?? json?.items ?? []) as any[];
         const images = imgs.map((it) => ({
           title: it?.title ?? it?.source ?? 'Image',

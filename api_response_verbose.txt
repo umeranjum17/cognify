@@ -1,0 +1,36 @@
+Note: Unnecessary use of -X or --request, POST is already inferred.
+* Host localhost:3000 was resolved.
+* IPv6: ::1
+* IPv4: 127.0.0.1
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0*   Trying [::1]:3000...
+* Connected to localhost (::1) port 3000
+> POST /api/chat HTTP/1.1
+> Host: localhost:3000
+> User-Agent: curl/8.7.1
+> Accept: */*
+> Content-Type: application/json
+> Content-Length: 155
+> 
+} [155 bytes data]
+* upload completely sent off: 155 bytes
+100   155    0     0  100   155      0    128  0:00:01  0:00:01 --:--:--   128< HTTP/1.1 200 OK
+< access-control-allow-credentials: true
+< access-control-allow-origin: *
+< access-control-allow-methods: POST, OPTIONS
+< access-control-allow-headers: Content-Type, Authorization
+< cache-control: no-cache
+< server: Vercel
+< x-vercel-id: dev1::dev1::p2j6c-1759677290352-727e028760c3
+< x-vercel-cache: MISS
+< connection: keep-alive
+< content-type: text/event-stream
+< date: Sun, 05 Oct 2025 15:14:51 GMT
+< transfer-encoding: chunked
+< 
+{ [24 bytes data]
+data: [DONE]
+
+100   169    0    14  100   155     10    114  0:00:01  0:00:01 --:--:--   125
+* Connection #0 to host localhost left intact

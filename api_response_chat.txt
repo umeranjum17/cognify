@@ -1,0 +1,94 @@
+Note: Unnecessary use of -X or --request, POST is already inferred.
+* Host localhost:3000 was resolved.
+* IPv6: ::1
+* IPv4: 127.0.0.1
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0*   Trying [::1]:3000...
+* Connected to localhost (::1) port 3000
+> POST /api/chat HTTP/1.1
+> Host: localhost:3000
+> User-Agent: curl/8.7.1
+> Accept: */*
+> Content-Type: application/json
+> Content-Length: 129
+> 
+} [129 bytes data]
+* upload completely sent off: 129 bytes
+100   129    0     0  100   129      0    624 --:--:-- --:--:-- --:--:--   623100   129    0     0  100   129      0    106  0:00:01  0:00:01 --:--:--   106< HTTP/1.1 200 OK
+< access-control-allow-credentials: true
+< access-control-allow-origin: *
+< access-control-allow-methods: POST, OPTIONS
+< access-control-allow-headers: Content-Type, Authorization
+< cache-control: no-cache
+< server: Vercel
+< x-vercel-id: dev1::dev1::p2j6c-1759677307866-53c4cd3113a4
+< x-vercel-cache: MISS
+< connection: keep-alive
+< content-type: text/event-stream
+< date: Sun, 05 Oct 2025 15:15:08 GMT
+< transfer-encoding: chunked
+< 
+{ [62 bytes data]
+data: {"content":"Hello"}
+
+data: {"content":"!"}
+
+data: {"content":" I'm"}
+
+data: {"content":" just"}
+
+data: {"content":" a"}
+
+data: {"content":" program"}
+
+data: {"content":","}
+
+data: {"content":" so"}
+
+data: {"content":" I"}
+
+data: {"content":" don't"}
+
+data: {"content":" have"}
+
+data: {"content":" feelings"}
+
+data: {"content":","}
+
+data: {"content":" but"}
+
+data: {"content":" I'm"}
+
+data: {"content":" here"}
+
+data: {"content":" and"}
+
+data: {"content":" ready"}
+
+data: {"content":" to"}
+
+data: {"content":" help"}
+
+data: {"content":" you"}
+
+data: {"content":"."}
+
+data: {"content":" How"}
+
+data: {"content":" can"}
+
+data: {"content":" I"}
+
+data: {"content":" assist"}
+
+data: {"content":" you"}
+
+data: {"content":" today"}
+
+100   860    0   731  100   129    352     62  0:00:02  0:00:02 --:--:--   414data: {"content":"?"}
+
+data: [DONE]
+
+100   897    0   768  100   129    356     59  0:00:02  0:00:02 --:--:--   416
+* Connection #0 to host localhost left intact

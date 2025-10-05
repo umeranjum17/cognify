@@ -15,7 +15,8 @@
     "@vercel/edge": "^1.1.1",
     "ai": "^5.0.60",
     "firebase-admin": "^12.7.0",
-    "zod": "^3.23.8"
+    "zod": "^3.25.76",
+    "zod-to-json-schema": "^3.24.6"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
