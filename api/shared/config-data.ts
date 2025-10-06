@@ -77,8 +77,7 @@ export const MODE_CONFIGS = {
     color: '#9B59B6',
     defaultModel: 'google/gemini-2.5-flash-lite',
     availableModels: [
-      'google/gemini-2.5-flash-lite',
-      'google/gemini-flash-1.5',
+      'google/gemini-2.5-flash-lite'
     ],
     capabilities: ['text', 'web-search', 'image-search'],
     temperature: 0.5,

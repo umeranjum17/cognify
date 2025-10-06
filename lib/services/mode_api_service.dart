@@ -269,14 +269,27 @@ class ModeApiService {
       print('✅ [STREAM] Stream connection established');
       final responseBody = resp.data as ResponseBody;
       int chunkCount = 0;
+      String buffer = '';
       
       await for (final chunk in responseBody.stream) {
         chunkCount++;
         final text = utf8.decode(chunk);
         print('📨 [STREAM] Chunk #$chunkCount received (${text.length} bytes)');
         
-        final lines = text.split('\n');
-        for (final line in lines) {
+        // Accumulate into buffer to handle partial lines across chunks
+        buffer += text;
+        int newlineIndex;
+        while ((newlineIndex = buffer.indexOf('\n')) != -1) {
+          var line = buffer.substring(0, newlineIndex);
+          buffer = buffer.substring(newlineIndex + 1);
+
+          // Normalize CRLF
+          if (line.endsWith('\r')) line = line.substring(0, line.length - 1);
+
+          if (line.isEmpty) {
+            continue; // skip keep-alives / empty lines
+          }
+
           if (line.startsWith('data: ')) {
             final data = line.substring(6).trim();
             if (data == '[DONE]') {
@@ -289,7 +302,6 @@ class ModeApiService {
               final jsonString = jsonEncode(jsonData);
               final preview = jsonString.length > 100 ? jsonString.substring(0, 100) + '...' : jsonString;
               print('📦 [STREAM] Yielding chunk data: $preview');
-              // Yield the parsed data directly (with type field if content is present)
               if (jsonData.containsKey('content')) {
                 yield {
                   'type': 'content',
@@ -297,18 +309,20 @@ class ModeApiService {
                   'streaming': true,
                 };
               } else {
-                // For other structured events, yield as-is
                 yield { ...jsonData, 'streaming': true };
               }
             } catch (e) {
+              // If JSON parse fails, it may be because this was still partial (shouldn't happen with newline-boundary), log and continue
               print('⚠️  [STREAM] Failed to parse JSON from line: $line (error: $e)');
-              // ignore non-JSON lines
             }
-          } else if (line.trim().isNotEmpty) {
-            print('⚠️  [STREAM] Non-data line received: ${line.substring(0, line.length > 50 ? 50 : line.length)}');
+          } else {
+            // Ignore other SSE fields; log short preview for debugging
+            final preview = line.length > 50 ? line.substring(0, 50) : line;
+            print('⚠️  [STREAM] Non-data line received: $preview');
           }
         }
       }
+      // On stream end, ignore any trailing partial buffer (no terminating newline)
       
       print('✅ [STREAM] Stream ended naturally (no [DONE] marker)');
     } catch (e, stackTrace) {

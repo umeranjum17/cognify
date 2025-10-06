@@ -1,0 +1,1116 @@
+data: {"type":"sourcesReady","sources":[{"id":"search-1759767159759-0","title":"Eiffel Tower history, architecture, design & construction","url":"https://www.toureiffel.paris/en/the-monument/history","description":"It was at the 1889 Exposition Universelle, the date that marked the 100th anniversary of the French Revolution, that a great competition was launched in the Journal Officiel. The first digging ...","type":"web","query":"Eiffel Tower overview history facts"},{"id":"search-1759767159759-1","title":"Eiffel Tower | History, Height, & Facts | Britannica","url":"https://www.britannica.com/topic/Eiffel-Tower-Paris-France","description":"Eiffel Tower, wrought-iron structure in Paris that is one of the most famous landmarks in the world. It is also a technological masterpiece in building-construction history. <strong>It was designed and built (1887–89) by Gustave Eiffel and named in his honor</strong>.","type":"web","query":"Eiffel Tower overview history facts"},{"id":"search-1759767159759-2","title":"Eiffel Tower - Wikipedia","url":"https://en.wikipedia.org/wiki/Eiffel_Tower","description":"No drilling or shaping was done ... to the factory for alteration. In all, 18,038 pieces were joined using 2.5 million rivets. At first, the legs were constructed as cantilevers, but about halfway to the first level construction was paused to create a substantial timber scaffold. This renewed concerns about the structural integrity of the <strong>tower</strong>, and sensational headlines such as &quot;<strong>Eiffel</strong> Suicide!&quot; ...","type":"web","query":"Eiffel Tower overview history facts"},{"id":"search-1759767159759-3","title":"Eiffel Tower information : facts, height in feet, weight, ...","url":"https://www.toureiffel.paris/en/the-monument/key-figures","description":"<strong>On the 31st March 1889, the Tower had been finished in record time – 2 years, 2 months and 5 days – and was established as a veritable technical feat</strong>. The tenth Exposition Universelle was organised in Paris in 1889, from the 15th May to the 6th November, and it was for this occasion that ...","type":"web","query":"Eiffel Tower overview history facts"},{"id":"search-1759767159759-4","title":"16 Eiffel Tower Facts: History, Science, and Secrets","url":"https://www.travelandleisure.com/attractions/landmarks-monuments/eiffel-tower-facts","description":"Discover 16 <strong>facts</strong> about the most famous landmark in Paris. From the role it played in World War I to its iconic paint job, we unlock the secrets of the <strong>Eiffel</strong> <strong>Tower</strong>.","type":"web","query":"Eiffel Tower overview history facts"},{"id":"search-1759767159759-5","title":"The Eiffel Tower: all there is to know - Official website","url":"https://www.toureiffel.paris/en/the-monument","description":"<strong>From the beginning the Tower was an attraction, but in the 1920s it became a symbol of modernity and the avant-garde</strong>. Little by little, its image was associated with Paris, until it even became its worldwide symbol. Poets, painters, singers, choreographers, film dire...","type":"web","query":"Eiffel Tower overview history facts"}]}
+
+data: {"type":"imagesReady","images":[{"id":"image-1759767162577-0","title":"eiffel tower in paris disappearing in the fog . french culture . - eiffel tower stock pictures, royalty-free photos & images","url":"https://media.gettyimages.com/id/1153683330/photo/eiffel-tower-in-paris-disappearing-in-the-fog-french-culture.jpg?s=612x612&w=0&k=20&c=S8tmbouN9okPd4XSHExN1CKLBU43BjqqBUXDzM10gQw=","source":"gettyimages.com","type":"image"},{"id":"image-1759767162577-1","title":"Tony Gravé - eiffel tower silhouette","url":"https://www.thephotoargus.com/wp-content/uploads/2019/04/eiffeltower05.jpg","source":"thephotoargus.com","type":"image"},{"id":"image-1759767162577-2","title":"eiffel tower france","url":"https://burst.shopifycdn.com/photos/eifel-tower-france.jpg?width=1000&format=pjpg&exif=0&iptc=0","source":"shopify.com","type":"image"},{"id":"image-1759767162577-3","title":"Eiffel Tower Vintage Eiffel Tower landscape. BW, sepia toned photo eiffel tower close up stock pictures, royalty-free photos & images","url":"https://media.istockphoto.com/id/533900220/photo/eiffel-tower-vintage.jpg?s=612x612&w=0&k=20&c=dSEXoAuhk3el-MEmDSPcQdLVxSRDCZI2i41WDuFAVlU=","source":"istockphoto.com","type":"image"}]}
+
+data: {"type":"content","content":"###"}
+
+data: {"type":"content","content":" Summary"}
+
+data: {"type":"content","content":"\n"}
+
+data: {"type":"content","content":"The"}
+
+data: {"type":"content","content":" Eiffel"}
+
+data: {"type":"content","content":" Tower"}
+
+data: {"type":"content","content":","}
+
+data: {"type":"content","content":" a"}
+
+data: {"type":"content","content":" global"}
+
+data: {"type":"content","content":" cultural"}
+
+data: {"type":"content","content":" icon"}
+
+data: {"type":"content","content":" located"}
+
+data: {"type":"content","content":" in"}
+
+data: {"type":"content","content":" Paris"}
+
+data: {"type":"content","content":","}
+
+data: {"type":"content","content":" was"}
+
+data: {"type":"content","content":" constructed"}
+
+data: {"type":"content","content":" for"}
+
+data: {"type":"content","content":" the"}
+
+data: {"type":"content","content":" "}
+
+data: {"type":"content","content":"188"}
+
+data: {"type":"content","content":"9"}
+
+data: {"type":"content","content":" Ex"}
+
+data: {"type":"content","content":"position"}
+
+data: {"type":"content","content":" Univers"}
+
+data: {"type":"content","content":"elle"}
+
+data: {"type":"content","content":" to"}
+
+data: {"type":"content","content":" celebrate"}
+
+data: {"type":"content","content":" the"}
+
+data: {"type":"content","content":" "}
+
+data: {"type":"content","content":"100"}
+
+data: {"type":"content","content":"th"}
+
+data: {"type":"content","content":" anniversary"}
+
+data: {"type":"content","content":" of"}
+
+data: {"type":"content","content":" the"}
+
+data: {"type":"content","content":" French"}
+
+data: {"type":"content","content":" Revolution"}
+
+data: {"type":"content","content":"."}
+
+data: {"type":"content","content":" Designed"}
+
+data: {"type":"content","content":" by"}
+
+data: {"type":"content","content":" engineer"}
+
+data: {"type":"content","content":" Gust"}
+
+data: {"type":"content","content":"ave"}
+
+data: {"type":"content","content":" Eiffel"}
+
+data: {"type":"content","content":","}
+
+data: {"type":"content","content":" the"}
+
+data: {"type":"content","content":" tower"}
+
+data: {"type":"content","content":" stands"}
+
+data: {"type":"content","content":" at"}
+
+data: {"type":"content","content":" "}
+
+data: {"type":"content","content":"1"}
+
+data: {"type":"content","content":","}
+
+data: {"type":"content","content":"083"}
+
+data: {"type":"content","content":" feet"}
+
+data: {"type":"content","content":" and"}
+
+data: {"type":"content","content":" was"}
+
+data: {"type":"content","content":" the"}
+
+data: {"type":"content","content":" tallest"}
+
+data: {"type":"content","content":" man"}
+
+data: {"type":"content","content":"-made"}
+
+data: {"type":"content","content":" structure"}
+
+data: {"type":"content","content":" in"}
+
+data: {"type":"content","content":" the"}
+
+data: {"type":"content","content":" world"}
+
+data: {"type":"content","content":" until"}
+
+data: {"type":"content","content":" the"}
+
+data: {"type":"content","content":" completion"}
+
+data: {"type":"content","content":" of"}
+
+data: {"type":"content","content":" the"}
+
+data: {"type":"content","content":" Chrysler"}
+
+data: {"type":"content","content":" Building"}
+
+data: {"type":"content","content":" in"}
+
+data: {"type":"content","content":" "}
+
+data: {"type":"content","content":"193"}
+
+data: {"type":"content","content":"0"}
+
+data: {"type":"content","content":"."}
+
+data: {"type":"content","content":" Its"}
+
+data: {"type":"content","content":" unique"}
+
+data: {"type":"content","content":" iron"}
+
+data: {"type":"content","content":" lattice"}
+
+data: {"type":"content","content":" structure"}
+
+data: {"type":"content","content":" has"}
+
+data: {"type":"content","content":" become"}
+
+data: {"type":"content","content":" a"}
+
+data: {"type":"content","content":" symbol"}
+
+data: {"type":"content","content":" of"}
+
+data: {"type":"content","content":" French"}
+
+data: {"type":"content","content":" ingenuity"}
+
+data: {"type":"content","content":" and"}
+
+data: {"type":"content","content":" artistry"}
+
+data: {"type":"content","content":".\n\n"}
+
+data: {"type":"content","content":"###"}
+
+data: {"type":"content","content":" Key"}
+
+data: {"type":"content","content":" Facts"}
+
+data: {"type":"content","content":"\n"}
+
+data: {"type":"content","content":"-"}
+
+data: {"type":"content","content":" **"}
+
+data: {"type":"content","content":"Location"}
+
+data: {"type":"content","content":"**"}
+
+data: {"type":"content","content":":"}
+
+data: {"type":"content","content":" Paris"}
+
+data: {"type":"content","content":","}
+
+data: {"type":"content","content":" France"}
+
+data: {"type":"content","content":"\n"}
+
+data: {"type":"content","content":"-"}
+
+data: {"type":"content","content":" **"}
+
+data: {"type":"content","content":"Height"}
+
+data: {"type":"content","content":"**"}
+
+data: {"type":"content","content":":"}
+
+data: {"type":"content","content":" "}
+
+data: {"type":"content","content":"1"}
+
+data: {"type":"content","content":","}
+
+data: {"type":"content","content":"083"}
+
+data: {"type":"content","content":" feet"}
+
+data: {"type":"content","content":" ("}
+
+data: {"type":"content","content":"330"}
+
+data: {"type":"content","content":" meters"}
+
+data: {"type":"content","content":")\n"}
+
+data: {"type":"content","content":"-"}
+
+data: {"type":"content","content":" **"}
+
+data: {"type":"content","content":"Construction"}
+
+data: {"type":"content","content":" Start"}
+
+data: {"type":"content","content":"**"}
+
+data: {"type":"content","content":":"}
+
+data: {"type":"content","content":" January"}
+
+data: {"type":"content","content":" "}
+
+data: {"type":"content","content":"26"}
+
+data: {"type":"content","content":","}
+
+data: {"type":"content","content":" "}
+
+data: {"type":"content","content":"188"}
+
+data: {"type":"content","content":"7"}
+
+data: {"type":"content","content":"\n"}
+
+data: {"type":"content","content":"-"}
+
+data: {"type":"content","content":" **"}
+
+data: {"type":"content","content":"In"}
+
+data: {"type":"content","content":"aug"}
+
+data: {"type":"content","content":"uration"}
+
+data: {"type":"content","content":"**"}
+
+data: {"type":"content","content":":"}
+
+data: {"type":"content","content":" March"}
+
+data: {"type":"content","content":" "}
+
+data: {"type":"content","content":"31"}
+
+data: {"type":"content","content":","}
+
+data: {"type":"content","content":" "}
+
+data: {"type":"content","content":"188"}
+
+data: {"type":"content","content":"9"}
+
+data: {"type":"content","content":"\n"}
+
+data: {"type":"content","content":"-"}
+
+data: {"type":"content","content":" **"}
+
+data: {"type":"content","content":"Design"}
+
+data: {"type":"content","content":"**"}
+
+data: {"type":"content","content":":"}
+
+data: {"type":"content","content":" Created"}
+
+data: {"type":"content","content":" by"}
+
+data: {"type":"content","content":" Gust"}
+
+data: {"type":"content","content":"ave"}
+
+data: {"type":"content","content":" Eiffel"}
+
+data: {"type":"content","content":" and"}
+
+data: {"type":"content","content":" his"}
+
+data: {"type":"content","content":" engineering"}
+
+data: {"type":"content","content":" company"}
+
+data: {"type":"content","content":"\n"}
+
+data: {"type":"content","content":"-"}
+
+data: {"type":"content","content":" **"}
+
+data: {"type":"content","content":"Material"}
+
+data: {"type":"content","content":"**"}
+
+data: {"type":"content","content":":"}
+
+data: {"type":"content","content":" W"}
+
+data: {"type":"content","content":"rought"}
+
+data: {"type":"content","content":" iron"}
+
+data: {"type":"content","content":"\n"}
+
+data: {"type":"content","content":"-"}
+
+data: {"type":"content","content":" **"}
+
+data: {"type":"content","content":"Visitors"}
+
+data: {"type":"content","content":"**"}
+
+data: {"type":"content","content":":"}
+
+data: {"type":"content","content":" Approximately"}
+
+data: {"type":"content","content":" "}
+
+data: {"type":"content","content":"7"}
+
+data: {"type":"content","content":" million"}
+
+data: {"type":"content","content":" annually"}
+
+data: {"type":"content","content":","}
+
+data: {"type":"content","content":" making"}
+
+data: {"type":"content","content":" it"}
+
+data: {"type":"content","content":" one"}
+
+data: {"type":"content","content":" of"}
+
+data: {"type":"content","content":" the"}
+
+data: {"type":"content","content":" most"}
+
+data: {"type":"content","content":" visited"}
+
+data: {"type":"content","content":" paid"}
+
+data: {"type":"content","content":" monuments"}
+
+data: {"type":"content","content":" in"}
+
+data: {"type":"content","content":" the"}
+
+data: {"type":"content","content":" world"}
+
+data: {"type":"content","content":"\n\n"}
+
+data: {"type":"content","content":"###"}
+
+data: {"type":"content","content":" Main"}
+
+data: {"type":"content","content":" Sections"}
+
+data: {"type":"content","content":"\n\n"}
+
+data: {"type":"content","content":"####"}
+
+data: {"type":"content","content":" History"}
+
+data: {"type":"content","content":"\n"}
+
+data: {"type":"content","content":"The"}
+
+data: {"type":"content","content":" Eiffel"}
+
+data: {"type":"content","content":" Tower"}
+
+data: {"type":"content","content":" was"}
+
+data: {"type":"content","content":" conceived"}
+
+data: {"type":"content","content":" as"}
+
+data: {"type":"content","content":" part"}
+
+data: {"type":"content","content":" of"}
+
+data: {"type":"content","content":" a"}
+
+data: {"type":"content","content":" competition"}
+
+data: {"type":"content","content":" for"}
+
+data: {"type":"content","content":" the"}
+
+data: {"type":"content","content":" "}
+
+data: {"type":"content","content":"188"}
+
+data: {"type":"content","content":"9"}
+
+data: {"type":"content","content":" Ex"}
+
+data: {"type":"content","content":"position"}
+
+data: {"type":"content","content":" Univers"}
+
+data: {"type":"content","content":"elle"}
+
+data: {"type":"content","content":"."}
+
+data: {"type":"content","content":" Construction"}
+
+data: {"type":"content","content":" began"}
+
+data: {"type":"content","content":" in"}
+
+data: {"type":"content","content":" "}
+
+data: {"type":"content","content":"188"}
+
+data: {"type":"content","content":"7"}
+
+data: {"type":"content","content":" and"}
+
+data: {"type":"content","content":" took"}
+
+data: {"type":"content","content":" just"}
+
+data: {"type":"content","content":" over"}
+
+data: {"type":"content","content":" two"}
+
+data: {"type":"content","content":" years"}
+
+data: {"type":"content","content":" to"}
+
+data: {"type":"content","content":" complete"}
+
+data: {"type":"content","content":","}
+
+data: {"type":"content","content":" culminating"}
+
+data: {"type":"content","content":" in"}
+
+data: {"type":"content","content":" its"}
+
+data: {"type":"content","content":" inauguration"}
+
+data: {"type":"content","content":" in"}
+
+data: {"type":"content","content":" March"}
+
+data: {"type":"content","content":" "}
+
+data: {"type":"content","content":"188"}
+
+data: {"type":"content","content":"9"}
+
+data: {"type":"content","content":"."}
+
+data: {"type":"content","content":" Initially"}
+
+data: {"type":"content","content":" met"}
+
+data: {"type":"content","content":" with"}
+
+data: {"type":"content","content":" criticism"}
+
+data: {"type":"content","content":","}
+
+data: {"type":"content","content":" it"}
+
+data: {"type":"content","content":" has"}
+
+data: {"type":"content","content":" since"}
+
+data: {"type":"content","content":" become"}
+
+data: {"type":"content","content":" a"}
+
+data: {"type":"content","content":" beloved"}
+
+data: {"type":"content","content":" landmark"}
+
+data: {"type":"content","content":".\n\n"}
+
+data: {"type":"content","content":"####"}
+
+data: {"type":"content","content":" Design"}
+
+data: {"type":"content","content":" and"}
+
+data: {"type":"content","content":" Structure"}
+
+data: {"type":"content","content":"\n"}
+
+data: {"type":"content","content":"The"}
+
+data: {"type":"content","content":" tower"}
+
+data: {"type":"content","content":"'s"}
+
+data: {"type":"content","content":" design"}
+
+data: {"type":"content","content":" features"}
+
+data: {"type":"content","content":" a"}
+
+data: {"type":"content","content":" unique"}
+
+data: {"type":"content","content":" iron"}
+
+data: {"type":"content","content":" lattice"}
+
+data: {"type":"content","content":" structure"}
+
+data: {"type":"content","content":" that"}
+
+data: {"type":"content","content":" allows"}
+
+data: {"type":"content","content":" it"}
+
+data: {"type":"content","content":" to"}
+
+data: {"type":"content","content":" withstand"}
+
+data: {"type":"content","content":" wind"}
+
+data: {"type":"content","content":" and"}
+
+data: {"type":"content","content":" weather"}
+
+data: {"type":"content","content":"."}
+
+data: {"type":"content","content":" It"}
+
+data: {"type":"content","content":" includes"}
+
+data: {"type":"content","content":" three"}
+
+data: {"type":"content","content":" observation"}
+
+data: {"type":"content","content":" decks"}
+
+data: {"type":"content","content":","}
+
+data: {"type":"content","content":" providing"}
+
+data: {"type":"content","content":" panoramic"}
+
+data: {"type":"content","content":" views"}
+
+data: {"type":"content","content":" of"}
+
+data: {"type":"content","content":" Paris"}
+
+data: {"type":"content","content":"."}
+
+data: {"type":"content","content":" The"}
+
+data: {"type":"content","content":" original"}
+
+data: {"type":"content","content":" height"}
+
+data: {"type":"content","content":" was"}
+
+data: {"type":"content","content":" "}
+
+data: {"type":"content","content":"1"}
+
+data: {"type":"content","content":","}
+
+data: {"type":"content","content":"024"}
+
+data: {"type":"content","content":" feet"}
+
+data: {"type":"content","content":","}
+
+data: {"type":"content","content":" but"}
+
+data: {"type":"content","content":" it"}
+
+data: {"type":"content","content":" later"}
+
+data: {"type":"content","content":" increased"}
+
+data: {"type":"content","content":" to"}
+
+data: {"type":"content","content":" "}
+
+data: {"type":"content","content":"1"}
+
+data: {"type":"content","content":","}
+
+data: {"type":"content","content":"083"}
+
+data: {"type":"content","content":" feet"}
+
+data: {"type":"content","content":" due"}
+
+data: {"type":"content","content":" to"}
+
+data: {"type":"content","content":" the"}
+
+data: {"type":"content","content":" addition"}
+
+data: {"type":"content","content":" of"}
+
+data: {"type":"content","content":" antennas"}
+
+data: {"type":"content","content":".\n\n"}
+
+data: {"type":"content","content":"####"}
+
+data: {"type":"content","content":" Cultural"}
+
+data: {"type":"content","content":" Sign"}
+
+data: {"type":"content","content":"ificance"}
+
+data: {"type":"content","content":"\n"}
+
+data: {"type":"content","content":"The"}
+
+data: {"type":"content","content":" Eiffel"}
+
+data: {"type":"content","content":" Tower"}
+
+data: {"type":"content","content":" is"}
+
+data: {"type":"content","content":" not"}
+
+data: {"type":"content","content":" only"}
+
+data: {"type":"content","content":" an"}
+
+data: {"type":"content","content":" architectural"}
+
+data: {"type":"content","content":" marvel"}
+
+data: {"type":"content","content":" but"}
+
+data: {"type":"content","content":" also"}
+
+data: {"type":"content","content":" a"}
+
+data: {"type":"content","content":" symbol"}
+
+data: {"type":"content","content":" of"}
+
+data: {"type":"content","content":" Paris"}
+
+data: {"type":"content","content":" and"}
+
+data: {"type":"content","content":" France"}
+
+data: {"type":"content","content":"."}
+
+data: {"type":"content","content":" It"}
+
+data: {"type":"content","content":" has"}
+
+data: {"type":"content","content":" appeared"}
+
+data: {"type":"content","content":" in"}
+
+data: {"type":"content","content":" numerous"}
+
+data: {"type":"content","content":" films"}
+
+data: {"type":"content","content":","}
+
+data: {"type":"content","content":" artworks"}
+
+data: {"type":"content","content":","}
+
+data: {"type":"content","content":" and"}
+
+data: {"type":"content","content":" literature"}
+
+data: {"type":"content","content":","}
+
+data: {"type":"content","content":" reinforcing"}
+
+data: {"type":"content","content":" its"}
+
+data: {"type":"content","content":" status"}
+
+data: {"type":"content","content":" as"}
+
+data: {"type":"content","content":" a"}
+
+data: {"type":"content","content":" universal"}
+
+data: {"type":"content","content":" symbol"}
+
+data: {"type":"content","content":" of"}
+
+data: {"type":"content","content":" romance"}
+
+data: {"type":"content","content":" and"}
+
+data: {"type":"content","content":" beauty"}
+
+data: {"type":"content","content":".\n\n"}
+
+data: {"type":"content","content":"###"}
+
+data: {"type":"content","content":" References"}
+
+data: {"type":"content","content":"\n"}
+
+data: {"type":"content","content":"-"}
+
+data: {"type":"content","content":" Eiffel"}
+
+data: {"type":"content","content":" Tower"}
+
+data: {"type":"content","content":" history"}
+
+data: {"type":"content","content":","}
+
+data: {"type":"content","content":" architecture"}
+
+data: {"type":"content","content":","}
+
+data: {"type":"content","content":" design"}
+
+data: {"type":"content","content":" &"}
+
+data: {"type":"content","content":" construction"}
+
+data: {"type":"content","content":"."}
+
+data: {"type":"content","content":" ["}
+
+data: {"type":"content","content":"URL"}
+
+data: {"type":"content","content":"]("}
+
+data: {"type":"content","content":"https"}
+
+data: {"type":"content","content":"://"}
+
+data: {"type":"content","content":"www"}
+
+data: {"type":"content","content":".t"}
+
+data: {"type":"content","content":"oure"}
+
+data: {"type":"content","content":"iffel"}
+
+data: {"type":"content","content":".par"}
+
+data: {"type":"content","content":"is"}
+
+data: {"type":"content","content":"/en"}
+
+data: {"type":"content","content":"/the"}
+
+data: {"type":"content","content":"-mon"}
+
+data: {"type":"content","content":"ument"}
+
+data: {"type":"content","content":"/history"}
+
+data: {"type":"content","content":")\n"}
+
+data: {"type":"content","content":"-"}
+
+data: {"type":"content","content":" Eiffel"}
+
+data: {"type":"content","content":" Tower"}
+
+data: {"type":"content","content":" |"}
+
+data: {"type":"content","content":" History"}
+
+data: {"type":"content","content":","}
+
+data: {"type":"content","content":" Height"}
+
+data: {"type":"content","content":","}
+
+data: {"type":"content","content":" &"}
+
+data: {"type":"content","content":" Facts"}
+
+data: {"type":"content","content":"."}
+
+data: {"type":"content","content":" ["}
+
+data: {"type":"content","content":"URL"}
+
+data: {"type":"content","content":"]("}
+
+data: {"type":"content","content":"https"}
+
+data: {"type":"content","content":"://"}
+
+data: {"type":"content","content":"www"}
+
+data: {"type":"content","content":".b"}
+
+data: {"type":"content","content":"rit"}
+
+data: {"type":"content","content":"ann"}
+
+data: {"type":"content","content":"ica"}
+
+data: {"type":"content","content":".com"}
+
+data: {"type":"content","content":"/topic"}
+
+data: {"type":"content","content":"/E"}
+
+data: {"type":"content","content":"iffel"}
+
+data: {"type":"content","content":"-T"}
+
+data: {"type":"content","content":"ower"}
+
+data: {"type":"content","content":"-"}
+
+data: {"type":"content","content":"Paris"}
+
+data: {"type":"content","content":"-France"}
+
+data: {"type":"content","content":")\n"}
+
+data: {"type":"content","content":"-"}
+
+data: {"type":"content","content":" Eiffel"}
+
+data: {"type":"content","content":" Tower"}
+
+data: {"type":"content","content":" -"}
+
+data: {"type":"content","content":" Wikipedia"}
+
+data: {"type":"content","content":"."}
+
+data: {"type":"content","content":" ["}
+
+data: {"type":"content","content":"URL"}
+
+data: {"type":"content","content":"]("}
+
+data: {"type":"content","content":"https"}
+
+data: {"type":"content","content":"://"}
+
+data: {"type":"content","content":"en"}
+
+data: {"type":"content","content":".wikipedia"}
+
+data: {"type":"content","content":".org"}
+
+data: {"type":"content","content":"/wiki"}
+
+data: {"type":"content","content":"/E"}
+
+data: {"type":"content","content":"iffel"}
+
+data: {"type":"content","content":"_T"}
+
+data: {"type":"content","content":"ower"}
+
+data: {"type":"content","content":")\n"}
+
+data: {"type":"content","content":"-"}
+
+data: {"type":"content","content":" Eiffel"}
+
+data: {"type":"content","content":" Tower"}
+
+data: {"type":"content","content":" information"}
+
+data: {"type":"content","content":":"}
+
+data: {"type":"content","content":" facts"}
+
+data: {"type":"content","content":","}
+
+data: {"type":"content","content":" height"}
+
+data: {"type":"content","content":" in"}
+
+data: {"type":"content","content":" feet"}
+
+data: {"type":"content","content":","}
+
+data: {"type":"content","content":" weight"}
+
+data: {"type":"content","content":","}
+
+data: {"type":"content","content":" ..."}
+
+data: {"type":"content","content":" ["}
+
+data: {"type":"content","content":"URL"}
+
+data: {"type":"content","content":"]("}
+
+data: {"type":"content","content":"https"}
+
+data: {"type":"content","content":"://"}
+
+data: {"type":"content","content":"www"}
+
+data: {"type":"content","content":".t"}
+
+data: {"type":"content","content":"oure"}
+
+data: {"type":"content","content":"iffel"}
+
+data: {"type":"content","content":".par"}
+
+data: {"type":"content","content":"is"}
+
+data: {"type":"content","content":"/en"}
+
+data: {"type":"content","content":"/the"}
+
+data: {"type":"content","content":"-mon"}
+
+data: {"type":"content","content":"ument"}
+
+data: {"type":"content","content":"/key"}
+
+data: {"type":"content","content":"-"}
+
+data: {"type":"content","content":"fig"}
+
+data: {"type":"content","content":"ures"}
+
+data: {"type":"content","content":")\n"}
+
+data: {"type":"content","content":"-"}
+
+data: {"type":"content","content":" "}
+
+data: {"type":"content","content":"16"}
+
+data: {"type":"content","content":" Eiffel"}
+
+data: {"type":"content","content":" Tower"}
+
+data: {"type":"content","content":" Facts"}
+
+data: {"type":"content","content":":"}
+
+data: {"type":"content","content":" History"}
+
+data: {"type":"content","content":","}
+
+data: {"type":"content","content":" Science"}
+
+data: {"type":"content","content":","}
+
+data: {"type":"content","content":" and"}
+
+data: {"type":"content","content":" Secrets"}
+
+data: {"type":"content","content":"."}
+
+data: {"type":"content","content":" ["}
+
+data: {"type":"content","content":"URL"}
+
+data: {"type":"content","content":"]("}
+
+data: {"type":"content","content":"https"}
+
+data: {"type":"content","content":"://"}
+
+data: {"type":"content","content":"www"}
+
+data: {"type":"content","content":".travel"}
+
+data: {"type":"content","content":"andle"}
+
+data: {"type":"content","content":"isure"}
+
+data: {"type":"content","content":".com"}
+
+data: {"type":"content","content":"/"}
+
+data: {"type":"content","content":"at"}
+
+data: {"type":"content","content":"tractions"}
+
+data: {"type":"content","content":"/"}
+
+data: {"type":"content","content":"land"}
+
+data: {"type":"content","content":"marks"}
+
+data: {"type":"content","content":"-mon"}
+
+data: {"type":"content","content":"uments"}
+
+data: {"type":"content","content":"/e"}
+
+data: {"type":"content","content":"iffel"}
+
+data: {"type":"content","content":"-t"}
+
+data: {"type":"content","content":"ower"}
+
+data: {"type":"content","content":"-f"}
+
+data: {"type":"content","content":"acts"}
+
+data: {"type":"content","content":")\n"}
+
+data: {"type":"content","content":"-"}
+
+data: {"type":"content","content":" The"}
+
+data: {"type":"content","content":" Eiffel"}
+
+data: {"type":"content","content":" Tower"}
+
+data: {"type":"content","content":":"}
+
+data: {"type":"content","content":" all"}
+
+data: {"type":"content","content":" there"}
+
+data: {"type":"content","content":" is"}
+
+data: {"type":"content","content":" to"}
+
+data: {"type":"content","content":" know"}
+
+data: {"type":"content","content":" -"}
+
+data: {"type":"content","content":" Official"}
+
+data: {"type":"content","content":" website"}
+
+data: {"type":"content","content":"."}
+
+data: {"type":"content","content":" ["}
+
+data: {"type":"content","content":"URL"}
+
+data: {"type":"content","content":"]("}
+
+data: {"type":"content","content":"https"}
+
+data: {"type":"content","content":"://"}
+
+data: {"type":"content","content":"www"}
+
+data: {"type":"content","content":".t"}
+
+data: {"type":"content","content":"oure"}
+
+data: {"type":"content","content":"iffel"}
+
+data: {"type":"content","content":".par"}
+
+data: {"type":"content","content":"is"}
+
+data: {"type":"content","content":"/en"}
+
+data: {"type":"content","content":"/the"}
+
+data: {"type":"content","content":"-mon"}
+
+data: {"type":"content","content":"ument"}
+
+data: {"type":"content","content":")"}
+
+data: [DONE]
+

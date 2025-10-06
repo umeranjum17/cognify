@@ -1,0 +1,320 @@
+data: {"type":"sourcesReady","sources":[{"id":"search-1759767131419-0","title":"What Is Quantum Computing? | IBM","url":"https://www.ibm.com/think/topics/quantum-computing","description":"<strong>Quantum</strong> <strong>computing</strong> <strong>is</strong> a rapidly-emerging technology that harnesses the laws of <strong>quantum</strong> mechanics to solve problems too complex for classical <strong>computers</strong>.","type":"web","query":"What is quantum computing?"},{"id":"search-1759767131419-1","title":"Quantum computing - Wikipedia","url":"https://en.wikipedia.org/wiki/Quantum_computing","description":"A quantum computer is <strong>a (real or theoretical) computer that uses quantum mechanical phenomena in an essential way</strong>: it exploits superposed and entangled states, and the intrinsically non-deterministic outcomes of quantum measurements, as features of its computation.","type":"web","query":"What is quantum computing?"},{"id":"search-1759767131419-2","title":"What is quantum computing? | McKinsey","url":"https://www.mckinsey.com/featured-insights/mckinsey-explainers/what-is-quantum-computing","description":"<strong>Quantum</strong> <strong>computing</strong> <strong>is</strong> a new approach to calculation that uses principles of fundamental physics to solve extremely complex problems very quickly.","type":"web","query":"What is quantum computing?"},{"id":"search-1759767131419-3","title":"These Quantum Computing Stocks Could Be the Secret Winners of the AI Boom","url":"https://finance.yahoo.com/news/quantum-computing-stocks-could-secret-223000237.html","description":"IonQ has leading technology in the <strong>quantum</strong> <strong>computing</strong> realm. Alphabet is developing <strong>quantum</strong> <strong>computing</strong> chips for its own use.","type":"web","query":"What is quantum computing?"},{"id":"search-1759767131419-4","title":"What is Quantum Computing? - NASA","url":"https://www.nasa.gov/technology/computing/what-is-quantum-computing/","description":"Harnessing the <strong>quantum</strong> realm for NASA’s future complex <strong>computing</strong> needs","type":"web","query":"What is quantum computing?"}]}
+
+data: {"type":"content","content":"Quantum"}
+
+data: {"type":"content","content":" computing"}
+
+data: {"type":"content","content":" is"}
+
+data: {"type":"content","content":" an"}
+
+data: {"type":"content","content":" advanced"}
+
+data: {"type":"content","content":" field"}
+
+data: {"type":"content","content":" of"}
+
+data: {"type":"content","content":" computer"}
+
+data: {"type":"content","content":" science"}
+
+data: {"type":"content","content":" that"}
+
+data: {"type":"content","content":" lever"}
+
+data: {"type":"content","content":"ages"}
+
+data: {"type":"content","content":" the"}
+
+data: {"type":"content","content":" principles"}
+
+data: {"type":"content","content":" of"}
+
+data: {"type":"content","content":" quantum"}
+
+data: {"type":"content","content":" mechanics"}
+
+data: {"type":"content","content":" to"}
+
+data: {"type":"content","content":" perform"}
+
+data: {"type":"content","content":" calculations"}
+
+data: {"type":"content","content":" that"}
+
+data: {"type":"content","content":" classical"}
+
+data: {"type":"content","content":" computers"}
+
+data: {"type":"content","content":" cannot"}
+
+data: {"type":"content","content":" achieve"}
+
+data: {"type":"content","content":" efficiently"}
+
+data: {"type":"content","content":"."}
+
+data: {"type":"content","content":" At"}
+
+data: {"type":"content","content":" its"}
+
+data: {"type":"content","content":" core"}
+
+data: {"type":"content","content":","}
+
+data: {"type":"content","content":" quantum"}
+
+data: {"type":"content","content":" computing"}
+
+data: {"type":"content","content":" utilizes"}
+
+data: {"type":"content","content":" quantum"}
+
+data: {"type":"content","content":" bits"}
+
+data: {"type":"content","content":","}
+
+data: {"type":"content","content":" or"}
+
+data: {"type":"content","content":" qu"}
+
+data: {"type":"content","content":"bits"}
+
+data: {"type":"content","content":","}
+
+data: {"type":"content","content":" which"}
+
+data: {"type":"content","content":" can"}
+
+data: {"type":"content","content":" exist"}
+
+data: {"type":"content","content":" in"}
+
+data: {"type":"content","content":" multiple"}
+
+data: {"type":"content","content":" states"}
+
+data: {"type":"content","content":" simultaneously"}
+
+data: {"type":"content","content":","}
+
+data: {"type":"content","content":" allowing"}
+
+data: {"type":"content","content":" for"}
+
+data: {"type":"content","content":" greater"}
+
+data: {"type":"content","content":" computational"}
+
+data: {"type":"content","content":" power"}
+
+data: {"type":"content","content":" through"}
+
+data: {"type":"content","content":" phenomena"}
+
+data: {"type":"content","content":" like"}
+
+data: {"type":"content","content":" super"}
+
+data: {"type":"content","content":"position"}
+
+data: {"type":"content","content":" and"}
+
+data: {"type":"content","content":" ent"}
+
+data: {"type":"content","content":"ang"}
+
+data: {"type":"content","content":"lement"}
+
+data: {"type":"content","content":"."}
+
+data: {"type":"content","content":" This"}
+
+data: {"type":"content","content":" enables"}
+
+data: {"type":"content","content":" quantum"}
+
+data: {"type":"content","content":" computers"}
+
+data: {"type":"content","content":" to"}
+
+data: {"type":"content","content":" solve"}
+
+data: {"type":"content","content":" complex"}
+
+data: {"type":"content","content":" problems"}
+
+data: {"type":"content","content":" much"}
+
+data: {"type":"content","content":" faster"}
+
+data: {"type":"content","content":" than"}
+
+data: {"type":"content","content":" traditional"}
+
+data: {"type":"content","content":" super"}
+
+data: {"type":"content","content":"comput"}
+
+data: {"type":"content","content":"ers"}
+
+data: {"type":"content","content":","}
+
+data: {"type":"content","content":" especially"}
+
+data: {"type":"content","content":" in"}
+
+data: {"type":"content","content":" areas"}
+
+data: {"type":"content","content":" such"}
+
+data: {"type":"content","content":" as"}
+
+data: {"type":"content","content":" crypt"}
+
+data: {"type":"content","content":"ography"}
+
+data: {"type":"content","content":","}
+
+data: {"type":"content","content":" optimization"}
+
+data: {"type":"content","content":","}
+
+data: {"type":"content","content":" and"}
+
+data: {"type":"content","content":" simulations"}
+
+data: {"type":"content","content":" of"}
+
+data: {"type":"content","content":" quantum"}
+
+data: {"type":"content","content":" systems"}
+
+data: {"type":"content","content":".\n\n"}
+
+data: {"type":"content","content":"The"}
+
+data: {"type":"content","content":" field"}
+
+data: {"type":"content","content":" encompasses"}
+
+data: {"type":"content","content":" various"}
+
+data: {"type":"content","content":" disciplines"}
+
+data: {"type":"content","content":","}
+
+data: {"type":"content","content":" including"}
+
+data: {"type":"content","content":" quantum"}
+
+data: {"type":"content","content":" hardware"}
+
+data: {"type":"content","content":" and"}
+
+data: {"type":"content","content":" algorithms"}
+
+data: {"type":"content","content":","}
+
+data: {"type":"content","content":" and"}
+
+data: {"type":"content","content":" is"}
+
+data: {"type":"content","content":" still"}
+
+data: {"type":"content","content":" in"}
+
+data: {"type":"content","content":" its"}
+
+data: {"type":"content","content":" developmental"}
+
+data: {"type":"content","content":" stages"}
+
+data: {"type":"content","content":"."}
+
+data: {"type":"content","content":" As"}
+
+data: {"type":"content","content":" technology"}
+
+data: {"type":"content","content":" progresses"}
+
+data: {"type":"content","content":","}
+
+data: {"type":"content","content":" quantum"}
+
+data: {"type":"content","content":" computing"}
+
+data: {"type":"content","content":" holds"}
+
+data: {"type":"content","content":" the"}
+
+data: {"type":"content","content":" potential"}
+
+data: {"type":"content","content":" to"}
+
+data: {"type":"content","content":" revolution"}
+
+data: {"type":"content","content":"ize"}
+
+data: {"type":"content","content":" industries"}
+
+data: {"type":"content","content":" by"}
+
+data: {"type":"content","content":" addressing"}
+
+data: {"type":"content","content":" challenges"}
+
+data: {"type":"content","content":" that"}
+
+data: {"type":"content","content":" are"}
+
+data: {"type":"content","content":" currently"}
+
+data: {"type":"content","content":" in"}
+
+data: {"type":"content","content":"tract"}
+
+data: {"type":"content","content":"able"}
+
+data: {"type":"content","content":" for"}
+
+data: {"type":"content","content":" classical"}
+
+data: {"type":"content","content":" computing"}
+
+data: {"type":"content","content":" systems"}
+
+data: {"type":"content","content":","}
+
+data: {"type":"content","content":" such"}
+
+data: {"type":"content","content":" as"}
+
+data: {"type":"content","content":" large"}
+
+data: {"type":"content","content":"-scale"}
+
+data: {"type":"content","content":" data"}
+
+data: {"type":"content","content":" analysis"}
+
+data: {"type":"content","content":" and"}
+
+data: {"type":"content","content":" complex"}
+
+data: {"type":"content","content":" system"}
+
+data: {"type":"content","content":" modeling"}
+
+data: {"type":"content","content":" ["}
+
+data: {"type":"content","content":"1"}
+
+data: {"type":"content","content":"]["}
+
+data: {"type":"content","content":"2"}
+
+data: {"type":"content","content":"]."}
+
+data: [DONE]
+

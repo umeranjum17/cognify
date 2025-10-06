@@ -3743,6 +3743,49 @@ class _EditorScreenState extends State<EditorScreen> {
             );
             break;
 
+          case StreamEventType.imagesReady:
+            // Handle images-only ready events
+            final newImagesOnly = event.images ?? [];
+
+            // Deduplicate by URL if present
+            for (final newImage in newImagesOnly) {
+              final imageUrl = newImage['url'] as String?;
+              if (imageUrl != null) {
+                final isDuplicate = accumulatedImages.any(
+                  (existing) => existing['url'] == imageUrl,
+                );
+                if (!isDuplicate) {
+                  accumulatedImages.add(newImage);
+                }
+              } else {
+                accumulatedImages.add(newImage);
+              }
+            }
+
+            // Update the streaming message with accumulated images (preserve sources)
+            final idx = _messages.indexWhere(
+              (m) => m.id == streamingMessage.id,
+            );
+            if (idx != -1) {
+              setState(() {
+                _messages[idx] = Message(
+                  id: streamingMessage.id,
+                  type: 'assistant',
+                  content: streamingContent,
+                  timestamp: streamingMessage.timestamp,
+                  isProcessing: true,
+                  sources: List.from(accumulatedSources),
+                  images: List.from(accumulatedImages),
+                );
+              });
+            }
+
+            Logger.debug(
+              '🖼️ Images ready: +${newImagesOnly.length} new images (${accumulatedImages.length} total)',
+              tag: 'EditorScreen',
+            );
+            break;
+
           case StreamEventType.content:
             // Append streaming content
             final newContent = event.content ?? '';

@@ -65,7 +65,8 @@ export default async function handler(req: Request) {
 
     // Extract parameters - backend determines defaults
     const mode = (body?.mode as string) || 'chat';
-    const model = (body?.model as string) || 'openai/gpt-4o-mini';
+    // Prefer model defined by mode config; fall back to request body or default
+    const model = (getModeConfig(mode)?.model as string) || (body?.model as string) || 'google/gemini-2.5-flash-lite';
     const temperature = typeof body?.temperature === 'number' ? body.temperature : 0.7;
     const maxTokens = typeof body?.maxTokens === 'number' ? body.maxTokens : undefined;
     const providedMessages = Array.isArray(body?.messages) ? body.messages : [];
@@ -108,66 +109,116 @@ export default async function handler(req: Request) {
     console.log('Messages:', JSON.stringify(messages, null, 2));
     console.log('==================');
 
-    // Use AI SDK streaming helpers
-    const result = streamText({
-      model: openrouter(model),
-      messages: [...systemMessages, ...messages],
-      temperature: modeConfig.temperature ?? temperature,
-      ...(maxTokens ? { maxOutputTokens: maxTokens } : {}),
-      ...(tools ? { tools, toolChoice: modeConfig.toolChoice || 'auto' } : {}),
-    });
+    // Two-phase for search-like modes; single-phase otherwise
+    const effectiveMaxTokens = maxTokens ?? (modeConfig as any).maxTokens;
+    const isTwoPhase = mode === 'search' || mode === 'aipedia';
+    const singlePhaseResult = !isTwoPhase
+      ? streamText({
+          model: openrouter(model),
+          messages: [...systemMessages, ...messages],
+          temperature: modeConfig.temperature ?? temperature,
+          ...(effectiveMaxTokens ? { maxOutputTokens: effectiveMaxTokens } : {}),
+          ...(tools ? { tools, toolChoice: modeConfig.toolChoice || 'auto' } : {}),
+        })
+      : undefined;
     
     // Convert to SSE format that Flutter expects
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
       async start(controller) {
         try {
-          let allSources: any[] = [];
-          let allImages: any[] = [];
-          
-          for await (const part of result.fullStream) {
-            if (part.type === 'text-delta') {
-              // Send text content chunks
-              const sseMessage = `data: ${JSON.stringify({ content: part.text })}\n\n`;
-              controller.enqueue(encoder.encode(sseMessage));
-            } else if (part.type === 'tool-result') {
-              // Capture tool results for sources
-              const toolOutput = part.output;
-              
-              if (part.toolName === 'braveWebSearch' && toolOutput && typeof toolOutput === 'object' && 'results' in toolOutput) {
-                // Add web search sources
-                const results = (toolOutput as any).results;
-                if (Array.isArray(results)) {
-                  const sources = results.map((result: any, index: number) => ({
-                    id: `search-${Date.now()}-${index}`,
-                    title: result.title || 'Untitled',
-                    url: result.url || '',
-                    description: result.description || '',
-                    type: 'web',
-                    query: (toolOutput as any).query || '',
-                  }));
-                  allSources.push(...sources);
-                }
-              } else if (part.toolName === 'braveImageSearch' && toolOutput && typeof toolOutput === 'object' && 'images' in toolOutput) {
-                // Add image search results
-                const images = (toolOutput as any).images;
-                if (Array.isArray(images)) {
-                  const imageResults = images.map((image: any, index: number) => ({
-                    id: `image-${Date.now()}-${index}`,
-                    title: image.title || 'Image',
-                    url: image.url || '',
-                    source: image.source || '',
-                    type: 'image',
-                    query: (toolOutput as any).query || '',
-                  }));
-                  allImages.push(...imageResults);
-                }
+        let allSources: any[] = [];
+        let allImages: any[] = [];
+        let emittedText = false;
+        let sourcesSent = false;
+        let imagesSent = false;
+
+        if (!isTwoPhase) {
+          emittedText = await streamSinglePhase(singlePhaseResult as any, controller, encoder, (toolName, toolOutput) => {
+            if (toolName === 'braveWebSearch' && toolOutput && typeof toolOutput === 'object') {
+              const results = (toolOutput as any).sources ?? (toolOutput as any).results;
+              if (Array.isArray(results)) {
+                const sources = results.map((result: any, index: number) => ({
+                  id: `search-${Date.now()}-${index}`,
+                  title: result.title || 'Untitled',
+                  url: result.url || '',
+                  description: result.description || '',
+                  type: 'web',
+                }));
+                allSources.push(...sources);
+              }
+            } else if (toolName === 'braveImageSearch' && toolOutput && typeof toolOutput === 'object' && 'images' in toolOutput) {
+              const images = (toolOutput as any).images;
+              if (Array.isArray(images)) {
+                const imageResults = images.map((image: any, index: number) => ({
+                  id: `image-${Date.now()}-${index}`,
+                  title: image.title || 'Image',
+                  url: image.url || '',
+                  source: image.source || '',
+                  type: 'image',
+                }));
+                allImages.push(...imageResults);
+                const imagesMessage = `data: ${JSON.stringify({ type: 'imagesReady', images: imageResults })}\n\n`;
+                controller.enqueue(encoder.encode(imagesMessage));
               }
             }
-          }
-          
-          // Send sources if any were found
+          });
+        } else {
+          const { rawSources, uiSources, uiImages } = await toolPhaseCollectSources({
+            model,
+            systemMessages,
+            messages,
+            temperature: modeConfig.temperature ?? temperature,
+            tools,
+          });
+          allSources = uiSources;
+          allImages = uiImages;
+          // Stream sources/images immediately so the UI can render while we summarize
           if (allSources.length > 0) {
+            const sourcesMessage = `data: ${JSON.stringify({ type: 'sourcesReady', sources: allSources })}\n\n`;
+            controller.enqueue(encoder.encode(sourcesMessage));
+            sourcesSent = true;
+          }
+          if (allImages.length > 0) {
+            const imagesMessage = `data: ${JSON.stringify({ type: 'imagesReady', images: allImages })}\n\n`;
+            controller.enqueue(encoder.encode(imagesMessage));
+            imagesSent = true;
+          }
+          // Minimal fallback: for aipedia, ensure we have images
+          if (mode === 'aipedia' && !imagesSent && tools && (tools as any).braveImageSearch) {
+            const extraImages = await toolPhaseCollectImages({
+              model,
+              systemMessages,
+              messages,
+              temperature: modeConfig.temperature ?? temperature,
+              tools,
+            });
+            if (extraImages.length > 0) {
+              allImages = extraImages;
+              const imagesMessage = `data: ${JSON.stringify({ type: 'imagesReady', images: allImages })}\n\n`;
+              controller.enqueue(encoder.encode(imagesMessage));
+              imagesSent = true;
+            }
+          }
+          await summarizePhaseStream({
+            model,
+            systemMessages,
+            userQuery: messages[messages.length - 1]?.content || fallbackQuery,
+            rawSources,
+            uiImages: allImages,
+            mode,
+            temperature: modeConfig.temperature ?? temperature,
+            maxTokens: effectiveMaxTokens,
+            controller,
+            encoder,
+          });
+          emittedText = true;
+        }
+          
+          // No second pass fallback here to avoid extra cost/latency.
+
+          // Send sources now (after any text that may have streamed)
+          if (!sourcesSent && allSources.length > 0) {
             const sourcesMessage = `data: ${JSON.stringify({ 
               type: 'sourcesReady', 
               sources: allSources 
@@ -176,7 +227,7 @@ export default async function handler(req: Request) {
           }
           
           // Send images if any were found
-          if (allImages.length > 0) {
+          if (!imagesSent && allImages.length > 0) {
             const imagesMessage = `data: ${JSON.stringify({ 
               type: 'imagesReady', 
               images: allImages 
@@ -216,25 +267,37 @@ export default async function handler(req: Request) {
 function getModeConfig(mode: string) {
   const configs: Record<string, any> = {
     chat: {
+      model: 'google/gemini-2.5-flash-lite',
       systemPrompt: 'You are a helpful AI assistant.',
       temperature: 0.7,
+      maxTokens: 700,
       capabilities: ['text'],
       tools: [],
     },
     search: {
+      model: 'google/gemini-2.5-flash-lite',
       systemPrompt: [
         'You are a web search assistant.',
-        'Behavior:',
-        '- Use braveWebSearch first to fetch relevant results.',
-        '- Answer concisely, then list key sources with [1], [2] markers.',
-        '- Only use provided sources; if insufficient, say so.',
+        'CRITICAL INSTRUCTIONS (follow exactly):',
+        '- You MUST call the tool braveWebSearch BEFORE writing any answer.',
+        '- Do NOT answer from prior knowledge. Never produce an answer without at least one braveWebSearch call.',
+        "- The tool returns results with optional 'content' (fetched page text). Prefer that 'content' over titles/snippets when forming the answer.",
+        '- After tool results arrive, you MUST write and STREAM a concise answer. Do not end the response after a tool call.',
+        '- Keep answers concise, neutral, and factual. Do NOT add inline [n] citation markers inside sentences. Instead, add a short "References" section at the end with numbered items (title – URL).',
+        '- If the tool returns no useful sources, explicitly say you lack sufficient information and stop.',
+        '- Never fabricate or guess URLs, titles, or facts.',
+        '- Begin streaming the answer as soon as you can; do not wait to see all tool results if the first ones suffice.',
+        '- Target length: 120–180 words. Avoid long digressions.',
       ].join('\n'),
-      temperature: 0.7,
+      temperature: 0.6,
+      maxTokens: 600,
       capabilities: ['text', 'web-search'],
       tools: ['braveWebSearch'],
+      // Allow the model to proceed after tool calls; some models stall on 'required'
       toolChoice: 'auto',
     },
     aipedia: {
+      model: 'google/gemini-2.5-flash-lite',
       systemPrompt: [
         'You are an encyclopedic topic writer (AIpedia). Produce a structured overview.',
         'Format:',
@@ -244,9 +307,14 @@ function getModeConfig(mode: string) {
         '- References (titles + URLs)',
         '',
         'Use Brave tools to gather reputable sources and relevant images.',
-        'Cite with inline markers like [1], [2]. Keep a neutral tone.',
+        'When images are available, weave them naturally into the prose (mention what key image(s) depict without dumping links or markdown).',
+        "When available, rely on the 'content' included with each source to write the summary and facts.",
+        'After tool results arrive, you MUST stream the structured article text. Do not stop after tool calls.',
+        'Do NOT add inline [n] citation markers inside sentences. Instead, include a short "References" section at the end with numbered items (title – URL). Keep a neutral tone.',
+        'Target length: ~350–500 words.',
       ].join('\n'),
       temperature: 0.5,
+      maxTokens: 900,
       capabilities: ['text', 'web-search', 'image-search'],
       tools: ['braveWebSearch', 'braveImageSearch'],
       toolChoice: 'auto',
@@ -269,12 +337,13 @@ async function buildToolsForMode(mode: string, config: any) {
 
     const resultCount = mode === 'aipedia' ? 6 : 5;
 
-    toolSet.braveWebSearch = tool({
+    toolSet.braveWebSearch = tool<any>({
       description: 'Search the web using Brave and return top results',
-      inputSchema: z.object({
+      inputSchema: (z.object({
         query: z.string().describe('The search query'),
-      }),
-      execute: async ({ query }) => {
+      }) as any),
+      execute: async (args: any) => {
+        const query = String(args?.query ?? '');
         const url = new URL('https://api.search.brave.com/res/v1/web/search');
         url.searchParams.set('q', query);
         url.searchParams.set('count', String(resultCount));
@@ -288,12 +357,27 @@ async function buildToolsForMode(mode: string, config: any) {
         });
         if (!res.ok) throw new Error(`Brave web search failed: ${res.status}`);
         const json: any = await res.json();
-        const results = (json?.web?.results ?? []).map((r: any) => ({
+        const results: any[] = (json?.web?.results ?? []).map((r: any) => ({
           title: r?.title ?? r?.url ?? 'Untitled',
           url: r?.url ?? '',
           description: r?.description ?? r?.snippet ?? '',
         }));
-        return { query, results, totalResults: results.length };
+
+        // Crawl pages to extract summary content for the model and UI
+        const maxPages = Math.min(results.length, resultCount);
+        const sources = await Promise.all(
+          results.slice(0, maxPages).map(async (r: any) => {
+            const content = await fetchPageTextSafe(r.url);
+            return {
+              title: r.title,
+              url: r.url,
+              description: r.description,
+              content,
+            };
+          })
+        );
+
+        return { query, sources, totalResults: results.length };
       },
     });
   }
@@ -303,12 +387,13 @@ async function buildToolsForMode(mode: string, config: any) {
       throw new Error('BRAVE_API_KEY required for aipedia mode');
     }
 
-    toolSet.braveImageSearch = tool({
+    toolSet.braveImageSearch = tool<any>({
       description: 'Find relevant images using Brave image search',
-      inputSchema: z.object({
+      inputSchema: (z.object({
         query: z.string().describe('Image search query'),
-      }),
-      execute: async ({ query }) => {
+      }) as any),
+      execute: async (args: any) => {
+        const query = String(args?.query ?? '');
         const imageCount = 4;
         const url = new URL('https://api.search.brave.com/res/v1/images/search');
         url.searchParams.set('q', query);
@@ -336,4 +421,187 @@ async function buildToolsForMode(mode: string, config: any) {
   return Object.keys(toolSet).length > 0 ? toolSet : undefined;
 }
 
-// removed manual SSE fallback per request
+// Best-effort page text fetcher for enriching sources
+async function fetchPageTextSafe(url: string): Promise<string> {
+  try {
+    if (!url) return '';
+    const res = await fetch(url, { headers: { Accept: 'text/html,application/xhtml+xml' } });
+    if (!res.ok) return '';
+    const html = await res.text();
+    // Heuristic extraction: prefer <article> or <main>, else full HTML
+    const pickSection = (source: string): string => {
+      const articleMatch = source.match(/<article[\s\S]*?<\/article>/i);
+      if (articleMatch) return articleMatch[0];
+      const mainMatch = source.match(/<main[\s\S]*?<\/main>/i);
+      if (mainMatch) return mainMatch[0];
+      const roleMainMatch = source.match(/<[^>]*role=["']main["'][^>]*>[\s\S]*?<\/[^>]+>/i);
+      if (roleMainMatch) return roleMainMatch[0];
+      const bodyMatch = source.match(/<body[\s\S]*?<\/body>/i);
+      return bodyMatch ? bodyMatch[0] : source;
+    };
+
+    let mainHtml = pickSection(html);
+
+    // Remove noisy blocks by tag and common boilerplate ids/classes
+    mainHtml = mainHtml
+      // scripts/styles/media
+      .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+      .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+      .replace(/<noscript[\s\S]*?<\/noscript>/gi, ' ')
+      .replace(/<svg[\s\S]*?<\/svg>/gi, ' ')
+      // nav/aside/footer/header sections
+      .replace(/<nav[\s\S]*?<\/nav>/gi, ' ')
+      .replace(/<aside[\s\S]*?<\/aside>/gi, ' ')
+      .replace(/<footer[\s\S]*?<\/footer>/gi, ' ')
+      .replace(/<header[\s\S]*?<\/header>/gi, ' ')
+      // common boilerplate containers by class/id (best-effort)
+      .replace(/<div[^>]*(id|class)=["'][^"']*(sidebar|menu|nav|footer|header|advert|ad-|ads|promo|cookie|banner)[^"']*["'][\s\S]*?<\/div>/gi, ' ');
+
+    // Convert <br> and block tags to line breaks to keep some structure
+    mainHtml = mainHtml
+      .replace(/<\s*br\s*\/?\s*>/gi, '\n')
+      .replace(/<\/(p|h[1-6]|li|section|article|main)>/gi, '\n');
+
+    // Strip remaining tags
+    let text = mainHtml.replace(/<[^>]+>/g, ' ');
+
+    // Decode a few common HTML entities
+    text = text
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#039;/g, "'");
+
+    // Collapse whitespace and trim
+    text = text.replace(/\s+/g, ' ').trim();
+
+    // Truncate to keep payload small for streaming/UI
+    const MAX_CHARS = 1800;
+    return text.length > MAX_CHARS ? text.slice(0, MAX_CHARS) : text;
+  } catch {
+    return '';
+  }
+}
+
+// Helpers: single-phase streaming with tool capture
+async function streamSinglePhase(result: any, controller: ReadableStreamDefaultController, encoder: { encode: (s: string) => Uint8Array }, onTool: (toolName: string, output: any) => void): Promise<boolean> {
+  let emitted = false;
+  for await (const part of result.fullStream) {
+    if (part.type === 'text-delta') {
+      const sseMessage = `data: ${JSON.stringify({ type: 'content', content: part.text })}\n\n`;
+      controller.enqueue(encoder.encode(sseMessage));
+      emitted = true;
+    } else if (part.type === 'tool-result') {
+      onTool(part.toolName, part.output);
+    }
+  }
+  return emitted;
+}
+
+// Helpers: Phase 1 – collect sources/images via tools only
+async function toolPhaseCollectSources({ model, systemMessages, messages, temperature, tools }: { model: string; systemMessages: any[]; messages: any[]; temperature: number; tools: any; }) {
+  const phase1 = streamText({
+    model: openrouter(model),
+    messages: [...systemMessages, ...messages],
+    temperature,
+    maxOutputTokens: 64,
+    ...(tools ? { tools, toolChoice: 'required' } : {}),
+  });
+  const rawSources: any[] = [];
+  const uiSources: any[] = [];
+  const uiImages: any[] = [];
+  for await (const part of phase1.fullStream) {
+    if (part.type === 'tool-result') {
+      const toolOutput = part.output;
+      if (part.toolName === 'braveWebSearch' && toolOutput && typeof toolOutput === 'object') {
+        const results = (toolOutput as any).sources ?? (toolOutput as any).results;
+        if (Array.isArray(results)) {
+          rawSources.push(...results);
+          const sources = (results as any[]).map((result: any, index: number) => ({
+            id: `search-${Date.now()}-${index}`,
+            title: result.title || 'Untitled',
+            url: result.url || '',
+            description: result.description || '',
+            type: 'web',
+            query: (toolOutput as any)?.query || '',
+          }));
+          uiSources.push(...sources);
+        }
+      } else if (part.toolName === 'braveImageSearch' && toolOutput && typeof toolOutput === 'object' && 'images' in toolOutput) {
+        const images = (toolOutput as any).images;
+        if (Array.isArray(images)) {
+          const imageResults = images.map((image: any, index: number) => ({
+            id: `image-${Date.now()}-${index}`,
+            title: image.title || 'Image',
+            url: image.url || '',
+            source: image.source || '',
+            type: 'image',
+            query: (toolOutput as any).query || '',
+          }));
+          uiImages.push(...imageResults);
+        }
+      }
+    }
+  }
+  return { rawSources, uiSources, uiImages };
+}
+
+// Helpers: Phase 2 – summarization-only streaming
+async function summarizePhaseStream({ model, systemMessages, userQuery, rawSources, uiImages, mode, temperature, maxTokens, controller, encoder }: { model: string; systemMessages: any[]; userQuery: string; rawSources: any[]; uiImages?: any[]; mode?: string; temperature: number; maxTokens?: number; controller: ReadableStreamDefaultController; encoder: { encode: (s: string) => Uint8Array }; }) {
+  const sourcesList = rawSources
+    .slice(0, 6)
+    .map((s: any, i: number) => `Source [${i + 1}] ${s.title}\nURL: ${s.url}\n${(typeof s.content === 'string' ? s.content : (s.description || '')).slice(0, 800)}`)
+    .join('\n\n');
+  const imagesList = (uiImages ?? [])
+    .slice(0, 6)
+    .map((img: any, i: number) => `Image [${i + 1}] ${img.title || 'Image'}\nURL: ${img.url}${img.source ? `\nSource: ${img.source}` : ''}`)
+    .join('\n\n');
+  const phase2 = streamText({
+    model: openrouter(model),
+    messages: [
+      ...systemMessages,
+      { role: 'user', content: `Question: ${userQuery}\n\nUse ONLY the following sources to answer. Prioritize the scraped page text under each source when available; treat titles/snippets as secondary. Do NOT include inline [n] citation markers inside sentences. Instead, add a short References section at the end with numbered items (title – URL). ${mode === 'aipedia' ? 'If helpful, seamlessly integrate the images into the narrative (e.g., "see image of X") but do not output raw HTML or markdown image tags.' : ''} Keep the answer concise.\n\n${sourcesList}${imagesList && mode === 'aipedia' ? `\n\nRelevant images (for context, not for listing verbatim):\n\n${imagesList}` : ''}` },
+    ],
+    temperature,
+    ...(maxTokens ? { maxOutputTokens: maxTokens } : {}),
+  });
+  for await (const part of phase2.fullStream) {
+    if (part.type === 'text-delta') {
+      const sseMessage = `data: ${JSON.stringify({ type: 'content', content: part.text })}\n\n`;
+      controller.enqueue(encoder.encode(sseMessage));
+    }
+  }
+}
+
+// (no extra phases)
+async function toolPhaseCollectImages({ model, systemMessages, messages, temperature, tools }: { model: string; systemMessages: any[]; messages: any[]; temperature: number; tools: any; }) {
+  const phase = streamText({
+    model: openrouter(model),
+    messages: [...systemMessages, ...messages],
+    temperature,
+    maxOutputTokens: 64,
+    tools: { braveImageSearch: (tools as any).braveImageSearch },
+    toolChoice: 'required',
+  } as any);
+  const uiImages: any[] = [];
+  for await (const part of (phase as any).fullStream) {
+    if (part.type === 'tool-result' && part.toolName === 'braveImageSearch') {
+      const images = (part.output as any)?.images;
+      if (Array.isArray(images)) {
+        const mapped = images.map((image: any, index: number) => ({
+          id: `image-${Date.now()}-${index}`,
+          title: image.title || 'Image',
+          url: image.url || '',
+          source: image.source || '',
+          type: 'image',
+        }));
+        uiImages.push(...mapped);
+      }
+    }
+  }
+  return uiImages;
+}
+
+
