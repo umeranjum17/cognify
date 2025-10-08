@@ -510,7 +510,12 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
     print('🔍 Model $modelId modalities: $modalities (raw: $inputModalities)');
 
     final pricing = model['pricing'] as Map<String, dynamic>?;
-    final isFree = model['isFree'] == true || pricing == null || pricing.isEmpty;
+    final bool explicitZeroPricing = pricing != null &&
+        pricing.containsKey('input') &&
+        pricing.containsKey('output') &&
+        ((pricing['input'] ?? 0.0) == 0.0) &&
+        ((pricing['output'] ?? 0.0) == 0.0);
+    final isFree = model['isFree'] == true || explicitZeroPricing;
     final provider =
         model['provider'] as String? ??
         model['top_provider']?['name'] as String?;
@@ -897,7 +902,10 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
   }
 
   String _getPriceDisplay(Map<String, dynamic>? pricing) {
-    if (pricing == null || pricing.isEmpty) return 'Free';
+    if (pricing == null || pricing.isEmpty) return 'Paid';
+    final input = (pricing['input'] ?? 0.0) as double;
+    final output = (pricing['output'] ?? 0.0) as double;
+    if (input == 0.0 && output == 0.0) return 'Free';
     return '~1 req';
   }
 

@@ -48,6 +48,13 @@ class SessionCostService {
 
   int get messageCount => _messageCount;
 
+  /// Current snapshot for consumers that need immediate values
+  SessionCostData get currentData => SessionCostData(
+        sessionCost: _sessionCost,
+        lastMessageCost: _lastMessageCost,
+        messageCount: _messageCount,
+      );
+
   /// Public API used by UI to register generation IDs for cost tracking.
   /// This is a no-op placeholder that just emits the current snapshot.
   Future<void> addGenerationIds(List<Map<String, dynamic>> ids) async {

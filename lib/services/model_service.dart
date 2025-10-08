@@ -165,10 +165,20 @@ class ModelService {
       if (modelsConfig != null) {
         final dynamic pricingDyn = modelsConfig['pricing'];
         final dynamic capsDyn = modelsConfig['capabilities'];
+        final dynamic quotaPricingDyn = modelsConfig['quotaPricing'];
         final Map<String, dynamic> pricing =
             pricingDyn is Map ? Map<String, dynamic>.from(pricingDyn) : {};
         final Map<String, dynamic> capabilities =
             capsDyn is Map ? Map<String, dynamic>.from(capsDyn) : {};
+        final Map<String, dynamic> quotaPricing =
+            quotaPricingDyn is Map ? Map<String, dynamic>.from(quotaPricingDyn) : {};
+
+        // Extract pre-calculated request estimates
+        final Map<String, dynamic> perRequestSampleChat =
+            quotaPricing['perRequestSample']?['chat'] is Map
+              ? Map<String, dynamic>.from(quotaPricing['perRequestSample']['chat'])
+              : {};
+
         // If mode has no explicit ids, use all available → else derive from capabilities keys
         if (ids.isEmpty) {
           final availDyn = modelsConfig['available'];
@@ -182,15 +192,24 @@ class ModelService {
         final models = ids.map((id) {
           final cap = capabilities[id];
           final price = pricing[id];
+          final requestEstimate = perRequestSampleChat[id];
           Map<String, dynamic> safeCap = cap is Map ? Map<String, dynamic>.from(cap) : {};
           Map<String, dynamic> safePrice = price is Map ? Map<String, dynamic>.from(price) : {};
+          Map<String, dynamic> safeEstimate = requestEstimate is Map ? Map<String, dynamic>.from(requestEstimate) : {};
+
+          // Determine free status only when pricing is explicitly provided and both input and output are zero
+          final bool explicitlyFree = safePrice.containsKey('input') &&
+              safePrice.containsKey('output') &&
+              ((safePrice['input'] ?? 0.0) == 0.0) &&
+              ((safePrice['output'] ?? 0.0) == 0.0);
           return {
           'id': id,
           'name': _formatModelName(id),
           'description': safeCap['description'] ?? _getModelDescription(id),
           'pricing': safePrice,
+          'requestEstimate': safeEstimate, // Pre-calculated request cost
           'provider': (safeCap['provider']) ?? id.split('/').first,
-          'isFree': ((safePrice['input'] ?? 0.0) == 0.0) && ((safePrice['output'] ?? 0.0) == 0.0),
+          'isFree': explicitlyFree,
           'context_length': safeCap['maxTokens'] ?? 8192,
           'inputModalities': safeCap['inputModalities'] ?? ['text'],
           'outputModalities': safeCap['outputModalities'] ?? ['text'],

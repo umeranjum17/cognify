@@ -4,7 +4,13 @@
   "buildCommand": "echo 'No build needed for Edge Functions'",
   "rewrites": [
     { "source": "/callback", "destination": "/api/oauth/callback" },
-    { "source": "/models", "destination": "/api/config/models" }
+    { "source": "/api/chat", "destination": "/api/chat" },
+    { "source": "/api/config/models", "destination": "/api/config/models" },
+    { "source": "/api/config/modes", "destination": "/api/config/modes" },
+    { "source": "/api/credits/consume", "destination": "/credits/consume" },
+    { "source": "/api/credits/balance", "destination": "/credits/balance" },
+    { "source": "/api/credits/refund", "destination": "/credits/refund" },
+    { "source": "/api/rc/webhook", "destination": "/rc/webhook" }
   ],
   "headers": [
     {

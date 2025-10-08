@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/file_attachment.dart';
 import '../theme/app_theme.dart';
 import '../config/model_registry.dart';
+import '../services/request_usage_estimator.dart';
 // Estimation handled by backend
 
 class ModelCapabilitiesBottomSheet extends StatelessWidget {
@@ -30,7 +31,7 @@ class ModelCapabilitiesBottomSheet extends StatelessWidget {
 
   String _getUsageEstimateLabel({bool compact = false}) {
     final pricing = _resolvePricing();
-    if (pricing == null || pricing.isEmpty) return 'Free';
+    if (pricing == null || pricing.isEmpty) return compact ? '~1 req' : '≈1 request';
     return compact ? '~1 req' : '≈1 request';
   }
 
@@ -40,7 +41,7 @@ class ModelCapabilitiesBottomSheet extends StatelessWidget {
 
   String _getEstimatedDollarCost() {
     final pricing = _resolvePricing();
-    if (pricing == null || pricing.isEmpty) return 'Free';
+    if (pricing == null || pricing.isEmpty) return 'Est. cost shown after request';
     return 'Est. cost shown after request';
   }
 
@@ -55,8 +56,11 @@ class ModelCapabilitiesBottomSheet extends StatelessWidget {
     // If backend or model data indicates free
     // Otherwise fall back to pricing presence
 
-    // Default to true if no pricing data available
-    return _resolvePricing() == null;
+    final p = _resolvePricing();
+    if (p == null || p.isEmpty) return false; // Unknown => treat as paid
+    final input = (p['input'] ?? 0.0) as double;
+    final output = (p['output'] ?? 0.0) as double;
+    return input == 0.0 && output == 0.0;
   }
 
   @override
@@ -192,17 +196,35 @@ class ModelCapabilitiesBottomSheet extends StatelessWidget {
         // Pricing Details
         const SizedBox(height: 16),
         _buildCapabilitySection('Pricing', [
-          _buildPricingItem(
-            'Estimated usage',
-            _getRequestLabel(),
-            Icons.request_page,
-            theme,
-          ),
-          _buildPricingItem(
-            'Estimated cost',
-            _getEstimatedDollarCost(),
-            Icons.attach_money,
-            theme,
+          FutureBuilder<RequestUsageEstimate>(
+            future: RequestUsageEstimator.estimate(
+              modelId: _resolveModelId(),
+            ),
+            builder: (context, snapshot) {
+              final est = snapshot.data;
+              if (est == null) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildPricingItem('Estimated usage', 'Calculating…', Icons.request_page, theme),
+                    _buildPricingItem('Estimated cost', 'Fetching…', Icons.attach_money, theme),
+                  ],
+                );
+              }
+
+              final usageLabel = RequestUsageEstimator.formatLabel(est);
+              final unitsLabel = est.isFree ? '0u (Free)' : '${est.requestUnits}u';
+              final costLabel = est.isFree ? 'Free' : '~\$' + est.dollarCost.toStringAsFixed(4);
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildPricingItem('Estimated usage', usageLabel, Icons.request_page, theme),
+                  _buildPricingItem('Estimated units', unitsLabel, Icons.event_available, theme),
+                  _buildPricingItem('Estimated cost', costLabel, Icons.attach_money, theme),
+                ],
+              );
+            },
           ),
         ], theme),
       ],
@@ -347,5 +369,11 @@ class ModelCapabilitiesBottomSheet extends StatelessWidget {
         ? modelName!.split('/').last.replaceAll(':free', '')
         : modelName!;
     return 'Model: $displayName';
+  }
+
+  String _resolveModelId() {
+    final idFromData = modelData != null ? modelData!['id'] as String? : null;
+    if (idFromData != null && idFromData.isNotEmpty) return idFromData;
+    return modelName ?? 'unknown';
   }
 }

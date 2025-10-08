@@ -51,26 +51,15 @@ class LLMService {
     final normalizedMessages = _normalizeMessages(messages);
     final mode = chatMode ?? ChatMode.chat;
 
-    final quotaUsage = await _reserveQuota(
-      model: selectedModel,
+    // Call backend Mode API - server enforces credits and refunds on failure
+    return await _modeApi.chat(
       mode: mode,
+      messages: normalizedMessages,
+      model: selectedModel,
+      temperature: temperature,
+      maxTokens: maxTokens,
+      stream: stream,
     );
-
-    try {
-      // Call backend Mode API - it handles search context injection
-      return await _modeApi.chat(
-        mode: mode,
-        messages: normalizedMessages,
-        model: selectedModel,
-        temperature: temperature,
-        maxTokens: maxTokens,
-        stream: stream,
-      );
-    } catch (e) {
-      await _refundQuota(quotaUsage);
-      print('🧠 Mode API failed: $e');
-      rethrow;
-    }
   }
 
   /// Send a streaming chat completion request via Mode API
@@ -99,30 +88,14 @@ class LLMService {
     final normalizedMessages = _normalizeMessages(messages);
     final resolvedMode = chatMode ?? _resolveChatMode(mode);
 
-    final quotaUsage = await _reserveQuota(
+    // Call backend Mode API - server enforces credits and handles refunds
+    yield* _modeApi.chatStream(
+      mode: resolvedMode ?? ChatMode.chat,
+      messages: normalizedMessages,
       model: selectedModel,
-      mode: resolvedMode,
+      temperature: temperature,
+      maxTokens: maxTokens,
     );
-
-    try {
-      // Call backend Mode API - it handles everything
-      yield* _attachQuotaRefund(
-        _modeApi.chatStream(
-          mode: resolvedMode ?? ChatMode.chat,
-          messages: normalizedMessages,
-          model: selectedModel,
-          temperature: temperature,
-          maxTokens: maxTokens,
-        ),
-        quotaUsage,
-      );
-    } catch (e) {
-      await _refundQuota(quotaUsage);
-      yield {
-        'error': 'Mode API streaming failed: $e',
-        'streaming': true,
-      };
-    }
   }
 
   /// Generate embeddings for text (placeholder - implement backend endpoint if needed)

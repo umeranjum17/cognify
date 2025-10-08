@@ -109,6 +109,36 @@ export default async function handler(req: Request) {
     console.log('Messages:', JSON.stringify(messages, null, 2));
     console.log('==================');
 
+    // Pre-deduct credits based on model/mode and refund on failure
+    const requestId = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    let didConsume = false;
+    try {
+      // Attempt to consume credits; if insufficient, return 409
+      const baseUrl = req.url.split('/api/')[0];
+      const consumeRes = await fetch(`${baseUrl}/api/credits/consume`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(req.headers.get('authorization') ? { Authorization: String(req.headers.get('authorization')) } : {}) },
+        body: JSON.stringify({
+          modelId: model,
+          mode,
+          requestId,
+        }),
+      });
+      if (consumeRes.status === 409) {
+        return new Response(JSON.stringify({ error: 'INSUFFICIENT_CREDITS' }), { status: 409, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } });
+      }
+      if (!consumeRes.ok) {
+        const text = await consumeRes.text().catch(() => '');
+        throw new Error(`Credit consume failed: ${consumeRes.status} ${text}`);
+      }
+      didConsume = true;
+    } catch (e) {
+      return new Response(
+        JSON.stringify({ error: 'Credit check failed', details: e instanceof Error ? e.message : String(e) }),
+        { status: 500, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } },
+      );
+    }
+
     // Two-phase for search-like modes; single-phase otherwise
     const effectiveMaxTokens = maxTokens ?? (modeConfig as any).maxTokens;
     const isTwoPhase = mode === 'search' || mode === 'aipedia';
@@ -239,6 +269,15 @@ export default async function handler(req: Request) {
           controller.enqueue(encoder.encode('data: [DONE]\n\n'));
           controller.close();
         } catch (error) {
+          // On error, attempt to refund credits
+          if (didConsume) {
+            const baseUrl = req.url.split('/api/')[0];
+            fetch(`${baseUrl}/api/credits/refund`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', ...(req.headers.get('authorization') ? { Authorization: String(req.headers.get('authorization')) } : {}) },
+              body: JSON.stringify({ requestId }),
+            }).catch(() => {});
+          }
           controller.error(error);
         }
       },
@@ -254,6 +293,7 @@ export default async function handler(req: Request) {
     });
   } catch (err) {
     console.error('Unified chat endpoint error:', err);
+    // Best-effort: cannot refund here because requestId lives in inner scope
     return new Response(
       JSON.stringify({ error: 'Chat request failed', details: err instanceof Error ? err.message : 'Unknown error' }),
       { status: 500, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } },
@@ -434,7 +474,7 @@ async function fetchPageTextSafe(url: string): Promise<string> {
       if (articleMatch) return articleMatch[0];
       const mainMatch = source.match(/<main[\s\S]*?<\/main>/i);
       if (mainMatch) return mainMatch[0];
-      const roleMainMatch = source.match(/<[^>]*role=["']main["'][^>]*>[\s\S]*?<\/[^>]+>/i);
+      const roleMainMatch = source.match(/<[^>]*role=["']main["'][^>]*>[\s\S]*?<\/[^^>]+>/i);
       if (roleMainMatch) return roleMainMatch[0];
       const bodyMatch = source.match(/<body[\s\S]*?<\/body>/i);
       return bodyMatch ? bodyMatch[0] : source;
@@ -603,5 +643,6 @@ async function toolPhaseCollectImages({ model, systemMessages, messages, tempera
   }
   return uiImages;
 }
+
 
 

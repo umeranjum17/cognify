@@ -45,37 +45,57 @@ export default async function handler(req: Request) {
     let calculatedMetadata: any = {};
 
     if (body?.modelId) {
-      // New flow: calculate units based on model and mode
-      const estimateResponse = await fetch(`${req.url.split('/api/')[0]}/api/usage/estimate`, {
-        method: 'POST',
+      // New flow: calculate units based on model and mode using /api/config/models
+      const baseUrl = req.url.split('/api/')[0];
+      const modelsResponse = await fetch(`${baseUrl}/api/config/models`, {
+        method: 'GET',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: body.modelId,
-          mode: body.mode || 'chat',
-          inputTokens: body.inputTokens,
-          outputTokens: body.outputTokens,
-        }),
       });
 
-      if (!estimateResponse.ok) {
-        throw new Error('Failed to estimate usage');
+      if (!modelsResponse.ok) {
+        throw new Error('Failed to load model pricing');
       }
 
-      const estimateData = await estimateResponse.json();
-      if (!estimateData.success) {
-        throw new Error(estimateData.error || 'Estimation failed');
-      }
+      const modelsData = await modelsResponse.json();
+      const mode = String(body.mode || 'chat');
+      const modelId = String(body.modelId);
+      const qp = modelsData?.data?.quotaPricing;
+      const sample = qp?.perRequestSample?.[mode]?.[modelId];
 
-      amount = estimateData.data.requestUnits;
-      calculatedMetadata = {
-        modelId: body.modelId,
-        mode: body.mode || 'chat',
-        dollarCost: estimateData.data.dollarCost,
-        inputTokens: estimateData.data.inputTokens,
-        outputTokens: estimateData.data.outputTokens,
-        conversationId: body.conversationId,
-        calculatedByBackend: true,
-      };
+      // Prefer precomputed per-request sample; else derive from pricing
+      if (sample && typeof sample.requestUnits === 'number') {
+        amount = Number(sample.requestUnits) || 0;
+        calculatedMetadata = {
+          modelId,
+          mode,
+          dollarCost: sample.dollarCost ?? null,
+          inputTokens: sample.inputTokens ?? null,
+          outputTokens: sample.outputTokens ?? null,
+          conversationId: body.conversationId,
+          calculatedByBackend: true,
+          method: 'models-config-sample',
+        };
+      } else {
+        const pricing = modelsData?.data?.pricing?.[modelId];
+        const dollarsPerUnit = qp?.dollarsPerRequestUnit ?? 0.01;
+        const inputPricePer1M = Number(pricing?.input || 0);
+        const outputPricePer1M = Number(pricing?.output || 0);
+        const inTokens = Number(body.inputTokens ?? 900);
+        const outTokens = Number(body.outputTokens ?? 1100);
+        const dollarCost = (inTokens / 1_000_000) * inputPricePer1M + (outTokens / 1_000_000) * outputPricePer1M;
+        const units = dollarCost > 0 ? Math.max(1, Math.ceil(dollarCost / dollarsPerUnit)) : 0;
+        amount = units;
+        calculatedMetadata = {
+          modelId,
+          mode,
+          dollarCost,
+          inputTokens: inTokens,
+          outputTokens: outTokens,
+          conversationId: body.conversationId,
+          calculatedByBackend: true,
+          method: 'models-config-derived',
+        };
+      }
     } else {
       // Legacy flow: use provided amount
       amount = Math.max(0, Number(body?.amount ?? 0));

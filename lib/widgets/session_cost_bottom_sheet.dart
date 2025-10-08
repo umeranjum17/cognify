@@ -24,6 +24,7 @@ class SessionCostBottomSheet extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         child: StreamBuilder<SessionCostData>(
           stream: sessionCostService.costUpdates,
+          initialData: sessionCostService.currentData,
           builder: (context, snapshot) {
             if (!snapshot.hasData) {
               return Center(

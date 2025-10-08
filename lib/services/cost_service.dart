@@ -13,60 +13,7 @@ class CostService {
   static DateTime? _cacheTimestamp;
   static const Duration cacheExpiry = Duration(hours: 1);
 
-  /// Calculate accurate costs using generation IDs from OpenRouter API
-  /// NOW USES BACKEND API - all calculation logic moved to /api/usage/calculate
-  static Future<Map<String, dynamic>> calculateAccurateCosts(List<Map<String, dynamic>>? generationIds) async {
-    if (generationIds == null || generationIds.isEmpty) {
-      return {
-        'totalCost': 0.0,
-        'breakdown': <String, dynamic>{},
-        'hasAccurateCosts': false,
-        'error': 'No generation IDs provided',
-      };
-    }
-
-    try {
-      print('💰 Calculating accurate costs for ${generationIds.length} generation IDs via backend');
-
-      final response = await http.post(
-        Uri.parse('$baseUrl/api/usage/calculate'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'generationIds': generationIds}),
-      );
-
-      if (response.statusCode == 200) {
-        final result = jsonDecode(response.body);
-        if (result['success'] == true) {
-          final data = result['data'];
-          print('✅ Accurate costs calculated: \$${data['totalCost'].toStringAsFixed(6)}');
-          return {
-            'totalCost': (data['totalCost'] as num).toDouble(),
-            'breakdown': data['breakdown'] ?? {},
-            'hasAccurateCosts': data['hasAccurateCosts'] ?? true,
-            'successfulFetches': data['successfulFetches'] ?? 0,
-            'failedFetches': data['failedFetches'] ?? 0,
-            'accuracy': data['accuracy'] ?? 0.0,
-          };
-        }
-      }
-
-      print('❌ Backend cost calculation failed: HTTP ${response.statusCode}');
-      return {
-        'totalCost': 0.0,
-        'breakdown': <String, dynamic>{},
-        'hasAccurateCosts': false,
-        'error': 'Backend request failed',
-      };
-    } catch (e) {
-      print('❌ Error calculating accurate costs via backend: $e');
-      return {
-        'totalCost': 0.0,
-        'breakdown': <String, dynamic>{},
-        'hasAccurateCosts': false,
-        'error': e.toString(),
-      };
-    }
-  }
+  // Removed calculateAccurateCosts: server-side consumption enforces credits; UI shows deltas only
 
   /// Calculate cost for given token usage
   static double calculateCost({

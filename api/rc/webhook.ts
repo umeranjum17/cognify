@@ -37,6 +37,23 @@ async function loadSubscriptionsConfig(db: FirebaseFirestore.Firestore): Promise
   }
 }
 
+// Load mapping for consumable products → credit units to grant
+async function loadConsumablesConfig(db: FirebaseFirestore.Firestore): Promise<{
+  productCredits: Record<string, number>;
+}> {
+  try {
+    const snap = await db.collection('config').doc('consumables').get();
+    if (!snap.exists) {
+      return { productCredits: {} };
+    }
+    const data = (snap.data() || {}) as any;
+    const productCredits = (data.productCredits || {}) as Record<string, number>;
+    return { productCredits };
+  } catch {
+    return { productCredits: {} };
+  }
+}
+
 // Resolve internal tier from a product ID using explicit mapping first, then a safe heuristic
 function getTierFromProductId(productId: string, productTiers: Record<string, string>): string {
   const mapped = productTiers[productId];
@@ -156,7 +173,7 @@ export default async function handler(req: Request) {
         });
 
         return { duplicated: false, action: 'subscription_activated', tier, allowance: monthlyAllowance };
-      } 
+      }
       else if (type.includes('CANCELLATION')) {
         // Subscription cancelled - mark as cancelled but keep access until period ends
         const currentSub = await tx.get(subscriptionRef);
@@ -298,6 +315,58 @@ export default async function handler(req: Request) {
           environment,
         });
         return { duplicated: false, action: 'product_changed' };
+      }
+      // Handle consumable (non-subscription) purchases → grant credits
+      else if (
+        type.includes('NON_RENEWING_PURCHASE') ||
+        type.includes('NON_SUBSCRIPTION') ||
+        // Fallback: treat unknown purchase types with configured mapping as consumable
+        true
+      ) {
+        // Load consumables config (product → credit units)
+        const { productCredits } = await loadConsumablesConfig(db);
+        const unitsToGrant = Number(productCredits[productId] ?? 0);
+        if (!unitsToGrant) {
+          // If not mapped, just log the event without granting
+          tx.set(idempotencyRef, {
+            handledAt: now,
+            appUserId,
+            type,
+            action: 'consumable_unmapped',
+            productId,
+            environment,
+          });
+          return { duplicated: false, action: 'consumable_unmapped' };
+        }
+
+        const balanceRef = db.collection('users').doc(appUserId).collection('credits').doc('balance');
+        const balSnap = await tx.get(balanceRef);
+        const balData = balSnap.exists ? balSnap.data() as any : { balance: 0 };
+        const current = Number(balData.balance ?? 0);
+        const newBalance = current + unitsToGrant;
+
+        tx.set(balanceRef, {
+          balance: newBalance,
+          updatedAt: now,
+          plan: balData.plan ?? { tier: 'free', allowance: 0 },
+          nextReset: balData.nextReset ?? null,
+          lastGrant: {
+            productId,
+            units: unitsToGrant,
+          },
+        }, { merge: true });
+
+        tx.set(idempotencyRef, {
+          handledAt: now,
+          appUserId,
+          type,
+          action: 'credits_granted',
+          productId,
+          units: unitsToGrant,
+          environment,
+        });
+
+        return { duplicated: false, action: 'credits_granted', units: unitsToGrant };
       }
       else {
         // Unknown event - just log it

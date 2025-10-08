@@ -1,4 +1,4 @@
-import { MODE_CONFIGS, CACHE_CONFIG } from '../../shared/config-data.js';
+import { MODE_CONFIGS, CACHE_CONFIG } from '../shared/config-data';
 
 export const config = {
   runtime: 'edge',
@@ -52,3 +52,5 @@ export default function handler(req: Request) {
     },
   });
 }
+
+

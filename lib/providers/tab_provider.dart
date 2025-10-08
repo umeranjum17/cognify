@@ -134,28 +134,9 @@ class TabProvider extends ChangeNotifier {
   Future<void> initializeWithFirstTab() async {
     if (!isEmpty) return;
 
-    try {
-      final conversations = await _conversationService.loadConversations();
-      if (conversations.isNotEmpty) {
-        // Prefer the most recently updated conversation
-        conversations.sort((a, b) {
-          final aTime = DateTime.tryParse(a['updatedAt'] ?? a['createdAt'] ?? '')?.millisecondsSinceEpoch ?? 0;
-          final bTime = DateTime.tryParse(b['updatedAt'] ?? b['createdAt'] ?? '')?.millisecondsSinceEpoch ?? 0;
-          return bTime.compareTo(aTime);
-        });
-
-        final recent = conversations.first;
-        final recentId = recent['id'] as String?;
-        if (recentId != null && recentId.isNotEmpty) {
-          await loadConversationInTab(recentId);
-          return;
-        }
-      }
-    } catch (_) {
-      // Fallback to new tab below
-    }
-
-    // Fallback when no conversations exist or on error
+    // Always start with a fresh blank tab on first load. We intentionally
+    // avoid auto-opening the most recent conversation to prevent previously
+    // saved messages from reappearing after app restarts.
     createNewTab();
   }
 }

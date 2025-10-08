@@ -1,21 +1,14 @@
-import 'dart:convert';
-import 'package:dio/dio.dart';
-
-import '../config/app_config.dart';
 import '../models/mode_config.dart';
+import './mode_api_service.dart';
 
 /// Estimates how many subscription request units a model invocation consumes.
-/// NOW USES BACKEND API - all calculation logic moved to /api/usage/estimate
+/// Uses cached config data from /api/config/models instead of separate API call
 class RequestUsageEstimator {
   RequestUsageEstimator._();
 
-  static final Dio _dio = Dio(BaseOptions(
-    baseUrl: AppConfig.backendBaseUrl,
-    connectTimeout: AppConfig.connectTimeout,
-    receiveTimeout: AppConfig.receiveTimeout,
-  ));
+  static final ModeApiService _modeApi = ModeApiService.instance;
 
-  /// Estimate request usage for a model - BACKEND API VERSION
+  /// Estimate request usage for a model - uses cached config data
   static Future<RequestUsageEstimate> estimate({
     required String modelId,
     ChatMode? mode,
@@ -24,33 +17,77 @@ class RequestUsageEstimator {
     Map<String, dynamic>? pricing, // Deprecated, kept for backwards compatibility
   }) async {
     try {
+      // Load config (uses cache if available)
+      final config = await _modeApi.loadModelsConfig();
+      if (config == null) {
+        return const RequestUsageEstimate.free();
+      }
+
       final modeStr = mode?.toString().split('.').last ?? 'chat';
 
-      final response = await _dio.post(
-        '/api/usage/estimate',
-        data: jsonEncode({
-          'model': modelId,
-          'mode': modeStr,
-          if (inputTokens != null) 'inputTokens': inputTokens,
-          if (outputTokens != null) 'outputTokens': outputTokens,
-        }),
-        options: Options(headers: {'Content-Type': 'application/json'}),
-      );
+      // Get pre-calculated estimate for chat mode
+      final quotaPricing = config['quotaPricing'] as Map<String, dynamic>?;
+      final perRequestSample = quotaPricing?['perRequestSample'] as Map<String, dynamic>?;
+      final chatEstimates = perRequestSample?[modeStr] as Map<String, dynamic>?;
+      final modelEstimate = chatEstimates?[modelId] as Map<String, dynamic>?;
 
-      if (response.statusCode == 200 && response.data['success'] == true) {
-        final data = response.data['data'];
+      if (modelEstimate != null) {
         return RequestUsageEstimate(
-          requestUnits: data['requestUnits'] ?? 0,
-          dollarCost: (data['dollarCost'] ?? 0.0).toDouble(),
-          inputTokens: data['inputTokens'] ?? 0,
-          outputTokens: data['outputTokens'] ?? 0,
+          requestUnits: modelEstimate['requestUnits'] ?? 0,
+          dollarCost: (modelEstimate['dollarCost'] ?? 0.0).toDouble(),
+          inputTokens: modelEstimate['inputTokens'] ?? 0,
+          outputTokens: modelEstimate['outputTokens'] ?? 0,
         );
-      } else {
-        throw Exception('Backend returned error: ${response.data['error']}');
       }
+
+      // Fallback: calculate manually from pricing if estimate not available
+      final pricingMap = config['pricing'] as Map<String, dynamic>?;
+      final modelPricing = pricingMap?[modelId] as Map<String, dynamic>?;
+
+      if (modelPricing != null) {
+        final inputPrice = (modelPricing['input'] ?? 0.0) as double;
+        final outputPrice = (modelPricing['output'] ?? 0.0) as double;
+
+        if (inputPrice == 0 && outputPrice == 0) {
+          return const RequestUsageEstimate.free();
+        }
+
+        // Mode multipliers
+        const modeMultipliers = {
+          'chat': 1.0,
+          'search': 1.3,
+          'aipedia': 1.5,
+          'deepsearch': 8.0,
+        };
+
+        final multiplier = modeMultipliers[modeStr] ?? 1.0;
+        const defaultInput = 900;
+        const defaultOutput = 1100;
+
+        final actualInput = ((inputTokens ?? defaultInput) * multiplier).round();
+        final actualOutput = ((outputTokens ?? defaultOutput) * multiplier).round();
+
+        final dollarCost = (actualInput / 1000000) * inputPrice +
+            (actualOutput / 1000000) * outputPrice;
+
+        if (dollarCost <= 0) {
+          return const RequestUsageEstimate.free();
+        }
+
+        final dollarsPerUnit = quotaPricing?['dollarsPerRequestUnit'] ?? 0.01;
+        final requestUnits = (dollarCost / dollarsPerUnit).ceil().clamp(1, 999999);
+
+        return RequestUsageEstimate(
+          requestUnits: requestUnits,
+          dollarCost: dollarCost,
+          inputTokens: actualInput,
+          outputTokens: actualOutput,
+        );
+      }
+
+      return const RequestUsageEstimate.free();
     } catch (e) {
-      print('❌ Failed to estimate usage from backend: $e');
-      // Fallback to free estimate on error
+      print('❌ Failed to estimate usage: $e');
       return const RequestUsageEstimate.free();
     }
   }

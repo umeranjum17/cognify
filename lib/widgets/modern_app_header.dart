@@ -30,34 +30,21 @@ class HeaderActionButton extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: isActive
-            ? (isDark ? AppColors.darkPrimary.withValues(alpha: 0.2) : AppColors.lightPrimary.withValues(alpha: 0.1))
-            : (isDark ? AppColors.darkCard.withValues(alpha: 0.8) : AppColors.lightCard.withValues(alpha: 0.8)),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isActive
-              ? (isDark ? AppColors.darkPrimary.withValues(alpha: 0.4) : AppColors.lightPrimary.withValues(alpha: 0.3))
-              : (isDark ? AppColors.darkBorder.withValues(alpha: 0.3) : AppColors.lightBorder.withValues(alpha: 0.2)),
-        ),
+    return IconButton(
+      icon: Icon(
+        icon,
+        color: color ?? (isActive
+            ? (isDark ? AppColors.darkAccent : AppColors.lightPrimary)
+            : (isDark ? AppColors.darkText : theme.textTheme.titleLarge?.color)),
+        size: 20,
       ),
-      child: IconButton(
-        icon: Icon(
-          icon,
-          color: color ?? (isActive 
-              ? (isDark ? AppColors.darkPrimary : AppColors.lightPrimary)
-              : theme.textTheme.titleLarge?.color),
-          size: 20,
-        ),
-        onPressed: onPressed,
-        padding: const EdgeInsets.all(8),
-        constraints: const BoxConstraints(
-          minWidth: 40,
-          minHeight: 40,
-        ),
-        tooltip: tooltip,
+      onPressed: onPressed,
+      padding: const EdgeInsets.all(8),
+      constraints: const BoxConstraints(
+        minWidth: 40,
+        minHeight: 40,
       ),
+      tooltip: tooltip,
     );
   }
 }
@@ -107,16 +94,26 @@ class ModernAppHeader extends StatelessWidget implements PreferredSizeWidget {
 
     return Container(
       decoration: BoxDecoration(
+        // Use scaffold background for seamless integration
         color: backgroundColor ?? theme.scaffoldBackgroundColor,
-        boxShadow: elevation > 0 ? [
-          BoxShadow(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.3)
-                : Colors.black.withValues(alpha: 0.08),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+        boxShadow: elevation > 0
+            ? [
+                BoxShadow(
+                  color: isDark
+                      ? Colors.black.withValues(alpha: 0.2)
+                      : Colors.black.withValues(alpha: 0.08),
+                  blurRadius: isDark ? 6 : 10,
+                  offset: const Offset(0, 2),
+                ),
+              ]
+            : null,
+        border: Border(
+          bottom: BorderSide(
+            // Very subtle border for separation
+            color: isDark ? AppColors.darkBorder.withValues(alpha: 0.3) : Colors.transparent,
+            width: isDark ? 0.5 : 0,
           ),
-        ] : null,
+        ),
       ),
       child: SafeArea(
         child: Container(
@@ -131,30 +128,17 @@ class ModernAppHeader extends StatelessWidget implements PreferredSizeWidget {
             children: [
               // Leading section
               if (showBackButton) ...[
-                Container(
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? AppColors.darkCard.withValues(alpha: 0.8)
-                        : AppColors.lightCard.withValues(alpha: 0.8),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: isDark
-                          ? AppColors.darkBorder.withValues(alpha: 0.3)
-                          : AppColors.lightBorder.withValues(alpha: 0.2),
-                    ),
+                IconButton(
+                  icon: Icon(
+                    Icons.arrow_back_ios_new,
+                    color: isDark ? AppColors.darkText : theme.textTheme.titleLarge?.color,
+                    size: 20,
                   ),
-                  child: IconButton(
-                    icon: Icon(
-                      Icons.arrow_back_ios_new,
-                      color: theme.textTheme.titleLarge?.color,
-                      size: 20,
-                    ),
-                    onPressed: () => _handleBackButton(context),
-                    padding: const EdgeInsets.all(8),
-                    constraints: const BoxConstraints(
-                      minWidth: 40,
-                      minHeight: 40,
-                    ),
+                  onPressed: () => _handleBackButton(context),
+                  padding: const EdgeInsets.all(8),
+                  constraints: const BoxConstraints(
+                    minWidth: 40,
+                    minHeight: 40,
                   ),
                 ),
                 SizedBox(width: isMobile ? 8 : 16),
@@ -213,106 +197,67 @@ class ModernAppHeader extends StatelessWidget implements PreferredSizeWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   // Theme toggle with modern styling
-                  Container(
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? AppColors.darkCard.withValues(alpha: 0.8)
-                          : AppColors.lightCard.withValues(alpha: 0.8),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
+                  IconButton(
+                    icon: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 300),
+                      child: Icon(
+                        isDark ? Icons.light_mode : Icons.dark_mode,
+                        key: ValueKey(isDark),
                         color: isDark
-                            ? AppColors.darkBorder.withValues(alpha: 0.3)
-                            : AppColors.lightBorder.withValues(alpha: 0.2),
+                            ? AppColors.darkAccent
+                            : AppColors.lightAccentQuaternary,
+                        size: 20,
                       ),
                     ),
-                    child: IconButton(
-                      icon: AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 300),
-                        child: Icon(
-                          isDark ? Icons.light_mode : Icons.dark_mode,
-                          key: ValueKey(isDark),
-                          color: isDark
-                              ? AppColors.darkAccentQuaternary
-                              : AppColors.lightAccentQuaternary,
-                          size: 20,
-                        ),
-                      ),
-                      onPressed: () => themeProvider.toggleTheme(),
-                      padding: const EdgeInsets.all(8),
-                      constraints: const BoxConstraints(
-                        minWidth: 40,
-                        minHeight: 40,
-                      ),
+                    onPressed: () => themeProvider.toggleTheme(),
+                    padding: const EdgeInsets.all(8),
+                    constraints: const BoxConstraints(
+                      minWidth: 40,
+                      minHeight: 40,
                     ),
                   ),
 
                   // New Chat button (always visible)
                   if (showNewChatButton) ...[
                     SizedBox(width: isMobile ? 6 : 12),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? AppColors.darkCard.withValues(alpha: 0.8)
-                            : AppColors.lightCard.withValues(alpha: 0.8),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: isDark
-                              ? AppColors.darkBorder.withValues(alpha: 0.3)
-                              : AppColors.lightBorder.withValues(alpha: 0.2),
-                        ),
-                      ),
-                      child: IconButton(
-                        icon: Icon(
-                          Icons.add_comment,
-                          color: theme.textTheme.titleLarge?.color,
-                          size: 20,
-                        ),
-                        onPressed: () => GoRouter.of(context).push('/editor'),
-                        padding: const EdgeInsets.all(8),
-                        constraints: const BoxConstraints(
-                          minWidth: 40,
-                          minHeight: 40,
-                        ),
-                        tooltip: 'New Chat',
-                      ),
-                    ),
-                  ],
-
-                  // Unified navigation menu
-                  SizedBox(width: isMobile ? 6 : 12),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? AppColors.darkCard.withValues(alpha: 0.8)
-                          : AppColors.lightCard.withValues(alpha: 0.8),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: isDark
-                            ? AppColors.darkBorder.withValues(alpha: 0.3)
-                            : AppColors.lightBorder.withValues(alpha: 0.2),
-                      ),
-                    ),
-                    child: PopupMenuButton<String>(
+                    IconButton(
                       icon: Icon(
-                        Icons.more_vert,
-                        color: theme.textTheme.titleLarge?.color,
+                        Icons.add_comment,
+                        color: isDark ? AppColors.darkText : theme.textTheme.titleLarge?.color,
                         size: 20,
                       ),
+                      onPressed: () => GoRouter.of(context).push('/editor'),
                       padding: const EdgeInsets.all(8),
                       constraints: const BoxConstraints(
                         minWidth: 40,
                         minHeight: 40,
                       ),
-                      onSelected: (value) => _handleMenuSelection(context, value),
-                      itemBuilder: (context) => _buildMenuItems(context),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      elevation: 8,
-                      shadowColor: isDark ? Colors.black.withValues(alpha: 0.3) : Colors.black.withValues(alpha: 0.1),
-                      color: isDark ? AppColors.darkCard : AppColors.lightCard,
-                      offset: const Offset(0, 8),
+                      tooltip: 'New Chat',
                     ),
+                  ],
+
+                  // Unified navigation menu
+                  SizedBox(width: isMobile ? 6 : 12),
+                  PopupMenuButton<String>(
+                    icon: Icon(
+                      Icons.more_vert,
+                      color: isDark ? AppColors.darkText : theme.textTheme.titleLarge?.color,
+                      size: 20,
+                    ),
+                    padding: const EdgeInsets.all(8),
+                    constraints: const BoxConstraints(
+                      minWidth: 40,
+                      minHeight: 40,
+                    ),
+                    onSelected: (value) => _handleMenuSelection(context, value),
+                    itemBuilder: (context) => _buildMenuItems(context),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    elevation: 8,
+                    shadowColor: isDark ? Colors.black.withValues(alpha: 0.3) : Colors.black.withValues(alpha: 0.1),
+                    color: isDark ? AppColors.darkBackgroundLight : AppColors.lightCard,
+                    offset: const Offset(0, 8),
                   ),
 
                   // Custom actions (deprecated - use menu instead)
@@ -345,13 +290,13 @@ class ModernAppHeader extends StatelessWidget implements PreferredSizeWidget {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: isDark ? AppColors.darkTextSecondary.withValues(alpha: 0.1) : AppColors.lightTextSecondary.withValues(alpha: 0.1),
+                color: isDark ? AppColors.darkAccent.withValues(alpha: 0.15) : AppColors.lightTextSecondary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
                 Icons.history,
                 size: 18,
-                color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                color: isDark ? AppColors.darkAccent : AppColors.lightTextSecondary,
               ),
             ),
             const SizedBox(width: 12),
@@ -374,13 +319,13 @@ class ModernAppHeader extends StatelessWidget implements PreferredSizeWidget {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: isDark ? AppColors.darkTextSecondary.withValues(alpha: 0.1) : AppColors.lightTextSecondary.withValues(alpha: 0.1),
+                color: isDark ? AppColors.darkAccent.withValues(alpha: 0.15) : AppColors.lightTextSecondary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
                 Icons.settings,
                 size: 18,
-                color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                color: isDark ? AppColors.darkAccent : AppColors.lightTextSecondary,
               ),
             ),
             const SizedBox(width: 12),

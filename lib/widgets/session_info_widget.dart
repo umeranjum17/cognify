@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../config/app_config.dart';
+import '../api/api.dart';
 import '../models/mode_config.dart';
 import '../theme/app_theme.dart';
 import '../services/session_cost_service.dart';
+import '../services/request_usage_estimator.dart';
 import '../services/user_service.dart';
 import 'session_cost_bottom_sheet.dart';
 
@@ -48,17 +50,64 @@ class _SessionInfoWidgetState extends State<SessionInfoWidget> {
   Map<String, dynamic>? _creditsData;
   bool _isLoadingCredits = false;
   String? _creditsError;
+  RequestUsageEstimate? _modelEstimate;
 
   @override
   void initState() {
     super.initState();
     _loadCreditsIfNeeded();
+    _estimateCurrentModelIfNeeded();
   }
 
   Future<void> _loadCreditsIfNeeded() async {
-    // Credits fetching is no longer needed
     if (widget.openRouterCredits != null) {
       _creditsData = widget.openRouterCredits;
+      return;
+    }
+
+    setState(() {
+      _isLoadingCredits = true;
+      _creditsError = null;
+    });
+    try {
+      final balance = await API.instance.getCreditsBalance();
+      // Map server shape to local expected shape
+      _creditsData = {
+        'success': true,
+        'credits': {
+          'remaining_credits': balance,
+          // Optional fields used by other widgets
+          'total_credits': balance,
+          'total_usage': 0.0,
+          'fetched_at': DateTime.now().toUtc().toIso8601String(),
+        },
+      };
+    } catch (e) {
+      _creditsError = e.toString();
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingCredits = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _estimateCurrentModelIfNeeded() async {
+    final modelId = widget.modelName;
+    if (modelId == null || modelId.isEmpty) return;
+    try {
+      final estimate = await RequestUsageEstimator.estimate(
+        modelId: modelId,
+        mode: widget.mode,
+      );
+      if (mounted) {
+        setState(() {
+          _modelEstimate = estimate;
+        });
+      }
+    } catch (_) {
+      // Ignore and keep null → UI falls back gracefully
     }
   }
 
@@ -114,10 +163,10 @@ class _SessionInfoWidgetState extends State<SessionInfoWidget> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.message_outlined, size: 12, color: iconColor),
+          Icon(Icons.message_outlined, size: 12, color: iconColor),
                   const SizedBox(width: 4),
                   Text(
-                    quotaText,
+            _buildQuotaAndPriceLabel(quotaText),
                     style: theme.textTheme.bodySmall?.copyWith(
                       fontSize: 9,
                       color: quotaColor,
@@ -130,6 +179,33 @@ class _SessionInfoWidgetState extends State<SessionInfoWidget> {
         ],
       ),
     );
+  }
+
+  String _buildQuotaAndPriceLabel(String quotaText) {
+    // If we have an estimate, show the price per request
+    if (_modelEstimate != null && !_modelEstimate!.isFree) {
+      final units = _modelEstimate!.requestUnits;
+      final price = _modelEstimate!.dollarCost;
+      final priceStr = price < 0.01
+          ? '<\$0.01'
+          : '\$${price.toStringAsFixed(2)}';
+
+      // Extract just the number from quotaText for cleaner display
+      final remaining = widget.remainingRequests;
+      if (remaining != null) {
+        final count = _formatCount(remaining);
+        return '$count left · $priceStr/req · ${units}u';
+      }
+      return '$quotaText · $priceStr/req · ${units}u';
+    }
+    if (_modelEstimate != null && _modelEstimate!.isFree) {
+      final remaining = widget.remainingRequests;
+      if (remaining != null) {
+        return '${_formatCount(remaining)} left · Free';
+      }
+      return '$quotaText · Free';
+    }
+    return quotaText;
   }
 
   Widget _buildCreditsDisplay(ThemeData theme) {
@@ -159,6 +235,18 @@ class _SessionInfoWidgetState extends State<SessionInfoWidget> {
     if (_creditsError != null ||
         _creditsData == null ||
         _creditsData!['success'] != true) {
+      // Show request count instead when credits are unavailable
+      final remaining = widget.remainingRequests;
+      if (remaining != null && remaining > 0) {
+        return Text(
+          '${_formatCount(remaining)} request${remaining == 1 ? '' : 's'} left',
+          style: theme.textTheme.bodySmall?.copyWith(
+            fontSize: 10,
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+            fontWeight: FontWeight.w500,
+          ),
+        );
+      }
       return Text(
         'Credits unavailable',
         style: theme.textTheme.bodySmall?.copyWith(

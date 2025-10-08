@@ -3861,7 +3861,7 @@ class _EditorScreenState extends State<EditorScreen> {
                 costBreakdown: costBreakdown,
               );
 
-              // Update the message in the list
+            // Update the message in the list
               setState(() {
                 _messages[index] = updatedMessage;
                 // Clear milestone state when complete
@@ -3896,12 +3896,12 @@ class _EditorScreenState extends State<EditorScreen> {
 
             // Update costs and LLM info
             setState(() {
-              // Don't manually update costs - let SessionCostService handle it
-              // The SessionCostService will emit updates through the stream
-              // if (finalCost != null) {
-              //   _lastOperationCost = finalCost;
-              //   _sessionCost += finalCost;
-              // }
+              // Emit cost delta via SessionCostService so widgets update immediately
+              if (finalCost != null && finalCost > 0) {
+                SessionCostService().updateCosts(
+                  lastMessageCostDelta: finalCost,
+                );
+              }
 
               // Update LLM and model info
               _lastUsedLLM = event.llmUsed;

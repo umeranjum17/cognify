@@ -2,8 +2,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../models/mode_config.dart';
 import '../services/llm_service.dart';
+import '../providers/usage_quota_provider.dart';
+import 'package:provider/provider.dart';
 import '../services/model_service.dart';
-import '../services/request_usage_estimator.dart';
 import '../theme/app_theme.dart';
 
 class ModelQuickSwitcher extends StatefulWidget {
@@ -102,10 +103,16 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
     for (final model in models) {
       final provider = _normalizeProvider(model);
       final pricing = model['pricing'] as Map<String, dynamic>?;
+      // Treat as free only if backend marked isFree OR pricing explicitly exists and both input/output are 0
+      final bool explicitZeroPricing = pricing != null &&
+          pricing.containsKey('input') &&
+          pricing.containsKey('output') &&
+          ((pricing['input'] ?? 0.0) == 0.0) &&
+          ((pricing['output'] ?? 0.0) == 0.0);
       final isFree =
           model['isFree'] == true ||
           (model['id']?.toString().endsWith(':free') ?? false) ||
-          pricing == null || pricing.isEmpty;
+          explicitZeroPricing;
       if (isFree) {
         _freeModels.add(model);
       } else {
@@ -180,8 +187,8 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
   }
 
   String _getPriceDisplay(Map<String, dynamic>? pricing) {
-    // Pricing display simplified - backend calculates actual costs
-    if (pricing == null) return 'Free';
+    // Display Free only when pricing explicitly exists with zero values
+    if (pricing == null || pricing.isEmpty) return 'Paid';
     final inputPrice = (pricing['input'] ?? 0.0) as double;
     final outputPrice = (pricing['output'] ?? 0.0) as double;
     if (inputPrice == 0 && outputPrice == 0) return 'Free';
@@ -224,6 +231,9 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    // Quota provider to determine affordability
+    final quotaProvider = context.read<UsageQuotaProvider?>();
+    final remaining = quotaProvider?.quota?.remaining;
     return Container(
       height: MediaQuery.of(context).size.height * 0.85,
       decoration: BoxDecoration(
@@ -547,15 +557,30 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
     final modalities = _getModalities(model);
     final pricing = model['pricing'] as Map<String, dynamic>?;
     final contextLength = model['contextLength'] ?? model['context_length'];
+
+    // Get pre-calculated request estimate from model data
+    final requestEstimate = model['requestEstimate'] as Map<String, dynamic>?;
+    final int requestUnits = requestEstimate?['requestUnits'] ?? 0;
+    final double dollarCost = (requestEstimate?['dollarCost'] ?? 0.0).toDouble();
+
     // Simplified pricing check - backend handles detailed calculations
+    final bool explicitZeroPricing = pricing != null &&
+        pricing.containsKey('input') &&
+        pricing.containsKey('output') &&
+        ((pricing['input'] ?? 0.0) == 0.0) &&
+        ((pricing['output'] ?? 0.0) == 0.0);
     final isFree =
         model['isFree'] == true ||
         (modelId is String && modelId.endsWith(':free')) ||
-        (pricing != null && (pricing['input'] ?? 0.0) == 0.0 && (pricing['output'] ?? 0.0) == 0.0);
-    final priceLabel = isFree ? 'Free' : 'Paid';
+        explicitZeroPricing ||
+        requestUnits == 0;
+
+    // Check if user can afford this model
+    final bool isAffordable = requestUnits == 0 ||
+        (context.read<UsageQuotaProvider?>()?.quota?.remaining ?? 0) >= requestUnits;
 
     return GestureDetector(
-      onTap: () => _selectModel(modelId),
+      onTap: isAffordable ? () => _selectModel(modelId) : null,
       child: Stack(
         children: [
           Container(
@@ -570,6 +595,13 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
                         ? AppColors.darkBackground.withValues(alpha: 0.3)
                         : AppColors.lightBackground.withValues(alpha: 0.3)),
               borderRadius: BorderRadius.circular(8),
+              // Visually indicate disabled/locked models
+              border: !isAffordable
+                  ? Border.all(
+                      color: isDark ? Colors.redAccent.withValues(alpha: 0.6) : Colors.redAccent.withValues(alpha: 0.5),
+                      width: 1.0,
+                    )
+                  : null,
             ),
             child: Row(
               children: [
@@ -726,20 +758,34 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
                       width: 0.5,
                     ),
                   ),
-                  child: Text(
-                    priceLabel,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      color: isFree
-                          ? (isDark
-                                ? AppColors.darkSuccess
-                                : AppColors.lightSuccess)
-                          : (isDark
-                                ? AppColors.darkAccent
-                                : AppColors.lightAccent),
-                    ),
-                    textAlign: TextAlign.center,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        isFree
+                            ? 'Free'
+                            : '${requestUnits}u',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: isFree
+                              ? (isDark
+                                    ? AppColors.darkSuccess
+                                    : AppColors.lightSuccess)
+                              : (isDark
+                                    ? AppColors.darkAccent
+                                    : AppColors.lightAccent),
+                        ),
+                      ),
+                      if (!isAffordable) ...[
+                        const SizedBox(width: 6),
+                        Icon(
+                          Icons.lock_outline,
+                          size: 12,
+                          color: isDark ? Colors.redAccent.withValues(alpha: 1.0) : Colors.redAccent.withValues(alpha: 0.9),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
               ],
@@ -758,6 +804,17 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: const Icon(Icons.check, color: Colors.white, size: 8),
+              ),
+            ),
+
+          // If not affordable, overlay a faint scrim
+          if (!isAffordable)
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: (isDark ? Colors.black : Colors.grey).withValues(alpha: isDark ? 0.4 : 0.3),
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
             ),
         ],

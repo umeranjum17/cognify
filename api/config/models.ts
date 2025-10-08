@@ -1,7 +1,8 @@
 import {
   MODEL_DEFAULTS,
   CACHE_CONFIG,
-} from '../../shared/config-data.js';
+  QUOTA_CONFIG,
+} from '../shared/config-data';
 
 export const config = {
   runtime: 'edge',
@@ -58,10 +59,13 @@ export default async function handler(req: Request) {
       throw new Error(`OpenRouter API error: ${response.status}`);
     }
 
-    const openRouterData = await response.json();
+    const openRouterData = (await response.json()) as any;
 
     const capabilities: Record<string, any> = {};
     const pricing: Record<string, { input: number; output: number }> = {};
+    // Derived pricing helpers
+    const perModelSampleCosts: Record<string, { per1kTokensDollarCost: number; per1kTokensRequestUnits: number }> = {};
+    const perRequestSampleChat: Record<string, { requestUnits: number; dollarCost: number; inputTokens: number; outputTokens: number }> = {};
     const availableModels: string[] = [];
 
     if (openRouterData.data && Array.isArray(openRouterData.data)) {
@@ -93,6 +97,29 @@ export default async function handler(req: Request) {
           supportsFiles: false,
           isMultimodal: model.architecture?.modality?.includes('image') || false,
         };
+        // Derived helpers
+        const p = pricing[model.id];
+        if (p) {
+          const dollarsPerRequestUnit = QUOTA_CONFIG.dollarsPerRequestUnit;
+          const costPer1k = (1000 / 1_000_000) * (p.input + p.output);
+          const unitsPer1k = costPer1k > 0 ? Math.max(1, Math.ceil(costPer1k / dollarsPerRequestUnit)) : 0;
+          perModelSampleCosts[model.id] = {
+            per1kTokensDollarCost: costPer1k,
+            per1kTokensRequestUnits: unitsPer1k,
+          };
+
+          // Default chat estimate (900 in / 1100 out)
+          const inT = 900;
+          const outT = 1100;
+          const chatDollar = (inT / 1_000_000) * p.input + (outT / 1_000_000) * p.output;
+          const chatUnits = chatDollar > 0 ? Math.max(1, Math.ceil(chatDollar / dollarsPerRequestUnit)) : 0;
+          perRequestSampleChat[model.id] = {
+            requestUnits: chatUnits,
+            dollarCost: chatDollar,
+            inputTokens: inT,
+            outputTokens: outT,
+          };
+        }
       }
     }
 
@@ -104,6 +131,13 @@ export default async function handler(req: Request) {
         capabilities,
         available: availableModels,
         pricing,
+        quotaPricing: {
+          dollarsPerRequestUnit: QUOTA_CONFIG.dollarsPerRequestUnit,
+          perModelSampleCosts,
+          perRequestSample: {
+            chat: perRequestSampleChat,
+          },
+        },
       },
       cached_until: Date.now() + CACHE_CONFIG.modelsCacheDuration * 1000,
       version: '1.0.0',
@@ -136,3 +170,5 @@ export default async function handler(req: Request) {
     );
   }
 }
+
+
