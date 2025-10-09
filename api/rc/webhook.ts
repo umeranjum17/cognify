@@ -1,6 +1,6 @@
-import { getAdminDb } from '../shared/firebase-admin';
+import { getAdminDb } from '../shared/firebase-admin.js';
 
-export const config = { runtime: 'nodejs18.x' };
+export const config = { runtime: 'nodejs' };
 
 // Default tier allowances used if no remote config is present
 const DEFAULT_TIER_ALLOWANCES: Record<string, number> = {

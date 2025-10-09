@@ -1,4 +1,5 @@
 import { MODE_CONFIGS, CACHE_CONFIG } from '../shared/config-data';
+import { verifyAuthForEdge, createUnauthorizedResponse } from '../shared/auth-helpers';
 
 export const config = {
   runtime: 'edge',
@@ -9,6 +10,8 @@ export const config = {
  *
  * Returns chat mode configurations (chat, search, aipedia, deepsearch).
  * Used by ModeConfigManager for mode selection and model assignment.
+ * 
+ * SECURITY: Requires authentication to prevent exposing business logic.
  *
  * Response format:
  * {
@@ -25,15 +28,24 @@ export const config = {
  *   }
  * }
  */
-export default function handler(req: Request) {
+export default async function handler(req: Request) {
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   } as const;
 
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 204, headers: corsHeaders });
+  }
+
+  // ============================================
+  // AUTHENTICATION CHECK
+  // ============================================
+  const auth = await verifyAuthForEdge(req);
+  if (!auth.success) {
+    console.error('Modes config - Authentication failed:', auth.error);
+    return createUnauthorizedResponse(auth.error || 'Unauthorized', corsHeaders);
   }
 
   const response = {

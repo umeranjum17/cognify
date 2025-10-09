@@ -1,0 +1,41 @@
+{
+  "name": "cognify-backend",
+  "version": "1.0.0",
+  "description": "Cognify Express Backend Server",
+  "type": "module",
+  "main": "dist/server.js",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "test": "node --test",
+    "test:api": "node tests/api-security.test.js"
+  },
+  "dependencies": {
+    "@ai-sdk/openai": "^2.0.42",
+    "@openrouter/ai-sdk-provider": "^1.2.0",
+    "@langchain/core": "^0.3.9",
+    "@langchain/openai": "^0.3.13",
+    "ai": "^5.0.60",
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "firebase-admin": "^12.7.0",
+    "zod": "^3.25.76",
+    "zod-to-json-schema": "^3.24.6",
+    "helmet": "^7.1.0",
+    "morgan": "^1.10.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/express": "^4.17.21",
+    "@types/cors": "^2.8.17",
+    "@types/morgan": "^1.9.9",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
+

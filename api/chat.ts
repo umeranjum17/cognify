@@ -1,6 +1,7 @@
 import { streamText, tool } from 'ai';
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { z } from 'zod';
+import { verifyAuthForEdge, createUnauthorizedResponse } from './shared/auth-helpers';
 // Manual SSE streaming to OpenRouter to guarantee streaming regardless of SDK helpers
 
 export const config = { runtime: 'edge' };
@@ -44,6 +45,18 @@ export default async function handler(req: Request) {
       { status: 405, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } },
     );
   }
+
+  // ============================================
+  // AUTHENTICATION CHECK - MUST HAPPEN FIRST
+  // ============================================
+  const auth = await verifyAuthForEdge(req);
+  if (!auth.success) {
+    console.error('Authentication failed:', auth.error);
+    return createUnauthorizedResponse(auth.error || 'Unauthorized', CORS_HEADERS);
+  }
+  
+  // User is authenticated, uid available as: auth.uid
+  console.log(`Authenticated request from user: ${auth.uid}`);
 
   try {
     if (!process.env.OPENROUTER_API_KEY) {
@@ -124,15 +137,26 @@ export default async function handler(req: Request) {
           requestId,
         }),
       });
+      
+      // Handle insufficient credits
       if (consumeRes.status === 409) {
         return new Response(JSON.stringify({ error: 'INSUFFICIENT_CREDITS' }), { status: 409, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } });
       }
+      
+      // Handle authentication errors (should not happen since we verified above, but just in case)
+      if (consumeRes.status === 401) {
+        return createUnauthorizedResponse('Authentication failed during credit check', CORS_HEADERS);
+      }
+      
+      // Handle other errors
       if (!consumeRes.ok) {
         const text = await consumeRes.text().catch(() => '');
         throw new Error(`Credit consume failed: ${consumeRes.status} ${text}`);
       }
+      
       didConsume = true;
     } catch (e) {
+      console.error('Credit consumption error:', e);
       return new Response(
         JSON.stringify({ error: 'Credit check failed', details: e instanceof Error ? e.message : String(e) }),
         { status: 500, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } },

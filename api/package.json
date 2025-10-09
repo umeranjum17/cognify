@@ -7,7 +7,8 @@
   "scripts": {
     "vercel:dev": "vercel dev --listen 3000",
     "start": "node -e \"console.log('Edge handlers served via Vercel dev');\"",
-    "build": "echo edge"
+    "build": "echo edge",
+    "test:api-security": "node test/api-security.test.js"
   },
   "dependencies": {
     "@ai-sdk/openai": "^2.0.42",

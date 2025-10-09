@@ -5,6 +5,7 @@ import {
   TIMEOUT_CONFIG,
   CACHE_CONFIG,
 } from '../shared/config-data';
+import { verifyAuthForEdge, createUnauthorizedResponse } from '../shared/auth-helpers';
 
 export const config = {
   runtime: 'edge',
@@ -15,6 +16,9 @@ export const config = {
  *
  * Returns app-level configuration including feature flags, quotas, and version info.
  * Used by AppConfig for dynamic feature management.
+ * 
+ * SECURITY: Requires authentication to prevent exposing business logic to competitors.
+ * If you need public config for pre-authentication screens, create a separate endpoint.
  *
  * Response format:
  * {
@@ -27,15 +31,24 @@ export const config = {
  *   }
  * }
  */
-export default function handler(req: Request) {
+export default async function handler(req: Request) {
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   } as const;
 
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 204, headers: corsHeaders });
+  }
+
+  // ============================================
+  // AUTHENTICATION CHECK
+  // ============================================
+  const auth = await verifyAuthForEdge(req);
+  if (!auth.success) {
+    console.error('App config - Authentication failed:', auth.error);
+    return createUnauthorizedResponse(auth.error || 'Unauthorized', corsHeaders);
   }
 
   const response = {

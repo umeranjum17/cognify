@@ -1,4 +1,5 @@
 import { CACHE_CONFIG } from '../shared/config-data';
+import { verifyAuthForEdge, createUnauthorizedResponse } from '../shared/auth-helpers';
 
 export const config = {
   runtime: 'edge',
@@ -10,6 +11,8 @@ export const config = {
  * Returns model pricing information (per 1 million tokens).
  * Fetches real-time pricing from OpenRouter API.
  * Used by CostService to calculate request costs.
+ * 
+ * SECURITY: Requires authentication to prevent exposing competitive pricing information.
  *
  * Response format:
  * {
@@ -25,11 +28,20 @@ export default async function handler(req: Request) {
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   } as const;
 
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 204, headers: corsHeaders });
+  }
+
+  // ============================================
+  // AUTHENTICATION CHECK
+  // ============================================
+  const auth = await verifyAuthForEdge(req);
+  if (!auth.success) {
+    console.error('Pricing config - Authentication failed:', auth.error);
+    return createUnauthorizedResponse(auth.error || 'Unauthorized', corsHeaders);
   }
 
   try {

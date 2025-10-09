@@ -1,6 +1,6 @@
-import { getAdminDb, verifyFirebaseIdToken } from '../shared/firebase-admin';
+import { getAdminDb, verifyFirebaseIdToken } from '../shared/firebase-admin.js';
 
-export const config = { runtime: 'nodejs18.x' };
+export const config = { runtime: 'nodejs' };
 
 export default async function handler(req: Request) {
   const corsHeaders = {

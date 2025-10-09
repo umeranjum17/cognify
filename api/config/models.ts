@@ -3,6 +3,7 @@ import {
   CACHE_CONFIG,
   QUOTA_CONFIG,
 } from '../shared/config-data';
+import { verifyAuthForEdge, createUnauthorizedResponse } from '../shared/auth-helpers';
 
 export const config = {
   runtime: 'edge',
@@ -14,6 +15,8 @@ export const config = {
  * Returns available models, their capabilities, and default selections.
  * Fetches real-time model data from OpenRouter API.
  * Used by ModelRegistry and ModelService for model selection.
+ * 
+ * SECURITY: Requires authentication to prevent exposing pricing and business logic.
  *
  * Response format:
  * {
@@ -36,13 +39,24 @@ export default async function handler(req: Request) {
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   } as const;
 
   if (req.method === 'OPTIONS') {
     console.log('[MODELS API] Handling OPTIONS request');
     return new Response(null, { status: 204, headers: corsHeaders });
   }
+
+  // ============================================
+  // AUTHENTICATION CHECK
+  // ============================================
+  const auth = await verifyAuthForEdge(req);
+  if (!auth.success) {
+    console.error('[MODELS API] Authentication failed:', auth.error);
+    return createUnauthorizedResponse(auth.error || 'Unauthorized', corsHeaders);
+  }
+  
+  console.log(`[MODELS API] Authenticated request from user: ${auth.uid}`);
 
   try {
     console.log('[MODELS API] Fetching models from OpenRouter...');

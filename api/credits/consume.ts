@@ -1,7 +1,7 @@
-import { getAdminDb, verifyFirebaseIdToken } from '../shared/firebase-admin';
+import { getAdminDb, verifyFirebaseIdToken } from '../shared/firebase-admin.js';
 import { QUOTA_CONFIG } from '../shared/config-data';
 
-export const config = { runtime: 'nodejs18.x' };
+export const config = { runtime: 'nodejs' };
 
 /**
  * Enhanced /api/credits/consume endpoint

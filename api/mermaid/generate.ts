@@ -1,10 +1,20 @@
 /**
  * Mermaid Diagram Generation Endpoint
  * Proxies requests to mermaid.ink API
+ * 
+ * SECURITY: Requires authentication to prevent abuse
  */
+
+import { verifyAuthForEdge, createUnauthorizedResponse } from '../shared/auth-helpers';
 
 export const config = {
   runtime: 'edge',
+};
+
+const CORS_HEADERS: Record<string, string> = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
 
 interface MermaidRequest {
@@ -15,12 +25,27 @@ interface MermaidRequest {
 }
 
 export default async function handler(req: Request) {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { status: 204, headers: CORS_HEADERS });
+  }
+
   if (req.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), {
       status: 405,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
     });
   }
+
+  // ============================================
+  // AUTHENTICATION CHECK - MUST HAPPEN FIRST
+  // ============================================
+  const auth = await verifyAuthForEdge(req);
+  if (!auth.success) {
+    console.error('Mermaid generation - Authentication failed:', auth.error);
+    return createUnauthorizedResponse(auth.error || 'Unauthorized', CORS_HEADERS);
+  }
+  
+  console.log(`Mermaid diagram generation requested by user: ${auth.uid}`);
 
   try {
     const body: MermaidRequest = await req.json();
@@ -31,7 +56,7 @@ export default async function handler(req: Request) {
         JSON.stringify({ error: 'Missing mermaid code' }),
         {
           status: 400,
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
         }
       );
     }
@@ -85,7 +110,7 @@ export default async function handler(req: Request) {
           JSON.stringify({ error: 'Failed to generate diagram' }),
           {
             status: fallbackResponse.status,
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
           }
         );
       }
@@ -114,7 +139,7 @@ export default async function handler(req: Request) {
       JSON.stringify({ error: 'Internal server error' }),
       {
         status: 500,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
       }
     );
   }

@@ -6,6 +6,7 @@ import {
   CACHE_CONFIG,
   MODEL_DEFAULTS,
 } from '../shared/config-data';
+import { verifyAuthForEdge, createUnauthorizedResponse } from '../shared/auth-helpers';
 
 export const config = {
   runtime: 'edge',
@@ -20,17 +21,28 @@ export const config = {
  * - pricing: per 1M tokens pricing for each model
  * - quotaPricing: derived costs in request units and dollar mapping
  *
+ * SECURITY: Requires authentication to prevent exposing business logic and pricing.
+ * 
  * The frontend should consume this and display without extra calculations.
  */
 export default async function handler(req: Request) {
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   } as const;
 
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 204, headers: corsHeaders });
+  }
+
+  // ============================================
+  // AUTHENTICATION CHECK
+  // ============================================
+  const auth = await verifyAuthForEdge(req);
+  if (!auth.success) {
+    console.error('Unified config - Authentication failed:', auth.error);
+    return createUnauthorizedResponse(auth.error || 'Unauthorized', corsHeaders);
   }
 
   try {
