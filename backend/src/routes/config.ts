@@ -12,16 +12,27 @@ import {
 
 export const configRouter = express.Router();
 
+// Simple in-memory cache for OpenRouter models/pricing
+let openRouterModelsCache: { data: any; fetchedAt: number } | null = null;
+async function getOpenRouterModelsCached(): Promise<any> {
+  const now = Date.now();
+  const ttlMs = (CACHE_CONFIG.modelsCacheDuration || 300) * 1000;
+  if (openRouterModelsCache && now - openRouterModelsCache.fetchedAt < ttlMs) {
+    return openRouterModelsCache.data;
+  }
+  const response = await fetch('https://openrouter.ai/api/v1/models', {
+    headers: { 'Content-Type': 'application/json' },
+  });
+  if (!response.ok) throw new Error(`OpenRouter API error: ${response.status}`);
+  const data = await response.json();
+  openRouterModelsCache = { data, fetchedAt: now };
+  return data;
+}
+
 // GET /api/config - Get all configuration
 configRouter.get('/', requireAuth, async (req, res) => {
   try {
-    // Fetch models from OpenRouter (public endpoint)
-    const response = await fetch('https://openrouter.ai/api/v1/models', {
-      headers: { 'Content-Type': 'application/json' },
-    });
-    if (!response.ok) throw new Error(`OpenRouter API error: ${response.status}`);
-
-    const openRouterData: any = await response.json();
+    const openRouterData: any = await getOpenRouterModelsCached();
 
     const capabilities: Record<string, any> = {};
     const pricing: Record<string, { input: number; output: number }> = {};
@@ -109,12 +120,7 @@ configRouter.get('/app', requireAuth, (req, res) => {
 // GET /api/config/models - Available models
 configRouter.get('/models', requireAuth, async (req, res) => {
   try {
-    const response = await fetch('https://openrouter.ai/api/v1/models', {
-      headers: { 'Content-Type': 'application/json' },
-    });
-    if (!response.ok) throw new Error(`OpenRouter API error: ${response.status}`);
-
-    const openRouterData: any = await response.json();
+    const openRouterData: any = await getOpenRouterModelsCached();
     const capabilities: Record<string, any> = {};
     const pricing: Record<string, { input: number; output: number }> = {};
     const perModelSampleCosts: Record<string, { per1kTokensDollarCost: number; per1kTokensRequestUnits: number }> = {};

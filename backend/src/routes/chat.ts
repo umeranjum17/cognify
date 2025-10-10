@@ -295,8 +295,6 @@ chatRouter.post('/', requireAuth, async (req: AuthRequest, res) => {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
       Connection: 'keep-alive',
-      // Enable Server-Timing trailer at end of stream for DevTools visibility
-      Trailer: 'Server-Timing',
     });
 
     const sendEvent = (obj: any) => {
@@ -306,29 +304,9 @@ chatRouter.post('/', requireAuth, async (req: AuthRequest, res) => {
     const finish = () => {
       try {
         timings.totalMs = Date.now() - reqStartMs;
-        sendEvent({ type: 'timing', timing: timings });
-        // Structured log line for profiling aggregation
-        console.log('[chat-timing]', JSON.stringify({ requestId: timings.requestId, mode: timings.mode, model: timings.model, ...timings }));
-        // Emit Server-Timing as trailer so browsers can show timings
-        const serverTimingParts: string[] = [];
-        if (typeof timings.authVerifyMs === 'number') serverTimingParts.push(`auth;dur=${timings.authVerifyMs}`);
-        if (typeof timings.creditsConsumeMs === 'number') serverTimingParts.push(`credits;dur=${timings.creditsConsumeMs}`);
-        if (typeof timings.planningMs === 'number') serverTimingParts.push(`planning;dur=${timings.planningMs}`);
-        if (Array.isArray(timings.searches)) {
-          const totalSearchMs = timings.searches.reduce((acc: number, s: any) => acc + (s.ms || 0), 0);
-          serverTimingParts.push(`search;dur=${totalSearchMs}`);
-        }
-        if (Array.isArray(timings.imagesSearch) && timings.imagesSearch.length > 0) {
-          const totalImgMs = timings.imagesSearch.reduce((acc: number, s: any) => acc + (s.ms || 0), 0);
-          serverTimingParts.push(`imgsearch;dur=${totalImgMs}`);
-        }
-        if (typeof timings.writerTtfbMs === 'number') serverTimingParts.push(`writer_ttfb;dur=${timings.writerTtfbMs}`);
-        if (typeof timings.writerTotalMs === 'number') serverTimingParts.push(`writer;dur=${timings.writerTotalMs}`);
-        if (typeof timings.totalMs === 'number') serverTimingParts.push(`total;dur=${timings.totalMs}`);
-        const trailerValue = serverTimingParts.join(', ');
-        if (trailerValue) {
-          (res as any).addTrailers?.({ 'Server-Timing': trailerValue });
-        }
+        const totalSearchMs = Array.isArray(timings.searches) ? timings.searches.reduce((acc: number, s: any) => acc + (s.ms || 0), 0) : 0;
+        const totalImgMs = Array.isArray(timings.imagesSearch) ? timings.imagesSearch.reduce((acc: number, s: any) => acc + (s.ms || 0), 0) : 0;
+        console.log(`[chat] id=${timings.requestId} mode=${timings.mode} model=${timings.model} auth=${timings.authVerifyMs ?? 0}ms credits=${timings.creditsConsumeMs ?? 0}ms plan=${timings.planningMs ?? 0}ms search=${totalSearchMs}ms img=${totalImgMs}ms writer_ttfb=${timings.writerTtfbMs ?? 0}ms writer=${timings.writerTotalMs ?? 0}ms total=${timings.totalMs ?? 0}ms`);
       } catch {}
       res.write('data: [DONE]\n\n');
       res.end();
