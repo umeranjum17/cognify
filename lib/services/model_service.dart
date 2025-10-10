@@ -3,6 +3,7 @@ import '../models/file_attachment.dart';
 import '../config/model_registry.dart';
 import 'mode_api_service.dart';
 import 'package:http/http.dart' as http;
+import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'dart:convert';
 import '../config/app_config.dart';
 
@@ -151,7 +152,15 @@ class ModelService {
       if (modelsConfig == null) {
         try {
           final url = Uri.parse('${AppConfig.backendBaseUrl}/api/config/models');
-          final resp = await http.get(url);
+          final user = fb.FirebaseAuth.instance.currentUser;
+          final token = user != null ? await user.getIdToken() : null;
+          final resp = await http.get(
+            url,
+            headers: {
+              if (token != null) 'Authorization': 'Bearer ' + token,
+              'Content-Type': 'application/json',
+            },
+          );
           if (resp.statusCode == 200) {
             final decoded = jsonDecode(resp.body) as Map<String, dynamic>;
             final raw = decoded['data'];

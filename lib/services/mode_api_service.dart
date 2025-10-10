@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
+import 'package:firebase_auth/firebase_auth.dart' as fb;
 
 import '../config/app_config.dart';
 import '../models/mode_config.dart';
@@ -18,6 +19,16 @@ class ModeApiService {
     sendTimeout: AppConfig.sendTimeout,
   ));
 
+  Future<Map<String, String>> _getAuthHeaders() async {
+    final user = fb.FirebaseAuth.instance.currentUser;
+    if (user == null) return {};
+    final token = await user.getIdToken();
+    return {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    };
+  }
+
   // Cache for mode configurations from backend
   Map<String, dynamic>? _modeConfigs;
   Map<String, dynamic>? _modelsConfig;
@@ -29,14 +40,20 @@ class ModeApiService {
       print('📡 [MODE_CONFIG] Making GET request to /api/config/modes');
       print('🔗 [MODE_CONFIG] Full URL: ${AppConfig.backendBaseUrl}/api/config/modes');
       
-      final response = await _dio.get('/api/config/modes');
+      final headers = await _getAuthHeaders();
+      final response = await _dio.get(
+        '/api/config/modes',
+        options: Options(headers: headers),
+      );
       
       print('✅ [MODE_CONFIG] Response received - Status: ${response.statusCode}');
       print('📦 [MODE_CONFIG] Response data type: ${response.data.runtimeType}');
       print('📄 [MODE_CONFIG] Response data: ${response.data}');
       
       final data = response.data is Map ? response.data as Map : {};
-      final raw = data['data'];
+      // Accept either {data: {modes: {...}}} or {modes: {...}}
+      final fromData = (data['data'] is Map) ? (data['data'] as Map)['modes'] : null;
+      final raw = (fromData is Map) ? fromData : (data['modes'] as Map?);
       if (raw is Map) {
         _modeConfigs = Map<String, dynamic>.from(raw);
         print('✅ [MODE_CONFIG] Successfully loaded ${_modeConfigs?.length} mode configs');
@@ -67,7 +84,11 @@ class ModeApiService {
       print('📡 [MODELS_CONFIG] Making GET request to /api/config/models');
       print('🔗 [MODELS_CONFIG] Full URL: ${AppConfig.backendBaseUrl}/api/config/models');
       
-      final response = await _dio.get('/api/config/models');
+      final headers = await _getAuthHeaders();
+      final response = await _dio.get(
+        '/api/config/models',
+        options: Options(headers: headers),
+      );
       
       print('✅ [MODELS_CONFIG] Response received - Status: ${response.statusCode}');
       print('📦 [MODELS_CONFIG] Response data type: ${response.data.runtimeType}');
@@ -179,12 +200,11 @@ class ModeApiService {
     print('📤 [CHAT] Sending POST request...');
 
     try {
+      final headers = await _getAuthHeaders();
       final resp = await _dio.post(
         endpoint,
         data: jsonEncode(body),
-        options: Options(headers: {
-          'Content-Type': 'application/json',
-        }),
+        options: Options(headers: headers),
       );
 
       print('✅ [CHAT] Response received: ${resp.statusCode}');
@@ -249,11 +269,12 @@ class ModeApiService {
     print('📤 [STREAM] Sending streaming POST request...');
 
     try {
+      final headers = await _getAuthHeaders();
       final resp = await _dio.post(
         endpoint,
         data: jsonEncode(body),
         options: Options(
-          headers: { 'Content-Type': 'application/json' },
+          headers: headers,
           responseType: ResponseType.stream,
         ),
       );

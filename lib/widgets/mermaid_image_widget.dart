@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:firebase_auth/firebase_auth.dart' as fb;
 
 import '../config/app_config.dart';
 import '../utils/logger.dart';
@@ -432,10 +433,14 @@ class _MermaidImageWidgetState extends State<MermaidImageWidget> {
 
       Logger.info('🌐 Generating ${widget.format.toUpperCase()} via backend API...', tag: 'MermaidWidget');
 
+      final user = fb.FirebaseAuth.instance.currentUser;
+      final token = user != null ? await user.getIdToken() : null;
+
       final response = await http.post(
         url,
         headers: {
           'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer ' + token,
         },
         body: jsonEncode({
           'code': widget.mermaidCode,

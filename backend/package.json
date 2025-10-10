@@ -6,6 +6,8 @@
   "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
+    "emulators": "npx firebase emulators:start --only firestore",
+    "dev:emu": "FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 FIREBASE_PROJECT_ID=cognify-eb0a2 tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
     "test": "node --test",

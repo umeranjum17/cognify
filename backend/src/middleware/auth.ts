@@ -15,6 +15,7 @@ export async function requireAuth(
   next: NextFunction
 ): Promise<void> {
   try {
+    const authStartMs = Date.now();
     const authHeader = req.headers.authorization;
     
     if (!authHeader) {
@@ -33,10 +34,13 @@ export async function requireAuth(
     const decodedToken = await auth.verifyIdToken(idToken);
     
     req.user = {
+      ...decodedToken,
       uid: decodedToken.uid,
-      email: decodedToken.email,
-      ...decodedToken
+      email: decodedToken.email
     };
+    // Attach auth verification duration for downstream profiling
+    (req as any)._timing = (req as any)._timing || {};
+    (req as any)._timing.authVerifyMs = Date.now() - authStartMs;
     
     next();
   } catch (error: any) {

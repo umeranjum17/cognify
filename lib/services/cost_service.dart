@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:cognify_flutter/config/app_config.dart';
 import '../config/model_registry.dart';
 import 'package:http/http.dart' as http;
+import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'remote_config_service.dart';
 
 class CostService {
@@ -108,9 +109,14 @@ class CostService {
 
     // Fallback to legacy endpoint (deprecated)
     try {
+      final user = fb.FirebaseAuth.instance.currentUser;
+      final token = user != null ? await user.getIdToken() : null;
       final response = await http.get(
         Uri.parse('$baseUrl/chat/pricing'),
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer ' + token,
+        },
       );
 
       if (response.statusCode == 200) {

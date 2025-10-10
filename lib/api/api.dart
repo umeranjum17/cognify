@@ -58,7 +58,11 @@ class API {
   /// ```
   Future<List<dynamic>> getModes() async {
     try {
-      final response = await _dio.get('/api/config/modes');
+      final headers = await _getAuthHeaders();
+      final response = await _dio.get(
+        '/api/config/modes',
+        options: Options(headers: headers),
+      );
       return response.data as List<dynamic>;
     } catch (e) {
       print('❌ API Error [getModes]: $e');
@@ -202,7 +206,15 @@ class API {
         options: Options(headers: headers),
       );
 
-      return (response.data['data']['balance'] as num).toDouble();
+      // Accept both { balance, lastUpdated } and legacy { data: { balance } }
+      final data = response.data;
+      if (data is Map && data['balance'] != null) {
+        return (data['balance'] as num).toDouble();
+      }
+      if (data is Map && data['data'] is Map && data['data']['balance'] != null) {
+        return (data['data']['balance'] as num).toDouble();
+      }
+      throw Exception('Invalid balance response');
     } catch (e) {
       print('❌ API Error [getCreditsBalance]: $e');
       return 0.0;
@@ -270,7 +282,11 @@ class API {
   /// ```
   Future<List<String>> getModels() async {
     try {
-      final response = await _dio.get('/api/config/models');
+      final headers = await _getAuthHeaders();
+      final response = await _dio.get(
+        '/api/config/models',
+        options: Options(headers: headers),
+      );
       return (response.data as List).cast<String>();
     } catch (e) {
       print('❌ API Error [getModels]: $e');
