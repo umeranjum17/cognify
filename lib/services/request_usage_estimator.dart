@@ -67,8 +67,14 @@ class RequestUsageEstimator {
       final modelEstimate = chatEstimates?[canonicalId] as Map<String, dynamic>?;
 
       if (modelEstimate != null) {
+        final step = (config['quotaPricing']?['requestUnitStep'] as num?)?.toDouble() ?? 0.1;
+        final minUnits = (config['quotaPricing']?['minRequestUnits'] as num?)?.toDouble() ?? 0.1;
+        double units = ((modelEstimate['requestUnits'] ?? 0) as num).toDouble();
+        units = (units.isFinite ? units : 0);
+        double rounded = (step > 0) ? ( (units / step).round() * step ) : units;
+        rounded = rounded < minUnits && rounded > 0 ? minUnits : rounded;
         return RequestUsageEstimate(
-          requestUnits: modelEstimate['requestUnits'] ?? 0,
+          requestUnits: rounded,
           dollarCost: (modelEstimate['dollarCost'] ?? 0.0).toDouble(),
           inputTokens: modelEstimate['inputTokens'] ?? 0,
           outputTokens: modelEstimate['outputTokens'] ?? 0,
@@ -110,13 +116,53 @@ class RequestUsageEstimator {
         }
 
         final dollarsPerUnit = (quotaPricing?['dollarsPerRequestUnit'] as num?)?.toDouble() ?? 0.01;
-        final requestUnits = (dollarCost / dollarsPerUnit).ceil().clamp(1, 999999);
+        final step = (quotaPricing?['requestUnitStep'] as num?)?.toDouble() ?? 0.1;
+        final minUnits = (quotaPricing?['minRequestUnits'] as num?)?.toDouble() ?? 0.1;
+        final rawUnits = dollarCost / dollarsPerUnit;
+        double rounded = step > 0 ? ( (rawUnits / step).round() * step ) : rawUnits;
+        if (rounded > 0 && rounded < minUnits) rounded = minUnits;
+        final requestUnits = rounded;
 
         return RequestUsageEstimate(
           requestUnits: requestUnits,
           dollarCost: dollarCost,
           inputTokens: actualInput,
           outputTokens: actualOutput,
+        );
+      }
+
+      // Final fallback: treat provider-marked free models as Budget (x0.3)
+      final capabilities = (config['models'] is Map
+              ? (config['models'] as Map)['capabilities']
+              : config['capabilities'])
+          as Map<String, dynamic>?;
+      bool isFreeByCapabilities = false;
+      if (capabilities != null) {
+        final cap = capabilities[canonicalId] as Map<String, dynamic>?;
+        if (cap != null && cap['isFree'] == true) {
+          isFreeByCapabilities = true;
+        } else {
+          // try suffix match
+          for (final entry in capabilities.entries) {
+            if (entry.key is String) {
+              final last = entry.key.split('/').length > 1
+                  ? entry.key.split('/').last
+                  : entry.key;
+              if (last == canonicalId &&
+                  (entry.value is Map && (entry.value as Map)['isFree'] == true)) {
+                isFreeByCapabilities = true;
+                break;
+              }
+            }
+          }
+        }
+      }
+      if (isFreeByCapabilities || canonicalId.endsWith(':free')) {
+        return const RequestUsageEstimate(
+          requestUnits: 0.3,
+          dollarCost: 0.0,
+          inputTokens: 0,
+          outputTokens: 0,
         );
       }
 
@@ -157,16 +203,16 @@ class RequestUsageEstimate {
   });
 
   const RequestUsageEstimate.free()
-    : requestUnits = 0,
+    : requestUnits = 0.0,
       dollarCost = 0,
       inputTokens = 0,
       outputTokens = 0;
 
-  final int requestUnits;
+  final double requestUnits;
   final double dollarCost;
   final int inputTokens;
   final int outputTokens;
 
-  bool get isFree => requestUnits == 0 || dollarCost == 0;
+  bool get isFree => requestUnits <= 0.0 || dollarCost <= 0.0;
   int get totalTokens => inputTokens + outputTokens;
 }

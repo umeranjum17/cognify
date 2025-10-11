@@ -515,7 +515,8 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
         pricing.containsKey('output') &&
         ((pricing['input'] ?? 0.0) == 0.0) &&
         ((pricing['output'] ?? 0.0) == 0.0);
-    final isFree = model['isFree'] == true || explicitZeroPricing;
+    // Do not infer free; show cost from requestEstimate if available
+    final isFree = false;
     final provider =
         model['provider'] as String? ??
         model['top_provider']?['name'] as String?;

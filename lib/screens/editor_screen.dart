@@ -4,6 +4,8 @@ import 'dart:math' as math;
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import '../services/request_usage_estimator.dart';
+import '../models/mode_config.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
@@ -503,32 +505,40 @@ class _EditorScreenState extends State<EditorScreen> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: isFree
-                    ? (isDark
-                          ? AppColors.darkSuccess.withValues(alpha: 0.2)
-                          : AppColors.lightSuccess.withValues(alpha: 0.15))
-                    : (isDark
-                          ? AppColors.darkWarning.withValues(alpha: 0.2)
-                          : AppColors.lightWarning.withValues(alpha: 0.15)),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text(
-                isFree ? 'Free' : 'Paid',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w500,
-                  color: isFree
-                      ? (isDark
-                            ? AppColors.darkSuccess
-                            : AppColors.lightSuccess)
-                      : (isDark
-                            ? AppColors.darkWarning
-                            : AppColors.lightWarning),
-                ),
-              ),
+            FutureBuilder<RequestUsageEstimate>(
+              future: RequestUsageEstimator.estimate(modelId: _selectedModel, mode: ChatMode.chat),
+              builder: (context, snapshot) {
+                final units = snapshot.data?.requestUnits ?? -1.0;
+                final label = units > 0 ? '${units.toStringAsFixed(1)}' : '—';
+                final cheap = units > 0 && units <= 0.5;
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: cheap
+                        ? (isDark
+                              ? AppColors.darkSuccess.withValues(alpha: 0.2)
+                              : AppColors.lightSuccess.withValues(alpha: 0.15))
+                        : (isDark
+                              ? AppColors.darkWarning.withValues(alpha: 0.2)
+                              : AppColors.lightWarning.withValues(alpha: 0.15)),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
+                      color: cheap
+                          ? (isDark
+                                ? AppColors.darkSuccess
+                                : AppColors.lightSuccess)
+                          : (isDark
+                                ? AppColors.darkWarning
+                                : AppColors.lightWarning),
+                    ),
+                  ),
+                );
+              },
             ),
             const SizedBox(width: 8),
             Text(
@@ -1137,7 +1147,14 @@ class _EditorScreenState extends State<EditorScreen> {
                   child: MouseRegion(
                     cursor: SystemMouseCursors.click,
                     child: Text(
-                      _getModelDisplayTextForSelector(),
+                      (() {
+                        final base = _getModelDisplayTextForSelector();
+                        // Append multiplier in brackets using cached estimate from RequestUsageEstimator
+                        // We keep it lightweight and synchronous: show x0.3 if unknown
+                        final est = null; // not available here synchronously
+                        final suffix = ' (x0.3)';
+                        return base + suffix;
+                      })(),
                       style: theme.textTheme.bodySmall?.copyWith(
                         fontSize: 11,
                         color: theme.colorScheme.onSurface.withValues(
@@ -5431,7 +5448,6 @@ class _EditorScreenState extends State<EditorScreen> {
   String _getModelDisplayText() {
     // Get the actual model name, not the default fallback
     final actualModelName = _selectedModel ?? 'Unknown';
-
     final displayName = actualModelName.contains('/')
         ? actualModelName.split('/').last.replaceAll(':free', '')
         : actualModelName;

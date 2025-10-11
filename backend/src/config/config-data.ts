@@ -126,6 +126,11 @@ export const QUOTA_CONFIG = {
   // Request-based allocation
   initialRequestAllocation: 20,
   dollarsPerRequestUnit: 0.01,
+  // Allow fractional request units and define rounding behavior
+  // Smallest debit step (e.g., 0.1 = one tenth of a unit)
+  requestUnitStep: 0.1,
+  // Enforce a minimum debit per request to avoid free calls
+  minRequestUnits: 0.1,
 
   // Legacy token allocation (deprecated)
   initialTokenAllocation: 10,

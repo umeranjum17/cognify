@@ -213,7 +213,7 @@ class ModelCapabilitiesBottomSheet extends StatelessWidget {
               }
 
               final usageLabel = RequestUsageEstimator.formatLabel(est);
-              final unitsLabel = est.isFree ? 'x0 (Free)' : 'x${est.requestUnits}';
+              final unitsLabel = est.isFree ? 'x0.0' : 'x${est.requestUnits.toStringAsFixed(1)}';
               final costLabel = est.isFree ? 'Free' : '~\$' + est.dollarCost.toStringAsFixed(4);
 
               return Column(

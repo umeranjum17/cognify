@@ -154,8 +154,13 @@ configRouter.get('/models', requireAuth, async (req, res) => {
         const p = pricing[model.id];
         if (p) {
           const dollarsPerRequestUnit = QUOTA_CONFIG.dollarsPerRequestUnit;
+          const step = (QUOTA_CONFIG as any).requestUnitStep ?? 0.1;
+          const minUnits = (QUOTA_CONFIG as any).minRequestUnits ?? 0.1;
+          const roundToStep = (x: number) => Math.round(x / step) * step;
           const costPer1k = (1000 / 1_000_000) * (p.input + p.output);
-          const unitsPer1k = costPer1k > 0 ? Math.max(1, Math.ceil(costPer1k / dollarsPerRequestUnit)) : 0;
+          const unitsPer1k = costPer1k > 0
+            ? roundToStep(Math.max(minUnits, costPer1k / dollarsPerRequestUnit))
+            : 0;
           perModelSampleCosts[model.id] = {
             per1kTokensDollarCost: costPer1k,
             per1kTokensRequestUnits: unitsPer1k,
@@ -164,7 +169,12 @@ configRouter.get('/models', requireAuth, async (req, res) => {
           const inT = 900;
           const outT = 1100;
           const chatDollar = (inT / 1_000_000) * p.input + (outT / 1_000_000) * p.output;
-          const chatUnits = chatDollar > 0 ? Math.max(1, Math.ceil(chatDollar / dollarsPerRequestUnit)) : 0;
+          // If model is marked free, we still charge a fixed budget rate
+          const chatUnits = isFree
+            ? 0.3
+            : (chatDollar > 0
+                ? roundToStep(Math.max(minUnits, chatDollar / dollarsPerRequestUnit))
+                : 0);
           perRequestSampleChat[model.id] = {
             requestUnits: chatUnits,
             dollarCost: chatDollar,
@@ -184,6 +194,8 @@ configRouter.get('/models', requireAuth, async (req, res) => {
         pricing,
         quotaPricing: {
           dollarsPerRequestUnit: QUOTA_CONFIG.dollarsPerRequestUnit,
+          requestUnitStep: (QUOTA_CONFIG as any).requestUnitStep ?? 0.1,
+          minRequestUnits: (QUOTA_CONFIG as any).minRequestUnits ?? 0.1,
           perModelSampleCosts,
           perRequestSample: { chat: perRequestSampleChat },
         },

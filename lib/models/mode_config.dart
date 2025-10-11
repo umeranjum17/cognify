@@ -222,7 +222,8 @@ class ModeConfigManager {
   }
 
   static bool isFreeModel(String model) {
-    return model.endsWith(':free');
+    // Deprecated: pricing is backend-driven; never infer free from suffix.
+    return false;
   }
 
   static bool isReasoningModel(String model) {

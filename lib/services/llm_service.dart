@@ -254,9 +254,11 @@ class LLMService {
       '(≈\$${estimate.dollarCost.toStringAsFixed(4)})',
     );
 
+    // Backend calculates fractional units; pass a minimal integer placeholder
+    // but we still log using the returned estimate locally.
     await UsageQuotaService.instance.consumeRequests(
       uid: user.uid,
-      amount: estimate.requestUnits,
+      amount: (estimate.requestUnits.round()),
       modelId: model,
       dollarCost: estimate.dollarCost,
       inputTokens: estimate.inputTokens,
@@ -265,7 +267,7 @@ class LLMService {
 
     return _QuotaUsage(
       uid: user.uid,
-      requestUnits: estimate.requestUnits,
+      requestUnits: estimate.requestUnits.round(),
       model: model,
     );
   }

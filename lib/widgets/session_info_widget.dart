@@ -210,17 +210,10 @@ class _SessionInfoWidgetState extends State<SessionInfoWidget> {
       return 'Loading...';
     }
     
-    if (_modelEstimate!.isFree) {
-      // Check if it's truly free (0 cost) or just failed to load pricing
-      if (_modelEstimate!.dollarCost == 0 && _modelEstimate!.requestUnits == 0) {
-        return 'Free model';
-      }
-      // If we don't have pricing data, don't claim it's free
-      return 'Cost unknown';
-    }
-    
+    // Always show fractional request units; never label as Free
     final units = _modelEstimate!.requestUnits;
-    return '$units per msg';
+    if (units <= 0) return 'x0.3 per msg';
+    return '${units.toStringAsFixed(1)} per msg';
   }
 
   Widget _buildCreditsDisplay(ThemeData theme) {

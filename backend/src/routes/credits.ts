@@ -75,37 +75,55 @@ creditsRouter.post('/consume', requireAuth, async (req: AuthRequest, res) => {
       const qp = modelsData?.data?.quotaPricing;
       const sample = qp?.perRequestSample?.[effectiveMode]?.[modelId];
       if (sample && typeof sample.requestUnits === 'number') {
-        consumeAmount = Number(sample.requestUnits) || 0;
+        const step = (QUOTA_CONFIG as any).requestUnitStep ?? 0.1;
+        const minUnits = (QUOTA_CONFIG as any).minRequestUnits ?? 0.1;
+        const roundToStep = (x: number) => Math.round(x / step) * step;
+        const pricingMap = (modelsData?.data?.pricing || {}) as any;
+        const p = pricingMap[modelId];
+        const isFreeModel = !!p && Number(p.input || 0) === 0 && Number(p.output || 0) === 0;
+        consumeAmount = isFreeModel ? 0.3 : roundToStep(Math.max(minUnits, Number(sample.requestUnits) || 0));
         calculatedMetadata = {
           modelId,
           mode: effectiveMode,
           dollarCost: sample.dollarCost ?? null,
           inputTokens: sample.inputTokens ?? null,
           outputTokens: sample.outputTokens ?? null,
-          conversationId,
           calculatedByBackend: true,
           method: 'models-config-sample',
         };
+        if (conversationId != null) {
+          calculatedMetadata.conversationId = conversationId;
+        }
       } else {
         const pricing = modelsData?.data?.pricing?.[modelId];
         const dollarsPerUnit = qp?.dollarsPerRequestUnit ?? QUOTA_CONFIG.dollarsPerRequestUnit;
+        const step = (QUOTA_CONFIG as any).requestUnitStep ?? 0.1;
+        const minUnits = (QUOTA_CONFIG as any).minRequestUnits ?? 0.1;
+        const roundToStep = (x: number) => Math.round(x / step) * step;
         const inputPricePer1M = Number(pricing?.input || 0);
         const outputPricePer1M = Number(pricing?.output || 0);
         const inT = Number(inputTokens ?? 900);
         const outT = Number(outputTokens ?? 1100);
         const dollarCost = (inT / 1_000_000) * inputPricePer1M + (outT / 1_000_000) * outputPricePer1M;
-        const units = dollarCost > 0 ? Math.max(1, Math.ceil(dollarCost / dollarsPerUnit)) : 0;
-        consumeAmount = units;
+        const isFreeModel = Number(inputPricePer1M) === 0 && Number(outputPricePer1M) === 0;
+        if (isFreeModel) {
+          consumeAmount = 0.3;
+        } else {
+          const unitsRaw = dollarCost / dollarsPerUnit;
+          consumeAmount = roundToStep(Math.max(minUnits, unitsRaw));
+        }
         calculatedMetadata = {
           modelId,
           mode: effectiveMode,
           dollarCost,
           inputTokens: inT,
           outputTokens: outT,
-          conversationId,
           calculatedByBackend: true,
           method: 'models-config-derived',
         };
+        if (conversationId != null) {
+          calculatedMetadata.conversationId = conversationId;
+        }
       }
     } else {
       // Legacy path
@@ -178,12 +196,7 @@ creditsRouter.post('/consume', requireAuth, async (req: AuthRequest, res) => {
       res.status(409).json({ success: false, code: 'INSUFFICIENT_CREDITS' });
       return;
     }
-    // Developer-friendly fallback when running locally and Firestore emulator/grpc has issues
-    if (isEmulator || isGrpcCryptoIssue) {
-      console.warn('Dev fallback: credits consume bypass due to admin/Firestore error');
-      res.status(200).json({ success: true, data: { balance: 999999, consumed: 0, requestId: String((req.body || {}).requestId || '') }, bypass: true });
-      return;
-    }
+    // No bypasses: fail fast if debiting cannot be completed
     res.status(500).json({ success: false, error: error?.message || 'Internal error' });
   }
 });

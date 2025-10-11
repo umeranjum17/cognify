@@ -105,26 +105,20 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
     _freeModels.clear();
     for (final model in models) {
       final provider = _normalizeProvider(model);
+      final estimate = model['requestEstimate'] as Map<String, dynamic>?;
+      final num units = (estimate?['requestUnits'] as num?) ?? -1;
+      // Budget = models marked free by backend pricing; we show x0.3 for them
       final pricing = model['pricing'] as Map<String, dynamic>?;
-      // Treat as free only if backend marked isFree OR pricing explicitly exists and both input/output are 0
-      final bool explicitZeroPricing = pricing != null &&
-          pricing.containsKey('input') &&
-          pricing.containsKey('output') &&
-          ((pricing['input'] ?? 0.0) == 0.0) &&
-          ((pricing['output'] ?? 0.0) == 0.0);
-      final isFree =
-          model['isFree'] == true ||
-          (model['id']?.toString().endsWith(':free') ?? false) ||
-          explicitZeroPricing;
-      if (isFree) {
-        _freeModels.add(model);
+      final bool backendFree = pricing != null &&
+          (pricing['input'] == 0 || pricing['input'] == 0.0) &&
+          (pricing['output'] == 0 || pricing['output'] == 0.0);
+      if (backendFree) {
+        _providersIndexed.putIfAbsent('Budget', () => []).add(model);
       } else {
         _providersIndexed.putIfAbsent(provider, () => []).add(model);
       }
     }
-    if (_freeModels.isNotEmpty) {
-      _providersIndexed['Free'] = _freeModels;
-    }
+    // No explicit Free section anymore
 
     // Sort providers by number of models in descending order
     final sortedProviders = _providersIndexed.entries.toList()
@@ -563,7 +557,8 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
 
     // Get pre-calculated request estimate from model data
     final requestEstimate = model['requestEstimate'] as Map<String, dynamic>?;
-    final int requestUnits = requestEstimate?['requestUnits'] ?? 0;
+    final double requestUnits =
+        ((requestEstimate?['requestUnits'] as num?)?.toDouble() ?? 0.0);
     final double dollarCost = (requestEstimate?['dollarCost'] ?? 0.0).toDouble();
 
     // Simplified pricing check - backend handles detailed calculations
@@ -572,11 +567,8 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
         pricing.containsKey('output') &&
         ((pricing['input'] ?? 0.0) == 0.0) &&
         ((pricing['output'] ?? 0.0) == 0.0);
-    final isFree =
-        model['isFree'] == true ||
-        (modelId is String && modelId.endsWith(':free')) ||
-        explicitZeroPricing ||
-        requestUnits == 0;
+    // Do not label free; treat zero/unknown as cost unknown
+    final bool isFree = false;
 
     // Affordability is enforced server-side; don't gate client-side
     final bool isAffordable = true;
@@ -741,7 +733,7 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: isFree
+                    color: (requestUnits > 0 && requestUnits <= 0.5)
                         ? (isDark
                               ? AppColors.darkSuccess.withValues(alpha: 0.2)
                               : AppColors.lightSuccess.withValues(alpha: 0.15))
@@ -750,7 +742,7 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
                               : AppColors.lightAccent.withValues(alpha: 0.15)),
                     borderRadius: BorderRadius.circular(6),
                     border: Border.all(
-                      color: isFree
+                      color: (requestUnits > 0 && requestUnits <= 0.5)
                           ? (isDark
                                 ? AppColors.darkSuccess
                                 : AppColors.lightSuccess)
@@ -764,13 +756,17 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        isFree
-                            ? 'Free'
-                            : 'x${requestUnits}',
+                        (pricing != null &&
+                                (pricing['input'] == 0 || pricing['input'] == 0.0) &&
+                                (pricing['output'] == 0 || pricing['output'] == 0.0))
+                            ? 'x0.3'
+                            : (requestUnits > 0
+                                  ? 'x${requestUnits.toStringAsFixed(1)}'
+                                  : '—'),
                         style: theme.textTheme.bodySmall?.copyWith(
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
-                          color: isFree
+                          color: (requestUnits > 0 && requestUnits <= 0.5)
                               ? (isDark
                                     ? AppColors.darkSuccess
                                     : AppColors.lightSuccess)
