@@ -133,7 +133,9 @@ class FirebaseAuthProvider extends ChangeNotifier {
       try {
         await AnalyticsService.instance.logLogin(method: 'google');
         await AnalyticsService.instance.setUserId(_user?.uid);
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('⚠️ [AppleSignIn] Failed to decode JWT payload for diagnostics: $e');
+      }
       notifyListeners();
     } catch (e) {
       _lastError = e;
@@ -173,14 +175,63 @@ class FirebaseAuthProvider extends ChangeNotifier {
         nonce: nonceSha256,
       );
 
+      // Detailed diagnostics without leaking sensitive token contents
+      try {
+        final opts = Firebase.apps.isNotEmpty ? Firebase.app().options : null;
+        debugPrint(
+          '🔎 [AppleSignIn] Diagnostics: '
+          'idTokenPresent=${credential.identityToken != null} '
+          'idTokenLen=${credential.identityToken?.length ?? 0} '
+          'authCodePresent=${credential.authorizationCode != null} '
+          'emailPresent=${credential.email != null} '
+          'fullNamePresent=${(credential.givenName ?? credential.familyName) != null} '
+          'userIdPresent=${credential.userIdentifier != null} '
+          'firebaseProjectId=${opts?.projectId} appId=${opts?.appId}');
+
+        // Decode JWT claims to inspect aud/nonce/iss without logging sensitive data
+        if (credential.identityToken != null && credential.identityToken!.isNotEmpty) {
+          final token = credential.identityToken!;
+          final parts = token.split('.');
+          if (parts.length >= 2) {
+            String normalize(String s) => s.padRight(s.length + (4 - s.length % 4) % 4, '=');
+            final payload = utf8.decode(base64Url.decode(normalize(parts[1])));
+            final map = jsonDecode(payload) as Map<String, dynamic>;
+            final aud = map['aud'];
+            final iss = map['iss'];
+            final sub = map['sub'];
+            final nonceClaim = map['nonce'];
+            final exp = map['exp'];
+            final iat = map['iat'];
+            debugPrint('🔎 [AppleSignIn] JWT: aud=$aud iss=$iss subPresent=${sub != null} '
+                'nonceClaimPresent=${nonceClaim != null} nonceMatchesSha256=${nonceClaim == nonceSha256} '
+                'exp=$exp iat=$iat');
+          }
+        }
+      } catch (_) {}
+
+      if (credential.identityToken == null || credential.identityToken!.isEmpty) {
+        // Standard handling: do not fall back. Provide actionable guidance.
+        throw Exception(
+          'Apple did not return an identity token. On Simulator, sign into iCloud in Settings, '
+          'ensure Keychain is enabled, and try again; or test on a real device. Also verify your '
+          'bundle ID matches the Apple Developer configuration and that the Sign in with Apple capability is enabled.'
+        );
+      }
+
       final oauthProvider = fb.OAuthProvider('apple.com');
       final oauthCred = oauthProvider.credential(
         idToken: credential.identityToken,
         rawNonce: rawNonce,
+        accessToken: credential.authorizationCode,
       );
 
-      final cred = await _auth.signInWithCredential(oauthCred);
-      _user = cred.user;
+      try {
+        final cred = await _auth.signInWithCredential(oauthCred);
+        _user = cred.user;
+      } on fb.FirebaseAuthException catch (fae) {
+        debugPrint('❌ [FirebaseAuth] Apple sign-in FirebaseAuthException: code=${fae.code} message=${fae.message}');
+        rethrow;
+      }
       debugPrint('✅ [FirebaseAuth] Apple sign-in successful');
       try {
         await AnalyticsService.instance.logLogin(method: 'apple');

@@ -44,6 +44,12 @@ post_install do |installer|
     target.build_configurations.each do |config|
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
       config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
+      # Ensure simulator builds include both arm64 and x86_64 slices for universal binaries
+      if config.name.include?('Debug') && config.build_settings['SDKROOT'] == 'iphonesimulator'
+        config.build_settings['ARCHS'] = ['arm64', 'x86_64']
+      end
+      # Workaround for CreateUniversalBinary failures with certain static libraries (e.g., RevenueCat)
+      # by preventing weak frameworks that may break lipo and keeping consistent arch slices
       if target.name == 'gRPC-Core'
         config.build_settings['MODULEMAP_FILE'] = '$(PODS_TARGET_SRCROOT)/include/grpc/module.modulemap'
       end

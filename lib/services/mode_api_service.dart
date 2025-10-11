@@ -19,6 +19,17 @@ class ModeApiService {
     sendTimeout: AppConfig.sendTimeout,
   ));
 
+  /// Ensure the Dio client is pointing at the current backend base URL.
+  /// This is important because different platforms (Android emulator vs iOS/macOS)
+  /// require different hosts (10.0.2.2 vs localhost), and hot-reload can keep
+  /// a stale baseUrl inside Dio if it was constructed earlier.
+  void _syncDioBaseUrl() {
+    final desired = AppConfig.backendBaseUrl;
+    if (_dio.options.baseUrl != desired) {
+      _dio.options.baseUrl = desired;
+    }
+  }
+
   Future<Map<String, String>> _getAuthHeaders() async {
     final user = fb.FirebaseAuth.instance.currentUser;
     if (user == null) return {};
@@ -36,6 +47,7 @@ class ModeApiService {
   /// Fetch mode configurations from backend
   Future<void> loadConfigurations() async {
     try {
+      _syncDioBaseUrl();
       print('🌐 ModeApiService baseUrl: ${AppConfig.backendBaseUrl}');
       print('📡 [MODE_CONFIG] Making GET request to /api/config/modes');
       print('🔗 [MODE_CONFIG] Full URL: ${AppConfig.backendBaseUrl}/api/config/modes');
@@ -80,6 +92,7 @@ class ModeApiService {
   Future<Map<String, dynamic>?> loadModelsConfig() async {
     try {
       if (_modelsConfig != null) return _modelsConfig;
+      _syncDioBaseUrl();
       print('🌐 ModelsConfig fetch baseUrl: ${AppConfig.backendBaseUrl}');
       print('📡 [MODELS_CONFIG] Making GET request to /api/config/models');
       print('🔗 [MODELS_CONFIG] Full URL: ${AppConfig.backendBaseUrl}/api/config/models');
@@ -179,6 +192,7 @@ class ModeApiService {
     print('💬 [CHAT] Messages: ${messages?.length ?? 0}');
     print('❓ [CHAT] Query: ${query?.substring(0, query.length > 50 ? 50 : query.length)}');
     
+    _syncDioBaseUrl();
     await _ensureConfigLoaded();
 
     final endpoint = _getEndpoint(mode);
@@ -248,6 +262,7 @@ class ModeApiService {
     print('💬 [STREAM] Messages: ${messages?.length ?? 0}');
     print('❓ [STREAM] Query: ${query?.substring(0, query != null && query.length > 50 ? 50 : query?.length ?? 0) ?? 'none'}');
     
+    _syncDioBaseUrl();
     await _ensureConfigLoaded();
 
     final endpoint = _getEndpoint(mode);

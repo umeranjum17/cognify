@@ -87,12 +87,24 @@ class AppConfig {
   static const String openAiBaseUrl = 'https://api.openai.ai/v1';
 
   static String get backendBaseUrl {
-    // Use production Vercel backend
-    // return 'https://cognify-backend.vercel.app';
-    
-    // For local development, uncomment below:
-    return 'http://10.0.2.2:3000'; // Android emulator
-    // return 'http://localhost:3000'; // iOS simulator / web
+    // 1) Allow runtime override via dart-define
+    const overridden = String.fromEnvironment('BACKEND_BASE_URL', defaultValue: '');
+    if (overridden.isNotEmpty) return overridden;
+
+    // 2) Default to sensible local dev hosts by platform
+    //    - Android Emulator: 10.0.2.2
+    //    - iOS Simulator/Web/macOS: localhost
+    //    - Others: localhost
+    if (kIsWeb) return 'http://localhost:3000';
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+        return 'http://10.0.2.2:3000';
+      case TargetPlatform.iOS:
+      case TargetPlatform.macOS:
+        return 'http://localhost:3000';
+      default:
+        return 'http://localhost:3000';
+    }
   }
 
   // App information

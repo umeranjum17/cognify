@@ -59,20 +59,20 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyAwHYQ7W3jhJDRtDzk7Fr-0xZrB-zYJ8tE',
-    appId: '1:702035468371:ios:5990b7f329907f2f91e6a6',
+    appId: '1:702035468371:ios:e61d78c4e05b987991e6a6',
     messagingSenderId: '702035468371',
     projectId: 'cognify-eb0a2',
     storageBucket: 'cognify-eb0a2.firebasestorage.app',
-    iosBundleId: 'com.umerfarooq1995.cognifyFlutter',
+    iosBundleId: 'com.umerfarooq1995.cognify-flutter',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
     apiKey: 'AIzaSyAwHYQ7W3jhJDRtDzk7Fr-0xZrB-zYJ8tE',
-    appId: '1:702035468371:ios:5990b7f329907f2f91e6a6',
+    appId: '1:702035468371:ios:e61d78c4e05b987991e6a6',
     messagingSenderId: '702035468371',
     projectId: 'cognify-eb0a2',
     storageBucket: 'cognify-eb0a2.firebasestorage.app',
-    iosBundleId: 'com.umerfarooq1995.cognifyFlutter',
+    iosBundleId: 'com.umerfarooq1995.cognify-flutter',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(

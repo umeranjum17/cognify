@@ -54,6 +54,7 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
   }
 
   Future<void> _loadModelsByMode() async {
+    if (!mounted) return;
     setState(() {
       _isLoading = true;
       _error = '';
@@ -83,6 +84,7 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
         }
       }
       _processModels(modelsList);
+      if (!mounted) return;
       setState(() {
         _isLoading = false;
         if (_selectedProvider.isEmpty && _providersIndexed.isNotEmpty) {
@@ -90,6 +92,7 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
         }
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _error = e.toString();
         _isLoading = false;
