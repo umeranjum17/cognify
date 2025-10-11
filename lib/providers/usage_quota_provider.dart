@@ -10,6 +10,7 @@ import 'firebase_auth_provider.dart';
 class UsageQuotaProvider extends ChangeNotifier {
   FirebaseAuthProvider? _auth;
   StreamSubscription<UsageQuota>? _quotaSub;
+  Timer? _refreshTimer;
 
   UsageQuota? _quota;
   bool _loading = false;
@@ -40,6 +41,7 @@ class UsageQuotaProvider extends ChangeNotifier {
       auth.addListener(_handleAuthChange);
     }
     _startStreamIfPossible(force: true);
+    _startAutoRefresh();
   }
 
   Future<UsageQuota?> refresh() async {
@@ -86,6 +88,7 @@ class UsageQuotaProvider extends ChangeNotifier {
 
   void _handleAuthChange() {
     _startStreamIfPossible(force: true);
+    _startAutoRefresh();
   }
 
   void _startStreamIfPossible({bool force = false}) {
@@ -94,6 +97,7 @@ class UsageQuotaProvider extends ChangeNotifier {
       _quotaSub?.cancel();
       _quotaSub = null;
       _quota = null;
+      _refreshTimer?.cancel();
       notifyListeners();
       return;
     }
@@ -120,9 +124,24 @@ class UsageQuotaProvider extends ChangeNotifier {
     );
   }
 
+  void _startAutoRefresh() {
+    _refreshTimer?.cancel();
+    final uid = _uid;
+    if (uid == null) return;
+    // Immediately refresh from backend once
+    UsageQuotaService.instance.refreshFromBackend(uid).catchError((_) {});
+    // Then poll periodically to keep in sync with server-side changes
+    _refreshTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      final currentUid = _uid;
+      if (currentUid == null) return;
+      UsageQuotaService.instance.refreshFromBackend(currentUid).catchError((_) {});
+    });
+  }
+
   @override
   void dispose() {
     _quotaSub?.cancel();
+    _refreshTimer?.cancel();
     _auth?.removeListener(_handleAuthChange);
     super.dispose();
   }

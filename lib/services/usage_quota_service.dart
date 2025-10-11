@@ -60,6 +60,18 @@ class UsageQuotaService {
     return await _load(uid);
   }
 
+  /// Force-refresh the local quota cache from backend balance and notify listeners.
+  /// This treats backend balance as the remaining requests. Consumed resets to 0.
+  Future<UsageQuota> refreshFromBackend(String uid) async {
+    final remoteBalance = await API.instance.getCreditsBalance();
+    final refreshed = UsageQuota.initial(
+      allocation: remoteBalance.toInt().clamp(0, 1 << 30),
+    );
+    await _save(uid, refreshed);
+    _controllersByUid[uid]?.add(refreshed);
+    return refreshed;
+  }
+
   Future<UsageQuota> consume({required String uid, int amount = 1}) async {
     // Backward-compatible consume method (no logging). Prefer consumeRequests.
     final current = await _load(uid);
