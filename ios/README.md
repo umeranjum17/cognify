@@ -7,19 +7,19 @@ This directory contains the iOS configuration for the Cognify Flutter app with s
 The app supports three build flavors:
 
 ### 1. Production
-- **Bundle ID**: `com.umerfarooq1995.cognify-flutter`
+- **Bundle ID**: `com.umerfarooq1995.cognifyFlutter`
 - **Display Name**: `Cognify`
 - **Configuration**: `Production.xcconfig`
 - **Use**: App Store release
 
 ### 2. Dev
-- **Bundle ID**: `com.umerfarooq1995.cognify-flutter.dev`
+- **Bundle ID**: `com.umerfarooq1995.cognifyFlutter.dev`
 - **Display Name**: `Cognify Dev`
 - **Configuration**: `Dev.xcconfig`
 - **Use**: Development and testing with premium features enabled
 
 ### 3. Umer
-- **Bundle ID**: `com.umerfarooq1995.cognify-flutter.umer`
+- **Bundle ID**: `com.umerfarooq1995.cognifyFlutter.umer`
 - **Display Name**: `Cognify Umer`
 - **Configuration**: `Umer.xcconfig`
 - **Use**: Personal build with premium features enabled

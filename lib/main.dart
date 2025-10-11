@@ -13,6 +13,8 @@ import 'package:provider/provider.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_android/webview_flutter_android.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'providers/app_access_provider.dart';
 import 'providers/firebase_auth_provider.dart';
@@ -27,6 +29,8 @@ import 'theme/app_theme.dart';
 import 'theme/theme_provider.dart';
 import 'utils/logger.dart';
 import 'config/app_config.dart';
+import 'firebase_options.dart';
+import 'services/analytics_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -39,6 +43,31 @@ void main() async {
     }
   } catch (_) {
     // Silent: we have sane fallbacks (Android emulator defaults to 10.0.2.2:3000)
+  }
+
+  // Initialize Firebase as early as possible for all features
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    // Optional: connect to Firestore emulator when env is set
+    final emulator = dotenv.maybeGet('FIRESTORE_EMULATOR_HOST');
+    if (emulator != null && emulator.isNotEmpty && !kIsWeb) {
+      final parts = emulator.split(':');
+      final host = parts.first;
+      final port = int.tryParse(parts.length > 1 ? parts[1] : '8080') ?? 8080;
+      FirebaseFirestore.instance.useFirestoreEmulator(host, port);
+      Logger.info('🧪 Using Firestore emulator at $host:$port', tag: 'Firebase');
+    }
+    // Enable offline persistence for efficient sync
+    try {
+      FirebaseFirestore.instance.settings = const Settings(persistenceEnabled: true);
+      Logger.info('📦 Firestore persistence enabled', tag: 'Firebase');
+    } catch (e) {
+      Logger.warn('⚠️ Could not enable Firestore persistence: $e', tag: 'Firebase');
+    }
+  } catch (e) {
+    Logger.error('❌ Firebase initialization failed early: $e', tag: 'Firebase');
   }
 
   // Disable Provider debug checks to prevent subtype warnings
@@ -305,14 +334,11 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    Logger.debug('🏗️ Building CognifyApp - _isInitializing: $_isInitializing, _themeProvider: ${_themeProvider != null}, _firebaseAuthProvider: ${_firebaseAuthProvider != null}, _router: ${_router != null}', tag: 'AppInit');
-    
     // Show consistent loading screen while initializing
     if (_isInitializing ||
         _themeProvider == null ||
         _firebaseAuthProvider == null ||
         _router == null) {
-      Logger.debug('🔄 Showing loading screen', tag: 'AppInit');
       return MaterialApp(
         theme: lightTheme,
         darkTheme: darkTheme,
@@ -322,7 +348,15 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Image.asset('assets/images/cognify_robot_512x512.png', width: 96, height: 96),
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: Colors.blue,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Icon(Icons.smart_toy, size: 48, color: Colors.white),
+                ),
                 SizedBox(height: 24),
                 SizedBox(
                   width: 24,
@@ -348,21 +382,12 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
       );
     }
 
-    Logger.debug('✅ All initialization complete, showing main app', tag: 'AppInit');
     return MultiProvider(
       providers: [
         ChangeNotifierProvider.value(value: _themeProvider!),
         ChangeNotifierProvider.value(value: _firebaseAuthProvider!),
         ChangeNotifierProvider(create: (_) => ModeConfigProvider()),
         ChangeNotifierProvider(create: (_) => TabProvider()),
-        ChangeNotifierProxyProvider<FirebaseAuthProvider, SubscriptionProvider>(
-          create: (_) => SubscriptionProvider(),
-          update: (_, auth, sub) {
-            sub ??= SubscriptionProvider();
-            sub.wireAuth(auth);
-            return sub;
-          },
-        ),
         ChangeNotifierProxyProvider<FirebaseAuthProvider, UsageQuotaProvider>(
           create: (_) => UsageQuotaProvider(),
           update: (_, auth, quota) {
@@ -467,24 +492,8 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
 
     _firebaseAuthProvider = FirebaseAuthProvider();
 
-    // Create a minimal router immediately so the app can render routes
-    // even while async initialization completes. This avoids being stuck
-    // on the initial loading screen if something delays initialization.
-    _router = AppRouter.createRouter(
-      initialLocation: '/',
-      authProvider: _firebaseAuthProvider!,
-    );
-
     // Initialize everything before building UI
     _initializeApp();
-
-    // Safety timeout so we don't get stuck on loading indefinitely
-    Future.delayed(const Duration(seconds: 8), () {
-      if (mounted && _isInitializing) {
-        Logger.warn('⏱️ Init timeout reached; forcing UI to continue', tag: 'AppInit');
-        setState(() { _isInitializing = false; });
-      }
-    });
 
     // Initialize app links for deep linking
     _initializeAppLinks();
@@ -559,13 +568,9 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
 
       // Mark initialization complete
       if (mounted) {
-        Logger.info('🔄 Setting _isInitializing to false', tag: 'AppInit');
         setState(() {
           _isInitializing = false;
         });
-        Logger.info('✅ _isInitializing set to false, UI should rebuild', tag: 'AppInit');
-      } else {
-        Logger.warn('⚠️ Widget not mounted, cannot set _isInitializing to false', tag: 'AppInit');
       }
 
       Logger.info('✅ Core initialization complete', tag: 'AppInit');
@@ -594,19 +599,23 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
       }
 
       if (mounted) {
-        Logger.info('🔄 Setting _isInitializing to false (fallback)', tag: 'AppInit');
         setState(() {
           _isInitializing = false;
         });
-        Logger.info('✅ _isInitializing set to false (fallback), UI should rebuild', tag: 'AppInit');
-      } else {
-        Logger.warn('⚠️ Widget not mounted (fallback), cannot set _isInitializing to false', tag: 'AppInit');
       }
     }
   }
 
   Future<void> _initializeSecondaryServices() async {
     try {
+      // Initialize Analytics
+      try {
+        await AnalyticsService.instance.initialize();
+        await AnalyticsService.instance.setUserId(_firebaseAuthProvider?.uid);
+      } catch (e) {
+        Logger.error('❌ [Analytics] Error initializing analytics: $e', tag: 'Analytics');
+      }
+
       // Initialize user service
       try {
         final userId = await UserService().initializeUser();

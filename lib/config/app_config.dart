@@ -102,11 +102,9 @@ class AppConfig {
     // Use production Vercel backend
     // return 'https://cognify-backend.vercel.app';
     
-    // For local development:
-    if (defaultTargetPlatform == TargetPlatform.android) {
-      return 'http://10.0.2.2:3000'; // Android emulator
-    }
-    return 'http://localhost:3000'; // iOS simulator / web / desktop
+    // For local development, uncomment below:
+    return 'http://10.0.2.2:3000'; // Android emulator
+    // return 'http://localhost:3000'; // iOS simulator / web
   }
 
   // App information

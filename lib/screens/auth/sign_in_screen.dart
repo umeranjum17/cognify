@@ -21,8 +21,12 @@ class SignInScreen extends StatefulWidget {
 class _SignInScreenState extends State<SignInScreen> {
   bool _busy = false;
   String? _error;
-  final _emailController = TextEditingController();
-  final _linkController = TextEditingController();
+  
+
+  @override
+  void initState() {
+    super.initState();
+  }
 
   Future<void> _handleGoogle(BuildContext context) async {
     setState(() {
@@ -179,75 +183,6 @@ class _SignInScreenState extends State<SignInScreen> {
                       onPressed: _busy ? null : () => _handleGoogle(context),
                     ),
                   const SizedBox(height: 24),
-                  // Magic link passwordless UI
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text('Or use a magic link', style: Theme.of(context).textTheme.titleMedium),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(
-                      labelText: 'Email',
-                      hintText: 'you@example.com',
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _SignInButton(
-                          label: 'Send Magic Link',
-                          icon: Icons.mail_outline,
-                          onPressed: _busy
-                              ? null
-                              : () async {
-                                  setState(() { _busy = true; _error = null; });
-                                  try {
-                                    await context.read<FirebaseAuthProvider>().sendSignInLinkToEmail(_emailController.text.trim());
-                                    if (!mounted) return;
-                                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Magic link sent')));
-                                  } catch (e) {
-                                    setState(() { _error = e.toString(); });
-                                  } finally {
-                                    if (mounted) setState(() { _busy = false; });
-                                  }
-                                },
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: _linkController,
-                    decoration: const InputDecoration(
-                      labelText: 'Paste magic link here (simulator)',
-                      hintText: 'https://...',
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  _SignInButton(
-                    label: 'Complete Sign-In',
-                    icon: Icons.link,
-                    onPressed: _busy
-                        ? null
-                        : () async {
-                            setState(() { _busy = true; _error = null; });
-                            try {
-                              await context.read<FirebaseAuthProvider>().signInWithEmailLink(
-                                email: _emailController.text.trim(),
-                                emailLink: _linkController.text.trim(),
-                              );
-                              if (!mounted) return;
-                              _handlePostSignIn(context);
-                            } catch (e) {
-                              setState(() { _error = e.toString(); });
-                            } finally {
-                              if (mounted) setState(() { _busy = false; });
-                            }
-                          },
-                  ),
                   const SizedBox(height: 24),
                   if (_busy) const CircularProgressIndicator(),
                   const SizedBox(height: 8),

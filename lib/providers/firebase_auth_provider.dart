@@ -1,4 +1,6 @@
 import 'dart:io' show Platform;
+import 'dart:convert';
+import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
@@ -6,11 +8,11 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+import 'package:crypto/crypto.dart';
 
-import '../firebase_options.dart';
-import '../utils/logger.dart';
+import '../services/analytics_service.dart';
 import '../api/api.dart';
-import 'package:flutter/material.dart' show TextEditingController; // for UI helpers
+import '../config/app_config.dart';
 
 /// FirebaseAuthProvider()
 /// Implements zero-friction start with anonymous auth by default.
@@ -21,7 +23,6 @@ class FirebaseAuthProvider extends ChangeNotifier {
   fb.User? _user;
   Object? _lastError;
   late final fb.FirebaseAuth _auth;
-  final TextEditingController magicEmailController = TextEditingController();
 
   bool get initialized => _initialized;
   bool get initializing => _initializing;
@@ -31,62 +32,40 @@ class FirebaseAuthProvider extends ChangeNotifier {
   Object? get lastError => _lastError;
 
   Future<void> initialize() async {
-    Logger.debug('🔐 FirebaseAuthProvider.initialize() called', tag: 'FirebaseAuth');
-    if (_initialized || _initializing) {
-      Logger.debug('🔐 Already initialized or initializing, skipping', tag: 'FirebaseAuth');
-      return;
-    }
+    if (_initialized || _initializing) return;
     _initializing = true;
-    Logger.debug('🔐 Setting _initializing = true', tag: 'FirebaseAuth');
     
     // Use post-frame callback to avoid setState during build
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Logger.debug('🔐 Notifying listeners (initializing = true)', tag: 'FirebaseAuth');
       notifyListeners();
     });
 
     try {
-      // Initialize Firebase if not already
+      // Assume Firebase is initialized in main.dart; fail gracefully if not
       if (Firebase.apps.isEmpty) {
-        Logger.debug('🔐 Firebase apps empty, initializing Firebase...', tag: 'FirebaseAuth');
-        try {
-          // Use the real Firebase options from firebase_options.dart
-          await Firebase.initializeApp(
-            options: DefaultFirebaseOptions.currentPlatform,
-          );
-          Logger.debug('🔐 Firebase initialization successful', tag: 'FirebaseAuth');
-        } catch (e) {
-          Logger.error('🔐 Firebase initialization failed: $e', tag: 'FirebaseAuth');
-          debugPrint('❌ [FirebaseAuth] Firebase initialization failed: $e');
-          debugPrint('⚠️ [FirebaseAuth] App will continue without Firebase - some features may be limited');
-          _lastError = e;
-          _initialized = true; // Mark as initialized to prevent retry loops
-          _initializing = false;
-          Logger.debug('🔐 Setting _initialized = true, _initializing = false (Firebase failed)', tag: 'FirebaseAuth');
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            Logger.debug('🔐 Notifying listeners (Firebase failed)', tag: 'FirebaseAuth');
-            notifyListeners();
-          });
-          return; // Exit early if Firebase can't be initialized
-        }
-      } else {
-        Logger.debug('🔐 Firebase already initialized', tag: 'FirebaseAuth');
+        debugPrint('⚠️ [FirebaseAuth] Firebase not initialized before auth provider. Skipping auth setup.');
+        _initialized = true;
+        _initializing = false;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          notifyListeners();
+        });
+        return;
       }
 
       _auth = fb.FirebaseAuth.instance;
-      Logger.debug('🔐 FirebaseAuth instance obtained', tag: 'FirebaseAuth');
 
       // Hydrate current user
       _user = _auth.currentUser;
-      Logger.debug('🔐 Current user: ${_user?.uid ?? "null"}', tag: 'FirebaseAuth');
 
       // Listen to auth state changes
       _auth.authStateChanges().listen((user) {
-        Logger.debug('🔐 Auth state changed: ${user?.uid ?? "null"}', tag: 'FirebaseAuth');
         _user = user;
+        // Wire analytics user identity on change
+        try {
+          AnalyticsService.instance.setUserId(user?.uid).catchError((_) {});
+        } catch (_) {}
         if (_initialized) { // Only notify if initialization is complete
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            Logger.debug('🔐 Notifying listeners (auth state change)', tag: 'FirebaseAuth');
             notifyListeners();
           });
         }
@@ -94,34 +73,29 @@ class FirebaseAuthProvider extends ChangeNotifier {
 
       // Zero-friction start: sign in anonymously if no user
       if (_user == null) {
-        Logger.debug('🔐 No current user, signing in anonymously...', tag: 'FirebaseAuth');
         try {
           await _auth.signInAnonymously();
           _user = _auth.currentUser;
-          Logger.debug('🔐 Anonymous sign-in successful: ${_user?.uid}', tag: 'FirebaseAuth');
           debugPrint('✅ [FirebaseAuth] Anonymous sign-in successful');
+          // Log anonymous login
+          try {
+            await AnalyticsService.instance.logLogin(method: 'anonymous');
+            await AnalyticsService.instance.setUserId(_user?.uid);
+          } catch (_) {}
         } catch (e) {
-          Logger.error('🔐 Anonymous sign-in failed: $e', tag: 'FirebaseAuth');
           debugPrint('⚠️ [FirebaseAuth] Anonymous sign-in failed: $e');
           // Continue without anonymous auth - user can still use the app
         }
-      } else {
-        Logger.debug('🔐 User already exists, skipping anonymous sign-in', tag: 'FirebaseAuth');
       }
 
       _initialized = true;
-      Logger.debug('🔐 Setting _initialized = true (success)', tag: 'FirebaseAuth');
     } catch (e) {
       _lastError = e;
-      Logger.error('🔐 Initialization error: $e', tag: 'FirebaseAuth');
       debugPrint('❌ [FirebaseAuth] Initialization error: $e');
       _initialized = true; // Mark as initialized even with error to prevent retry loops
-      Logger.debug('🔐 Setting _initialized = true (error)', tag: 'FirebaseAuth');
     } finally {
       _initializing = false;
-      Logger.debug('🔐 Setting _initializing = false (finally)', tag: 'FirebaseAuth');
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        Logger.debug('🔐 Notifying listeners (finally)', tag: 'FirebaseAuth');
         notifyListeners();
       });
     }
@@ -156,6 +130,10 @@ class FirebaseAuthProvider extends ChangeNotifier {
         _user = cred.user;
       }
       debugPrint('✅ [FirebaseAuth] Google sign-in successful');
+      try {
+        await AnalyticsService.instance.logLogin(method: 'google');
+        await AnalyticsService.instance.setUserId(_user?.uid);
+      } catch (_) {}
       notifyListeners();
     } catch (e) {
       _lastError = e;
@@ -183,22 +161,31 @@ class FirebaseAuthProvider extends ChangeNotifier {
         throw Exception('Sign in with Apple not available on this device');
       }
 
+      // Nonce protects against replay attacks and is recommended for Firebase
+      final String rawNonce = _generateNonce();
+      final String nonceSha256 = _sha256ofString(rawNonce);
+
       final credential = await SignInWithApple.getAppleIDCredential(
         scopes: [
           AppleIDAuthorizationScopes.email,
           AppleIDAuthorizationScopes.fullName,
         ],
+        nonce: nonceSha256,
       );
 
       final oauthProvider = fb.OAuthProvider('apple.com');
       final oauthCred = oauthProvider.credential(
         idToken: credential.identityToken,
-        accessToken: credential.authorizationCode,
+        rawNonce: rawNonce,
       );
 
       final cred = await _auth.signInWithCredential(oauthCred);
       _user = cred.user;
       debugPrint('✅ [FirebaseAuth] Apple sign-in successful');
+      try {
+        await AnalyticsService.instance.logLogin(method: 'apple');
+        await AnalyticsService.instance.setUserId(_user?.uid);
+      } catch (_) {}
       notifyListeners();
     } catch (e) {
       _lastError = e;
@@ -217,6 +204,10 @@ class FirebaseAuthProvider extends ChangeNotifier {
       );
       _user = cred.user;
       debugPrint('✅ [FirebaseAuth] Email sign-in successful');
+      try {
+        await AnalyticsService.instance.logLogin(method: 'email');
+        await AnalyticsService.instance.setUserId(_user?.uid);
+      } catch (_) {}
       notifyListeners();
     } catch (e) {
       _lastError = e;
@@ -235,70 +226,14 @@ class FirebaseAuthProvider extends ChangeNotifier {
       );
       _user = cred.user;
       debugPrint('✅ [FirebaseAuth] Account creation successful');
+      try {
+        await AnalyticsService.instance.logLogin(method: 'email_create');
+        await AnalyticsService.instance.setUserId(_user?.uid);
+      } catch (_) {}
       notifyListeners();
     } catch (e) {
       _lastError = e;
       debugPrint('❌ [FirebaseAuth] Account creation error: $e');
-      notifyListeners();
-      rethrow;
-    }
-  }
-
-  /// Dev-only: request a custom token from backend and sign in
-  Future<void> devSignIn({String? uid, String? email}) async {
-    _lastError = null;
-    try {
-      final signedUid = await API.instance.devSignIn(uid: uid, email: email);
-      _user = _auth.currentUser;
-      debugPrint('✅ [FirebaseAuth] Dev sign-in successful: $signedUid');
-      notifyListeners();
-    } catch (e) {
-      _lastError = e;
-      debugPrint('❌ [FirebaseAuth] Dev sign-in error: $e');
-      notifyListeners();
-      rethrow;
-    }
-  }
-
-  /// Send sign-in link to email (magic link)
-  Future<void> sendSignInLinkToEmail(String email) async {
-    _lastError = null;
-    try {
-      // Configure ActionCodeSettings:
-      // Use app's bundle ID for iOS and android package for Android; URL must be authorized in Firebase.
-      final actionCodeSettings = fb.ActionCodeSettings(
-        url: 'https://cognify-eb0a2.firebaseapp.com/__/auth/action',
-        handleCodeInApp: true,
-        iOSBundleId: DefaultFirebaseOptions.ios.iosBundleId,
-        androidPackageName: null,
-        androidInstallApp: false,
-      );
-      await _auth.sendSignInLinkToEmail(email: email, actionCodeSettings: actionCodeSettings);
-      debugPrint('✅ [FirebaseAuth] Magic link sent to $email');
-      notifyListeners();
-    } catch (e) {
-      _lastError = e;
-      debugPrint('❌ [FirebaseAuth] sendSignInLinkToEmail error: $e');
-      notifyListeners();
-      rethrow;
-    }
-  }
-
-  /// Complete sign-in with email link (paste-in flow on simulator)
-  Future<void> signInWithEmailLink({required String email, required String emailLink}) async {
-    _lastError = null;
-    try {
-      final isValid = _auth.isSignInWithEmailLink(emailLink);
-      if (!isValid) {
-        throw Exception('Invalid sign-in link');
-      }
-      final cred = await _auth.signInWithEmailLink(email: email, emailLink: emailLink);
-      _user = cred.user;
-      debugPrint('✅ [FirebaseAuth] Magic link sign-in successful');
-      notifyListeners();
-    } catch (e) {
-      _lastError = e;
-      debugPrint('❌ [FirebaseAuth] signInWithEmailLink error: $e');
       notifyListeners();
       rethrow;
     }
@@ -310,6 +245,9 @@ class FirebaseAuthProvider extends ChangeNotifier {
       await _auth.signOut();
       _user = null;
       debugPrint('✅ [FirebaseAuth] Sign out successful');
+      try {
+        await AnalyticsService.instance.setUserId(null);
+      } catch (_) {}
       notifyListeners();
     } catch (e) {
       _lastError = e;
@@ -329,4 +267,40 @@ class FirebaseAuthProvider extends ChangeNotifier {
 
   /// Get user's photo URL
   String? get photoURL => _user?.photoURL;
+
+  // Magic link sign-in removed
+
+  /// Dev-only: Sign in using a custom token issued by backend.
+  Future<void> devSignIn({String? uid, String? email, Map<String, dynamic>? claims}) async {
+    _lastError = null;
+    try {
+      final signedUid = await API.instance.devSignIn(uid: uid, email: email, claims: claims);
+      _user = _auth.currentUser;
+      debugPrint('✅ [FirebaseAuth] Dev sign-in successful uid=$signedUid');
+      try {
+        await AnalyticsService.instance.logLogin(method: 'dev_custom_token');
+        await AnalyticsService.instance.setUserId(_user?.uid);
+      } catch (_) {}
+      notifyListeners();
+    } catch (e) {
+      _lastError = e;
+      debugPrint('❌ [FirebaseAuth] devSignIn error: $e');
+      notifyListeners();
+      rethrow;
+    }
+  }
+
+  // Magic-link helpers removed
+
+  String _generateNonce([int length = 32]) {
+    const String charset = '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
+    final Random random = Random.secure();
+    return List.generate(length, (_) => charset[random.nextInt(charset.length)]).join();
+  }
+
+  String _sha256ofString(String input) {
+    final List<int> bytes = utf8.encode(input);
+    final Digest digest = sha256.convert(bytes);
+    return digest.toString();
+  }
 }

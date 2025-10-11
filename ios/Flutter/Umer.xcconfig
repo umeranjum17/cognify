@@ -2,6 +2,6 @@
 #include? "../Pods/Target Support Files/Pods-Runner/Pods-Runner.debug.xcconfig"
 
 // Umer flavor configuration
-PRODUCT_BUNDLE_IDENTIFIER = com.umerfarooq1995.cognify-flutter.umer
+PRODUCT_BUNDLE_IDENTIFIER = com.umerfarooq1995.cognifyFlutter.umer
 PRODUCT_NAME = Cognify Umer
 DISPLAY_NAME = Cognify Umer
