@@ -322,15 +322,7 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: Colors.blue,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Icon(Icons.smart_toy, size: 48, color: Colors.white),
-                ),
+                Image.asset('assets/images/cognify_robot_512x512.png', width: 96, height: 96),
                 SizedBox(height: 24),
                 SizedBox(
                   width: 24,
@@ -475,8 +467,24 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
 
     _firebaseAuthProvider = FirebaseAuthProvider();
 
+    // Create a minimal router immediately so the app can render routes
+    // even while async initialization completes. This avoids being stuck
+    // on the initial loading screen if something delays initialization.
+    _router = AppRouter.createRouter(
+      initialLocation: '/',
+      authProvider: _firebaseAuthProvider!,
+    );
+
     // Initialize everything before building UI
     _initializeApp();
+
+    // Safety timeout so we don't get stuck on loading indefinitely
+    Future.delayed(const Duration(seconds: 8), () {
+      if (mounted && _isInitializing) {
+        Logger.warn('⏱️ Init timeout reached; forcing UI to continue', tag: 'AppInit');
+        setState(() { _isInitializing = false; });
+      }
+    });
 
     // Initialize app links for deep linking
     _initializeAppLinks();

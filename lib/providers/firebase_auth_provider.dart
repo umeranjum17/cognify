@@ -10,6 +10,7 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import '../firebase_options.dart';
 import '../utils/logger.dart';
 import '../api/api.dart';
+import 'package:flutter/material.dart' show TextEditingController; // for UI helpers
 
 /// FirebaseAuthProvider()
 /// Implements zero-friction start with anonymous auth by default.
@@ -20,6 +21,7 @@ class FirebaseAuthProvider extends ChangeNotifier {
   fb.User? _user;
   Object? _lastError;
   late final fb.FirebaseAuth _auth;
+  final TextEditingController magicEmailController = TextEditingController();
 
   bool get initialized => _initialized;
   bool get initializing => _initializing;
@@ -253,6 +255,50 @@ class FirebaseAuthProvider extends ChangeNotifier {
     } catch (e) {
       _lastError = e;
       debugPrint('❌ [FirebaseAuth] Dev sign-in error: $e');
+      notifyListeners();
+      rethrow;
+    }
+  }
+
+  /// Send sign-in link to email (magic link)
+  Future<void> sendSignInLinkToEmail(String email) async {
+    _lastError = null;
+    try {
+      // Configure ActionCodeSettings:
+      // Use app's bundle ID for iOS and android package for Android; URL must be authorized in Firebase.
+      final actionCodeSettings = fb.ActionCodeSettings(
+        url: 'https://cognify-eb0a2.firebaseapp.com/__/auth/action',
+        handleCodeInApp: true,
+        iOSBundleId: DefaultFirebaseOptions.ios.iosBundleId,
+        androidPackageName: null,
+        androidInstallApp: false,
+      );
+      await _auth.sendSignInLinkToEmail(email: email, actionCodeSettings: actionCodeSettings);
+      debugPrint('✅ [FirebaseAuth] Magic link sent to $email');
+      notifyListeners();
+    } catch (e) {
+      _lastError = e;
+      debugPrint('❌ [FirebaseAuth] sendSignInLinkToEmail error: $e');
+      notifyListeners();
+      rethrow;
+    }
+  }
+
+  /// Complete sign-in with email link (paste-in flow on simulator)
+  Future<void> signInWithEmailLink({required String email, required String emailLink}) async {
+    _lastError = null;
+    try {
+      final isValid = _auth.isSignInWithEmailLink(emailLink);
+      if (!isValid) {
+        throw Exception('Invalid sign-in link');
+      }
+      final cred = await _auth.signInWithEmailLink(email: email, emailLink: emailLink);
+      _user = cred.user;
+      debugPrint('✅ [FirebaseAuth] Magic link sign-in successful');
+      notifyListeners();
+    } catch (e) {
+      _lastError = e;
+      debugPrint('❌ [FirebaseAuth] signInWithEmailLink error: $e');
       notifyListeners();
       rethrow;
     }
