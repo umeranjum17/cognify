@@ -373,7 +373,7 @@ class _GeneralSettingsTabState extends State<GeneralSettingsTab> {
 
     final quota = quotaProvider.quota;
     final int totalTokens =
-        quota?.totalTokens ?? AppSecrets.initialTokenAllocation;
+        quota?.totalTokens ?? 0;
     final bool isTester = AccessService.instance.isTester;
     final int remainingTokens = isTester
         ? totalTokens

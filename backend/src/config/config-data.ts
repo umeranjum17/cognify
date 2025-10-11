@@ -157,3 +157,22 @@ export const CACHE_CONFIG = {
   appConfigCacheDuration: 300, // 5 minutes
   modesCacheDuration: 3600, // 1 hour
 } as const;
+
+// ========== REVENUECAT PRODUCT → CREDIT MAPPING ==========
+
+// Map store product identifiers (RevenueCat product_id / storeProduct.identifier)
+// to the number of credits to grant on purchase/renewal.
+// Keep this config in source control and update alongside RC dashboard changes.
+export const RC_CREDIT_PRODUCTS: Record<string, number> = {
+  // Example mappings – update to your actual product IDs
+  'premium_monthly': 100, // 100 credits per monthly purchase
+  'premium_annual': 1500, // 1500 credits per annual purchase
+  // Add more SKUs as needed, e.g., one-off top-up packs
+  'credits_100': 100,
+  'credits_500': 500,
+};
+
+// Control which RC environments are accepted by the webhook handler
+export const RC_WEBHOOK_CONFIG = {
+  allowSandbox: true, // set to false in production if desired
+} as const;

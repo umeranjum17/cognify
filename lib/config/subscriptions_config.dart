@@ -2,6 +2,9 @@
 // TODO: Replace placeholders with real keys and product IDs once created in RevenueCat and the stores.
 
 class SubscriptionsConfig {
+  // Global kill-switch: when false, all subscription/RevenueCat flows are disabled.
+  static const bool subscriptionsEnabled = false;
+
   // RevenueCat public SDK keys (Environment: Production)
   // Get these from RevenueCat → Apps & providers → Select your Android app → SDK API Keys (Client)
   // Use Android SDK API Key (Client) starting with 'apx_' - NOT Secret API keys

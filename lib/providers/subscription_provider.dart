@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import '../services/revenuecat_service.dart';
+import '../config/subscriptions_config.dart';
 import 'firebase_auth_provider.dart';
 
 // SubscriptionProvider()
@@ -34,6 +35,16 @@ class SubscriptionProvider extends ChangeNotifier {
 
   Future<void> initialize({String? appUserId}) async {
     if (_initialized) return;
+
+    // When subscriptions are disabled, mark initialized and set inactive state
+    if (!SubscriptionsConfig.subscriptionsEnabled) {
+      _initialized = true;
+      _setState(SubscriptionState.active); // credit-based: treat as active/unlocked
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        notifyListeners();
+      });
+      return;
+    }
 
     // Default fail-closed state
     _setState(SubscriptionState.unknown);
@@ -85,6 +96,10 @@ class SubscriptionProvider extends ChangeNotifier {
   }
 
   Future<void> refreshOfferings() async {
+    if (!SubscriptionsConfig.subscriptionsEnabled) {
+      // No-op in credit mode
+      return;
+    }
     try {
       // Only attempt to get offerings if RevenueCat is properly configured
       if (!RevenueCatService.instance.isConfigured) {
@@ -109,6 +124,10 @@ class SubscriptionProvider extends ChangeNotifier {
   }
 
   Future<void> restore() async {
+    if (!SubscriptionsConfig.subscriptionsEnabled) {
+      // No-op in credit mode
+      return;
+    }
     try {
       // Only attempt to restore if RevenueCat is properly configured
       if (!RevenueCatService.instance.isConfigured) {
@@ -139,7 +158,9 @@ class SubscriptionProvider extends ChangeNotifier {
     _auth = auth;
 
     // React immediately to current state
-    _handleAuthChange();
+    if (SubscriptionsConfig.subscriptionsEnabled) {
+      _handleAuthChange();
+    }
 
     // Listen for subsequent auth state changes
     _auth!.addListener(_handleAuthChange);
@@ -149,6 +170,9 @@ class SubscriptionProvider extends ChangeNotifier {
   bool _isHandlingAuthChange = false; // Prevent duplicate auth handling
 
   void _handleAuthChange() {
+    if (!SubscriptionsConfig.subscriptionsEnabled) {
+      return;
+    }
     // Prevent duplicate/concurrent auth change handling
     if (_isHandlingAuthChange) {
       debugPrint('⚠️ [SubscriptionProvider] Auth change already in progress, skipping...');

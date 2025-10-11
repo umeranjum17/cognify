@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../providers/firebase_auth_provider.dart';
 import '../providers/subscription_provider.dart';
 import '../services/access_service.dart';
+import '../config/subscriptions_config.dart';
 
 /// Tracks high-level access flags for the signed-in user.
 ///
@@ -32,8 +33,10 @@ class AppAccessProvider extends ChangeNotifier {
   String? get userEmail => _auth.user?.email;
 
   void _evaluate() {
-    // Check actual RevenueCat subscription status
-    final hasActiveSubscription = _subs.isEntitled;
+    // Credit-based gating: ignore subscriptions when disabled
+    final hasActiveSubscription = !SubscriptionsConfig.subscriptionsEnabled
+        ? true
+        : _subs.isEntitled;
     
     // No tester whitelist in production
     const tester = false;

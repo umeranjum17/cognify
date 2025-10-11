@@ -63,6 +63,11 @@ class RevenueCatService {
     String? appUserId,
     Duration timeout = const Duration(seconds: 6),
   }) async {
+    if (!SubscriptionsConfig.subscriptionsEnabled) {
+      debugPrint('⛔ [RevenueCat] Subscriptions disabled. Skipping initialize().');
+      _configured = false;
+      return;
+    }
     if (_configured) return; // idempotent
 
     try {
@@ -81,7 +86,10 @@ class RevenueCatService {
         return;
       }
 
-      debugPrint('🔧 [RevenueCat] Configuring with key: ${apiKey.substring(0, 10)}...');
+      debugPrint('🔧 [RevenueCat] Configuring');
+      debugPrint('  - Platform: ${isApplePlatform ? 'Apple' : 'Android'}');
+      debugPrint('  - SDK Key (first 10): ${apiKey.substring(0, 10)}...');
+      debugPrint('  - App User ID (provided): ${appUserId ?? 'anonymous'}');
       
       final configuration = PurchasesConfiguration(apiKey);
       // If we already know the user, set it on configuration to avoid identity races
@@ -91,6 +99,12 @@ class RevenueCatService {
       // Enable trusted entitlements in informational mode for extra safety
       configuration.entitlementVerificationMode =
           EntitlementVerificationMode.informational;
+      // Enable verbose logs in debug mode
+      assert(() {
+        debugPrint('🔊 [RevenueCat] Enabling debug logs');
+        Purchases.setLogLevel(LogLevel.debug);
+        return true;
+      }());
       await _withTimeout(() => Purchases.configure(configuration), timeout);
       _configured = true;
       debugPrint('✅ [RevenueCat] Configuration successful');
@@ -116,9 +130,12 @@ class RevenueCatService {
 
     // Warm caches and set up listener
     try {
+      debugPrint('🔍 [RevenueCat] Fetching initial customer info after configure...');
       _customerInfoCache =
           await _withTimeout(() => Purchases.getCustomerInfo(), timeout);
       if (_customerInfoCache != null) {
+        final ent = _customerInfoCache!.entitlements.active;
+        debugPrint('🎟️ [RevenueCat] Initial entitlements: ${ent.keys.join(', ')}');
         _customerInfoController.add(_customerInfoCache!);
       }
     } catch (e) {
@@ -132,6 +149,8 @@ class RevenueCatService {
         // Never throw from stream add
         try {
           _customerInfoController.add(customerInfo);
+          final ent = customerInfo.entitlements.active;
+          debugPrint('🔔 [RevenueCat] CustomerInfo updated. Active entitlements: ${ent.keys.join(', ')}');
         } catch (e) {
           debugPrint('⚠️ [RevenueCat] stream add error: $e');
         }
@@ -161,6 +180,10 @@ class RevenueCatService {
 
   /// Force refresh customer info from RevenueCat servers (bypassing cache)
   Future<CustomerInfo?> forceRefreshCustomerInfo({Duration timeout = const Duration(seconds: 6)}) async {
+    if (!SubscriptionsConfig.subscriptionsEnabled) {
+      debugPrint('⛔ [RevenueCat] Subscriptions disabled. Skipping forceRefreshCustomerInfo().');
+      return _customerInfoCache;
+    }
     if (!_configured) return _customerInfoCache;
     try {
       debugPrint('🔄 [RevenueCat] Force refreshing customer info...');
@@ -176,6 +199,10 @@ class RevenueCatService {
   }
 
   Future<void> logOut({Duration timeout = const Duration(seconds: 6)}) async {
+    if (!SubscriptionsConfig.subscriptionsEnabled) {
+      debugPrint('⛔ [RevenueCat] Subscriptions disabled. Skipping logOut().');
+      return;
+    }
     if (!_configured) return;
     try {
       await _withTimeout(() => Purchases.logOut(), timeout);
@@ -192,12 +219,17 @@ class RevenueCatService {
     bool forceRefresh = false,
     Duration timeout = const Duration(seconds: 8),
   }) async {
+    if (!SubscriptionsConfig.subscriptionsEnabled) {
+      debugPrint('⛔ [RevenueCat] Subscriptions disabled. Returning null from getOfferings().');
+      return null;
+    }
     if (!_configured) {
       debugPrint('⚠️ [RevenueCat] getOfferings: RC not configured - returning null');
       return null;
     }
     if (!forceRefresh && _offeringsCache != null) return _offeringsCache;
     try {
+      debugPrint('📡 [RevenueCat] Fetching offerings (force: $forceRefresh)...');
       _offeringsCache =
           await _withTimeout(() => Purchases.getOfferings(), timeout);
       if (_offeringsCache == null) {
@@ -209,12 +241,22 @@ class RevenueCatService {
         _offeringsCache!.all.forEach((key, offering) {
           debugPrint('📦 [RevenueCat] Offering "$key": ${offering.availablePackages.length} packages');
           offering.availablePackages.forEach((package) {
-            debugPrint('  📦 Package: ${package.identifier} - Product: ${package.storeProduct.identifier}');
+            final sp = package.storeProduct;
+            debugPrint('  📦 Package: ${package.identifier}');
+            debugPrint('     - Product: ${sp.identifier}');
+            debugPrint('     - Title: ${sp.title}');
+            debugPrint('     - Price: ${sp.priceString}');
+            debugPrint('     - Description: ${sp.description}');
           });
         });
       }
     } catch (e) {
       debugPrint('⚠️ [RevenueCat] getOfferings error: $e');
+      if (e is PlatformException) {
+        debugPrint('  - Code: ${e.code}');
+        debugPrint('  - Message: ${e.message}');
+        debugPrint('  - Details: ${e.details}');
+      }
       // Return null for unconfigured RevenueCat to prevent fatal errors
       return null;
     }
@@ -223,6 +265,10 @@ class RevenueCatService {
 
   Future<CustomerInfo?> restorePurchases(
       {Duration timeout = const Duration(seconds: 10)}) async {
+    if (!SubscriptionsConfig.subscriptionsEnabled) {
+      debugPrint('⛔ [RevenueCat] Subscriptions disabled. Skipping restorePurchases().');
+      return null;
+    }
     if (!_configured) {
       debugPrint('⚠️ [RevenueCat] restorePurchases: RC not configured');
       return null;
@@ -240,6 +286,9 @@ class RevenueCatService {
   }
 
   bool get isEntitledToPremium {
+    if (!SubscriptionsConfig.subscriptionsEnabled) {
+      return true; // Credit-based approach: do not gate features by subscription
+    }
     final entitlements = _customerInfoCache?.entitlements.active;
     
     // Debug: Log all active entitlements to help diagnose issues
@@ -247,6 +296,16 @@ class RevenueCatService {
     debugPrint('🔍 [RevenueCat] Looking for entitlement: "${SubscriptionsConfig.entitlementPremium}"');
     
     final hasExpectedEntitlement = entitlements?.containsKey(SubscriptionsConfig.entitlementPremium) == true;
+    if (hasExpectedEntitlement) {
+      final e = entitlements![SubscriptionsConfig.entitlementPremium]!;
+      debugPrint('  - Will renew: ${e.willRenew}');
+      debugPrint('  - Period type: ${e.periodType}');
+      debugPrint('  - Latest purchase date: ${e.latestPurchaseDate}');
+      debugPrint('  - Original purchase date: ${e.originalPurchaseDate}');
+      debugPrint('  - Expiration date: ${e.expirationDate}');
+      debugPrint('  - Store: ${e.store}');
+      debugPrint('  - Product identifier: ${e.productIdentifier}');
+    }
     debugPrint('✅ [RevenueCat] Has expected entitlement: $hasExpectedEntitlement');
     
     return hasExpectedEntitlement;

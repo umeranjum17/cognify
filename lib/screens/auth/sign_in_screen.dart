@@ -146,7 +146,7 @@ class _SignInScreenState extends State<SignInScreen> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Sign in to sync your workspace and access your starter balance of ${AppSecrets.initialTokenAllocation} tokens for Cognify.',
+                    'Sign in to sync your workspace and access your starter credits in Cognify.',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),

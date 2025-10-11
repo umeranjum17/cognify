@@ -10,6 +10,7 @@ import '../services/user_service.dart';
 import 'session_cost_bottom_sheet.dart';
 import 'quick_credit_purchase_sheet.dart';
 import 'wallet_topup_sheet.dart';
+import '../config/subscriptions_config.dart';
 import 'package:provider/provider.dart';
 import '../providers/subscription_provider.dart';
 import '../providers/firebase_auth_provider.dart';
@@ -413,7 +414,11 @@ class _SessionInfoWidgetState extends State<SessionInfoWidget> {
   }
 
   void _showQuickCreditPurchase(BuildContext context, int currentCredits) {
-    // Capture providers from the current scope BEFORE opening the sheet
+    if (!SubscriptionsConfig.subscriptionsEnabled) {
+      _showWalletTopUp(context, currentCredits);
+      return;
+    }
+    // Legacy path (kept for compatibility when enabled)
     final subs = Provider.of<SubscriptionProvider>(context, listen: false);
     final auth = Provider.of<FirebaseAuthProvider>(context, listen: false);
 
@@ -430,7 +435,6 @@ class _SessionInfoWidgetState extends State<SessionInfoWidget> {
         child: QuickCreditPurchaseSheet(currentCredits: currentCredits),
       ),
     ).then((purchased) {
-      // Reload credits if purchase was successful
       if (purchased == true) {
         _loadCreditsIfNeeded();
       }

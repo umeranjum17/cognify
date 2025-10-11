@@ -218,7 +218,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Cognify now runs on request tokens. Every account starts with ${AppSecrets.initialTokenAllocation} tokens and top-up options are coming soon.',
+                    'Cognify now runs on request credits. You can top up credits anytime.',
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 24),
