@@ -575,9 +575,8 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
         explicitZeroPricing ||
         requestUnits == 0;
 
-    // Check if user can afford this model
-    final bool isAffordable = requestUnits == 0 ||
-        (context.read<UsageQuotaProvider?>()?.quota?.remaining ?? 0) >= requestUnits;
+    // Affordability is enforced server-side; don't gate client-side
+    final bool isAffordable = true;
 
     return GestureDetector(
       onTap: isAffordable ? () => _selectModel(modelId) : null,

@@ -40,10 +40,8 @@ class SubscriptionCreditsService {
         .listen(
       (snapshot) async {
         if (!snapshot.exists) {
-          // No subscription data - initialize with free tier
-          final freeCredits = SubscriptionCredits.free(uid);
-          await _initializeSubscription(uid, freeCredits);
-          controller.add(freeCredits);
+          // No subscription data - treat as zero credits on client
+          controller.add(SubscriptionCredits.zero(uid));
           return;
         }
 
@@ -82,9 +80,8 @@ class SubscriptionCreditsService {
           .get();
 
       if (!snapshot.exists) {
-        final freeCredits = SubscriptionCredits.free(uid);
-        await _initializeSubscription(uid, freeCredits);
-        return freeCredits;
+        // No subscription data - treat as zero credits
+        return SubscriptionCredits.zero(uid);
       }
 
       final credits = SubscriptionCredits.fromFirestore(snapshot.data()!, uid);
@@ -257,6 +254,22 @@ class SubscriptionCredits {
     required this.consumed,
     this.lastSyncedFromRC,
   });
+
+  factory SubscriptionCredits.zero(String uid) {
+    final now = DateTime.now().toUtc();
+    final periodEnd = DateTime(now.year, now.month + 1, now.day).toUtc();
+    return SubscriptionCredits(
+      uid: uid,
+      status: 'free',
+      tier: 'free',
+      productId: null,
+      currentPeriodStart: now,
+      currentPeriodEnd: periodEnd,
+      monthlyAllowance: 0,
+      consumed: 0,
+      lastSyncedFromRC: null,
+    );
+  }
 
   factory SubscriptionCredits.free(String uid) {
     final now = DateTime.now().toUtc();

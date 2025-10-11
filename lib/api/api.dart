@@ -515,16 +515,16 @@ class API {
         .map((snapshot) {
       if (!snapshot.exists) {
         return {
-          'monthlyAllowance': 10,
+          'monthlyAllowance': 0,
           'consumed': 0,
-          'remaining': 10,
+          'remaining': 0,
           'tier': 'free',
           'status': 'free',
         };
       }
 
       final data = snapshot.data()!;
-      final allowance = data['monthlyAllowance'] as int? ?? 10;
+      final allowance = data['monthlyAllowance'] as int? ?? 0;
       final consumed = data['consumed'] as int? ?? 0;
 
       return {
@@ -556,16 +556,16 @@ class API {
 
       if (!snapshot.exists) {
         return {
-          'monthlyAllowance': 10,
+          'monthlyAllowance': 0,
           'consumed': 0,
-          'remaining': 10,
+          'remaining': 0,
           'tier': 'free',
           'status': 'free',
         };
       }
 
       final data = snapshot.data()!;
-      final allowance = data['monthlyAllowance'] as int? ?? 10;
+      final allowance = data['monthlyAllowance'] as int? ?? 0;
       final consumed = data['consumed'] as int? ?? 0;
 
       return {
@@ -579,9 +579,9 @@ class API {
     } catch (e) {
       print('❌ API Error [fetchSubscriptionCredits]: $e');
       return {
-        'monthlyAllowance': 10,
+        'monthlyAllowance': 0,
         'consumed': 0,
-        'remaining': 10,
+        'remaining': 0,
         'tier': 'free',
         'status': 'free',
       };

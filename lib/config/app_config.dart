@@ -57,19 +57,7 @@ class AppSecrets {
     defaultValue: '',
   );
 
-  static const int initialTokenAllocation = int.fromEnvironment(
-    'INITIAL_TOKEN_ALLOCATION',
-    defaultValue: 10,
-  );
-
-  // New: request-based allocation and conversion
-  // Default: 1000 requests for $10 => $0.01 per request
-  static const int initialRequestAllocation = int.fromEnvironment(
-    'INITIAL_REQUEST_ALLOCATION',
-    defaultValue: 1000,
-  );
-
-  static const double dollarsPerRequestUnit = 0.01;
+  // Note: Credits and pricing come from backend config; no frontend defaults
 }
 
 // ========== APP CONFIG ==========

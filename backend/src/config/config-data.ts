@@ -124,7 +124,7 @@ export const FEATURE_FLAGS = {
 
 export const QUOTA_CONFIG = {
   // Request-based allocation
-  initialRequestAllocation: 1000,
+  initialRequestAllocation: 20,
   dollarsPerRequestUnit: 0.01,
 
   // Legacy token allocation (deprecated)

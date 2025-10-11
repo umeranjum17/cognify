@@ -109,7 +109,7 @@ class RequestUsageEstimator {
           return const RequestUsageEstimate.free();
         }
 
-        final dollarsPerUnit = quotaPricing?['dollarsPerRequestUnit'] ?? 0.01;
+        final dollarsPerUnit = (quotaPricing?['dollarsPerRequestUnit'] as num?)?.toDouble() ?? 0.01;
         final requestUnits = (dollarCost / dollarsPerUnit).ceil().clamp(1, 999999);
 
         return RequestUsageEstimate(
@@ -120,6 +120,7 @@ class RequestUsageEstimator {
         );
       }
 
+      // Missing pricing; treat as free to avoid client-side blocking
       return const RequestUsageEstimate.free();
     } catch (e) {
       print('❌ Failed to estimate usage: $e');

@@ -329,7 +329,7 @@ class _SessionInfoWidgetState extends State<SessionInfoWidget> {
 
     final remaining = widget.remainingRequests;
 
-    final fallback = AppSecrets.initialRequestAllocation;
+    const fallback = 0;
     final effectiveRemaining = ((remaining ?? fallback).clamp(
       0,
       1 << 30,

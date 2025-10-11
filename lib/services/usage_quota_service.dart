@@ -3,7 +3,7 @@ import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../config/app_config.dart';
+import '../api/api.dart';
 import '../models/usage_quota.dart';
 
 /// Local UsageQuota service backed by SharedPreferences.
@@ -24,14 +24,15 @@ class UsageQuotaService {
         final data = json.decode(jsonStr) as Map<String, dynamic>;
         return UsageQuota.fromJson(
           data,
-          allocation: AppSecrets.initialRequestAllocation,
+          allocation: 0,
         );
       } catch (_) {}
     }
 
-    // Initialize with default allocation
+    // Initialize from backend balance (source of truth)
+    final remoteBalance = await API.instance.getCreditsBalance();
     final initial = UsageQuota.initial(
-      allocation: AppSecrets.initialRequestAllocation,
+      allocation: remoteBalance.toInt().clamp(0, 1 << 30),
     );
     await _save(uid, initial);
     return initial;
