@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 
 import '../../config/app_config.dart';
 import '../../providers/firebase_auth_provider.dart';
+import '../../services/analytics_service.dart';
 
 /// SignInScreen()
 class SignInScreen extends StatefulWidget {
@@ -36,6 +37,7 @@ class _SignInScreenState extends State<SignInScreen> {
     final auth = context.read<FirebaseAuthProvider>();
     try {
       await auth.signInWithGoogle();
+      await AnalyticsService.instance.logLogin(method: 'google');
       if (!mounted) return;
       _handlePostSignIn(context);
     } catch (e) {
@@ -59,6 +61,7 @@ class _SignInScreenState extends State<SignInScreen> {
     final auth = context.read<FirebaseAuthProvider>();
     try {
       await auth.signInWithApple();
+      await AnalyticsService.instance.logLogin(method: 'apple');
       if (!mounted) return;
       _handlePostSignIn(context);
     } catch (e) {
@@ -82,6 +85,7 @@ class _SignInScreenState extends State<SignInScreen> {
     final auth = context.read<FirebaseAuthProvider>();
     try {
       await auth.devSignIn(email: 'simulator@dev.local');
+      await AnalyticsService.instance.logLogin(method: 'dev');
       if (!mounted) return;
       _handlePostSignIn(context);
     } catch (e) {

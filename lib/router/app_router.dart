@@ -10,6 +10,7 @@ import '../screens/conversation_history_screen.dart';
 import '../screens/editor_screen.dart';
 import '../screens/tabbed_editor_screen.dart';
 import '../widgets/auth_guard.dart';
+import '../services/analytics_service.dart';
 
 class AppRouter {
   AppRouter._();
@@ -22,6 +23,7 @@ class AppRouter {
       initialLocation: initialLocation,
       debugLogDiagnostics: true,
       refreshListenable: authProvider,
+      observers: [AnalyticsRouteObserver()],
       redirect: (context, state) {
         final loc = state.uri.toString();
         final isInitializing =
@@ -74,6 +76,7 @@ class AppRouter {
       routes: [
         GoRoute(
           path: '/',
+          name: 'home',
           pageBuilder: (context, state) {
             final firebaseAuth = context.read<FirebaseAuthProvider>();
             final sharedUrl = state.uri.queryParameters['sharedUrl'];
@@ -98,6 +101,7 @@ class AppRouter {
         ),
         GoRoute(
           path: '/sign-in',
+          name: 'sign_in',
           pageBuilder: (context, state) => MaterialPage(
             key: state.pageKey,
             child: SignInScreen(
@@ -107,6 +111,7 @@ class AppRouter {
         ),
         GoRoute(
           path: '/editor',
+          name: 'editor',
           pageBuilder: (context, state) {
             final prompt = state.uri.queryParameters['prompt'];
             final conversationId = state.uri.queryParameters['conversationId'];
@@ -128,6 +133,7 @@ class AppRouter {
         ),
         GoRoute(
           path: '/history',
+          name: 'history',
           pageBuilder: (context, state) => MaterialPage(
             key: state.pageKey,
             child: const AuthGuard(

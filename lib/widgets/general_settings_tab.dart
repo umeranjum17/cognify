@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 
 import '../providers/firebase_auth_provider.dart';
 import '../services/access_service.dart';
 import '../providers/usage_quota_provider.dart';
-import '../config/app_config.dart';
 import '../theme/app_theme.dart';
 import '../services/data_deletion_service.dart';
-import '../services/secure_storage.dart';
+import '../services/feedback_service.dart';
+import '../services/analytics_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class GeneralSettingsTab extends StatefulWidget {
   const GeneralSettingsTab({super.key});
@@ -20,28 +20,20 @@ class GeneralSettingsTab extends StatefulWidget {
 
 class _GeneralSettingsTabState extends State<GeneralSettingsTab> {
   bool _signingOut = false;
-  final TextEditingController _openRouterKeyController = TextEditingController();
-  bool _obscureOpenRouterKey = true;
-  bool _savingKey = false;
+  final TextEditingController _feedbackController = TextEditingController();
+  final TextEditingController _contactEmailController = TextEditingController();
+  bool _submittingFeedback = false;
 
   @override
   void initState() {
     super.initState();
-    _loadExistingKeys();
   }
 
   @override
   void dispose() {
-    _openRouterKeyController.dispose();
+    _feedbackController.dispose();
+    _contactEmailController.dispose();
     super.dispose();
-  }
-
-  Future<void> _loadExistingKeys() async {
-    final existing = await SecureStorage.getOpenRouterApiKey();
-    if (!mounted) return;
-    setState(() {
-      _openRouterKeyController.text = existing ?? '';
-    });
   }
 
   Future<void> _logout() async {
@@ -74,6 +66,7 @@ class _GeneralSettingsTabState extends State<GeneralSettingsTab> {
           listen: false,
         );
         await authProvider.signOut();
+        AnalyticsService.instance.logEvent('logout');
 
         if (mounted) {
           context.go('/sign-in');
@@ -89,6 +82,57 @@ class _GeneralSettingsTabState extends State<GeneralSettingsTab> {
           setState(() => _signingOut = false);
         }
       }
+    }
+  }
+
+  Future<void> _submitFeedback() async {
+    final message = _feedbackController.text.trim();
+    if (message.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please write some feedback before submitting.')),
+      );
+      return;
+    }
+
+    setState(() => _submittingFeedback = true);
+    try {
+      final authProvider = Provider.of<FirebaseAuthProvider>(context, listen: false);
+      final user = authProvider.user;
+      await FeedbackService.instance.submit(
+        message: message,
+        userId: user?.uid,
+        userEmail: _contactEmailController.text.trim().isNotEmpty
+            ? _contactEmailController.text.trim()
+            : user?.email,
+        extra: {
+          'platform': Theme.of(context).platform.toString(),
+        },
+      );
+      AnalyticsService.instance.logEvent('feedback_submitted');
+      _feedbackController.clear();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Thanks! Your feedback was sent.')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to send feedback: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _submittingFeedback = false);
+    }
+  }
+
+  Future<void> _fallbackEmail() async {
+    final subject = Uri.encodeComponent('Cognify Feedback');
+    final body = Uri.encodeComponent(_feedbackController.text.trim());
+    final uri = Uri.parse('mailto:umerfarooq1995@gmail.com?subject=$subject&body=$body');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+      AnalyticsService.instance.logEvent('feedback_mailto_opened');
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No email client available on this device.')),
+      );
     }
   }
 
@@ -152,6 +196,7 @@ class _GeneralSettingsTabState extends State<GeneralSettingsTab> {
           firebaseAuth: authProvider,
           includeFirebaseAccount: true,
         );
+        AnalyticsService.instance.logEvent('data_deletion_requested');
 
         if (mounted) {
           Navigator.of(context).pop(); // Close loading dialog
@@ -203,47 +248,6 @@ class _GeneralSettingsTabState extends State<GeneralSettingsTab> {
           );
         }
       }
-    }
-  }
-
-  Future<void> _saveOpenRouterKey() async {
-    setState(() => _savingKey = true);
-    try {
-      final value = _openRouterKeyController.text.trim();
-      if (value.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please enter an API key.')),
-        );
-        return;
-      }
-      await SecureStorage.storeOpenRouterApiKey(value);
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('OpenRouter API key saved.')),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to save key: $e')),
-      );
-    } finally {
-      if (mounted) setState(() => _savingKey = false);
-    }
-  }
-
-  Future<void> _clearOpenRouterKey() async {
-    try {
-      await SecureStorage.storeOpenRouterApiKey('');
-      if (!mounted) return;
-      _openRouterKeyController.clear();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('OpenRouter API key cleared.')),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to clear key: $e')),
-      );
     }
   }
 
@@ -429,110 +433,7 @@ class _GeneralSettingsTabState extends State<GeneralSettingsTab> {
 
         const SizedBox(height: 24),
 
-          _buildSection(theme, isDark, 'API Keys', [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.darkCard : AppColors.lightCard,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: isDark
-                      ? AppColors.darkDivider.withValues(alpha: 0.2)
-                      : AppColors.lightDivider.withValues(alpha: 0.2),
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: (isDark
-                                  ? AppColors.darkTextSecondary
-                                  : AppColors.lightTextSecondary)
-                              .withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Icon(
-                          Icons.vpn_key_outlined,
-                          size: 20,
-                          color: isDark
-                              ? AppColors.darkTextSecondary
-                              : AppColors.lightTextSecondary,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      const Expanded(
-                        child: Text(
-                          'OpenRouter API Key',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _openRouterKeyController,
-                    obscureText: _obscureOpenRouterKey,
-                    enableSuggestions: false,
-                    autocorrect: false,
-                    decoration: InputDecoration(
-                      hintText: 'sk-or-... (paste your key)',
-                      suffixIcon: IconButton(
-                        tooltip: _obscureOpenRouterKey ? 'Show' : 'Hide',
-                        icon: Icon(
-                          _obscureOpenRouterKey
-                              ? Icons.visibility_off
-                              : Icons.visibility,
-                        ),
-                        onPressed: () => setState(
-                          () => _obscureOpenRouterKey = !_obscureOpenRouterKey,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      ElevatedButton.icon(
-                        onPressed: _savingKey ? null : _saveOpenRouterKey,
-                        icon: _savingKey
-                            ? const SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              )
-                            : const Icon(Icons.save_alt),
-                        label: Text(_savingKey ? 'Saving…' : 'Save'),
-                      ),
-                      const SizedBox(width: 12),
-                      OutlinedButton.icon(
-                        onPressed: _clearOpenRouterKey,
-                        icon: const Icon(Icons.clear),
-                        label: const Text('Clear'),
-                      ),
-                      const Spacer(),
-                      IconButton(
-                        tooltip: 'Paste',
-                        icon: const Icon(Icons.content_paste_go),
-                        onPressed: () async {
-                          final data = await Clipboard.getData('text/plain');
-                          if (data?.text != null) {
-                            _openRouterKeyController.text = data!.text!.trim();
-                          }
-                        },
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ]),
+          // API keys section removed: frontend does not manage provider keys.
 
           const SizedBox(height: 24),
 
@@ -555,6 +456,67 @@ class _GeneralSettingsTabState extends State<GeneralSettingsTab> {
               ),
             ),
             const SizedBox(height: 12),
+          _buildSection(theme, isDark, 'Feedback', [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.darkCard : AppColors.lightCard,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isDark
+                      ? AppColors.darkDivider.withValues(alpha: 0.2)
+                      : AppColors.lightDivider.withValues(alpha: 0.2),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Tell us what to improve'),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _feedbackController,
+                    maxLines: 4,
+                    decoration: const InputDecoration(
+                      hintText: 'Describe your idea, bug, or request…',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _contactEmailController,
+                    decoration: const InputDecoration(
+                      hintText: 'Optional: your email for follow-up',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      ElevatedButton.icon(
+                        onPressed: _submittingFeedback ? null : _submitFeedback,
+                        icon: _submittingFeedback
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : const Icon(Icons.send),
+                        label: Text(_submittingFeedback ? 'Sending…' : 'Send'),
+                      ),
+                      const SizedBox(width: 12),
+                      TextButton.icon(
+                        onPressed: _fallbackEmail,
+                        icon: const Icon(Icons.email_outlined),
+                        label: const Text('Email instead'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ]),
+          const SizedBox(height: 12),
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 16),
