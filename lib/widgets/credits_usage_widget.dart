@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../services/user_service.dart';
 import '../theme/app_theme.dart';
+import 'quick_credit_purchase_sheet.dart';
 
 class CreditsUsageWidget extends StatefulWidget {
   const CreditsUsageWidget({super.key});
@@ -175,9 +176,9 @@ class _CreditsUsageWidgetState extends State<CreditsUsageWidget> {
 
   Widget _buildCreditsInfo(ThemeData theme, bool isDark) {
     final credits = _creditsData!['credits'] as Map<String, dynamic>;
-    final totalCredits = (credits['total_credits'] as num?)?.toDouble() ?? 0.0;
-    final totalUsage = (credits['total_usage'] as num?)?.toDouble() ?? 0.0;
-    final remainingCredits = (credits['remaining_credits'] as num?)?.toDouble() ?? 0.0;
+    final totalUnits = (credits['total_credits'] as num?)?.toInt() ?? 0;
+    final usedUnits = (credits['total_usage'] as num?)?.toInt() ?? 0;
+    final remainingUnits = (credits['remaining_credits'] as num?)?.toInt() ?? 0;
     final fetchedAt = credits['fetched_at'] as String?;
 
     return Column(
@@ -186,7 +187,7 @@ class _CreditsUsageWidgetState extends State<CreditsUsageWidget> {
         _buildCreditRow(
           theme,
           'Total Credits',
-          '\$${totalCredits.toStringAsFixed(2)}',
+          '${totalUnits}x',
           Icons.account_balance,
           Colors.blue,
         ),
@@ -196,7 +197,7 @@ class _CreditsUsageWidgetState extends State<CreditsUsageWidget> {
         _buildCreditRow(
           theme,
           'Used',
-          '\$${totalUsage.toStringAsFixed(2)}',
+          '${usedUnits}x',
           Icons.trending_up,
           Colors.orange,
         ),
@@ -206,9 +207,34 @@ class _CreditsUsageWidgetState extends State<CreditsUsageWidget> {
         _buildCreditRow(
           theme,
           'Remaining',
-          '\$${remainingCredits.toStringAsFixed(2)}',
+          '${remainingUnits}x',
           Icons.account_balance_wallet,
-          remainingCredits > 0 ? Colors.green : Colors.red,
+          remainingUnits > 0 ? Colors.green : Colors.red,
+        ),
+        
+        // Buy Credits button
+        const SizedBox(height: AppColors.spacingMd),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: () => _showQuickCreditPurchase(remainingUnits),
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              backgroundColor: Colors.blue,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            icon: const Icon(Icons.add_card, size: 20),
+            label: const Text(
+              'Buy More Credits',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
         ),
         
         if (fetchedAt != null) ...[
@@ -250,6 +276,22 @@ class _CreditsUsageWidgetState extends State<CreditsUsageWidget> {
     setState(() {
       _isLoading = false;
       _creditsData = null;
+    });
+  }
+
+  void _showQuickCreditPurchase(int currentCredits) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => QuickCreditPurchaseSheet(
+        currentCredits: currentCredits,
+      ),
+    ).then((purchased) {
+      // Reload credits if purchase was successful
+      if (purchased == true) {
+        _loadCredits();
+      }
     });
   }
 }

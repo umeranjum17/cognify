@@ -9,6 +9,7 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../firebase_options.dart';
 import '../utils/logger.dart';
+import '../api/api.dart';
 
 /// FirebaseAuthProvider()
 /// Implements zero-friction start with anonymous auth by default.
@@ -236,6 +237,22 @@ class FirebaseAuthProvider extends ChangeNotifier {
     } catch (e) {
       _lastError = e;
       debugPrint('❌ [FirebaseAuth] Account creation error: $e');
+      notifyListeners();
+      rethrow;
+    }
+  }
+
+  /// Dev-only: request a custom token from backend and sign in
+  Future<void> devSignIn({String? uid, String? email}) async {
+    _lastError = null;
+    try {
+      final signedUid = await API.instance.devSignIn(uid: uid, email: email);
+      _user = _auth.currentUser;
+      debugPrint('✅ [FirebaseAuth] Dev sign-in successful: $signedUid');
+      notifyListeners();
+    } catch (e) {
+      _lastError = e;
+      debugPrint('❌ [FirebaseAuth] Dev sign-in error: $e');
       notifyListeners();
       rethrow;
     }

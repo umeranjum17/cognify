@@ -764,7 +764,7 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
                       Text(
                         isFree
                             ? 'Free'
-                            : '${requestUnits}u',
+                            : 'x${requestUnits}',
                         style: theme.textTheme.bodySmall?.copyWith(
                           fontSize: 10,
                           fontWeight: FontWeight.w600,

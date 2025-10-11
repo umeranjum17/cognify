@@ -1,7 +1,7 @@
 import express from 'express';
 import { requireAuth, AuthRequest } from '../middleware/auth.js';
 import { MODE_CONFIGS } from '../config/config-data.js';
-import { streamText, generateText, tool } from 'ai';
+import { streamText, generateText, generateObject, tool } from 'ai';
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { z } from 'zod';
 
@@ -218,26 +218,29 @@ async function streamWithAiSDK(options: {
 }
 
 async function completeJSONWithAiSDK(options: { model: string; prompt: string; temperature?: number; maxTokens?: number; }): Promise<any> {
-  const result = await generateText({
+  const planSchema = z.object({
+    analysis: z.string().min(1).optional().default(''),
+    tools: z.array(z.object({
+      name: z.enum(['brave_search', 'brave_search_enhanced', 'image_search']).optional().default('brave_search'),
+      input: z.object({
+        query: z.string().min(1).optional(),
+        count: z.number().int().positive().optional(),
+      }).optional().default({}),
+      order: z.number().int().min(1).max(10).optional().default(1),
+      reasoning: z.string().optional().default(''),
+    })).default([]),
+    estimatedSteps: z.number().int().min(1).max(10).optional().default(2),
+    complexity: z.enum(['low', 'medium']).optional().default('low'),
+  });
+
+  const result = await generateObject({
     model: getOpenRouterProvider()(options.model),
     temperature: options.temperature ?? 0.3,
     ...(options.maxTokens ? { maxOutputTokens: options.maxTokens } : {}),
     prompt: options.prompt,
+    schema: planSchema as any,
   });
-  let cleaned = (result.text || '').trim();
-  if (cleaned.startsWith('```json')) cleaned = cleaned.slice(7);
-  if (cleaned.startsWith('```')) cleaned = cleaned.slice(3);
-  if (cleaned.endsWith('```')) cleaned = cleaned.slice(0, -3);
-  cleaned = cleaned.trim();
-  try {
-    return JSON.parse(cleaned);
-  } catch {
-    const m = cleaned.match(/\{[\s\S]*\}/);
-    if (m) {
-      try { return JSON.parse(m[0]); } catch {}
-    }
-    return {};
-  }
+  return result.object ?? {};
 }
 
 // POST /api/chat - Unified chat endpoint with SSE streaming

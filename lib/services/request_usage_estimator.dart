@@ -25,11 +25,46 @@ class RequestUsageEstimator {
 
       final modeStr = mode?.toString().split('.').last ?? 'chat';
 
+      // Attempt to resolve canonical model id (backend keys are full provider/model)
+      String _resolveCanonicalId(String incomingId) {
+        // Fast path: exact match
+        final pricingMap = config['pricing'] as Map<String, dynamic>?;
+        if (pricingMap != null && pricingMap.containsKey(incomingId)) {
+          return incomingId;
+        }
+        // Try suffix match against pricing keys
+        if (pricingMap != null) {
+          for (final key in pricingMap.keys) {
+            if (key is String) {
+              final last = key.split('/').length > 1 ? key.split('/').last : key;
+              if (last == incomingId) {
+                return key;
+              }
+            }
+          }
+        }
+        // Try against available models list
+        final available = config['available'] as List<dynamic>? ?? config['models'] as List<dynamic>?;
+        if (available != null) {
+          for (final raw in available) {
+            final key = raw.toString();
+            final last = key.split('/').length > 1 ? key.split('/').last : key;
+            if (last == incomingId) {
+              return key;
+            }
+          }
+        }
+        // Fallback to incoming id
+        return incomingId;
+      }
+
+      final canonicalId = _resolveCanonicalId(modelId);
+
       // Get pre-calculated estimate for chat mode
       final quotaPricing = config['quotaPricing'] as Map<String, dynamic>?;
       final perRequestSample = quotaPricing?['perRequestSample'] as Map<String, dynamic>?;
       final chatEstimates = perRequestSample?[modeStr] as Map<String, dynamic>?;
-      final modelEstimate = chatEstimates?[modelId] as Map<String, dynamic>?;
+      final modelEstimate = chatEstimates?[canonicalId] as Map<String, dynamic>?;
 
       if (modelEstimate != null) {
         return RequestUsageEstimate(
@@ -42,7 +77,7 @@ class RequestUsageEstimator {
 
       // Fallback: calculate manually from pricing if estimate not available
       final pricingMap = config['pricing'] as Map<String, dynamic>?;
-      final modelPricing = pricingMap?[modelId] as Map<String, dynamic>?;
+      final modelPricing = pricingMap?[canonicalId] as Map<String, dynamic>?;
 
       if (modelPricing != null) {
         final inputPrice = (modelPricing['input'] ?? 0.0) as double;

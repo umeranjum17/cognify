@@ -22,8 +22,8 @@
          </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
-  <TestAction
-     buildConfiguration = "Debug-dev"
+   <TestAction
+      buildConfiguration = "Debug"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       customLLDBInitFile = "$(SRCROOT)/Flutter/ephemeral/flutter_lldbinit"
@@ -51,8 +51,8 @@
          </TestableReference>
       </Testables>
    </TestAction>
-  <LaunchAction
-     buildConfiguration = "Debug-dev"
+   <LaunchAction
+      buildConfiguration = "Debug"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       customLLDBInitFile = "$(SRCROOT)/Flutter/ephemeral/flutter_lldbinit"
@@ -73,16 +73,9 @@
             ReferencedContainer = "container:Runner.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
-      <EnvironmentVariables>
-         <EnvironmentVariable
-            key = "DART_DEFINES"
-            value = "Zmxhdm9yPWRldg=="
-            isEnabled = "YES">
-         </EnvironmentVariable>
-      </EnvironmentVariables>
    </LaunchAction>
-  <ProfileAction
-     buildConfiguration = "Profile-dev"
+   <ProfileAction
+      buildConfiguration = "Profile"
       shouldUseLaunchSchemeArgsEnv = "YES"
       savedToolIdentifier = ""
       useCustomWorkingDirectory = "NO"
@@ -98,11 +91,11 @@
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>
-  <AnalyzeAction
-     buildConfiguration = "Debug-dev">
+   <AnalyzeAction
+      buildConfiguration = "Debug">
    </AnalyzeAction>
-  <ArchiveAction
-     buildConfiguration = "Release-dev"
+   <ArchiveAction
+      buildConfiguration = "Release"
       revealArchiveInOrganizer = "YES">
    </ArchiveAction>
 </Scheme>

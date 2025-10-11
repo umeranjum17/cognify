@@ -10,6 +10,7 @@ import { mermaidRouter } from './routes/mermaid.js';
 import { oauthRouter } from './routes/oauth.js';
 import { webhookRouter } from './routes/webhook.js';
 import { errorHandler } from './middleware/errorHandler.js';
+import { devAuthRouter } from './routes/devauth.js';
 
 // Load environment variables
 dotenv.config();
@@ -45,6 +46,7 @@ app.use('/api/credits', creditsRouter);
 app.use('/api/mermaid', mermaidRouter);
 app.use('/api/oauth', oauthRouter);
 app.use('/api/rc', webhookRouter);
+app.use('/api/devauth', devAuthRouter);
 
 // Error handling
 app.use(errorHandler);

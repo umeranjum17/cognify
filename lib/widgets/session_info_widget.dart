@@ -8,6 +8,11 @@ import '../services/session_cost_service.dart';
 import '../services/request_usage_estimator.dart';
 import '../services/user_service.dart';
 import 'session_cost_bottom_sheet.dart';
+import 'quick_credit_purchase_sheet.dart';
+import 'wallet_topup_sheet.dart';
+import 'package:provider/provider.dart';
+import '../providers/subscription_provider.dart';
+import '../providers/firebase_auth_provider.dart';
 
 class SessionInfoWidget extends StatefulWidget {
   final String? llmUsed;
@@ -101,12 +106,14 @@ class _SessionInfoWidgetState extends State<SessionInfoWidget> {
         modelId: modelId,
         mode: widget.mode,
       );
+      print('📊 Model estimate for $modelId: ${estimate.requestUnits} units, \$${estimate.dollarCost}, isFree: ${estimate.isFree}');
       if (mounted) {
         setState(() {
           _modelEstimate = estimate;
         });
       }
-    } catch (_) {
+    } catch (e) {
+      print('❌ Failed to estimate model $modelId: $e');
       // Ignore and keep null → UI falls back gracefully
     }
   }
@@ -118,6 +125,11 @@ class _SessionInfoWidgetState extends State<SessionInfoWidget> {
     final quotaColor = _resolveQuotaDisplayColor(theme);
     final iconColor =
         quotaColor ?? theme.colorScheme.onSurface.withValues(alpha: 0.6);
+
+    // Get remaining credits for display
+    final remainingUnits = _creditsData != null && _creditsData!['success'] == true
+        ? ((_creditsData!['credits'] as Map<String, dynamic>)['remaining_credits'] as num?)?.toInt() ?? 0
+        : 0;
 
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -132,80 +144,82 @@ class _SessionInfoWidgetState extends State<SessionInfoWidget> {
         children: [
           // OpenRouter credits info (replacing model info)
           Expanded(
-            child: GestureDetector(
-              onTap: () => _showSessionCostPopup(context),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.account_balance,
-                    size: 14,
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                  ),
-                  const SizedBox(width: 4),
-                  Expanded(child: _buildCreditsDisplay(theme)),
-                ],
-              ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.account_balance,
+                  size: 14,
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                ),
+                const SizedBox(width: 4),
+                Expanded(child: _buildCreditsAndModelDisplay(theme, quotaText)),
+              ],
             ),
           ),
 
-          // Cost info (simplified)
-          GestureDetector(
-            onTap: () => _showSessionCostPopup(context),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surface.withValues(alpha: 0.5),
-                borderRadius: BorderRadius.circular(4),
-                border: Border.all(
-                  color: theme.dividerColor.withValues(alpha: 0.3),
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-          Icon(Icons.message_outlined, size: 12, color: iconColor),
-                  const SizedBox(width: 4),
-                  Text(
-            _buildQuotaAndPriceLabel(quotaText),
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      fontSize: 9,
-                      color: quotaColor,
+          // (Cost info merged into left label)
+
+          // Buy Credits chip (classy, subtle – primary action as rightmost)
+          if (!_isLoadingCredits) ...[
+            const SizedBox(width: 8),
+            Tooltip(
+              message: 'Purchase more credits',
+              child: GestureDetector(
+                onTap: () => _showQuickCreditPurchase(context, remainingUnits),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surface.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: theme.dividerColor.withValues(alpha: 0.3),
                     ),
                   ),
-                ],
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.add_circle_outline,
+                        size: 12,
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.75),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Buy credits',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          fontSize: 10,
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
-          ),
+          ],
         ],
       ),
     );
   }
 
   String _buildQuotaAndPriceLabel(String quotaText) {
-    // If we have an estimate, show the price per request
-    if (_modelEstimate != null && !_modelEstimate!.isFree) {
-      final units = _modelEstimate!.requestUnits;
-      final price = _modelEstimate!.dollarCost;
-      final priceStr = price < 0.01
-          ? '<\$0.01'
-          : '\$${price.toStringAsFixed(2)}';
-
-      // Extract just the number from quotaText for cleaner display
-      final remaining = widget.remainingRequests;
-      if (remaining != null) {
-        final count = _formatCount(remaining);
-        return '$count left · $priceStr/req · ${units}u';
-      }
-      return '$quotaText · $priceStr/req · ${units}u';
+    // Show only the cost per message for current model
+    if (_modelEstimate == null) {
+      return 'Loading...';
     }
-    if (_modelEstimate != null && _modelEstimate!.isFree) {
-      final remaining = widget.remainingRequests;
-      if (remaining != null) {
-        return '${_formatCount(remaining)} left · Free';
+    
+    if (_modelEstimate!.isFree) {
+      // Check if it's truly free (0 cost) or just failed to load pricing
+      if (_modelEstimate!.dollarCost == 0 && _modelEstimate!.requestUnits == 0) {
+        return 'Free model';
       }
-      return '$quotaText · Free';
+      // If we don't have pricing data, don't claim it's free
+      return 'Cost unknown';
     }
-    return quotaText;
+    
+    final units = _modelEstimate!.requestUnits;
+    return '$units per msg';
   }
 
   Widget _buildCreditsDisplay(ThemeData theme) {
@@ -257,21 +271,50 @@ class _SessionInfoWidgetState extends State<SessionInfoWidget> {
     }
 
     final credits = _creditsData!['credits'] as Map<String, dynamic>;
-    final remainingCredits =
-        (credits['remaining_credits'] as num?)?.toDouble() ?? 0.0;
+    final remainingUnits =
+        (credits['remaining_credits'] as num?)?.toInt() ?? 0;
 
-    final color = remainingCredits > 0
+    final color = remainingUnits > 0
         ? theme.colorScheme.onSurface.withValues(alpha: 0.8)
         : Colors.red;
 
     return Text(
-      'Balance: \$${remainingCredits.toStringAsFixed(2)}',
+      '${_formatCount(remainingUnits)} credits',
       style: theme.textTheme.bodySmall?.copyWith(
         fontSize: 10,
         color: color,
         fontWeight: FontWeight.w500,
       ),
       overflow: TextOverflow.ellipsis,
+    );
+  }
+
+  Widget _buildCreditsAndModelDisplay(ThemeData theme, String quotaText) {
+    final left = _buildCreditsDisplay(theme);
+    final modelLabel = _buildQuotaAndPriceLabel(quotaText);
+    return Row(
+      children: [
+        Flexible(child: left),
+        const SizedBox(width: 8),
+        Text(
+          '·',
+          style: theme.textTheme.bodySmall?.copyWith(
+            fontSize: 10,
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Flexible(
+          child: Text(
+            modelLabel,
+            style: theme.textTheme.bodySmall?.copyWith(
+              fontSize: 10,
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
     );
   }
 
@@ -367,5 +410,54 @@ class _SessionInfoWidgetState extends State<SessionInfoWidget> {
         ),
       ),
     );
+  }
+
+  void _showQuickCreditPurchase(BuildContext context, int currentCredits) {
+    // Capture providers from the current scope BEFORE opening the sheet
+    final subs = Provider.of<SubscriptionProvider>(context, listen: false);
+    final auth = Provider.of<FirebaseAuthProvider>(context, listen: false);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      useRootNavigator: false,
+      builder: (context) => MultiProvider(
+        providers: [
+          ChangeNotifierProvider<SubscriptionProvider>.value(value: subs),
+          ChangeNotifierProvider<FirebaseAuthProvider>.value(value: auth),
+        ],
+        child: QuickCreditPurchaseSheet(currentCredits: currentCredits),
+      ),
+    ).then((purchased) {
+      // Reload credits if purchase was successful
+      if (purchased == true) {
+        _loadCreditsIfNeeded();
+      }
+    });
+  }
+
+  void _showWalletTopUp(BuildContext context, int currentCredits) {
+    // Capture providers from the current scope BEFORE opening the sheet
+    final subs = Provider.of<SubscriptionProvider>(context, listen: false);
+    final auth = Provider.of<FirebaseAuthProvider>(context, listen: false);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      useRootNavigator: false,
+      builder: (context) => MultiProvider(
+        providers: [
+          ChangeNotifierProvider<SubscriptionProvider>.value(value: subs),
+          ChangeNotifierProvider<FirebaseAuthProvider>.value(value: auth),
+        ],
+        child: WalletTopUpSheet(currentCredits: currentCredits),
+      ),
+    ).then((purchased) {
+      if (purchased == true) {
+        _loadCreditsIfNeeded();
+      }
+    });
   }
 }

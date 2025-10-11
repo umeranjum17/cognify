@@ -68,6 +68,29 @@ class _SignInScreenState extends State<SignInScreen> {
     }
   }
 
+  Future<void> _handleDevSignIn(BuildContext context) async {
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    final auth = context.read<FirebaseAuthProvider>();
+    try {
+      await auth.devSignIn(email: 'simulator@dev.local');
+      if (!mounted) return;
+      _handlePostSignIn(context);
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _busy = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isIOS = Platform.isIOS;
@@ -153,6 +176,15 @@ class _SignInScreenState extends State<SignInScreen> {
                       icon: Icons.login,
                       onPressed: _busy ? null : () => _handleGoogle(context),
                     ),
+                  const SizedBox(height: 24),
+                  if (kDebugMode) ...[
+                    const SizedBox(height: 12),
+                    _SignInButton(
+                      label: 'Dev Sign-In (Custom Token)',
+                      icon: Icons.developer_mode,
+                      onPressed: _busy ? null : () => _handleDevSignIn(context),
+                    ),
+                  ],
                   const SizedBox(height: 24),
                   if (_busy) const CircularProgressIndicator(),
                   const Spacer(),

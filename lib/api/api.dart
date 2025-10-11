@@ -121,6 +121,30 @@ class API {
     }
   }
 
+  // ========== DEV AUTH (CUSTOM TOKEN) ==========
+
+  /// Request a Firebase custom token from backend and sign in on device.
+  /// Dev-only. Returns the signed-in Firebase user UID.
+  Future<String?> devSignIn({String? uid, String? email, Map<String, dynamic>? claims}) async {
+    try {
+      final response = await _dio.post(
+        '/api/devauth/custom-token',
+        data: {
+          if (uid != null) 'uid': uid,
+          if (email != null) 'email': email,
+          if (claims != null) 'claims': claims,
+        },
+      );
+
+      final String customToken = response.data['customToken'] as String;
+      final cred = await fb.FirebaseAuth.instance.signInWithCustomToken(customToken);
+      return cred.user?.uid;
+    } catch (e) {
+      print('❌ API Error [devSignIn]: $e');
+      rethrow;
+    }
+  }
+
   /// Send chat message (streaming)
   ///
   /// Parameters: Same as `chat()` method

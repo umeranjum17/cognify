@@ -8,6 +8,9 @@ project 'Runner', {
   'Debug' => :debug,
   'Profile' => :release,
   'Release' => :release,
+  'Debug-dev' => :debug,
+  'Profile-dev' => :release,
+  'Release-dev' => :release,
 }
 
 def flutter_root
@@ -28,9 +31,8 @@ require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelpe
 flutter_ios_podfile_setup
 
 target 'Runner' do
-  # Avoid use_frameworks to prevent pods linking against a missing Flutter.framework
-  # If a specific pod requires frameworks, we can enable it per‑pod later.
-  # use_frameworks!
+  # Keep static linking (default). Enable modular headers for Swift pods (Firebase, DKPhotoGallery)
+  # use_frameworks! :linkage => :static
   use_modular_headers!
 
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
@@ -39,10 +41,75 @@ end
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
-    
-    # Ensure minimum iOS version is set correctly
     target.build_configurations.each do |config|
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
+      config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
+      if target.name == 'gRPC-Core'
+        config.build_settings['MODULEMAP_FILE'] = '$(PODS_TARGET_SRCROOT)/include/grpc/module.modulemap'
+      end
+      if config.build_settings['OTHER_CFLAGS'].is_a?(String)
+        config.build_settings['OTHER_CFLAGS'] = config.build_settings['OTHER_CFLAGS'].gsub(
+          '${PODS_ROOT}/Headers/Private/grpc/gRPC-Core.modulemap',
+          '${PODS_ROOT}/gRPC-Core/include/grpc/module.modulemap'
+        )
+      end
+      ldflags = config.build_settings['OTHER_LDFLAGS']
+      if ldflags.is_a?(String) && ldflags.include?('FirebaseFirestoreInternal')
+        sanitized = ldflags.gsub(/-weak_framework\s+"?FirebaseFirestoreInternal"?/, '')
+        config.build_settings['OTHER_LDFLAGS'] = sanitized.squeeze(' ').strip
+      end
+    end
+  end
+
+  installer.aggregate_targets.each do |aggregate|
+    aggregate.xcconfigs.each_key do |config_name|
+      path = aggregate.xcconfig_path(config_name)
+      next unless File.exist?(path)
+      contents = File.read(path)
+      next unless contents.include?('weak_framework "FirebaseFirestoreInternal"') || contents.include?('weak_framework FirebaseFirestoreInternal')
+      sanitized = contents.gsub(/-weak_framework\s+"?FirebaseFirestoreInternal"?/, '')
+      File.write(path, sanitized)
+    end
+  end
+end
+
+post_integrate do |_installer|
+  require 'fileutils'
+  pods_root = File.join(Dir.pwd, 'Pods')
+  grpc_headers_source = File.join(pods_root, 'gRPC-Core', 'include', 'grpc')
+  module_map_source = File.join(grpc_headers_source, 'module.modulemap')
+  if File.directory?(grpc_headers_source) && File.exist?(module_map_source)
+    ['Private', 'Public'].each do |visibility|
+      dest_dir = File.join(pods_root, 'Headers', visibility, 'grpc')
+      begin
+        FileUtils.rm_rf(dest_dir)
+        FileUtils.mkdir_p(File.dirname(dest_dir))
+        FileUtils.cp_r(grpc_headers_source, dest_dir)
+        FileUtils.rm_f(File.join(dest_dir, 'gRPC-Core.modulemap'))
+        FileUtils.cp(module_map_source, File.join(dest_dir, 'gRPC-Core.modulemap'))
+      rescue => e
+        Pod::UI.warn("Warning: could not stage gRPC headers in #{dest_dir}: #{e}")
+      end
+    end
+  else
+    Pod::UI.warn('Warning: gRPC headers source not found; skipping manual modulemap copy')
+  end
+
+  ['Private', 'Public'].each do |visibility|
+    ssl_source = File.join(pods_root, 'Headers', visibility, 'BoringSSL-GRPC', 'openssl_grpc')
+    ssl_dest = File.join(pods_root, 'Headers', visibility, 'openssl_grpc')
+    ssl_module_map = File.join(pods_root, 'Target Support Files', 'BoringSSL-GRPC', 'BoringSSL-GRPC.modulemap')
+    next unless File.directory?(ssl_source)
+    begin
+      FileUtils.rm_rf(ssl_dest)
+      FileUtils.mkdir_p(File.dirname(ssl_dest))
+      FileUtils.cp_r(ssl_source, ssl_dest)
+      if File.exist?(ssl_module_map)
+        FileUtils.rm_f(File.join(ssl_dest, 'BoringSSL-GRPC.modulemap'))
+        FileUtils.cp(ssl_module_map, File.join(ssl_dest, 'BoringSSL-GRPC.modulemap'))
+      end
+    rescue => e
+      Pod::UI.warn("Warning: could not stage openssl_grpc headers in #{visibility} scope: #{e}")
     end
   end
 end
