@@ -2,7 +2,7 @@ import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../providers/subscription_provider.dart';
+import '../providers/credits_purchase_provider.dart';
 import '../providers/firebase_auth_provider.dart';
 import '../theme/app_theme.dart';
 import 'quick_credit_purchase_sheet.dart';

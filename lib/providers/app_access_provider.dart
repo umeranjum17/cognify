@@ -2,9 +2,9 @@ import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/firebase_auth_provider.dart';
-import '../providers/subscription_provider.dart';
+import '../providers/credits_purchase_provider.dart';
 import '../services/access_service.dart';
-import '../config/subscriptions_config.dart';
+import '../config/purchases_config.dart';
 
 /// Tracks high-level access flags for the signed-in user.
 ///
@@ -13,7 +13,7 @@ import '../config/subscriptions_config.dart';
 class AppAccessProvider extends ChangeNotifier {
   AppAccessProvider({
     required FirebaseAuthProvider authProvider,
-    required SubscriptionProvider subscriptionProvider,
+    required CreditsPurchaseProvider subscriptionProvider,
   }) : _auth = authProvider,
        _subs = subscriptionProvider {
     _auth.addListener(_evaluate);
@@ -22,7 +22,7 @@ class AppAccessProvider extends ChangeNotifier {
   }
 
   final FirebaseAuthProvider _auth;
-  final SubscriptionProvider _subs;
+  final CreditsPurchaseProvider _subs;
 
   bool _isTester = false;
   bool _hasPremiumAccess = false;
@@ -34,9 +34,8 @@ class AppAccessProvider extends ChangeNotifier {
 
   void _evaluate() {
     // Credit-based gating: ignore subscriptions when disabled
-    final hasActiveSubscription = !SubscriptionsConfig.subscriptionsEnabled
-        ? true
-        : _subs.isEntitled;
+    // Credit-based gating: treat purchases as enabling credits; entitlement not used
+    final hasActiveSubscription = true;
     
     // No tester whitelist in production
     const tester = false;
@@ -50,7 +49,7 @@ class AppAccessProvider extends ChangeNotifier {
       
       debugPrint('🔐 [AppAccessProvider] Access updated:');
       debugPrint('  - Has premium: $hasActiveSubscription');
-      debugPrint('  - Subscription state: ${_subs.state}');
+      debugPrint('  - Purchases enabled: ${PurchasesConfig.purchasesEnabled}');
       debugPrint('  - Is tester: $tester');
     }
   }

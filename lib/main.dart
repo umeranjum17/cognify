@@ -18,7 +18,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'providers/app_access_provider.dart';
 import 'providers/firebase_auth_provider.dart';
-import 'providers/subscription_provider.dart';
+import 'providers/credits_purchase_provider.dart';
 import 'providers/usage_quota_provider.dart';
 import 'services/revenuecat_service.dart';
 
@@ -388,6 +388,15 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
         ChangeNotifierProvider.value(value: _firebaseAuthProvider!),
         ChangeNotifierProvider(create: (_) => ModeConfigProvider()),
         ChangeNotifierProvider(create: (_) => TabProvider()),
+        // Provide CreditsPurchaseProvider app-wide and wire it to FirebaseAuthProvider.
+        ChangeNotifierProxyProvider<FirebaseAuthProvider, CreditsPurchaseProvider>(
+          create: (_) => CreditsPurchaseProvider(),
+          update: (_, auth, provider) {
+            final instance = provider ?? CreditsPurchaseProvider();
+            instance.wireAuth(auth);
+            return instance;
+          },
+        ),
         ChangeNotifierProxyProvider<FirebaseAuthProvider, UsageQuotaProvider>(
           create: (_) => UsageQuotaProvider(),
           update: (_, auth, quota) {

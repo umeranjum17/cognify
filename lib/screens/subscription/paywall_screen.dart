@@ -4,8 +4,8 @@ import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:provider/provider.dart';
 
 import '../../config/app_config.dart';
-import '../../config/subscriptions_config.dart';
-import '../../providers/subscription_provider.dart';
+import '../../config/purchases_config.dart';
+import '../../providers/credits_purchase_provider.dart';
 import '../../providers/firebase_auth_provider.dart';
 import '../../services/revenuecat_service.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -30,7 +30,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
   }
 
   Future<void> _loadOfferings() async {
-    final subs = context.read<SubscriptionProvider>();
+    final subs = context.read<CreditsPurchaseProvider>();
 
     setState(() {
       _error = 'Initializing subscription provider...';
@@ -53,7 +53,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
     setState(() {
       if (offerings == null) {
         _error =
-            'No offerings available. RevenueCat may not be configured properly.\n\nDebug info:\n- RevenueCat configured: ${RevenueCatService.instance.isConfigured}\n- Subscription provider initialized: ${subs.initialized}\n- API Key: ${SubscriptionsConfig.rcPublicKeyAndroid.substring(0, 10)}...';
+            'No offerings available. RevenueCat may not be configured properly.\n\nDebug info:\n- RevenueCat configured: ${RevenueCatService.instance.isConfigured}\n- Purchases provider initialized: ${subs.initialized}\n- API Key: ${PurchasesConfig.rcPublicKeyAndroid.substring(0, 10)}...';
       } else if (offerings.current == null) {
         _error =
             'No current offering found. Check RevenueCat dashboard configuration.\n\nDebug info:\n- Total offerings: ${offerings.all.length}';
@@ -68,7 +68,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
   }
 
   Future<void> _purchase() async {
-    final subs = context.read<SubscriptionProvider>();
+    final subs = context.read<CreditsPurchaseProvider>();
     final auth = context.read<FirebaseAuthProvider>();
     final selected = _selected;
     if (selected == null) {
@@ -181,7 +181,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
 
   Future<void> _manageSubscription() async {
     try {
-      final info = context.read<SubscriptionProvider>().customerInfo;
+      final info = context.read<CreditsPurchaseProvider>().customerInfo;
       final url = info?.managementURL;
       if (url == null) return;
       final uri = Uri.parse(url);
@@ -195,7 +195,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final subs = context.watch<SubscriptionProvider>();
+    final subs = context.watch<CreditsPurchaseProvider>();
     final offerings = subs.offerings;
 
     final packages = offerings?.current?.availablePackages ?? [];
@@ -333,7 +333,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
                           const SizedBox(height: 8),
                           Builder(builder: (context) {
                             final manageUrl = context
-                                .watch<SubscriptionProvider>()
+                                .watch<CreditsPurchaseProvider>()
                                 .customerInfo
                                 ?.managementURL;
                             if (manageUrl == null) return const SizedBox.shrink();
@@ -411,7 +411,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
                                                 .identify(auth.uid!);
                                             // Refresh offerings to show correct packages
                                             await context
-                                                .read<SubscriptionProvider>()
+                                                .read<CreditsPurchaseProvider>()
                                                 .refreshOfferings();
                                             await _loadOfferings();
                                           }
@@ -444,7 +444,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
                             ),
                             Builder(builder: (context) {
                               final manageUrl = context
-                                  .watch<SubscriptionProvider>()
+                                  .watch<CreditsPurchaseProvider>()
                                   .customerInfo
                                   ?.managementURL;
                               if (manageUrl == null) return const SizedBox.shrink();
@@ -484,7 +484,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
                     ),
                     Builder(builder: (context) {
                       final manageUrl = context
-                          .watch<SubscriptionProvider>()
+                          .watch<CreditsPurchaseProvider>()
                           .customerInfo
                           ?.managementURL;
                       if (manageUrl == null) return const SizedBox.shrink();

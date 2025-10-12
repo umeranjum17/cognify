@@ -16,7 +16,7 @@ import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:purchases_flutter/errors.dart';
 import 'package:flutter/services.dart';
 
-import '../config/subscriptions_config.dart';
+import '../config/purchases_config.dart';
 
 class RevenueCatService {
   RevenueCatService._();
@@ -63,8 +63,8 @@ class RevenueCatService {
     String? appUserId,
     Duration timeout = const Duration(seconds: 6),
   }) async {
-    if (!SubscriptionsConfig.subscriptionsEnabled) {
-      debugPrint('⛔ [RevenueCat] Subscriptions disabled. Skipping initialize().');
+    if (!PurchasesConfig.purchasesEnabled) {
+      debugPrint('⛔ [RevenueCat] Purchases disabled. Skipping initialize().');
       _configured = false;
       return;
     }
@@ -75,8 +75,8 @@ class RevenueCatService {
       final isApplePlatform = defaultTargetPlatform == TargetPlatform.iOS ||
           defaultTargetPlatform == TargetPlatform.macOS;
       final apiKey = isApplePlatform
-          ? SubscriptionsConfig.rcPublicKeyIOS
-          : SubscriptionsConfig.rcPublicKeyAndroid;
+          ? PurchasesConfig.rcPublicKeyIOS
+          : PurchasesConfig.rcPublicKeyAndroid;
 
       // Check for placeholder keys and skip initialization
       if (apiKey.contains('TODO_') || apiKey.contains('placeholder') || apiKey.length < 10) {
@@ -180,8 +180,8 @@ class RevenueCatService {
 
   /// Force refresh customer info from RevenueCat servers (bypassing cache)
   Future<CustomerInfo?> forceRefreshCustomerInfo({Duration timeout = const Duration(seconds: 6)}) async {
-    if (!SubscriptionsConfig.subscriptionsEnabled) {
-      debugPrint('⛔ [RevenueCat] Subscriptions disabled. Skipping forceRefreshCustomerInfo().');
+    if (!PurchasesConfig.purchasesEnabled) {
+      debugPrint('⛔ [RevenueCat] Purchases disabled. Skipping forceRefreshCustomerInfo().');
       return _customerInfoCache;
     }
     if (!_configured) return _customerInfoCache;
@@ -199,8 +199,8 @@ class RevenueCatService {
   }
 
   Future<void> logOut({Duration timeout = const Duration(seconds: 6)}) async {
-    if (!SubscriptionsConfig.subscriptionsEnabled) {
-      debugPrint('⛔ [RevenueCat] Subscriptions disabled. Skipping logOut().');
+    if (!PurchasesConfig.purchasesEnabled) {
+      debugPrint('⛔ [RevenueCat] Purchases disabled. Skipping logOut().');
       return;
     }
     if (!_configured) return;
@@ -219,8 +219,8 @@ class RevenueCatService {
     bool forceRefresh = false,
     Duration timeout = const Duration(seconds: 8),
   }) async {
-    if (!SubscriptionsConfig.subscriptionsEnabled) {
-      debugPrint('⛔ [RevenueCat] Subscriptions disabled. Returning null from getOfferings().');
+    if (!PurchasesConfig.purchasesEnabled) {
+      debugPrint('⛔ [RevenueCat] Purchases disabled. Returning null from getOfferings().');
       return null;
     }
     if (!_configured) {
@@ -265,8 +265,8 @@ class RevenueCatService {
 
   Future<CustomerInfo?> restorePurchases(
       {Duration timeout = const Duration(seconds: 10)}) async {
-    if (!SubscriptionsConfig.subscriptionsEnabled) {
-      debugPrint('⛔ [RevenueCat] Subscriptions disabled. Skipping restorePurchases().');
+    if (!PurchasesConfig.purchasesEnabled) {
+      debugPrint('⛔ [RevenueCat] Purchases disabled. Skipping restorePurchases().');
       return null;
     }
     if (!_configured) {
@@ -286,29 +286,8 @@ class RevenueCatService {
   }
 
   bool get isEntitledToPremium {
-    if (!SubscriptionsConfig.subscriptionsEnabled) {
-      return true; // Credit-based approach: do not gate features by subscription
-    }
-    final entitlements = _customerInfoCache?.entitlements.active;
-    
-    // Debug: Log all active entitlements to help diagnose issues
-    debugPrint('🎫 [RevenueCat] Active entitlements: ${entitlements?.keys.join(", ") ?? "none"}');
-    debugPrint('🔍 [RevenueCat] Looking for entitlement: "${SubscriptionsConfig.entitlementPremium}"');
-    
-    final hasExpectedEntitlement = entitlements?.containsKey(SubscriptionsConfig.entitlementPremium) == true;
-    if (hasExpectedEntitlement) {
-      final e = entitlements![SubscriptionsConfig.entitlementPremium]!;
-      debugPrint('  - Will renew: ${e.willRenew}');
-      debugPrint('  - Period type: ${e.periodType}');
-      debugPrint('  - Latest purchase date: ${e.latestPurchaseDate}');
-      debugPrint('  - Original purchase date: ${e.originalPurchaseDate}');
-      debugPrint('  - Expiration date: ${e.expirationDate}');
-      debugPrint('  - Store: ${e.store}');
-      debugPrint('  - Product identifier: ${e.productIdentifier}');
-    }
-    debugPrint('✅ [RevenueCat] Has expected entitlement: $hasExpectedEntitlement');
-    
-    return hasExpectedEntitlement;
+    // Entitlements not used for credit-based purchases; always return true
+    return true;
   }
 
   Future<PurchaseResult> purchasePackage(
@@ -332,12 +311,8 @@ class RevenueCatService {
           () => Purchases.purchasePackage(pkg), timeout);
       _customerInfoCache = customerInfo;
       _customerInfoController.add(customerInfo);
-      final entitled = customerInfo.entitlements.active.containsKey(
-        SubscriptionsConfig.entitlementPremium,
-      );
-      
-      debugPrint('✅ [RevenueCat] Purchase successful - Entitled: $entitled');
-      return PurchaseResult(success: entitled, customerInfo: customerInfo);
+      debugPrint('✅ [RevenueCat] Purchase successful');
+      return PurchaseResult(success: true, customerInfo: customerInfo);
     } on PlatformException catch (e) {
       final code = PurchasesErrorHelper.getErrorCode(e);
       if (code == PurchasesErrorCode.purchaseCancelledError) {

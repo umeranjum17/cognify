@@ -1,17 +1,20 @@
 import express from 'express';
+import crypto from 'crypto';
 import { getAdminDb } from '../services/firebase.js';
 import { RC_CREDIT_PRODUCTS, RC_WEBHOOK_CONFIG } from '../config/config-data.js';
 
 export const webhookRouter = express.Router();
 
-// Note: RevenueCat can send either Bearer secret or signature headers depending on settings.
-// Here we support a simple Bearer secret first; you can add signature verification later if needed.
+// RevenueCat can authenticate webhooks via Bearer secret or signature headers.
+// We first accept Bearer for simplicity; if RC_SIGNATURE_SECRET is set, verify signature too.
 
 // POST /api/rc/webhook - RevenueCat webhook handler
 webhookRouter.post('/webhook', async (req, res) => {
   try {
     const authHeader = String(req.headers.authorization || '');
     const expectedSecret = process.env.RC_WEBHOOK_SECRET;
+    const signatureHeader = String(req.headers['x-revenuecat-signature'] || '');
+    const signatureSecret = process.env.RC_SIGNATURE_SECRET;
     if (!expectedSecret) {
       res.status(500).json({ error: 'Server misconfigured: RC_WEBHOOK_SECRET missing' });
       return;
@@ -24,6 +27,17 @@ webhookRouter.post('/webhook', async (req, res) => {
     }
 
     const payload = req.body as any;
+    // Optional signature verification (if configured)
+    if (signatureSecret && signatureHeader) {
+      const computed = crypto
+        .createHmac('sha256', signatureSecret)
+        .update(JSON.stringify(payload))
+        .digest('hex');
+      if (computed !== signatureHeader) {
+        res.status(401).json({ error: 'Invalid signature' });
+        return;
+      }
+    }
     const event = payload?.event;
     const environment = String(payload?.environment || '');
     if (!event) {

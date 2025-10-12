@@ -10,9 +10,9 @@ import '../services/user_service.dart';
 import 'session_cost_bottom_sheet.dart';
 import 'quick_credit_purchase_sheet.dart';
 import 'wallet_topup_sheet.dart';
-import '../config/subscriptions_config.dart';
+import '../config/purchases_config.dart';
 import 'package:provider/provider.dart';
-import '../providers/subscription_provider.dart';
+import '../providers/credits_purchase_provider.dart';
 import '../providers/firebase_auth_provider.dart';
 
 class SessionInfoWidget extends StatefulWidget {
@@ -407,12 +407,12 @@ class _SessionInfoWidgetState extends State<SessionInfoWidget> {
   }
 
   void _showQuickCreditPurchase(BuildContext context, int currentCredits) {
-    if (!SubscriptionsConfig.subscriptionsEnabled) {
+    if (!PurchasesConfig.purchasesEnabled) {
       _showWalletTopUp(context, currentCredits);
       return;
     }
     // Legacy path (kept for compatibility when enabled)
-    final subs = Provider.of<SubscriptionProvider>(context, listen: false);
+    final subs = Provider.of<CreditsPurchaseProvider>(context, listen: false);
     final auth = Provider.of<FirebaseAuthProvider>(context, listen: false);
 
     showModalBottomSheet(
@@ -422,7 +422,7 @@ class _SessionInfoWidgetState extends State<SessionInfoWidget> {
       useRootNavigator: false,
       builder: (context) => MultiProvider(
         providers: [
-          ChangeNotifierProvider<SubscriptionProvider>.value(value: subs),
+          ChangeNotifierProvider<CreditsPurchaseProvider>.value(value: subs),
           ChangeNotifierProvider<FirebaseAuthProvider>.value(value: auth),
         ],
         child: QuickCreditPurchaseSheet(currentCredits: currentCredits),
@@ -436,7 +436,7 @@ class _SessionInfoWidgetState extends State<SessionInfoWidget> {
 
   void _showWalletTopUp(BuildContext context, int currentCredits) {
     // Capture providers from the current scope BEFORE opening the sheet
-    final subs = Provider.of<SubscriptionProvider>(context, listen: false);
+    final subs = Provider.of<CreditsPurchaseProvider>(context, listen: false);
     final auth = Provider.of<FirebaseAuthProvider>(context, listen: false);
 
     showModalBottomSheet(
@@ -446,7 +446,7 @@ class _SessionInfoWidgetState extends State<SessionInfoWidget> {
       useRootNavigator: false,
       builder: (context) => MultiProvider(
         providers: [
-          ChangeNotifierProvider<SubscriptionProvider>.value(value: subs),
+          ChangeNotifierProvider<CreditsPurchaseProvider>.value(value: subs),
           ChangeNotifierProvider<FirebaseAuthProvider>.value(value: auth),
         ],
         child: WalletTopUpSheet(currentCredits: currentCredits),

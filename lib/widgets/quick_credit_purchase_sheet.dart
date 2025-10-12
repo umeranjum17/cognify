@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 
 import '../config/subscriptions_config.dart';
-import '../providers/subscription_provider.dart';
+import '../providers/credits_purchase_provider.dart';
 import '../providers/firebase_auth_provider.dart';
 import '../services/revenuecat_service.dart';
 import '../theme/app_theme.dart';
@@ -35,7 +35,7 @@ class _QuickCreditPurchaseSheetState extends State<QuickCreditPurchaseSheet> {
   }
 
   Future<void> _loadOfferings() async {
-    final subs = context.read<SubscriptionProvider>();
+    final subs = context.read<CreditsPurchaseProvider>();
     
     setState(() {
       _statusMessage = 'Loading credit options...';
@@ -61,7 +61,7 @@ class _QuickCreditPurchaseSheetState extends State<QuickCreditPurchaseSheet> {
   }
 
   Future<void> _purchase() async {
-    final subs = context.read<SubscriptionProvider>();
+    final subs = context.read<CreditsPurchaseProvider>();
     final auth = context.read<FirebaseAuthProvider>();
     final selected = _selectedPackage;
     
@@ -159,7 +159,7 @@ class _QuickCreditPurchaseSheetState extends State<QuickCreditPurchaseSheet> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final subs = context.watch<SubscriptionProvider>();
+    final subs = context.watch<CreditsPurchaseProvider>();
     final auth = context.watch<FirebaseAuthProvider>();
     final offerings = subs.offerings;
     final packages = offerings?.current?.availablePackages ?? [];

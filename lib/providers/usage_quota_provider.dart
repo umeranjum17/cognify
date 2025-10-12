@@ -112,7 +112,8 @@ class UsageQuotaProvider extends ChangeNotifier {
         _error = null;
         notifyListeners();
         if (kDebugMode) {
-          debugPrint('📊 [UsageQuota] ${q.requestsConsumed}/${q.totalRequests} used');
+          // Backend sync gives us remaining balance; log remaining for clarity
+          debugPrint('📊 [UsageQuota] remaining: ${q.remaining}');
         }
       },
       onError: (err) {
