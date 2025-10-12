@@ -431,12 +431,6 @@ class _QuickCreditPurchaseSheetState extends State<QuickCreditPurchaseSheet> {
 
               const SizedBox(height: 12),
 
-              // Restore purchases
-              TextButton(
-                onPressed: _busy ? null : _restorePurchases,
-                child: const Text('Restore Previous Purchases'),
-              ),
-
               const SizedBox(height: 8),
 
               // Info text
@@ -531,36 +525,6 @@ class _QuickCreditPurchaseSheetState extends State<QuickCreditPurchaseSheet> {
     );
   }
 
-  Future<void> _restorePurchases() async {
-    setState(() {
-      _busy = true;
-      _error = null;
-      _statusMessage = 'Restoring purchases...';
-    });
-
-    try {
-      await RevenueCatService.instance.restorePurchases();
-      
-      setState(() {
-        _busy = false;
-        _statusMessage = null;
-      });
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Purchases restored successfully!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } catch (e) {
-      setState(() {
-        _busy = false;
-        _statusMessage = null;
-        _error = 'Restore failed: ${e.toString()}';
-      });
-    }
-  }
+  // Restore purchases functionality removed per product decision
 }
 

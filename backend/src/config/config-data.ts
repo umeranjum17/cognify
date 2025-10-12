@@ -122,10 +122,35 @@ export const FEATURE_FLAGS = {
 
 // ========== QUOTA CONFIGURATION ==========
 
+// Pricing/credits economics – adjust these to tune margins
+const CREDIT_ECONOMY = {
+  // Reference pack you sell: 500 credits for $5 gross
+  packCredits: 500,
+  packGrossPrice: 5, // USD
+  // App Store fee rate (e.g., 0.30 = 30%)
+  storeFeeRate: 0.30,
+  // Target profit margin on base (provider) cost: choose 0.20–0.30
+  targetProfitMargin: 0.25,
+} as const;
+
+// Derived unit economics
+// Net revenue per credit after store fees
+const NET_PER_CREDIT =
+  (CREDIT_ECONOMY.packGrossPrice * (1 - CREDIT_ECONOMY.storeFeeRate)) /
+  CREDIT_ECONOMY.packCredits; // e.g., 3.50 / 500 = $0.007
+
+// Each request unit (credit) should cover provider base cost plus margin
+// units = dollarCost / dollarsPerRequestUnit
+// Set dollarsPerRequestUnit to the provider cost per unit that yields the desired margin
+const DOLLARS_PER_REQUEST_UNIT =
+  NET_PER_CREDIT / (1 + CREDIT_ECONOMY.targetProfitMargin);
+
 export const QUOTA_CONFIG = {
   // Request-based allocation
   initialRequestAllocation: 20,
-  dollarsPerRequestUnit: 0.01,
+  // Provider base-cost per unit (credit) so that selling price achieves target margin
+  // Example with values above: 0.007 / 1.25 = $0.0056 per unit
+  dollarsPerRequestUnit: Number(DOLLARS_PER_REQUEST_UNIT.toFixed(6)),
   // Allow fractional request units and define rounding behavior
   // Smallest debit step (e.g., 0.1 = one tenth of a unit)
   requestUnitStep: 0.1,

@@ -152,32 +152,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
     }
   }
 
-  Future<void> _restore() async {
-    setState(() {
-      _busy = true;
-      _error = null;
-    });
-    try {
-      setState(() {
-        _error = 'Restoring purchases...';
-      });
-
-      await RevenueCatService.instance.restorePurchases();
-
-      setState(() {
-        _error = null;
-      });
-    } catch (e) {
-      setState(() {
-        _error =
-            'Restore failed: ${e.toString()}\n\nDebug info:\n- RevenueCat configured: ${RevenueCatService.instance.isConfigured}\n- User: ${context.read<FirebaseAuthProvider>().uid}';
-      });
-    } finally {
-      setState(() {
-        _busy = false;
-      });
-    }
-  }
+  // Restore functionality intentionally removed
 
   Future<void> _manageSubscription() async {
     try {
@@ -438,10 +413,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
                               ),
                             ),
                             const SizedBox(height: 8),
-                            TextButton(
-                              onPressed: _busy ? null : _restore,
-                              child: const Text('Restore Purchases'),
-                            ),
+                            // Restore button removed
                             Builder(builder: (context) {
                               final manageUrl = context
                                   .watch<CreditsPurchaseProvider>()
@@ -478,10 +450,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    TextButton(
-                      onPressed: _busy ? null : _restore,
-                      child: const Text('Restore Purchases'),
-                    ),
+                    // Restore button removed
                     Builder(builder: (context) {
                       final manageUrl = context
                           .watch<CreditsPurchaseProvider>()

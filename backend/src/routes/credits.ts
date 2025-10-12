@@ -56,6 +56,8 @@ creditsRouter.post('/consume', requireAuth, async (req: AuthRequest, res) => {
     // Calculate server-side amount if modelId provided; else legacy amount
     let consumeAmount: number = 0;
     let calculatedMetadata: any = {};
+    let dollarsPerUnitUsed: number = QUOTA_CONFIG.dollarsPerRequestUnit;
+    let isFreeModelForAnalytics = false;
     if (modelId) {
       // Fetch models config to derive request units
       const internalBase = getInternalBaseUrl(req);
@@ -82,6 +84,8 @@ creditsRouter.post('/consume', requireAuth, async (req: AuthRequest, res) => {
         const p = pricingMap[modelId];
         const isFreeModel = !!p && Number(p.input || 0) === 0 && Number(p.output || 0) === 0;
         consumeAmount = isFreeModel ? 0.3 : roundToStep(Math.max(minUnits, Number(sample.requestUnits) || 0));
+        dollarsPerUnitUsed = Number((modelsData?.data?.quotaPricing?.dollarsPerRequestUnit) ?? QUOTA_CONFIG.dollarsPerRequestUnit);
+        isFreeModelForAnalytics = isFreeModel;
         calculatedMetadata = {
           modelId,
           mode: effectiveMode,
@@ -112,6 +116,8 @@ creditsRouter.post('/consume', requireAuth, async (req: AuthRequest, res) => {
           const unitsRaw = dollarCost / dollarsPerUnit;
           consumeAmount = roundToStep(Math.max(minUnits, unitsRaw));
         }
+        dollarsPerUnitUsed = Number(dollarsPerUnit);
+        isFreeModelForAnalytics = isFreeModel;
         calculatedMetadata = {
           modelId,
           mode: effectiveMode,
@@ -178,6 +184,28 @@ creditsRouter.post('/consume', requireAuth, async (req: AuthRequest, res) => {
       timestamp: new Date().toISOString(),
       metadata: { ...(metadata || {}), ...calculatedMetadata },
     });
+
+    // Analytics: record cost vs units for monitoring (non-blocking)
+    try {
+      const analyticsRef = db.collection('analytics').doc('usage').collection('entries');
+      await analyticsRef.add({
+        uid,
+        requestId,
+        modelId: calculatedMetadata.modelId || modelId || null,
+        mode: calculatedMetadata.mode || mode || 'chat',
+        isFreeModel: isFreeModelForAnalytics,
+        dollarCost: Number(calculatedMetadata.dollarCost ?? 0),
+        units: Number(consumeAmount),
+        dollarsPerRequestUnit: Number(dollarsPerUnitUsed),
+        inputTokens: calculatedMetadata.inputTokens ?? null,
+        outputTokens: calculatedMetadata.outputTokens ?? null,
+        timestamp: new Date().toISOString(),
+      });
+      console.log(`[credits] model=${calculatedMetadata.modelId || modelId} mode=${calculatedMetadata.mode || mode} $=${Number(calculatedMetadata.dollarCost ?? 0).toFixed(6)} units=${Number(consumeAmount).toFixed(2)} free=${isFreeModelForAnalytics ? 'y' : 'n'}`);
+    } catch (e) {
+      // Analytics failures must not affect the request
+      console.warn('Analytics write failed:', (e as any)?.message || e);
+    }
     
     res.json({
       success: true,
