@@ -285,7 +285,6 @@ class _SessionInfoWidgetState extends State<SessionInfoWidget> {
 
   Widget _buildCreditsAndModelDisplay(ThemeData theme, String quotaText) {
     final left = _buildCreditsDisplay(theme);
-    final modelLabel = _buildQuotaAndPriceLabel(quotaText);
     return Row(
       children: [
         Flexible(child: left),
@@ -298,16 +297,6 @@ class _SessionInfoWidgetState extends State<SessionInfoWidget> {
           ),
         ),
         const SizedBox(width: 8),
-        Flexible(
-          child: Text(
-            modelLabel,
-            style: theme.textTheme.bodySmall?.copyWith(
-              fontSize: 10,
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-            ),
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
       ],
     );
   }

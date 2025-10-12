@@ -7,6 +7,7 @@ import '../services/llm_service.dart'; // Added import for LLMService
 import '../services/model_service.dart';
 // Estimation handled by backend pricing API
 import '../theme/app_theme.dart';
+import '../utils/provider_priority.dart';
 
 class ModelSelectionScreen extends StatefulWidget {
   final ChatMode mode;
@@ -165,7 +166,7 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
               double.tryParse(pricing['output']?.toString() ?? '0') ?? 0;
           if (inputCost == 0 && outputCost == 0) {
             return true;
-          }
+}
         }
 
         return false;
@@ -205,12 +206,8 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
       }).toList();
     }
 
-    // Sorting by name
-    filtered.sort((a, b) {
-      return (a['name'] ?? '').toString().compareTo(
-        (b['name'] ?? '').toString(),
-      );
-    });
+    // Enhanced sorting: Famous providers first, then budget models, then others
+    filtered.sort(ProviderPriority.compareModels);
 
     setState(() {
       _filteredModels = filtered;
@@ -658,23 +655,11 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
                           ? AppColors.darkAccentTertiary
                           : AppColors.lightAccentTertiary,
                     ),
-                  // Show pricing
+                  // Show pricing using backend request units
                   _buildFeatureChip(
-                    _getPriceDisplay(pricing),
-                    bgColor: isFree
-                        ? (isDark
-                              ? AppColors.darkSuccess.withValues(alpha: 0.2)
-                              : AppColors.lightSuccess.withValues(alpha: 0.15))
-                        : (isDark
-                              ? AppColors.darkWarning.withValues(alpha: 0.2)
-                              : AppColors.lightWarning.withValues(alpha: 0.15)),
-                    textColor: isFree
-                        ? (isDark
-                              ? AppColors.darkSuccess
-                              : AppColors.lightSuccess)
-                        : (isDark
-                              ? AppColors.darkWarning
-                              : AppColors.lightWarning),
+                    _getRequestUnitsDisplay(model),
+                    bgColor: _getRequestUnitsColor(model, isDark),
+                    textColor: _getRequestUnitsTextColor(model, isDark),
                   ),
                   // Show context length if available
                   if (model['contextLength'] != null ||
@@ -902,12 +887,60 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
     );
   }
 
-  String _getPriceDisplay(Map<String, dynamic>? pricing) {
-    if (pricing == null || pricing.isEmpty) return 'Paid';
-    final input = (pricing['input'] ?? 0.0) as double;
-    final output = (pricing['output'] ?? 0.0) as double;
-    if (input == 0.0 && output == 0.0) return 'Free';
-    return '~1 req';
+  String _getRequestUnitsDisplay(Map<String, dynamic> model) {
+    // Use requestEstimate from backend if available
+    final requestEstimate = model['requestEstimate'] as Map<String, dynamic>?;
+    if (requestEstimate != null) {
+      final units = (requestEstimate['requestUnits'] as num?)?.toDouble() ?? 0.0;
+      if (units > 0) {
+        return 'x${units.toStringAsFixed(1)}';
+      }
+    }
+    
+    // Fallback to pricing check
+    final pricing = model['pricing'] as Map<String, dynamic>?;
+    if (pricing != null) {
+      final input = (pricing['input'] ?? 0.0) as double;
+      final output = (pricing['output'] ?? 0.0) as double;
+      if (input == 0.0 && output == 0.0) {
+        // Use configurable free model rate from backend config
+        final quotaPricing = model['quotaPricing'] as Map<String, dynamic>?;
+        final freeModelRate = (quotaPricing?['freeModelRate'] as num?)?.toDouble() ?? 0.3;
+        return 'x${freeModelRate.toStringAsFixed(1)}';
+      }
+    }
+    
+    return 'x1.0'; // Default fallback
+  }
+
+  Color _getRequestUnitsColor(Map<String, dynamic> model, bool isDark) {
+    final requestEstimate = model['requestEstimate'] as Map<String, dynamic>?;
+    final units = (requestEstimate?['requestUnits'] as num?)?.toDouble() ?? 1.0;
+    
+    if (units <= 0.5) {
+      // Budget models - green
+      return isDark
+          ? AppColors.darkSuccess.withValues(alpha: 0.2)
+          : AppColors.lightSuccess.withValues(alpha: 0.15);
+    } else {
+      // Regular models - warning color
+      return isDark
+          ? AppColors.darkWarning.withValues(alpha: 0.2)
+          : AppColors.lightWarning.withValues(alpha: 0.15);
+    }
+  }
+
+  Color _getRequestUnitsTextColor(Map<String, dynamic> model, bool isDark) {
+    final requestEstimate = model['requestEstimate'] as Map<String, dynamic>?;
+    final units = (requestEstimate?['requestUnits'] as num?)?.toDouble() ?? 1.0;
+    
+    if (units <= 0.5) {
+      // Budget models - green
+      return isDark ? AppColors.darkSuccess : AppColors.lightSuccess;
+    } else {
+      // Regular models - warning color
+      return isDark ? AppColors.darkWarning : AppColors.lightWarning;
+    }
   }
 
   String _getProviderIcon(String? provider) {

@@ -264,7 +264,12 @@ chatRouter.post('/', requireAuth, async (req: AuthRequest, res) => {
 
     const mode = typeof rawMode === 'string' ? rawMode : 'chat';
     const modeConfig: any = (MODE_CONFIGS as any)[mode] || (MODE_CONFIGS as any).chat;
-    const model = (modeConfig?.model as string) || (typeof rawModel === 'string' ? rawModel : 'google/gemini-2.5-flash-lite');
+    // Prioritize user-selected model over mode default
+    const model = (typeof rawModel === 'string' ? rawModel : null) || (modeConfig?.model as string) || 'google/gemini-2.5-flash-lite';
+    
+    // Debug logging for model selection
+    console.log(`[chat] Mode: ${mode}, RawModel: ${rawModel}, SelectedModel: ${model}, ModeConfigModel: ${modeConfig?.model}`);
+    
     const userQuery = getLastUserMessageText(messages);
     const effectiveMaxTokens = typeof maxTokens === 'number' ? maxTokens : mode === 'aipedia' ? 900 : 700;
 

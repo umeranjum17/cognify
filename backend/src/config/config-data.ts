@@ -129,8 +129,8 @@ const CREDIT_ECONOMY = {
   packGrossPrice: 5, // USD
   // App Store fee rate (e.g., 0.30 = 30%)
   storeFeeRate: 0.30,
-  // Target profit margin on base (provider) cost: choose 0.20–0.30
-  targetProfitMargin: 0.25,
+  // Target profit margin on base (provider) cost: 2x markup (100% markup)
+  targetProfitMargin: 1.0, // 100% markup = 2x the provider cost
 } as const;
 
 // Derived unit economics
@@ -142,6 +142,7 @@ const NET_PER_CREDIT =
 // Each request unit (credit) should cover provider base cost plus margin
 // units = dollarCost / dollarsPerRequestUnit
 // Set dollarsPerRequestUnit to the provider cost per unit that yields the desired margin
+// With 100% markup (2x), this becomes: NET_PER_CREDIT / 2.0
 const DOLLARS_PER_REQUEST_UNIT =
   NET_PER_CREDIT / (1 + CREDIT_ECONOMY.targetProfitMargin);
 
@@ -149,13 +150,15 @@ export const QUOTA_CONFIG = {
   // Request-based allocation
   initialRequestAllocation: 20,
   // Provider base-cost per unit (credit) so that selling price achieves target margin
-  // Example with values above: 0.007 / 1.25 = $0.0056 per unit
+  // Example with values above: 0.007 / 2.0 = $0.0035 per unit (2x markup)
   dollarsPerRequestUnit: Number(DOLLARS_PER_REQUEST_UNIT.toFixed(6)),
   // Allow fractional request units and define rounding behavior
   // Smallest debit step (e.g., 0.1 = one tenth of a unit)
   requestUnitStep: 0.1,
   // Enforce a minimum debit per request to avoid free calls
   minRequestUnits: 0.1,
+  // Rate for models marked as "free" (0 input/output pricing) - still charge a small amount
+  freeModelRate: 0.3,
 
   // Legacy token allocation (deprecated)
   initialTokenAllocation: 10,

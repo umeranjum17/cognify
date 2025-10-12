@@ -6,6 +6,7 @@ import '../providers/usage_quota_provider.dart';
 import 'package:provider/provider.dart';
 import '../services/model_service.dart';
 import '../theme/app_theme.dart';
+import '../utils/provider_priority.dart';
 
 class ModelQuickSwitcher extends StatefulWidget {
   final ChatMode mode;
@@ -61,6 +62,8 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
     });
 
     try {
+      // Clear cache to ensure fresh data
+      ModelService.clearCache();
       final modelsData = await ModelService.getEnhancedModelsByMode(
         widget.mode,
       );
@@ -105,27 +108,48 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
     _freeModels.clear();
     for (final model in models) {
       final provider = _normalizeProvider(model);
-      final estimate = model['requestEstimate'] as Map<String, dynamic>?;
-      final num units = (estimate?['requestUnits'] as num?) ?? -1;
-      // Budget = models marked free by backend pricing; we show x0.3 for them
-      final pricing = model['pricing'] as Map<String, dynamic>?;
-      final bool backendFree = pricing != null &&
-          (pricing['input'] == 0 || pricing['input'] == 0.0) &&
-          (pricing['output'] == 0 || pricing['output'] == 0.0);
-      if (backendFree) {
+      
+      // Use utility function to check if model is budget
+      final isBudget = ProviderPriority.isBudgetModel(model);
+      print('🔍 Model ${model['id']}: provider=$provider, isBudget=$isBudget, requestEstimate=${model['requestEstimate']}');
+      
+      // Add model to its provider category
+      _providersIndexed.putIfAbsent(provider, () => []).add(model);
+      
+      // ALSO add to Budget category if it's a budget model
+      if (isBudget) {
         _providersIndexed.putIfAbsent('Budget', () => []).add(model);
-      } else {
-        _providersIndexed.putIfAbsent(provider, () => []).add(model);
       }
     }
-    // No explicit Free section anymore
 
-    // Sort providers by number of models in descending order
+    // Sort providers by priority using utility function
     final sortedProviders = _providersIndexed.entries.toList()
-      ..sort((a, b) => b.value.length.compareTo(a.value.length));
+      ..sort((a, b) => ProviderPriority.compareProviders(a.key, b.key));
 
     // Create a new map with sorted order
     _providersIndexed = Map.fromEntries(sortedProviders);
+    
+    print('📊 Final provider order: ${_providersIndexed.keys.toList()}');
+    
+    // Sort models within each provider by provider priority (for budget models)
+    for (final entry in _providersIndexed.entries) {
+      if (entry.key == 'Budget') {
+        // Sort budget models by provider priority
+        entry.value.sort((a, b) {
+          final aProvider = (a['provider'] ?? '').toString().toLowerCase();
+          final bProvider = (b['provider'] ?? '').toString().toLowerCase();
+          final aPriority = ProviderPriority.getPriority(aProvider);
+          final bPriority = ProviderPriority.getPriority(bProvider);
+          
+          if (aPriority != bPriority) {
+            return aPriority.compareTo(bPriority);
+          }
+          
+          // If same priority, sort by name
+          return (a['name'] ?? '').toString().compareTo((b['name'] ?? '').toString());
+        });
+      }
+    }
   }
 
   String _normalizeProvider(Map<String, dynamic> model) {
@@ -759,7 +783,12 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
                         (pricing != null &&
                                 (pricing['input'] == 0 || pricing['input'] == 0.0) &&
                                 (pricing['output'] == 0 || pricing['output'] == 0.0))
-                            ? 'x0.3'
+                            ? (() {
+                                // Use configurable free model rate from backend config
+                                final quotaPricing = model['quotaPricing'] as Map<String, dynamic>?;
+                                final freeModelRate = (quotaPricing?['freeModelRate'] as num?)?.toDouble() ?? 0.3;
+                                return 'x${freeModelRate.toStringAsFixed(1)}';
+                              })()
                             : (requestUnits > 0
                                   ? 'x${requestUnits.toStringAsFixed(1)}'
                                   : '—'),

@@ -169,9 +169,10 @@ configRouter.get('/models', requireAuth, async (req, res) => {
           const inT = 900;
           const outT = 1100;
           const chatDollar = (inT / 1_000_000) * p.input + (outT / 1_000_000) * p.output;
-          // If model is marked free, we still charge a fixed budget rate
+          // If model is marked free, we still charge a configurable budget rate
+          const freeModelRate = (QUOTA_CONFIG as any).freeModelRate ?? 0.3;
           const chatUnits = isFree
-            ? 0.3
+            ? freeModelRate
             : (chatDollar > 0
                 ? roundToStep(Math.max(minUnits, chatDollar / dollarsPerRequestUnit))
                 : 0);
@@ -196,6 +197,7 @@ configRouter.get('/models', requireAuth, async (req, res) => {
           dollarsPerRequestUnit: QUOTA_CONFIG.dollarsPerRequestUnit,
           requestUnitStep: (QUOTA_CONFIG as any).requestUnitStep ?? 0.1,
           minRequestUnits: (QUOTA_CONFIG as any).minRequestUnits ?? 0.1,
+          freeModelRate: (QUOTA_CONFIG as any).freeModelRate ?? 0.3,
           perModelSampleCosts,
           perRequestSample: { chat: perRequestSampleChat },
         },

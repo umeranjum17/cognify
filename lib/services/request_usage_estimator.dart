@@ -158,8 +158,11 @@ class RequestUsageEstimator {
         }
       }
       if (isFreeByCapabilities || canonicalId.endsWith(':free')) {
-        return const RequestUsageEstimate(
-          requestUnits: 0.3,
+        // Get configurable free model rate from backend config
+        final quotaPricing = config['quotaPricing'] as Map<String, dynamic>?;
+        final freeModelRate = (quotaPricing?['freeModelRate'] as num?)?.toDouble() ?? 0.3;
+        return RequestUsageEstimate(
+          requestUnits: freeModelRate,
           dollarCost: 0.0,
           inputTokens: 0,
           outputTokens: 0,

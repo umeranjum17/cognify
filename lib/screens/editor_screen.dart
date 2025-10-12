@@ -1146,22 +1146,15 @@ class _EditorScreenState extends State<EditorScreen> {
                   onTap: () => _showModelCapabilitiesBottomSheet(context),
                   child: MouseRegion(
                     cursor: SystemMouseCursors.click,
-                    child: Text(
-                      (() {
-                        final base = _getModelDisplayTextForSelector();
-                        // Append multiplier in brackets using cached estimate from RequestUsageEstimator
-                        // We keep it lightweight and synchronous: show x0.3 if unknown
-                        final est = null; // not available here synchronously
-                        final suffix = ' (x0.3)';
-                        return base + suffix;
-                      })(),
+                    child: _ModelRateDisplay(
+                      modelId: _selectedModel ?? _lastUsedModel ?? _getModelForCurrentMode(),
+                      baseText: _getModelDisplayTextForSelector(),
                       style: theme.textTheme.bodySmall?.copyWith(
                         fontSize: 11,
                         color: theme.colorScheme.onSurface.withValues(
                           alpha: 0.8,
                         ),
                       ),
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ),
@@ -5487,6 +5480,54 @@ class _EditorScreenState extends State<EditorScreen> {
         modelName: currentModel,
         modelData: modelData,
       ),
+    );
+  }
+}
+
+// Widget to display model rate consistently from backend
+class _ModelRateDisplay extends StatelessWidget {
+  final String? modelId;
+  final String baseText;
+  final TextStyle? style;
+
+  const _ModelRateDisplay({
+    required this.modelId,
+    required this.baseText,
+    this.style,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (modelId == null) {
+      return Text(
+        '$baseText (Loading...)',
+        style: style,
+        overflow: TextOverflow.ellipsis,
+      );
+    }
+
+    return FutureBuilder<RequestUsageEstimate>(
+      future: RequestUsageEstimator.estimate(
+        modelId: modelId!,
+        mode: ChatMode.chat,
+      ),
+      builder: (context, snapshot) {
+        String suffix = ' (Loading...)';
+        
+        if (snapshot.hasData) {
+          final units = snapshot.data!.requestUnits;
+          suffix = units > 0 ? ' (x${units.toStringAsFixed(1)})' : ' (x0.3)';
+        } else if (snapshot.hasError) {
+          // Fallback for errors - could be improved to get from config
+          suffix = ' (x0.3)';
+        }
+        
+        return Text(
+          '$baseText$suffix',
+          style: style,
+          overflow: TextOverflow.ellipsis,
+        );
+      },
     );
   }
 }
