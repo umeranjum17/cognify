@@ -428,16 +428,55 @@ chatRouter.post('/', requireAuth, async (req: AuthRequest, res) => {
       }
 
       // Phase 2 or single-phase: writer pass using agents prompt
-      const writerPrompt = buildWriterPromptFromAgents({ originalQuery: userQuery, mode, sources: collectedSources, images: collectedImages });
       const writerStart = Date.now();
+      
+      // Build conversation context with last few messages for better continuity
+      const conversationMessages = [];
+      
+      // Add system message
+      conversationMessages.push({ role: 'system', content: 'You are a helpful, professional AI assistant.' });
+      
+      // Add conversation history (last 3 messages to keep context manageable)
+      const recentMessages = messages.slice(-3); // Last 3 messages for context
+      for (const msg of recentMessages) {
+        if (msg.role === 'user' || msg.role === 'assistant') {
+          // Extract text content from message
+          let content = '';
+          if (typeof msg.content === 'string') {
+            content = msg.content;
+          } else if (Array.isArray(msg.content)) {
+            // Extract text from content array
+            const textParts = msg.content
+              .filter((part: any) => part.type === 'text')
+              .map((part: any) => part.text)
+              .join(' ');
+            content = textParts;
+          }
+          
+          if (content.trim()) {
+            conversationMessages.push({
+              role: msg.role,
+              content: content.trim()
+            });
+          }
+        }
+      }
+      
+      // For two-phase modes (search/aipedia), use the writer prompt with sources
+      // For simple chat mode, use the conversation history directly
+      if (isTwoPhase) {
+        const writerPrompt = buildWriterPromptFromAgents({ originalQuery: userQuery, mode, sources: collectedSources, images: collectedImages });
+        conversationMessages.push({ role: 'user', content: writerPrompt });
+      }
+      // For simple chat mode, the conversation history already includes the current user message
+      
+      console.log(`[chat] Using ${conversationMessages.length} messages for context (including system${isTwoPhase ? ' and writer prompt' : ''})`);
+      
       await streamWithAiSDK({
         model,
         temperature: typeof temperature === 'number' ? temperature : (modeConfig?.temperature ?? 0.7),
         maxTokens: effectiveMaxTokens,
-        messages: [
-          { role: 'system', content: 'You are a helpful, professional AI assistant.' },
-          { role: 'user', content: writerPrompt },
-        ],
+        messages: conversationMessages,
         onTextDelta: (text) => {
           if (!firstChunkSent) {
             firstChunkSent = true;
