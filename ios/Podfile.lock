@@ -1255,6 +1255,9 @@ PODS:
   - Firebase/Firestore (12.0.0):
     - Firebase/CoreOnly
     - FirebaseFirestore (~> 12.0.0)
+  - Firebase/RemoteConfig (12.0.0):
+    - Firebase/CoreOnly
+    - FirebaseRemoteConfig (~> 12.0.0)
   - firebase_analytics (12.0.0):
     - firebase_core
     - FirebaseAnalytics (= 12.0.0)
@@ -1266,6 +1269,12 @@ PODS:
   - firebase_core (4.0.0):
     - Firebase/CoreOnly (= 12.0.0)
     - Flutter
+  - firebase_remote_config (6.0.0):
+    - Firebase/RemoteConfig (= 12.0.0)
+    - firebase_core
+    - Flutter
+  - FirebaseABTesting (12.0.0):
+    - FirebaseCore (~> 12.0.0)
   - FirebaseAnalytics (12.0.0):
     - FirebaseAnalytics/Default (= 12.0.0)
     - FirebaseCore (~> 12.0.0)
@@ -1328,6 +1337,15 @@ PODS:
     - GoogleUtilities/Environment (~> 8.1)
     - GoogleUtilities/UserDefaults (~> 8.1)
     - PromisesObjC (~> 2.4)
+  - FirebaseRemoteConfig (12.0.0):
+    - FirebaseABTesting (~> 12.0.0)
+    - FirebaseCore (~> 12.0.0)
+    - FirebaseInstallations (~> 12.0.0)
+    - FirebaseRemoteConfigInterop (~> 12.0.0)
+    - FirebaseSharedSwift (~> 12.0.0)
+    - GoogleUtilities/Environment (~> 8.1)
+    - "GoogleUtilities/NSData+zlib (~> 8.1)"
+  - FirebaseRemoteConfigInterop (12.0.0)
   - FirebaseSharedSwift (12.0.0)
   - Flutter (1.0.0)
   - flutter_background_service_ios (0.0.3):
@@ -1552,6 +1570,7 @@ DEPENDENCIES:
   - firebase_analytics (from `.symlinks/plugins/firebase_analytics/ios`)
   - firebase_auth (from `.symlinks/plugins/firebase_auth/ios`)
   - firebase_core (from `.symlinks/plugins/firebase_core/ios`)
+  - firebase_remote_config (from `.symlinks/plugins/firebase_remote_config/ios`)
   - Flutter (from `Flutter`)
   - flutter_background_service_ios (from `.symlinks/plugins/flutter_background_service_ios/ios`)
   - flutter_secure_storage (from `.symlinks/plugins/flutter_secure_storage/ios`)
@@ -1578,6 +1597,7 @@ SPEC REPOS:
     - DKImagePickerController
     - DKPhotoGallery
     - Firebase
+    - FirebaseABTesting
     - FirebaseAnalytics
     - FirebaseAppCheckInterop
     - FirebaseAuth
@@ -1588,6 +1608,8 @@ SPEC REPOS:
     - FirebaseFirestore
     - FirebaseFirestoreInternal
     - FirebaseInstallations
+    - FirebaseRemoteConfig
+    - FirebaseRemoteConfigInterop
     - FirebaseSharedSwift
     - GoogleAdsOnDeviceConversion
     - GoogleAppMeasurement
@@ -1622,6 +1644,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/firebase_auth/ios"
   firebase_core:
     :path: ".symlinks/plugins/firebase_core/ios"
+  firebase_remote_config:
+    :path: ".symlinks/plugins/firebase_remote_config/ios"
   Flutter:
     :path: Flutter
   flutter_background_service_ios:
@@ -1670,6 +1694,8 @@ SPEC CHECKSUMS:
   firebase_analytics: cd56fc56f75c1df30a6ff5290cd56e230996a76d
   firebase_auth: 4734e8223034e214039a9a805ff2cfb323223e34
   firebase_core: 633e1851ffe1b9ab875f6467a4f574c79cef02e4
+  firebase_remote_config: ce17e27739e9fa1a5a41a70319c5ce3f792788d4
+  FirebaseABTesting: 2cad22e464cd7ef4589ae29f897bc71ff83ce83b
   FirebaseAnalytics: 6d790cd1b159b4eb61a99948df0934ce505a34f7
   FirebaseAppCheckInterop: c848d06a04030c9858ef0ae555b82035dbe470d0
   FirebaseAuth: 654e4de84787c45d7265599a651038e854ccb439
@@ -1680,6 +1706,8 @@ SPEC CHECKSUMS:
   FirebaseFirestore: 64f13d770a1e5a77e667efc5ed5576461f4d7827
   FirebaseFirestoreInternal: 1ba4a8841496a9af788622a97fc45eb7b3b92c5f
   FirebaseInstallations: d4c7c958f99c8860d7fcece786314ae790e2f988
+  FirebaseRemoteConfig: 4cbbe0083474359025e7bb334b9d0cff16b78d3a
+  FirebaseRemoteConfigInterop: bfa0ea72ba3dc5af739777296424e46bd6f42613
   FirebaseSharedSwift: 59266c22ccfcef604d725c034c568fa666ea9bda
   Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
   flutter_background_service_ios: 00d31bdff7b4bfe06d32375df358abe0329cf87e

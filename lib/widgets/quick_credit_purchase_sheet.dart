@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 
+import '../api/api.dart';
 import '../config/subscriptions_config.dart';
 import '../providers/credits_purchase_provider.dart';
 import '../providers/firebase_auth_provider.dart';

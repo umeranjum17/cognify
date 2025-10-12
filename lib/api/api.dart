@@ -6,6 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import '../config/app_config.dart';
+import '../utils/logger.dart';
 
 /// Single centralized API file for ALL data access
 ///
@@ -26,6 +27,38 @@ class API {
       receiveTimeout: AppConfig.receiveTimeout,
       sendTimeout: AppConfig.sendTimeout,
       headers: {'Content-Type': 'application/json'},
+    ));
+
+    // Log all requests/responses to help diagnose baseUrl/RC issues
+    _dio.interceptors.add(InterceptorsWrapper(
+      onRequest: (options, handler) {
+        try {
+          Logger.debug(
+            '➡️ API Request: ${options.method} ${options.uri}',
+            tag: 'API',
+          );
+          Logger.debug('   baseUrl=${_dio.options.baseUrl}', tag: 'API');
+        } catch (_) {}
+        handler.next(options);
+      },
+      onResponse: (response, handler) {
+        try {
+          Logger.debug(
+            '✅ API Response: ${response.statusCode} ${response.requestOptions.uri}',
+            tag: 'API',
+          );
+        } catch (_) {}
+        handler.next(response);
+      },
+      onError: (e, handler) {
+        try {
+          Logger.warn(
+            '❌ API Error: ${e.message} ${e.requestOptions.uri}',
+            tag: 'API',
+          );
+        } catch (_) {}
+        handler.next(e);
+      },
     ));
   }
 
@@ -840,5 +873,6 @@ class API {
   /// Update base URL (useful for switching environments)
   void updateBaseUrl(String newBaseUrl) {
     _dio.options.baseUrl = newBaseUrl;
+    Logger.info('🔄 API baseUrl updated -> $newBaseUrl', tag: 'API');
   }
 }

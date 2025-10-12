@@ -96,9 +96,11 @@ class AppConfig {
       final uri = Uri.tryParse(override);
       if (uri != null && uri.hasScheme) return override;
     }
-    // 1) Allow runtime override via dart-define
+    // 1) Allow runtime override via dart-define (support both names)
     const overridden = String.fromEnvironment('BACKEND_BASE_URL', defaultValue: '');
     if (overridden.isNotEmpty) return overridden;
+    const apiBaseUrl = String.fromEnvironment('API_BASE_URL', defaultValue: '');
+    if (apiBaseUrl.isNotEmpty) return apiBaseUrl;
 
     // 2) Default to sensible local dev hosts by platform
     //    - Android Emulator: 10.0.2.2
