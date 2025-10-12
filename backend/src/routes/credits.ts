@@ -111,7 +111,7 @@ creditsRouter.post('/consume', requireAuth, async (req: AuthRequest, res) => {
         const dollarCost = (inT / 1_000_000) * inputPricePer1M + (outT / 1_000_000) * outputPricePer1M;
         const isFreeModel = Number(inputPricePer1M) === 0 && Number(outputPricePer1M) === 0;
         if (isFreeModel) {
-          consumeAmount = 0.3; // Charge something for free models but keep it low
+          consumeAmount = (QUOTA_CONFIG as any).freeModelRate ?? 0.1; // Use configurable free model rate
         } else {
           const unitsRaw = dollarCost / dollarsPerUnit;
           consumeAmount = roundToStep(Math.max(minUnits, unitsRaw));

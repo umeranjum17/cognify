@@ -158,7 +158,7 @@ export const QUOTA_CONFIG = {
   // Enforce a minimum debit per request to avoid free calls
   minRequestUnits: 0.1,
   // Rate for models marked as "free" (0 input/output pricing) - still charge a small amount
-  freeModelRate: 0.3,
+  freeModelRate: 0.1,
 
   // Legacy token allocation (deprecated)
   initialTokenAllocation: 10,

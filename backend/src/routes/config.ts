@@ -170,7 +170,7 @@ configRouter.get('/models', requireAuth, async (req, res) => {
           const outT = 1100;
           const chatDollar = (inT / 1_000_000) * p.input + (outT / 1_000_000) * p.output;
           // If model is marked free, we still charge a configurable budget rate
-          const freeModelRate = (QUOTA_CONFIG as any).freeModelRate ?? 0.3;
+          const freeModelRate = (QUOTA_CONFIG as any).freeModelRate ?? 0.1;
           const chatUnits = isFree
             ? freeModelRate
             : (chatDollar > 0
