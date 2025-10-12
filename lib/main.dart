@@ -31,6 +31,11 @@ import 'utils/logger.dart';
 import 'config/app_config.dart';
 import 'firebase_options.dart';
 import 'services/analytics_service.dart';
+import 'api/api.dart';
+import 'utils/version.dart';
+import 'widgets/update_required_screen.dart';
+import 'widgets/update_soft_prompt.dart';
+import 'package:firebase_remote_config/firebase_remote_config.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -331,6 +336,8 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
   ThemeProvider? _themeProvider;
   FirebaseAuthProvider? _firebaseAuthProvider;
   bool _isInitializing = true;
+  bool _hardBlocked = false;
+  String _updateUrl = '';
 
   @override
   Widget build(BuildContext context) {
@@ -339,6 +346,14 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
         _themeProvider == null ||
         _firebaseAuthProvider == null ||
         _router == null) {
+      if (_hardBlocked && _updateUrl.isNotEmpty) {
+        return MaterialApp(
+          theme: lightTheme,
+          darkTheme: darkTheme,
+          home: UpdateRequiredScreen(updateUrl: _updateUrl),
+          debugShowCheckedModeBanner: false,
+        );
+      }
       return MaterialApp(
         theme: lightTheme,
         darkTheme: darkTheme,
@@ -485,6 +500,9 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.resumed) {
+      _recheckRemoteConfig();
+    }
   }
 
   @override
@@ -557,6 +575,9 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
       await _firebaseAuthProvider!.initialize();
       Logger.info('✅ Firebase auth provider initialized', tag: 'AppInit');
 
+      // Remote Config: fetch, activate, apply URL and gate
+      await _initRemoteConfigAndGate();
+
       // Create router after auth provider is initialized
       final defaultRouteName =
           WidgetsBinding.instance.platformDispatcher.defaultRouteName;
@@ -612,6 +633,123 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
           _isInitializing = false;
         });
       }
+    }
+  }
+
+  Future<void> _initRemoteConfigAndGate() async {
+    try {
+      final rc = FirebaseRemoteConfig.instance;
+      await rc.setConfigSettings(RemoteConfigSettings(
+        fetchTimeout: const Duration(seconds: 10),
+        minimumFetchInterval: const Duration(seconds: AppConfig.defaultRcFetchMinIntervalSec),
+      ));
+      await rc.setDefaults({
+        'backend_base_url': AppConfig.backendBaseUrl,
+        'min_supported_version': AppConfig.defaultMinSupportedVersion,
+        'soft_min_version': AppConfig.defaultSoftMinVersion,
+        'update_url_android': AppConfig.defaultUpdateUrlAndroid,
+        'update_url_ios': AppConfig.defaultUpdateUrlIOS,
+        'update_url_web': AppConfig.defaultUpdateUrlWeb,
+      });
+
+      await rc.fetchAndActivate();
+
+      // Apply backend base URL
+      final remoteUrl = rc.getString('backend_base_url');
+      if (Uri.tryParse(remoteUrl)?.hasScheme == true) {
+        AppConfig.setRemoteBackendBaseUrl(remoteUrl);
+        API.instance.updateBaseUrl(remoteUrl);
+        Logger.info('🔄 Applied Remote Config backend_base_url: $remoteUrl', tag: 'RemoteConfig');
+      }
+
+      // Determine update URLs
+      String updateUrl = '';
+      if (kIsWeb) {
+        updateUrl = rc.getString('update_url_web');
+      } else if (defaultTargetPlatform == TargetPlatform.iOS || defaultTargetPlatform == TargetPlatform.macOS) {
+        updateUrl = rc.getString('update_url_ios');
+      } else {
+        updateUrl = rc.getString('update_url_android');
+      }
+
+      // Version gating
+      final current = await VersionInfo.current();
+      final hard = Version.parse(rc.getString('min_supported_version'));
+      final soft = Version.parse(rc.getString('soft_min_version'));
+
+      if (current < hard && updateUrl.isNotEmpty) {
+        _hardBlocked = true;
+        _updateUrl = updateUrl;
+      } else if (current < soft && updateUrl.isNotEmpty) {
+        // Soft prompt after first frame
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            showDialog(
+              context: context,
+              barrierDismissible: true,
+              builder: (_) => UpdateSoftPrompt(
+                updateUrl: updateUrl,
+                currentVersion: current.toString(),
+                requiredVersion: soft.toString(),
+              ),
+            );
+          }
+        });
+      }
+    } catch (e) {
+      Logger.warn('⚠️ Remote Config unavailable or failed: $e', tag: 'RemoteConfig');
+    }
+  }
+
+  Future<void> _recheckRemoteConfig() async {
+    try {
+      final rc = FirebaseRemoteConfig.instance;
+      final activated = await rc.fetchAndActivate();
+      if (activated) {
+        // Re-apply backend URL if changed
+        final remoteUrl = rc.getString('backend_base_url');
+        if (Uri.tryParse(remoteUrl)?.hasScheme == true) {
+          AppConfig.setRemoteBackendBaseUrl(remoteUrl);
+          API.instance.updateBaseUrl(remoteUrl);
+          Logger.info('🔄 Re-applied Remote Config backend_base_url: $remoteUrl', tag: 'RemoteConfig');
+        }
+      }
+
+      // Compute gate again
+      String updateUrl = '';
+      if (kIsWeb) {
+        updateUrl = rc.getString('update_url_web');
+      } else if (defaultTargetPlatform == TargetPlatform.iOS || defaultTargetPlatform == TargetPlatform.macOS) {
+        updateUrl = rc.getString('update_url_ios');
+      } else {
+        updateUrl = rc.getString('update_url_android');
+      }
+      final current = await VersionInfo.current();
+      final hard = Version.parse(rc.getString('min_supported_version'));
+      final soft = Version.parse(rc.getString('soft_min_version'));
+
+      if (current < hard && updateUrl.isNotEmpty) {
+        if (mounted) {
+          setState(() {
+            _hardBlocked = true;
+            _updateUrl = updateUrl;
+          });
+        }
+      } else if (current < soft && updateUrl.isNotEmpty) {
+        if (mounted) {
+          showDialog(
+            context: context,
+            barrierDismissible: true,
+            builder: (_) => UpdateSoftPrompt(
+              updateUrl: updateUrl,
+              currentVersion: current.toString(),
+              requiredVersion: soft.toString(),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      Logger.warn('⚠️ Remote Config re-check failed: $e', tag: 'RemoteConfig');
     }
   }
 

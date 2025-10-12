@@ -1,4 +1,17 @@
 node_modules
+npm-debug.log
+.git
+.gitignore
+dist
+.env
+.env.*
+Dockerfile*
+docker-compose.yml
+firebase-debug.log
+firestore-debug.log
+README.md
+**/*.tsbuildinfo
+node_modules
 dist
 .env
 .env.local

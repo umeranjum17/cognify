@@ -5,7 +5,8 @@ WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
-RUN npm ci --only=production
+# Install all dependencies (including dev) to build TypeScript
+RUN npm ci
 
 # Copy source code
 COPY . .
@@ -13,12 +14,15 @@ COPY . .
 # Build TypeScript
 RUN npm run build
 
+# Prune devDependencies to reduce final image size
+RUN npm prune --omit=dev
+
 # Production image
 FROM node:18-alpine
 
 WORKDIR /app
 
-# Copy built files and dependencies
+# Copy built files and production dependencies
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package*.json ./

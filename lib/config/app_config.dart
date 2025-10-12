@@ -86,7 +86,16 @@ class AppConfig {
   static const String openRouterBaseUrl = 'https://openrouter.ai/api/v1';
   static const String openAiBaseUrl = 'https://api.openai.ai/v1';
 
+  // Remote-configurable overrides
+  static String? _overrideBackendBaseUrl;
+
   static String get backendBaseUrl {
+    // 0) Prefer remote-config override when set and valid
+    final override = _overrideBackendBaseUrl;
+    if (override != null && override.isNotEmpty) {
+      final uri = Uri.tryParse(override);
+      if (uri != null && uri.hasScheme) return override;
+    }
     // 1) Allow runtime override via dart-define
     const overridden = String.fromEnvironment('BACKEND_BASE_URL', defaultValue: '');
     if (overridden.isNotEmpty) return overridden;
@@ -104,6 +113,15 @@ class AppConfig {
         return 'http://localhost:3000';
       default:
         return 'http://localhost:3000';
+    }
+  }
+
+  /// Apply a Remote Config-provided backend base URL at runtime.
+  static void setRemoteBackendBaseUrl(String? url) {
+    if (url == null || url.isEmpty) return;
+    final uri = Uri.tryParse(url);
+    if (uri != null && uri.hasScheme) {
+      _overrideBackendBaseUrl = url;
     }
   }
 
@@ -125,6 +143,14 @@ class AppConfig {
   static bool get enableLogging => kDebugMode;
   static bool get isDevelopment => kDebugMode;
   static bool get isProduction => kReleaseMode;
+
+  // ===== Remote Config defaults (when RC unavailable) =====
+  static const String defaultSoftMinVersion = '';
+  static const String defaultMinSupportedVersion = '';
+  static const String defaultUpdateUrlAndroid = '';
+  static const String defaultUpdateUrlIOS = '';
+  static const String defaultUpdateUrlWeb = '';
+  static const int defaultRcFetchMinIntervalSec = 0; // 0 in dev; tune in prod
 
   bool _initialized = false;
   final DatabaseService _db = DatabaseService();
