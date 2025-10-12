@@ -30,8 +30,14 @@ app.use(cors({
 // Logging
 app.use(morgan('dev'));
 
-// Body parser
-app.use(express.json({ limit: '10mb' }));
+// Body parser (capture raw body for webhook signature verification)
+app.use(express.json({
+  limit: '10mb',
+  verify: (req: any, _res, buf) => {
+    // Store raw body for HMAC verification in webhook handlers
+    req.rawBody = Buffer.isBuffer(buf) ? buf : Buffer.from(buf || '');
+  },
+}));
 app.use(express.urlencoded({ extended: true }));
 
 // Health check

@@ -22,8 +22,8 @@
          </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
-  <TestAction
-     buildConfiguration = "Debug-dev"
+   <TestAction
+      buildConfiguration = "Debug-dev"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       customLLDBInitFile = "$(SRCROOT)/Flutter/ephemeral/flutter_lldbinit"
@@ -51,8 +51,8 @@
          </TestableReference>
       </Testables>
    </TestAction>
-  <LaunchAction
-     buildConfiguration = "Debug-dev"
+   <LaunchAction
+      buildConfiguration = "Debug-dev"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       customLLDBInitFile = "$(SRCROOT)/Flutter/ephemeral/flutter_lldbinit"
@@ -80,9 +80,12 @@
             isEnabled = "YES">
          </EnvironmentVariable>
       </EnvironmentVariables>
+      <StoreKitConfigurationFileReference
+         identifier = "../sotrekit.storekit">
+      </StoreKitConfigurationFileReference>
    </LaunchAction>
-  <ProfileAction
-     buildConfiguration = "Profile-dev"
+   <ProfileAction
+      buildConfiguration = "Profile-dev"
       shouldUseLaunchSchemeArgsEnv = "YES"
       savedToolIdentifier = ""
       useCustomWorkingDirectory = "NO"
@@ -98,11 +101,11 @@
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>
-  <AnalyzeAction
-     buildConfiguration = "Debug-dev">
+   <AnalyzeAction
+      buildConfiguration = "Debug-dev">
    </AnalyzeAction>
-  <ArchiveAction
-     buildConfiguration = "Release-dev"
+   <ArchiveAction
+      buildConfiguration = "Release-dev"
       revealArchiveInOrganizer = "YES">
    </ArchiveAction>
 </Scheme>

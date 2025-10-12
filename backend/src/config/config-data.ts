@@ -175,6 +175,15 @@ export const RC_CREDIT_PRODUCTS: Record<string, number> = {
   // Add more SKUs as needed, e.g., one-off top-up packs
   'credits_100': 100,
   'credits_500': 500,
+  'credits_1000': 1000,
+  'credits_2000': 2000,
+  'credits_5000': 5000,
+  // Common iOS-style bundle identifiers (adjust to your actual App Store IDs)
+  'com.cognify.credits.100': 100,
+  'com.cognify.credits.500': 500,
+  'com.cognify.credits.1000': 1000,
+  'com.cognify.credits.2000': 2000,
+  'com.cognify.credits.5000': 5000,
 };
 
 // Control which RC environments are accepted by the webhook handler

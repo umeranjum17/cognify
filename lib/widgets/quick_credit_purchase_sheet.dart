@@ -125,6 +125,36 @@ class _QuickCreditPurchaseSheetState extends State<QuickCreditPurchaseSheet> {
       });
 
       if (result.success) {
+        // After successful purchase, poll backend for updated balance via webhook
+        // and show a transient processing message while waiting.
+        if (mounted) {
+          setState(() {
+            _statusMessage = 'Finalizing purchase… updating balance';
+          });
+        }
+
+        try {
+          // Poll GET /api/credits/balance with short backoff for ~15s
+          final started = DateTime.now();
+          double lastBalance = -1;
+          while (DateTime.now().difference(started).inSeconds < 15) {
+            await Future.delayed(const Duration(seconds: 1));
+            final balance = await API.instance.getCreditsBalance();
+            if (balance >= 0 && balance != lastBalance) {
+              lastBalance = balance;
+              // Heuristic: as soon as we observe a non-zero or changed balance after purchase, break
+              if (balance > (widget.currentCredits ?? 0)) {
+                break;
+              }
+            }
+          }
+        } catch (_) {}
+
+        if (mounted) {
+          setState(() {
+            _statusMessage = null;
+          });
+        }
         if (mounted) {
           // Show success message
           ScaffoldMessenger.of(context).showSnackBar(

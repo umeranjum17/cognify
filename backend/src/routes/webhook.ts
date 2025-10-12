@@ -11,10 +11,19 @@ export const webhookRouter = express.Router();
 // POST /api/rc/webhook - RevenueCat webhook handler
 webhookRouter.post('/webhook', async (req, res) => {
   try {
+    console.log('Webhook received');
     const authHeader = String(req.headers.authorization || '');
     const expectedSecret = process.env.RC_WEBHOOK_SECRET;
     const signatureHeader = String(req.headers['x-revenuecat-signature'] || '');
     const signatureSecret = process.env.RC_SIGNATURE_SECRET;
+    const requireSignature = String(process.env.RC_REQUIRE_SIGNATURE || '').toLowerCase() === 'true';
+    // Debug: log presence (not values) to diagnose missing headers/signature
+    console.log('RC webhook diagnostics', {
+      hasAuthHeader: Boolean(authHeader),
+      hasSignatureHeader: Boolean(signatureHeader),
+      hasRawBody: Boolean((req as any).rawBody),
+      hasSignatureSecret: Boolean(signatureSecret),
+    });
     if (!expectedSecret) {
       res.status(500).json({ error: 'Server misconfigured: RC_WEBHOOK_SECRET missing' });
       return;
@@ -26,16 +35,24 @@ webhookRouter.post('/webhook', async (req, res) => {
       return;
     }
 
+    // Signature verification using raw body.
+    // If RC_REQUIRE_SIGNATURE=true, we require a valid signature when RC_SIGNATURE_SECRET is set.
+    // Otherwise, if a signature header is present we validate it; if missing, we proceed with Bearer-only.
     const payload = req.body as any;
-    // Optional signature verification (if configured)
-    if (signatureSecret && signatureHeader) {
-      const computed = crypto
-        .createHmac('sha256', signatureSecret)
-        .update(JSON.stringify(payload))
-        .digest('hex');
-      if (computed !== signatureHeader) {
-        res.status(401).json({ error: 'Invalid signature' });
-        return;
+    const raw = (req as any).rawBody as Buffer | undefined;
+    if (signatureSecret) {
+      const shouldVerify = requireSignature || Boolean(signatureHeader);
+      if (shouldVerify) {
+        if (!signatureHeader || !raw || raw.length === 0) {
+          res.status(401).json({ error: 'Invalid signature' });
+          return;
+        }
+        const computed = crypto.createHmac('sha256', signatureSecret).update(raw).digest('hex');
+        const valid = safeEqual(computed, String(signatureHeader));
+        if (!valid) {
+          res.status(401).json({ error: 'Invalid signature' });
+          return;
+        }
       }
     }
     const event = payload?.event;
@@ -121,4 +138,15 @@ webhookRouter.post('/webhook', async (req, res) => {
     res.status(500).json({ error: 'Webhook processing failed' });
   }
 });
+
+function safeEqual(a: string, b: string): boolean {
+  try {
+    const ab = Buffer.from(a);
+    const bb = Buffer.from(b);
+    if (ab.length !== bb.length) return false;
+    return crypto.timingSafeEqual(ab, bb);
+  } catch {
+    return false;
+  }
+}
 

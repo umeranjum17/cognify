@@ -21,13 +21,36 @@ ThemeData darkTheme = ThemeData(
     tertiary: AppColors.darkAccentSecondary,
     error: AppColors.darkError,
     surface: AppColors.darkCard,
-    onPrimary: AppColors.darkButtonText,
+    // onPrimary should contrast with primary. Primary is a light gray in dark mode,
+    // so a near-black/on-dark text can reduce contrast too much on chips/buttons.
+    // Use dark background to ensure readable text on amber/primary containers.
+    onPrimary: Colors.black,
     onSecondary: AppColors.darkButtonText,
     onSurface: AppColors.darkText,
     onError: AppColors.darkButtonText,
     primaryContainer: AppColors.darkPrimaryLight,
     secondaryContainer: AppColors.darkAccent.withValues(alpha: 0.2),
     tertiaryContainer: AppColors.darkAccentSecondary.withValues(alpha: 0.2),
+  ),
+  elevatedButtonTheme: ElevatedButtonThemeData(
+    style: ElevatedButton.styleFrom(
+      backgroundColor: AppColors.darkButton,
+      foregroundColor: AppColors.darkButtonText,
+      disabledBackgroundColor: AppColors.darkBorderMuted,
+      disabledForegroundColor: AppColors.darkTextLight,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppColors.borderRadiusMd),
+      ),
+    ),
+  ),
+  filledButtonTheme: FilledButtonThemeData(
+    style: FilledButton.styleFrom(
+      backgroundColor: AppColors.darkAccent,
+      foregroundColor: AppColors.darkButtonText,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppColors.borderRadiusMd),
+      ),
+    ),
   ),
   textTheme: const TextTheme(
     bodyLarge: TextStyle(color: AppColors.darkText, fontSize: 16, fontWeight: FontWeight.w400),
@@ -74,13 +97,34 @@ ThemeData lightTheme = ThemeData(
     tertiary: AppColors.lightAccentSecondary,
     error: AppColors.lightError,
     surface: AppColors.lightSurface,
-    onPrimary: AppColors.lightButtonText,
+    // Primary is near-black in light mode; onPrimary must be light for contrast.
+    onPrimary: Colors.white,
     onSecondary: AppColors.lightButtonText,
     onSurface: AppColors.lightText,
     onError: AppColors.lightButtonText,
     primaryContainer: AppColors.lightPrimaryLight,
     secondaryContainer: AppColors.lightAccent.withValues(alpha: 0.1),
     tertiaryContainer: AppColors.lightAccentSecondary.withValues(alpha: 0.1),
+  ),
+  elevatedButtonTheme: ElevatedButtonThemeData(
+    style: ElevatedButton.styleFrom(
+      backgroundColor: AppColors.lightButton,
+      foregroundColor: AppColors.lightButtonText,
+      disabledBackgroundColor: AppColors.lightBorderMuted,
+      disabledForegroundColor: AppColors.lightTextLight,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppColors.borderRadiusMd),
+      ),
+    ),
+  ),
+  filledButtonTheme: FilledButtonThemeData(
+    style: FilledButton.styleFrom(
+      backgroundColor: AppColors.lightAccent,
+      foregroundColor: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppColors.borderRadiusMd),
+      ),
+    ),
   ),
   textTheme: const TextTheme(
     bodyLarge: TextStyle(color: AppColors.lightText, fontSize: 16, fontWeight: FontWeight.w400),

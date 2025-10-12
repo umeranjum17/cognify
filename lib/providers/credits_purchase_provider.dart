@@ -161,7 +161,12 @@ class CreditsPurchaseProvider extends ChangeNotifier {
             await Future.delayed(const Duration(milliseconds: 500));
             await RevenueCatService.instance.initialize(appUserId: uid);
           } else {
-            await RevenueCatService.instance.identify(uid);
+            // If the SDK isn't configured yet (first login after app start), initialize with UID
+            if (!RevenueCatService.instance.isConfigured) {
+              await RevenueCatService.instance.initialize(appUserId: uid);
+            } else {
+              await RevenueCatService.instance.identify(uid);
+            }
           }
 
           if (RevenueCatService.instance.isConfigured) {
