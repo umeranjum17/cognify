@@ -300,18 +300,36 @@ async function streamWithAiSDK(options: {
   });
   
   try {
-    // Use fullStream with relaxed validation to avoid OpenRouter type validation issues
-    for await (const part of result.fullStream) {
-      if ((part as any).type === 'text-delta') {
-        options.onTextDelta((part as any).text as string);
-      }
-      if ((part as any).type === 'finish') {
-        console.log('[stream] Stream completed successfully');
-        break;
+    // Use textStream with proper error handling
+    for await (const chunk of result.textStream) {
+      options.onTextDelta(chunk);
+    }
+    console.log('[stream] Stream completed successfully');
+  } catch (error: any) {
+    console.error('[stream] Stream error:', error);
+    
+    // If it's a validation error, try with fullStream as fallback
+    if (error?.message?.includes('Type validation failed') || 
+        error?.message?.includes('invalid_union') ||
+        error?.message?.includes('logprobs')) {
+      console.warn('[stream] Validation error, trying fullStream fallback');
+      
+      try {
+        for await (const part of result.fullStream) {
+          if ((part as any).type === 'text-delta') {
+            options.onTextDelta((part as any).text as string);
+          } else if ((part as any).type === 'finish') {
+            console.log('[stream] Fallback stream completed');
+            break;
+          }
+        }
+        return;
+      } catch (fallbackError) {
+        console.error('[stream] Fallback also failed:', fallbackError);
+        throw error;
       }
     }
-  } catch (error) {
-    console.error('[stream] Stream error:', error);
+    
     throw error;
   }
 }
