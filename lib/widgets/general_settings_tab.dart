@@ -396,8 +396,7 @@ class _GeneralSettingsTabState extends State<GeneralSettingsTab> {
       tokenSubtitle = 'Fetching your current token balance';
     } else {
       tokenValue = '$remainingTokens tokens';
-      tokenSubtitle =
-          '$consumedTokens used • $totalTokens available since signup';
+      tokenSubtitle = '$remainingTokens remaining';
     }
 
     return SingleChildScrollView(
@@ -420,7 +419,7 @@ class _GeneralSettingsTabState extends State<GeneralSettingsTab> {
 
           const SizedBox(height: 24),
 
-        _buildSection(theme, isDark, 'Usage', [
+          _buildSection(theme, isDark, 'Usage', [
             _buildInfoCard(
               theme,
               isDark,
@@ -431,31 +430,12 @@ class _GeneralSettingsTabState extends State<GeneralSettingsTab> {
             ),
           ]),
 
-        const SizedBox(height: 24),
+          const SizedBox(height: 24),
 
           // API keys section removed: frontend does not manage provider keys.
 
           const SizedBox(height: 24),
 
-          _buildSection(theme, isDark, 'Data & Privacy', [
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: OutlinedButton.icon(
-                onPressed: _deleteAllData,
-                icon: const Icon(Icons.delete_forever),
-                label: const Text('Delete All My Data'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.red,
-                  side: const BorderSide(color: Colors.red),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
           _buildSection(theme, isDark, 'Feedback', [
             Container(
               width: double.infinity,
@@ -491,32 +471,48 @@ class _GeneralSettingsTabState extends State<GeneralSettingsTab> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      ElevatedButton.icon(
-                        onPressed: _submittingFeedback ? null : _submitFeedback,
-                        icon: _submittingFeedback
-                            ? const SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              )
-                            : const Icon(Icons.send),
-                        label: Text(_submittingFeedback ? 'Sending…' : 'Send'),
-                      ),
-                      const SizedBox(width: 12),
-                      TextButton.icon(
-                        onPressed: _fallbackEmail,
-                        icon: const Icon(Icons.email_outlined),
-                        label: const Text('Email instead'),
-                      ),
-                    ],
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: ElevatedButton.icon(
+                      onPressed: _submittingFeedback ? null : _submitFeedback,
+                      icon: _submittingFeedback
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.send),
+                      label: Text(_submittingFeedback ? 'Sending…' : 'Send'),
+                    ),
                   ),
                 ],
               ),
             ),
           ]),
           const SizedBox(height: 12),
+          // Data & Privacy moved to bottom and made smaller
+          _buildSection(theme, isDark, 'Data & Privacy', [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: OutlinedButton.icon(
+                onPressed: _deleteAllData,
+                icon: const Icon(Icons.delete_forever, size: 18),
+                label: const Text('Delete All My Data'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.red,
+                  side: const BorderSide(color: Colors.red),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+            ),
+          ]),
+          const SizedBox(height: 12),
+          _buildSection(theme, isDark, 'Account Actions', [
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 16),

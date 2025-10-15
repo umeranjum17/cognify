@@ -7,6 +7,7 @@ import '../providers/firebase_auth_provider.dart';
 
 import '../screens/auth/sign_in_screen.dart';
 import '../screens/conversation_history_screen.dart';
+import '../screens/demo_mode_screen.dart';
 import '../screens/editor_screen.dart';
 import '../screens/tabbed_editor_screen.dart';
 import '../widgets/auth_guard.dart';
@@ -38,6 +39,10 @@ class AppRouter {
         if (!signedIn) {
           if (loggingIn) {
             return null;
+          }
+          // Allow demo mode on home route, redirect to sign-in for other routes
+          if (state.matchedLocation == '/') {
+            return null; // Let pageBuilder handle demo mode
           }
           final qp = Map<String, String>.from(state.uri.queryParameters);
           return Uri(
@@ -92,7 +97,7 @@ class AppRouter {
             if (!firebaseAuth.isSignedIn) {
               return MaterialPage(
                 key: state.pageKey,
-                child: SignInScreen(pendingSharedUrl: sharedUrl),
+                child: const DemoModeScreen(),
               );
             }
 

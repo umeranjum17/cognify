@@ -150,7 +150,7 @@ class _SignInScreenState extends State<SignInScreen> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Sign in to sync your workspace and access your starter credits in Cognify.',
+                    'Sign in to start chatting and access your free credits in Cognify.',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),

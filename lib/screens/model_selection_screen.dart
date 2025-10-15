@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 
 import '../models/mode_config.dart';
 import '../services/llm_service.dart'; // Added import for LLMService
+import 'package:provider/provider.dart';
+import '../providers/usage_quota_provider.dart';
 import '../services/model_service.dart';
 // Estimation handled by backend pricing API
 import '../theme/app_theme.dart';
@@ -523,8 +525,26 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
     final modelIdForSelection =
         model['id'] ?? model['canonical_slug'] ?? model['name'] ?? 'unknown';
 
+    // Affordability guard
+    final requestEstimate = model['requestEstimate'] as Map<String, dynamic>?;
+    final double requestUnits =
+        ((requestEstimate?['requestUnits'] as num?)?.toDouble() ?? 0.0);
+    final quotaProvider = context.read<UsageQuotaProvider?>();
+    final int remainingUnits = quotaProvider?.quota?.remaining ?? 0;
+    final bool isAffordable = requestUnits <= 0
+        ? true
+        : (remainingUnits > 0 && requestUnits <= remainingUnits);
+
     return GestureDetector(
-      onTap: () => _selectModel(modelIdForSelection),
+      onTap: isAffordable
+          ? () => _selectModel(modelIdForSelection)
+          : () => _showInsufficientCredits(
+                context,
+                theme,
+                isDark,
+                need: requestUnits,
+                have: remainingUnits.toDouble(),
+              ),
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
@@ -661,6 +681,16 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
                     bgColor: _getRequestUnitsColor(model, isDark),
                     textColor: _getRequestUnitsTextColor(model, isDark),
                   ),
+                  if (!isAffordable)
+                    _buildFeatureChip(
+                      'Locked',
+                      bgColor: isDark
+                          ? AppColors.darkError.withValues(alpha: 0.15)
+                          : AppColors.lightError.withValues(alpha: 0.12),
+                      textColor: isDark
+                          ? AppColors.darkError
+                          : AppColors.lightError,
+                    ),
                   // Show context length if available
                   if (model['contextLength'] != null ||
                       model['context_length'] != null)
@@ -1220,5 +1250,29 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
         ),
       ),
     );
+  }
+
+  void _showInsufficientCredits(
+    BuildContext context,
+    ThemeData theme,
+    bool isDark, {
+    required double need,
+    required double have,
+  }) {
+    final snackBar = SnackBar(
+      content: Text(
+        'Not enough credits: need x${need.toStringAsFixed(1)}, have x${have.toStringAsFixed(0)}',
+        style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white),
+      ),
+      backgroundColor: isDark ? AppColors.darkError : AppColors.lightError,
+      duration: const Duration(seconds: 3),
+      action: SnackBarAction(
+        label: 'Buy credits',
+        textColor: Colors.white,
+        onPressed: () {},
+      ),
+    );
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 }

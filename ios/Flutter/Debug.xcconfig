@@ -2,5 +2,5 @@
 #include "Generated.xcconfig"
 
 // Default to dev flavor if no other flavor is specified
-PRODUCT_BUNDLE_IDENTIFIER = com.umerfarooq1995.cognifyFlutter
+PRODUCT_BUNDLE_IDENTIFIER = com.umerfarooq1995.cognify-flutter
 PRODUCT_NAME = Runner

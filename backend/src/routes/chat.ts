@@ -44,6 +44,63 @@ function getLastUserMessageText(messages: any[]): string {
   return '';
 }
 
+function needsClarification(userMessage: string, conversationHistory: any[]): boolean {
+  if (!userMessage || userMessage.length < 3) return true;
+  
+  // Check for vague references that need context
+  const vaguePatterns = [
+    /\b(this|that|it|them|those|these)\b/i,
+    /\b(what|how|why|when|where)\s+(about|with|is|are|was|were)\s+(it|this|that)\b/i,
+    /\b(explain|tell me about|what about)\s+(it|this|that)\b/i,
+    /\b(more|additional|further)\s+(info|information|details)\b/i,
+    /\b(continue|go on|keep going)\b/i,
+    /\b(same|similar|like that)\b/i
+  ];
+  
+  const hasVagueReference = vaguePatterns.some(pattern => pattern.test(userMessage));
+  
+  // If there's a vague reference and no recent context, clarification is needed
+  if (hasVagueReference && conversationHistory.length === 0) {
+    return true;
+  }
+  
+  // Check if the message is too short and vague
+  if (userMessage.length < 10 && /\b(what|how|why|when|where|explain|tell me)\b/i.test(userMessage)) {
+    return true;
+  }
+  
+  return false;
+}
+
+function extractContextTopics(conversationHistory: any[]): string[] {
+  const topics: string[] = [];
+  const recentMessages = conversationHistory.slice(-3); // Last 3 messages for topic extraction
+  
+  for (const msg of recentMessages) {
+    if (msg.role === 'user' || msg.role === 'assistant') {
+      let content = '';
+      if (typeof msg.content === 'string') {
+        content = msg.content;
+      } else if (Array.isArray(msg.content)) {
+        content = msg.content
+          .filter((part: any) => part.type === 'text')
+          .map((part: any) => part.text)
+          .join(' ');
+      }
+      
+      // Extract potential topics (simple keyword extraction)
+      const words = content.toLowerCase().split(/\s+/);
+      const topicWords = words.filter(word => 
+        word.length > 4 && 
+        !['this', 'that', 'with', 'from', 'they', 'them', 'their', 'there', 'where', 'when', 'what', 'how', 'why'].includes(word)
+      );
+      topics.push(...topicWords.slice(0, 3)); // Take first 3 potential topic words
+    }
+  }
+  
+  return [...new Set(topics)]; // Remove duplicates
+}
+
 async function braveWebSearch(query: string, count = 5): Promise<{ sources: any[] }> {
   const apiKey = process.env.BRAVE_API_KEY || '';
   if (!apiKey) return { sources: [] };
@@ -156,24 +213,23 @@ function createPlanningPromptFromAgents(query: string, mode: string, enabledTool
     '',
     goal,
     '',
-    'Return JSON with EXACT schema:',
+    'CRITICAL: Keep reasoning field under 50 words. Be concise and avoid repetition.',
+    'IMPORTANT: You must respond with ONLY valid JSON. No additional text, explanations, or markdown formatting.',
+    'Return JSON with this EXACT structure:',
     '{',
     '  "analysis": "Brief analysis of user need",',
     '  "tools": [',
-    '    { "name": "brave_search" | "brave_search_enhanced",',
+    '    { "name": "brave_search_enhanced",',
     `      "input": { "query": "search terms", "count": ${searchLimits.maxResults} },`,
     '      "order": 1,',
-    '      "reasoning": "why this search"',
-    '    },',
-    '    { "name": "image_search" (optional),',
-    '      "input": { "query": "image search terms", "count": 4 },',
-    '      "order": 2,',
-    '      "reasoning": "why images help"',
+    '      "reasoning": "Short reason for this search"',
     '    }',
     '  ],',
     '  "estimatedSteps": 2,',
-    '  "complexity": "low|medium"',
+    '  "complexity": "low"',
     '}',
+    '',
+    'JSON Response:'
   ].join('\n');
 }
 
@@ -182,8 +238,27 @@ function buildWriterPromptFromAgents(params: {
   mode: string;
   sources: any[];
   images: any[];
+  conversationHistory?: any[];
 }): string {
-  const { originalQuery, mode, sources, images } = params;
+  const { originalQuery, mode, sources, images, conversationHistory = [] } = params;
+  
+  // Build conversation context section
+  const conversationSection = conversationHistory.length > 0 ? `\n**CONVERSATION CONTEXT:**\n\n${conversationHistory
+    .map((msg: any, i: number) => {
+      const role = msg.role === 'user' ? 'User' : 'Assistant';
+      let content = '';
+      if (typeof msg.content === 'string') {
+        content = msg.content;
+      } else if (Array.isArray(msg.content)) {
+        content = msg.content
+          .filter((part: any) => part.type === 'text')
+          .map((part: any) => part.text)
+          .join(' ');
+      }
+      return `${role}: ${content}`;
+    })
+    .join('\n\n')}\n` : '';
+  
   const sourcesSection = sources.length > 0 ? `\n**SOURCES WITH CONTENT:**\n\n${sources
     .map((s: any, i: number) => `Source ${i + 1}: ${s.title || 'Untitled'}\nURL: ${s.url || ''}\nCONTENT: ${(s.content || s.description || '').slice(0, 1000)}`)
     .join('\n\n')}` : '';
@@ -193,8 +268,21 @@ function buildWriterPromptFromAgents(params: {
   const modeGuidance = mode === 'aipedia'
     ? '\nProduce a structured overview: Summary, Key Facts (bullets), Main Sections (with headings).'
     : '';
-  const responseGuidelines = `**RESPONSE EXCELLENCE GUIDELINES:** Use bold, lists, code blocks; be comprehensive but concise; do not include a Sources section in the text (UI shows sources).`;
-  return `You are a helpful, professional AI assistant.\n\n**USER QUERY:** "${originalQuery}"\n**MODE:** ${mode}${modeGuidance}${sourcesSection}${imagesSection}\n\n${responseGuidelines}\n\nWrite your response now:`;
+  const responseGuidelines = `**RESPONSE EXCELLENCE GUIDELINES:** 
+- Use the conversation context to understand what the user is asking about
+- If the current query seems vague or unclear, ask for clarification
+- Maintain continuity with previous topics discussed
+- Use bold, lists, code blocks; be comprehensive but concise
+- Do not include a Sources section in the text (UI shows sources)`;
+  
+  return `You are a helpful, professional AI assistant with strong context awareness.
+
+**CURRENT USER QUERY:** "${originalQuery}"
+**MODE:** ${mode}${modeGuidance}${conversationSection}${sourcesSection}${imagesSection}
+
+${responseGuidelines}
+
+Write your response now:`;
 }
 
 async function streamWithAiSDK(options: {
@@ -219,28 +307,53 @@ async function streamWithAiSDK(options: {
 
 async function completeJSONWithAiSDK(options: { model: string; prompt: string; temperature?: number; maxTokens?: number; }): Promise<any> {
   const planSchema = z.object({
-    analysis: z.string().min(1).optional().default(''),
+    analysis: z.string().min(1).max(200).optional().default(''),
     tools: z.array(z.object({
       name: z.enum(['brave_search', 'brave_search_enhanced', 'image_search']).optional().default('brave_search'),
       input: z.object({
-        query: z.string().min(1).optional(),
-        count: z.number().int().positive().optional(),
+        query: z.string().min(1).max(100).optional(),
+        count: z.number().int().positive().max(10).optional(),
       }).optional().default({}),
       order: z.number().int().min(1).max(10).optional().default(1),
-      reasoning: z.string().optional().default(''),
-    })).default([]),
+      reasoning: z.string().max(100).optional().default(''),
+    })).max(3).default([]),
     estimatedSteps: z.number().int().min(1).max(10).optional().default(2),
     complexity: z.enum(['low', 'medium']).optional().default('low'),
   });
 
-  const result = await generateObject({
-    model: getOpenRouterProvider()(options.model),
-    temperature: options.temperature ?? 0.3,
-    ...(options.maxTokens ? { maxOutputTokens: options.maxTokens } : {}),
-    prompt: options.prompt,
-    schema: planSchema as any,
-  });
-  return result.object ?? {};
+  try {
+    const result = await generateObject({
+      model: getOpenRouterProvider()(options.model),
+      temperature: options.temperature ?? 0.3,
+      ...(options.maxTokens ? { maxOutputTokens: options.maxTokens } : {}),
+      prompt: options.prompt,
+      schema: planSchema as any,
+    });
+    
+    // Validate the result before returning
+    if (!result || !result.object) {
+      console.warn('[planning] generateObject returned empty result');
+      return {};
+    }
+    
+    // Log successful planning for debugging
+    console.log('[planning] Successfully generated plan:', JSON.stringify(result.object, null, 2));
+    return result.object;
+  } catch (error: any) {
+    console.error('[planning] generateObject failed:', {
+      error: error.message,
+      model: options.model,
+      promptLength: options.prompt.length,
+      stack: error.stack
+    });
+    
+    // Try to extract any partial response for debugging
+    if (error.cause) {
+      console.error('[planning] Error cause:', error.cause);
+    }
+    
+    throw new Error(`No object generated: could not parse the response. ${error.message}`);
+  }
 }
 
 // POST /api/chat - Unified chat endpoint with SSE streaming
@@ -335,17 +448,30 @@ chatRouter.post('/', requireAuth, async (req: AuthRequest, res) => {
         // Phase 1 (planning): use agent planning prompt to create tool plan
         const enabledTools = ['brave_search_enhanced', 'brave_search'];
         if (mode === 'aipedia') enabledTools.push('image_search');
+        const searchCount = mode === 'aipedia' ? 6 : 5;
         const planningPrompt = createPlanningPromptFromAgents(userQuery || '', mode, enabledTools);
         let plan: any = {};
         try {
           const t0 = Date.now();
-          plan = await completeJSONWithAiSDK({ model, prompt: planningPrompt, temperature: 0.3, maxTokens: 1200 });
+          plan = await completeJSONWithAiSDK({ model, prompt: planningPrompt, temperature: 0.1, maxTokens: 500 });
           timings.planningMs = Date.now() - t0;
+          console.log(`[planning] Planning completed in ${timings.planningMs}ms`);
         } catch (e) {
           console.warn('Planning phase failed, falling back to direct search:', (e as Error).message);
+          // Set a default plan structure for fallback
+          plan = {
+            analysis: 'Planning failed, using direct search approach',
+            tools: [{
+              name: 'brave_search_enhanced',
+              input: { query: userQuery, count: searchCount },
+              order: 1,
+              reasoning: 'Fallback search due to planning failure'
+            }],
+            estimatedSteps: 1,
+            complexity: 'low'
+          };
         }
         const tools: any[] = Array.isArray(plan?.tools) ? plan.tools : [];
-        const searchCount = mode === 'aipedia' ? 6 : 5;
 
         // Execute planned tools (search/image)
         for (const t of tools) {
@@ -430,14 +556,36 @@ chatRouter.post('/', requireAuth, async (req: AuthRequest, res) => {
       // Phase 2 or single-phase: writer pass using agents prompt
       const writerStart = Date.now();
       
-      // Build conversation context with last few messages for better continuity
+      // Build conversation context with last 4 messages for better continuity
       const conversationMessages = [];
       
-      // Add system message
-      conversationMessages.push({ role: 'system', content: 'You are a helpful, professional AI assistant.' });
+      // Check if clarification is needed
+      const recentHistory = messages.slice(-4, -1); // Last 3 messages before current
+      const needsClarificationCheck = needsClarification(userQuery, recentHistory);
+      const contextTopics = extractContextTopics(recentHistory);
       
-      // Add conversation history (last 3 messages to keep context manageable)
-      const recentMessages = messages.slice(-3); // Last 3 messages for context
+      // Add enhanced system message with context awareness
+      let systemMessage = `You are a helpful, professional AI assistant with strong context awareness. 
+
+IMPORTANT CONTEXT GUIDELINES:
+- Always maintain awareness of the conversation history and current topic
+- If a user's message seems vague or unclear, ask for clarification before responding
+- When the user refers to "this", "that", "it", or other pronouns, use the conversation context to understand what they mean
+- If you're unsure about what the user is asking about, politely ask: "I want to make sure I understand correctly - are you asking about [specific topic from context] or something else?"
+- Keep track of the main topics being discussed and maintain continuity
+- If the conversation topic seems to have changed abruptly, acknowledge it and ask for confirmation
+
+Be conversational, helpful, and always strive to understand the user's intent based on the conversation context.`;
+
+      // Add context-specific guidance if clarification might be needed
+      if (needsClarificationCheck && contextTopics.length > 0) {
+        systemMessage += `\n\nCURRENT CONTEXT TOPICS: ${contextTopics.join(', ')}\nIf the user's message seems to reference these topics but is unclear, ask for clarification.`;
+      }
+      
+      conversationMessages.push({ role: 'system', content: systemMessage });
+      
+      // Add conversation history (last 4 messages for better context)
+      const recentMessages = messages.slice(-4); // Last 4 messages for context as requested
       for (const msg of recentMessages) {
         if (msg.role === 'user' || msg.role === 'assistant') {
           // Extract text content from message
@@ -462,10 +610,16 @@ chatRouter.post('/', requireAuth, async (req: AuthRequest, res) => {
         }
       }
       
-      // For two-phase modes (search/aipedia), use the writer prompt with sources
+      // For two-phase modes (search/aipedia), enhance the writer prompt with conversation context
       // For simple chat mode, use the conversation history directly
       if (isTwoPhase) {
-        const writerPrompt = buildWriterPromptFromAgents({ originalQuery: userQuery, mode, sources: collectedSources, images: collectedImages });
+        const writerPrompt = buildWriterPromptFromAgents({ 
+          originalQuery: userQuery, 
+          mode, 
+          sources: collectedSources, 
+          images: collectedImages,
+          conversationHistory: recentMessages.slice(0, -1) // Exclude the current message as it's already in the query
+        });
         conversationMessages.push({ role: 'user', content: writerPrompt });
       }
       // For simple chat mode, the conversation history already includes the current user message

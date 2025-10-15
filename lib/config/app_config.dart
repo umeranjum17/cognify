@@ -38,11 +38,46 @@ class EnvironmentConfig {
 
   static String get appId {
     switch (current) {
-      case AppEnvironment.production: return 'com.umerfarooq1995.cognify_flutter';
-      case AppEnvironment.dev: return 'com.umerfarooq1995.cognify_flutter.dev';
-      case AppEnvironment.umer: return 'com.umerfarooq1995.cognify_flutter.umer';
+      case AppEnvironment.production: return 'com.umerfarooq1995.cognify-flutter';
+      case AppEnvironment.dev: return 'com.umerfarooq1995.cognify-flutter.dev';
+      case AppEnvironment.umer: return 'com.umerfarooq1995.cognify-flutter.umer';
     }
   }
+}
+
+// ========== DEMO MODE ==========
+
+class DemoModeConfig {
+  // Enable demo mode for unauthenticated users (Apple Guideline 5.1.1)
+  static const bool enabled = true;
+  
+  // Sample conversations to display in demo mode
+  static const List<Map<String, String>> sampleConversations = [
+    {
+      'role': 'user',
+      'content': 'What is artificial intelligence?',
+    },
+    {
+      'role': 'assistant',
+      'content': 'Artificial intelligence (AI) is the simulation of human intelligence processes by machines, especially computer systems. These processes include learning (acquiring information and rules for using it), reasoning (using rules to reach approximate or definite conclusions), and self-correction.\n\nModern AI systems can perform tasks like:\n• Understanding natural language\n• Recognizing patterns in images and data\n• Making decisions based on complex information\n• Learning from experience to improve over time\n\nAI powers many everyday technologies, from voice assistants and recommendation systems to autonomous vehicles and medical diagnostics.',
+    },
+    {
+      'role': 'user',
+      'content': 'Can you help me write a professional email?',
+    },
+    {
+      'role': 'assistant',
+      'content': 'Of course! I\'d be happy to help you draft a professional email. To get started, I\'ll need a few details:\n\n1. **Purpose**: What is the email about? (e.g., job application, meeting request, follow-up, etc.)\n2. **Recipient**: Who are you writing to? (e.g., colleague, manager, client, potential employer)\n3. **Key Points**: What are the main points you want to convey?\n4. **Tone**: Should it be formal, semi-formal, or friendly-professional?\n\nOnce you provide these details, I can help you create a well-structured, professional email!',
+    },
+    {
+      'role': 'user',
+      'content': 'How can AI help with creative writing?',
+    },
+    {
+      'role': 'assistant',
+      'content': 'AI can be a powerful tool for creative writing in several ways:\n\n**Brainstorming & Ideation**\n• Generate story ideas, plot twists, and character concepts\n• Explore different narrative directions\n• Overcome writer\'s block with creative prompts\n\n**Writing Assistance**\n• Help with dialogue and descriptive passages\n• Suggest alternative phrasings and word choices\n• Maintain consistency in tone and style\n\n**Editing & Refinement**\n• Catch grammar and spelling errors\n• Improve sentence structure and flow\n• Enhance clarity and readability\n\n**Research & World-Building**\n• Provide background information for settings\n• Help develop realistic technical details\n• Suggest historical or cultural context\n\nThe key is using AI as a collaborative tool that enhances your creativity rather than replacing it. Your unique voice, vision, and judgment remain essential to creating authentic, meaningful work.',
+    },
+  ];
 }
 
 // ========== SECRETS ==========

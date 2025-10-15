@@ -594,11 +594,25 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
     // Do not label free; treat zero/unknown as cost unknown
     final bool isFree = false;
 
-    // Affordability is enforced server-side; don't gate client-side
-    final bool isAffordable = true;
+    // Determine remaining request units from quota provider
+    final quotaProvider = context.read<UsageQuotaProvider?>();
+    final int remainingUnits = quotaProvider?.quota?.remaining ?? 0;
+
+    // Treat unknown/zero units as affordable; otherwise compare to remaining
+    final bool isAffordable = requestUnits <= 0
+        ? true
+        : (remainingUnits > 0 && requestUnits <= remainingUnits);
 
     return GestureDetector(
-      onTap: isAffordable ? () => _selectModel(modelId) : null,
+      onTap: isAffordable
+          ? () => _selectModel(modelId)
+          : () => _showInsufficientCredits(
+                context,
+                theme,
+                isDark,
+                need: requestUnits,
+                have: remainingUnits.toDouble(),
+              ),
       child: Stack(
         children: [
           Container(
@@ -744,7 +758,7 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
                             ),
                         ],
                       ),
-                    ],
+                      ],
                   ),
                 ),
 
@@ -927,5 +941,31 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
         );
       },
     );
+  }
+
+  void _showInsufficientCredits(
+    BuildContext context,
+    ThemeData theme,
+    bool isDark, {
+    required double need,
+    required double have,
+  }) {
+    final snackBar = SnackBar(
+      content: Text(
+        'Not enough credits: need x${need.toStringAsFixed(1)}, have x${have.toStringAsFixed(0)}',
+        style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white),
+      ),
+      backgroundColor: isDark ? AppColors.darkError : AppColors.lightError,
+      duration: const Duration(seconds: 3),
+      action: SnackBarAction(
+        label: 'Buy credits',
+        textColor: Colors.white,
+        onPressed: () {
+          // The purchase sheet is attached elsewhere in UI; here we just hint.
+        },
+      ),
+    );
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 }
