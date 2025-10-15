@@ -298,10 +298,16 @@ async function streamWithAiSDK(options: {
     temperature: options.temperature ?? 0.7,
     ...(options.maxTokens ? { maxOutputTokens: options.maxTokens } : {}),
   });
-  for await (const part of result.fullStream) {
-    if ((part as any).type === 'text-delta') {
-      options.onTextDelta((part as any).text as string);
+  
+  try {
+    // Use the textStream directly which handles completion properly
+    for await (const chunk of result.textStream) {
+      options.onTextDelta(chunk);
     }
+    console.log('[stream] Stream completed successfully');
+  } catch (error) {
+    console.error('[stream] Stream error:', error);
+    throw error;
   }
 }
 
