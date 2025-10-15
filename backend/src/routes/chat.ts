@@ -285,17 +285,6 @@ ${responseGuidelines}
 Write your response now:`;
 }
 
-// Check if a model is known to have compatibility issues
-function isProblematicModel(model: string): boolean {
-  const problematicModels = [
-    'deepseek/deepseek-v3.2-exp',
-    'deepseek/deepseek-v3',
-    'deepseek/deepseek-coder-v2',
-    'deepseek/deepseek-coder-v1.5',
-  ];
-  return problematicModels.some(problematic => model.includes(problematic));
-}
-
 async function streamWithAiSDK(options: {
   model: string;
   messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string | any[] }>;
@@ -310,59 +299,19 @@ async function streamWithAiSDK(options: {
     ...(options.maxTokens ? { maxOutputTokens: options.maxTokens } : {}),
   });
   
-  // For problematic models, use fullStream directly to avoid validation issues
-  if (isProblematicModel(options.model)) {
-    console.log(`[stream] Using fullStream for problematic model: ${options.model}`);
-    try {
-      for await (const part of result.fullStream) {
-        if ((part as any).type === 'text-delta') {
-          options.onTextDelta((part as any).text as string);
-        }
-        if ((part as any).type === 'finish') {
-          console.log('[stream] Stream completed successfully');
-          break;
-        }
-      }
-      return;
-    } catch (error) {
-      console.error('[stream] fullStream error for problematic model:', error);
-      throw error;
-    }
-  }
-  
-  // For other models, try textStream first
   try {
-    for await (const chunk of result.textStream) {
-      options.onTextDelta(chunk);
-    }
-    console.log('[stream] Stream completed successfully');
-  } catch (error: any) {
-    console.error('[stream] Stream error:', error);
-    
-    // Check if it's a type validation error from OpenRouter
-    if (error?.message?.includes('Type validation failed') || 
-        error?.message?.includes('invalid_union') ||
-        error?.message?.includes('logprobs')) {
-      console.warn('[stream] OpenRouter type validation error, attempting fallback with fullStream');
-      
-      try {
-        // Fallback to fullStream with manual text extraction
-        for await (const part of result.fullStream) {
-          if ((part as any).type === 'text-delta') {
-            options.onTextDelta((part as any).text as string);
-          }
-          if ((part as any).type === 'finish') {
-            console.log('[stream] Fallback stream completed');
-            break;
-          }
-        }
-        return; // Success with fallback
-      } catch (fallbackError) {
-        console.error('[stream] Fallback also failed:', fallbackError);
-        throw error; // Throw original error if fallback fails
+    // Use fullStream with relaxed validation to avoid OpenRouter type validation issues
+    for await (const part of result.fullStream) {
+      if ((part as any).type === 'text-delta') {
+        options.onTextDelta((part as any).text as string);
+      }
+      if ((part as any).type === 'finish') {
+        console.log('[stream] Stream completed successfully');
+        break;
       }
     }
-    
+  } catch (error) {
+    console.error('[stream] Stream error:', error);
     throw error;
   }
 }
