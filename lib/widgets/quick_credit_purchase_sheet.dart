@@ -80,8 +80,8 @@ class _QuickCreditPurchaseSheetState extends State<QuickCreditPurchaseSheet> {
     });
 
     try {
-      // Step 1: Ensure user is signed in
-      if (auth.uid == null || auth.uid!.isEmpty) {
+      // Step 1: Ensure user is signed in with a persistent account (not anonymous)
+      if (auth.uid == null || auth.uid!.isEmpty || auth.isAnonymous) {
         final isIOS = Platform.isIOS;
         setState(() {
           _statusMessage = isIOS

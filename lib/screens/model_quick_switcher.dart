@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../models/mode_config.dart';
-import '../services/llm_service.dart';
+import '../services/optimized_llm_service.dart';
 import '../providers/usage_quota_provider.dart';
 import 'package:provider/provider.dart';
 import '../services/model_service.dart';
@@ -232,7 +232,7 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
 
   void _selectModel(String modelId) {
     widget.onModelSelected(modelId);
-    LLMService().setCurrentModel(modelId);
+    OptimizedLLMService().setCurrentModel(modelId);
     Navigator.of(context).pop();
   }
 

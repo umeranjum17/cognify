@@ -24,13 +24,15 @@ import '../models/streaming_message.dart';
 import '../models/tools_config.dart';
 import '../providers/mode_config_provider.dart';
 import '../services/conversation_service.dart';
-import '../services/llm_service.dart';
+import '../services/optimized_llm_service.dart';
 import '../services/model_service.dart';
 // Removed: openrouter_client, services_manager, mode_engine — backend handles logic
 import '../config/model_registry.dart';
 // Premium/subscription removed; using quota-based access.
 import '../providers/tab_provider.dart';
 import '../providers/usage_quota_provider.dart';
+import '../providers/firebase_auth_provider.dart';
+import '../providers/anonymous_access_provider.dart';
 import '../theme/app_theme.dart';
 import '../utils/logger.dart';
 import '../widgets/cost_display_widget.dart';
@@ -69,7 +71,7 @@ class EditorScreen extends StatefulWidget {
 }
 
 class _EditorScreenState extends State<EditorScreen> {
-  late final LLMService _llmService;
+  late final OptimizedLLMService _llmService;
   late final ConversationService _conversationService;
   ModeConfigProvider? _modeConfigProvider;
 
@@ -126,8 +128,8 @@ class _EditorScreenState extends State<EditorScreen> {
   // Cost service stream subscription
   StreamSubscription<SessionCostData>? _costSubscription;
 
-  // Services ready state
-  bool _servicesReady = false;
+  // Services ready state - ALWAYS READY (no more loaders!)
+  bool _servicesReady = true;
 
   @override
   Widget build(BuildContext context) {
@@ -224,7 +226,7 @@ class _EditorScreenState extends State<EditorScreen> {
     super.initState();
 
     // Get the globally initialized services
-    _llmService = LLMService();
+    _llmService = OptimizedLLMService();
     _conversationService = ConversationService();
 
     // Start auto-save for conversations
@@ -233,8 +235,8 @@ class _EditorScreenState extends State<EditorScreen> {
     // Add scroll listener for scroll-to-bottom button
     _scrollController.addListener(_onScroll);
 
-    // Check if services are ready
-    _checkServicesReady();
+    // Services are always ready - no more initialization checks!
+    // _checkServicesReady(); // REMOVED - no more loaders!
 
     _currentConversationId =
         widget.conversationId ??
@@ -580,14 +582,17 @@ class _EditorScreenState extends State<EditorScreen> {
   }
 
   void _showModelQuickSwitcher() {
-    if (false) {
-      return;
-    }
     showModelQuickSwitcher(
       context: context,
       mode: _currentMode,
       selectedModel: _selectedModel,
       onModelSelected: (modelId) {
+        final auth = Provider.of<FirebaseAuthProvider>(context, listen: false);
+        // Anonymous users must sign in to switch models
+        if (auth.isAnonymous) {
+          _showSignInBlocker(context, reason: 'Sign in to switch AI models.');
+          return;
+        }
         setState(() {
           _selectedModel = modelId;
         });
@@ -778,6 +783,7 @@ class _EditorScreenState extends State<EditorScreen> {
             return Consumer2<ModeConfigProvider, UsageQuotaProvider>(
               builder: (context, modeConfigProvider, quotaProvider, child) {
                 final usageQuota = quotaProvider.quota;
+                final auth = Provider.of<FirebaseAuthProvider>(context, listen: false);
 
                 return SessionInfoWidget(
                   llmUsed: _lastUsedLLM,
@@ -791,6 +797,11 @@ class _EditorScreenState extends State<EditorScreen> {
                   modelCapabilities: _currentModelCapabilities,
                   mode: _currentMode,
                   onModelSwitched: (modelId) {
+                    final auth = Provider.of<FirebaseAuthProvider>(context, listen: false);
+                    if (auth.isAnonymous) {
+                      _showSignInBlocker(context, reason: 'Sign in to change your AI model.');
+                      return;
+                    }
                     setState(() {
                       _selectedModel = modelId;
                     });
@@ -811,9 +822,15 @@ class _EditorScreenState extends State<EditorScreen> {
                       );
                     }
                     // Update LLM service
-                    LLMService().setCurrentModel(modelId);
+                    _llmService.setCurrentModel(modelId);
                     _checkModelCapabilities();
                   },
+                  onBuyCreditsTapped: auth.isAnonymous
+                      ? () => _showSignInBlocker(
+                            context,
+                            reason: 'Sign in to purchase or use credits.',
+                          )
+                      : null,
                   remainingRequests: usageQuota?.remaining,
                   isQuotaLoading: quotaProvider.isLoading,
                 );
@@ -1189,7 +1206,7 @@ class _EditorScreenState extends State<EditorScreen> {
                         );
                       }
                       // Update LLM service
-                      LLMService().setCurrentModel(modelId);
+                      _llmService.setCurrentModel(modelId);
                       _checkModelCapabilities();
                     },
                   );
@@ -1327,49 +1344,8 @@ class _EditorScreenState extends State<EditorScreen> {
                         // Controls row (bottom section)
                         const SizedBox(height: 2),
 
-                        // Services status indicator
-                        if (!_servicesReady)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            margin: const EdgeInsets.only(bottom: 4),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.surface.withValues(
-                                alpha: 0.8,
-                              ),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: theme.colorScheme.outline.withValues(
-                                  alpha: 0.3,
-                                ),
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                SizedBox(
-                                  width: 12,
-                                  height: 12,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      theme.colorScheme.primary,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'Initializing services...',
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: theme.colorScheme.onSurface
-                                        .withValues(alpha: 0.7),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                        // Services status indicator - REMOVED (no more loaders!)
+                        // if (!_servicesReady) ... REMOVED
                         Row(
                           children: [
                             // Left side controls: attachment and mode dropdown
@@ -1417,9 +1393,7 @@ class _EditorScreenState extends State<EditorScreen> {
                               child: IconButton(
                                 onPressed: _isProcessing
                                     ? () => _cancelMessage()
-                                    : (_servicesReady
-                                          ? () => _sendMessage()
-                                          : null),
+                                    : () => _sendMessage(),
                                 icon: _isProcessing
                                     ? Icon(
                                         Icons.close,
@@ -2426,22 +2400,8 @@ class _EditorScreenState extends State<EditorScreen> {
     }
   }
 
-  /// Check if services are ready for use
-  void _checkServicesReady() {
-    // Check if ServicesManager is initialized and agent system is ready
-    // ServicesManager removed; use services directly
-    final isReady = _llmService.isInitialized;
-    setState(() {
-      _servicesReady = isReady;
-    });
-    if (!_servicesReady) {
-      Future.delayed(const Duration(milliseconds: 1000), () {
-        if (mounted && !_servicesReady) {
-          _checkServicesReady();
-        }
-      });
-    }
-  }
+  /// Check if services are ready for use - REMOVED (services are always ready!)
+  // void _checkServicesReady() { ... } REMOVED
 
   // Premium feature methods
   Future<bool> _checkWebSearchAccess() async {
@@ -2681,7 +2641,7 @@ class _EditorScreenState extends State<EditorScreen> {
       }
 
       // Also update the LLM service with the selected model
-      LLMService().setCurrentModel(_selectedModel);
+      _llmService.setCurrentModel(_selectedModel);
     } catch (e) {
       Logger.error('❌ Error loading saved model: $e', tag: 'EditorScreen');
       // Keep the current _selectedModel value
@@ -2731,7 +2691,7 @@ class _EditorScreenState extends State<EditorScreen> {
       //     _selectedModel = spec.fixedModelId!;
       //   });
       //   await _saveSelectedModel(_selectedModel);
-      //   LLMService().setCurrentModel(_selectedModel);
+      //   _llmService.setCurrentModel(_selectedModel);
       //   Logger.info(
       //     '🤖 Using fixed model for mode $_currentMode: $_selectedModel',
       //     tag: 'EditorScreen',
@@ -2770,7 +2730,7 @@ class _EditorScreenState extends State<EditorScreen> {
 
       // Save the selected model and update LLM service
       await _saveSelectedModel(_selectedModel);
-      LLMService().setCurrentModel(_selectedModel);
+      _llmService.setCurrentModel(_selectedModel);
     } catch (e) {
       Logger.error(
         '❌ Error loading model for current mode: $e',
@@ -3031,7 +2991,7 @@ class _EditorScreenState extends State<EditorScreen> {
     //     _selectedModel = spec.fixedModelId!;
     //   });
     //   await _saveSelectedModel(spec.fixedModelId!);
-    //   await LLMService().setCurrentModel(spec.fixedModelId!);
+    //   await _llmService.setCurrentModel(spec.fixedModelId!);
     // }
   }
 
@@ -3094,7 +3054,7 @@ class _EditorScreenState extends State<EditorScreen> {
           _selectedModel = currentConfig.model;
         });
         // Update LLM service immediately
-        LLMService().setCurrentModel(_selectedModel);
+        _llmService.setCurrentModel(_selectedModel);
       }
 
       _checkModelCapabilities(); // Check capabilities when mode changes
@@ -3339,7 +3299,7 @@ class _EditorScreenState extends State<EditorScreen> {
             );
           }
           // Update LLM service
-          LLMService().setCurrentModel(modelId);
+          _llmService.setCurrentModel(modelId);
 
           // Set the text in the input field and send the message again
           _messageController.text = userMessage.textContent;
@@ -3407,32 +3367,36 @@ class _EditorScreenState extends State<EditorScreen> {
     final textToSend = initialText ?? _messageController.text.trim();
     if (textToSend.isEmpty && _attachments.isEmpty) return;
 
+    // Gate anonymous users with proper limit management
+    try {
+      final auth = Provider.of<FirebaseAuthProvider>(context, listen: false);
+      if (auth.isAnonymous) {
+        final anonymousAccess = Provider.of<AnonymousAccessProvider>(context, listen: false);
+        debugPrint('🔍 [Editor] Anonymous user trying to send message');
+        debugPrint('  - Can send message: ${anonymousAccess.canSendMessage()}');
+        debugPrint('  - Messages used: ${anonymousAccess.messagesUsed}');
+        debugPrint('  - Messages remaining: ${anonymousAccess.messagesRemaining}');
+        debugPrint('  - Has reached limit: ${anonymousAccess.hasReachedLimit}');
+        
+        if (!anonymousAccess.canSendMessage()) {
+          debugPrint('🚫 [Editor] Anonymous user blocked - showing sign-in blocker');
+          await _showSignInBlocker(
+            context,
+            reason: anonymousAccess.getLimitMessage(),
+          );
+          return;
+        }
+      }
+    } catch (e) {
+      debugPrint('❌ [Editor] Error checking anonymous access: $e');
+      // If provider not available yet, allow and continue
+    }
+
     // Reset cancellation flag
     _isCancelled = false;
 
-    // Check if services are ready
-    if (!_servicesReady) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Row(
-              children: [
-                Icon(Icons.warning, color: Colors.white),
-                SizedBox(width: 8),
-                Text(
-                  'Services are still initializing. Please wait a moment...',
-                ),
-              ],
-            ),
-            backgroundColor: Theme.of(context).colorScheme.error,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
-      // Retry checking services readiness
-      _checkServicesReady();
-      return;
-    }
+    // Services are always ready - no more checks!
+    // if (!_servicesReady) ... REMOVED
 
     // Set human-friendly header title on first message
     if (_isFirstMessage && textToSend.isNotEmpty) {
@@ -3507,6 +3471,17 @@ class _EditorScreenState extends State<EditorScreen> {
       _currentPhase = null;
       _currentProgress = null;
     });
+
+    // Record anonymous usage after successful message addition
+    try {
+      final auth = Provider.of<FirebaseAuthProvider>(context, listen: false);
+      if (auth.isAnonymous) {
+        final anonymousAccess = Provider.of<AnonymousAccessProvider>(context, listen: false);
+        await anonymousAccess.recordMessageUsage();
+      }
+    } catch (_) {
+      // If provider not available, continue silently
+    }
 
     // Save conversation immediately after adding user message
     if (_currentConversationId != null) {
@@ -4897,11 +4872,11 @@ class _EditorScreenState extends State<EditorScreen> {
         setState(() {
           _selectedModel = currentConfig.model;
         });
-        LLMService().setCurrentModel(_selectedModel);
+        _llmService.setCurrentModel(_selectedModel);
       }
 
-      // Ensure services are still ready after settings close
-      _checkServicesReady();
+      // Services are always ready - no need to check!
+      // _checkServicesReady(); REMOVED
 
       // Reload the API key from storage to ensure it's still available
       // Services already initialized by ServicesManager
@@ -5410,7 +5385,7 @@ class _EditorScreenState extends State<EditorScreen> {
     }
 
     // Update LLM service
-    LLMService().setCurrentModel(modelId);
+    _llmService.setCurrentModel(modelId);
 
     // Check new model capabilities
     _checkModelCapabilities();
@@ -5584,3 +5559,36 @@ String _getModelShortName(String? modelName) {
   final shortName = lastPart.split('-').first;
   return shortName.length > 8 ? shortName.substring(0, 8) : shortName;
 }
+  Future<void> _showSignInBlocker(BuildContext context, {String? reason}) async {
+    final theme = Theme.of(context);
+    await showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (ctx) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.lock_open, color: theme.colorScheme.primary),
+            const SizedBox(width: 8),
+            const Text('Sign in to continue'),
+          ],
+        ),
+        content: Text(
+          reason ??
+              'Sign in to keep chatting, switch models, and unlock your credits.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Not now'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              context.push('/sign-in');
+            },
+            child: const Text('Sign In'),
+          ),
+        ],
+      ),
+    );
+  }

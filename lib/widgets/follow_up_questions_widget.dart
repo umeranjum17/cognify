@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../services/session_cost_service.dart';
-import '../services/llm_service.dart';
+import '../services/optimized_llm_service.dart';
 import '../config/model_registry.dart';
 import 'modern_card.dart';
 
@@ -218,7 +218,7 @@ class _FollowUpQuestionsWidgetState extends State<FollowUpQuestionsWidget> {
 
   Future<List<String>> _fetchFollowUpQuestions() async {
     // Generate follow-up questions using LLM service
-    final response = await LLMService().chatCompletion(
+    final response = await OptimizedLLMService().chatCompletion(
       model: widget.model ?? ModelRegistry.defaults['FOLLOWUP_QUESTIONS']!,
       messages: [
         {'role': 'system', 'content': 'Generate 3 follow-up questions based on the answer.'},

@@ -30,6 +30,7 @@ class SessionInfoWidget extends StatefulWidget {
   final Map<String, dynamic>? openRouterCredits; // NEW: OpenRouter credits data
   final int? remainingRequests;
   final bool isQuotaLoading;
+  final VoidCallback? onBuyCreditsTapped; // Optional override for buy credits action
 
   const SessionInfoWidget({
     super.key,
@@ -46,6 +47,7 @@ class SessionInfoWidget extends StatefulWidget {
     this.openRouterCredits,
     this.remainingRequests,
     this.isQuotaLoading = false,
+    this.onBuyCreditsTapped,
   });
 
   @override
@@ -166,7 +168,13 @@ class _SessionInfoWidgetState extends State<SessionInfoWidget> {
             Tooltip(
               message: 'Purchase more credits',
               child: GestureDetector(
-                onTap: () => _showQuickCreditPurchase(context, remainingUnits),
+                onTap: () {
+                  if (widget.onBuyCreditsTapped != null) {
+                    widget.onBuyCreditsTapped!();
+                  } else {
+                    _showQuickCreditPurchase(context, remainingUnits);
+                  }
+                },
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(

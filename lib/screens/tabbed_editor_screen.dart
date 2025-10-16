@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/tab_provider.dart';
+import '../providers/firebase_auth_provider.dart';
+import '../providers/anonymous_access_provider.dart';
 import '../widgets/editor_tab_bar.dart';
 import '../widgets/unified_settings_modal.dart';
 import '../widgets/modern_app_header.dart';
+import '../widgets/anonymous_limit_banner.dart';
 import 'editor_screen.dart';
 
 class TabbedEditorScreen extends StatefulWidget {
@@ -121,6 +124,8 @@ class _TabbedEditorScreenState extends State<TabbedEditorScreen> {
 
           return Column(
             children: [
+              // Anonymous user limit banner
+              const AnonymousLimitBanner(),
               // Tab bar positioned below header, will be below session cost widget
               const EditorTabBar(),
               // Editor content

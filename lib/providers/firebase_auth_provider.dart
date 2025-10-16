@@ -13,6 +13,7 @@ import 'package:crypto/crypto.dart';
 import '../services/analytics_service.dart';
 import '../api/api.dart';
 import '../config/app_config.dart';
+import '../utils/apple_signin_helper.dart';
 
 /// FirebaseAuthProvider()
 /// Implements zero-friction start with anonymous auth by default.
@@ -26,7 +27,11 @@ class FirebaseAuthProvider extends ChangeNotifier {
 
   bool get initialized => _initialized;
   bool get initializing => _initializing;
-  bool get isSignedIn => _user != null;
+  bool get isSignedIn {
+    final result = _user != null;
+    debugPrint('🔐 [FirebaseAuth] isSignedIn: $result, user: ${_user?.uid}, isAnonymous: ${_user?.isAnonymous}');
+    return result;
+  }
   String? get uid => _user?.uid;
   fb.User? get user => _user;
   Object? get lastError => _lastError;
@@ -59,11 +64,20 @@ class FirebaseAuthProvider extends ChangeNotifier {
 
       // Listen to auth state changes
       _auth.authStateChanges().listen((user) {
+        final wasAnonymous = _user?.isAnonymous ?? false;
         _user = user;
+        
         // Wire analytics user identity on change
         try {
           AnalyticsService.instance.setUserId(user?.uid).catchError((_) {});
         } catch (_) {}
+        
+        // Handle account linking: if user was anonymous and now has a persistent account
+        if (wasAnonymous && user != null && !user.isAnonymous) {
+          debugPrint('✅ [FirebaseAuth] Account linked from anonymous to persistent');
+          // The AnonymousAccessProvider will be notified via the proxy provider
+        }
+        
         if (_initialized) { // Only notify if initialization is complete
           WidgetsBinding.instance.addPostFrameCallback((_) {
             notifyListeners();
@@ -111,8 +125,31 @@ class FirebaseAuthProvider extends ChangeNotifier {
       }
       if (kIsWeb) {
         final googleProvider = fb.GoogleAuthProvider();
-        final cred = await _auth.signInWithPopup(googleProvider);
-        _user = cred.user;
+        
+        if (_auth.currentUser?.isAnonymous == true) {
+          // Anonymous user - sign out and sign in fresh (no linking)
+          debugPrint('🔄 [FirebaseAuth] Anonymous user - signing out and signing in with Google (web)');
+          await _auth.signOut();
+          final cred = await _auth.signInWithPopup(googleProvider);
+          _user = cred.user;
+        } else {
+          // Authenticated user - try to link accounts (Apple ↔ Google)
+          debugPrint('🔄 [FirebaseAuth] Authenticated user - attempting to link Google account (web)');
+          try {
+            final cred = await _auth.currentUser!.linkWithPopup(googleProvider);
+            _user = cred.user;
+            debugPrint('✅ [FirebaseAuth] Successfully linked Google account (web)');
+          } on fb.FirebaseAuthException catch (e) {
+            if (e.code == 'credential-already-in-use' || e.code == 'provider-already-linked') {
+              // Account already linked - sign in with existing account
+              debugPrint('🔄 [FirebaseAuth] Google account already linked - signing in with existing account (web)');
+              final cred = await _auth.signInWithPopup(googleProvider);
+              _user = cred.user;
+            } else {
+              rethrow;
+            }
+          }
+        }
       } else {
         final GoogleSignIn googleSignIn = GoogleSignIn(
           scopes: ['email', 'profile'],
@@ -126,15 +163,38 @@ class FirebaseAuthProvider extends ChangeNotifier {
           idToken: auth.idToken,
           accessToken: auth.accessToken,
         );
-        final cred = await _auth.signInWithCredential(credential);
-        _user = cred.user;
+        
+        if (_auth.currentUser?.isAnonymous == true) {
+          // Anonymous user - sign out and sign in fresh (no linking)
+          debugPrint('🔄 [FirebaseAuth] Anonymous user - signing out and signing in with Google');
+          await _auth.signOut();
+          final signInRes = await _auth.signInWithCredential(credential);
+          _user = signInRes.user;
+        } else {
+          // Authenticated user - try to link accounts (Apple ↔ Google)
+          debugPrint('🔄 [FirebaseAuth] Authenticated user - attempting to link Google account');
+          try {
+            final linkRes = await _auth.currentUser!.linkWithCredential(credential);
+            _user = linkRes.user;
+            debugPrint('✅ [FirebaseAuth] Successfully linked Google account');
+          } on fb.FirebaseAuthException catch (e) {
+            if (e.code == 'credential-already-in-use' || e.code == 'provider-already-linked') {
+              // Account already linked - sign in with existing account
+              debugPrint('🔄 [FirebaseAuth] Google account already linked - signing in with existing account');
+              final signInRes = await _auth.signInWithCredential(credential);
+              _user = signInRes.user;
+            } else {
+              rethrow;
+            }
+          }
+        }
       }
       debugPrint('✅ [FirebaseAuth] Google sign-in successful');
       try {
         await AnalyticsService.instance.logLogin(method: 'google');
         await AnalyticsService.instance.setUserId(_user?.uid);
       } catch (e) {
-        debugPrint('⚠️ [AppleSignIn] Failed to decode JWT payload for diagnostics: $e');
+        debugPrint('⚠️ [GoogleSignIn] Failed to log analytics: $e');
       }
       notifyListeners();
     } catch (e) {
@@ -162,6 +222,9 @@ class FirebaseAuthProvider extends ChangeNotifier {
       if (!isAvailable) {
         throw Exception('Sign in with Apple not available on this device');
       }
+
+      // Clear any previous Apple Sign-In state to avoid duplicate credential errors
+      await AppleSignInHelper.clearAppleSignInState();
 
       // Nonce protects against replay attacks and is recommended for Firebase
       final String rawNonce = _generateNonce();
@@ -226,19 +289,77 @@ class FirebaseAuthProvider extends ChangeNotifier {
       );
 
       try {
-        final cred = await _auth.signInWithCredential(oauthCred);
-        _user = cred.user;
+        if (_auth.currentUser?.isAnonymous == true) {
+          // Anonymous user - sign out and sign in fresh (no linking)
+          debugPrint('🔄 [FirebaseAuth] Anonymous user - signing out and signing in with Apple');
+          await _auth.signOut();
+          final signInRes = await _auth.signInWithCredential(oauthCred);
+          _user = signInRes.user;
+        } else {
+          // Authenticated user - try to link accounts (Google ↔ Apple)
+          debugPrint('🔄 [FirebaseAuth] Authenticated user - attempting to link Apple account');
+          try {
+            final linkRes = await _auth.currentUser!.linkWithCredential(oauthCred);
+            _user = linkRes.user;
+            debugPrint('✅ [FirebaseAuth] Successfully linked Apple account');
+          } on fb.FirebaseAuthException catch (e) {
+            if (e.code == 'credential-already-in-use' || e.code == 'provider-already-linked') {
+              // Account already linked - sign in with existing account
+              debugPrint('🔄 [FirebaseAuth] Apple account already linked - signing in with existing account');
+              final signInRes = await _auth.signInWithCredential(oauthCred);
+              _user = signInRes.user;
+            } else {
+              rethrow;
+            }
+          }
+        }
+        
+        // Log the successful sign-in
+        try {
+          await AnalyticsService.instance.logLogin(method: 'apple');
+          await AnalyticsService.instance.setUserId(_user?.uid);
+        } catch (_) {}
       } on fb.FirebaseAuthException catch (fae) {
         debugPrint('❌ [FirebaseAuth] Apple sign-in FirebaseAuthException: code=${fae.code} message=${fae.message}');
+        
+        // Handle specific error cases with user-friendly messages
+        if (fae.code == 'missing-or-invalid-nonce') {
+          throw Exception('Apple Sign-In failed. Please try again.');
+        } else if (fae.code == 'credential-already-in-use') {
+          throw Exception('This Apple ID is already in use. Please try again.');
+        } else if (fae.code == 'invalid-credential') {
+          throw Exception('Invalid Apple credential. Please try signing in with Apple again.');
+        } else if (fae.code == 'account-exists-with-different-credential') {
+          throw Exception('An account already exists with this email. Please try again.');
+        }
+        
         rethrow;
       }
       debugPrint('✅ [FirebaseAuth] Apple sign-in successful');
-      try {
-        await AnalyticsService.instance.logLogin(method: 'apple');
-        await AnalyticsService.instance.setUserId(_user?.uid);
-      } catch (_) {}
       notifyListeners();
     } catch (e) {
+      // Handle Apple Sign-In cancellation gracefully
+      if (e is SignInWithAppleAuthorizationException) {
+        if (e.code == AuthorizationErrorCode.canceled) {
+          debugPrint('ℹ️ [FirebaseAuth] Apple sign-in was canceled by user');
+          _lastError = null; // Don't treat cancellation as an error
+          notifyListeners();
+          return; // Don't rethrow for user cancellation
+        } else {
+          debugPrint('❌ [FirebaseAuth] Apple sign-in authorization error: ${e.code} - ${e.message}');
+          _lastError = e;
+          notifyListeners();
+          rethrow;
+        }
+      } else if (e.toString().contains('AuthorizationErrorCode.canceled') || 
+                 e.toString().contains('error 1001')) {
+        // Fallback for string-based error detection
+        debugPrint('ℹ️ [FirebaseAuth] Apple sign-in was canceled by user (fallback detection)');
+        _lastError = null;
+        notifyListeners();
+        return;
+      }
+      
       _lastError = e;
       debugPrint('❌ [FirebaseAuth] Apple sign-in error: $e');
       notifyListeners();
@@ -306,6 +427,19 @@ class FirebaseAuthProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  /// Clear Apple Sign-In state and force fresh authentication
+  Future<void> clearAppleSignInState() async {
+    try {
+      await AppleSignInHelper.clearAppleSignInState();
+      debugPrint('🔄 [FirebaseAuth] Apple Sign-In state cleared');
+    } catch (e) {
+      debugPrint('⚠️ [FirebaseAuth] Failed to clear Apple Sign-In state: $e');
+    }
+  }
+
+  // Account linking removed - we just give 1 free message to anonymous users
+  // and force them to sign in for more. No complex data transfer needed.
 
   /// Check if current user is anonymous
   bool get isAnonymous => _user?.isAnonymous ?? true;

@@ -12,6 +12,7 @@ class PurchasesConfig {
   static const String offeringDefault = 'default';
 
   // Product IDs (must match Google Play and App Store product identifiers)
+  static const String productCredits500 = 'com.cognify.credits.500';
   static const String productMonthly = 'premium_monthly';
   static const String productAnnual = 'premium_annual';
 }

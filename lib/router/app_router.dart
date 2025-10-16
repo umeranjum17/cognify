@@ -7,7 +7,6 @@ import '../providers/firebase_auth_provider.dart';
 
 import '../screens/auth/sign_in_screen.dart';
 import '../screens/conversation_history_screen.dart';
-import '../screens/demo_mode_screen.dart';
 import '../screens/editor_screen.dart';
 import '../screens/tabbed_editor_screen.dart';
 import '../widgets/auth_guard.dart';
@@ -34,8 +33,10 @@ class AppRouter {
         }
 
         final signedIn = authProvider.isSignedIn;
+        final isAnonymous = authProvider.isAnonymous;
         final loggingIn = state.matchedLocation == '/sign-in';
 
+        // If not signed in at all, redirect to sign-in for protected routes
         if (!signedIn) {
           if (loggingIn) {
             return null;
@@ -51,8 +52,14 @@ class AppRouter {
           ).toString();
         }
 
-        if (signedIn && loggingIn) {
+        // If signed in with persistent account and on sign-in page, redirect to editor
+        if (signedIn && !isAnonymous && loggingIn) {
           return '/editor';
+        }
+
+        // If anonymous user on sign-in page, let them stay to sign in
+        if (signedIn && isAnonymous && loggingIn) {
+          return null; // Stay on sign-in page
         }
 
         if (loc.contains('://')) {
@@ -94,13 +101,8 @@ class AppRouter {
               );
             }
 
-            if (!firebaseAuth.isSignedIn) {
-              return MaterialPage(
-                key: state.pageKey,
-                child: const DemoModeScreen(),
-              );
-            }
-
+            // Show the editor for both anonymous and signed-in users.
+            // Anonymous users are gated in-editor to one free message, then prompted to sign in.
             return const MaterialPage(child: TabbedEditorScreen());
           },
         ),

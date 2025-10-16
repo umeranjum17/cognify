@@ -405,15 +405,24 @@ class _GeneralSettingsTabState extends State<GeneralSettingsTab> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildSection(theme, isDark, 'Account', [
-            _buildInfoCard(
-              theme,
-              isDark,
-              icon: Icons.person_outline,
-              title: 'Signed in as',
-              value: user?.email ?? user?.displayName ?? 'Anonymous session',
-              subtitle: user?.uid != null
-                  ? 'UID: ${user!.uid.substring(0, 8)}…'
-                  : null,
+            Consumer<FirebaseAuthProvider>(
+              builder: (context, authProvider, _) {
+                final isAnonymous = authProvider.isAnonymous;
+                final displayName = user?.email ?? user?.displayName;
+                final sessionType = isAnonymous ? 'Anonymous session' : 'Apple account';
+                final displayValue = isAnonymous ? sessionType : (displayName ?? sessionType);
+                
+                return _buildInfoCard(
+                  theme,
+                  isDark,
+                  icon: Icons.person_outline,
+                  title: 'Signed in as',
+                  value: displayValue,
+                  subtitle: user?.uid != null
+                      ? 'UID: ${user!.uid.substring(0, 8)}…'
+                      : null,
+                );
+              },
             ),
           ]),
 

@@ -875,4 +875,39 @@ class API {
     _dio.options.baseUrl = newBaseUrl;
     Logger.info('🔄 API baseUrl updated -> $newBaseUrl', tag: 'API');
   }
+
+  /// Link anonymous account to persistent account and restore credits
+  Future<void> linkAccountAndRestoreCredits({
+    required String anonymousUserId,
+    required String persistentUserId,
+  }) async {
+    try {
+      final user = fb.FirebaseAuth.instance.currentUser;
+      if (user == null) throw Exception('User not authenticated');
+
+      final token = await user.getIdToken();
+      final response = await _dio.post(
+        '/api/account/link',
+        data: {
+          'anonymousUserId': anonymousUserId,
+          'persistentUserId': persistentUserId,
+        },
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Failed to link account: ${response.statusCode}');
+      }
+
+      Logger.info('✅ Account linked successfully', tag: 'API');
+    } catch (e) {
+      Logger.error('❌ Failed to link account: $e', tag: 'API');
+      rethrow;
+    }
+  }
 }

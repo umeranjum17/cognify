@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../models/mode_config.dart';
 import '../providers/mode_config_provider.dart';
-import '../services/llm_service.dart'; // Added import for LLMService
+import '../services/optimized_llm_service.dart'; // Added import for OptimizedLLMService
 import '../theme/app_theme.dart';
 
 class ModeSettingsModal extends StatefulWidget {
@@ -373,6 +373,6 @@ class _ModeSettingsModalState extends State<ModeSettingsModal> implements ModeSe
     ModeConfigManager.saveConfigs(_configs);
     
     // Also update the LLM service's current model to ensure API calls use the selected model
-    LLMService().setCurrentModel(model);
+    OptimizedLLMService().setCurrentModel(model);
   }
 }

@@ -20,6 +20,7 @@ import 'providers/app_access_provider.dart';
 import 'providers/firebase_auth_provider.dart';
 import 'providers/credits_purchase_provider.dart';
 import 'providers/usage_quota_provider.dart';
+import 'providers/anonymous_access_provider.dart';
 import 'services/revenuecat_service.dart';
 
 import 'providers/mode_config_provider.dart';
@@ -31,6 +32,8 @@ import 'utils/logger.dart';
 import 'config/app_config.dart';
 import 'firebase_options.dart';
 import 'services/analytics_service.dart';
+import 'services/service_cache_manager.dart';
+import 'services/service_migration_helper.dart';
 import 'api/api.dart';
 import 'utils/version.dart';
 import 'widgets/update_required_screen.dart';
@@ -420,6 +423,15 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
             return quota;
           },
         ),
+        // Anonymous access provider for managing anonymous user limits
+        ChangeNotifierProxyProvider<FirebaseAuthProvider, AnonymousAccessProvider>(
+          create: (_) => AnonymousAccessProvider(),
+          update: (_, auth, anonymousAccess) {
+            anonymousAccess ??= AnonymousAccessProvider();
+            anonymousAccess.initialize(auth.user);
+            return anonymousAccess;
+          },
+        ),
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, _) {
@@ -566,14 +578,18 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
 
   Future<void> _initializeApp() async {
     try {
-      Logger.info('🚀 Starting app initialization...', tag: 'AppInit');
+      Logger.info('🚀 Starting optimized app initialization...', tag: 'AppInit');
 
       // Initialize theme provider first (synchronously)
       _themeProvider = await ThemeProvider.create();
       Logger.info('✅ Theme provider initialized', tag: 'AppInit');
 
+      // Initialize Firebase auth provider
       await _firebaseAuthProvider!.initialize();
       Logger.info('✅ Firebase auth provider initialized', tag: 'AppInit');
+
+      // Initialize service cache manager early for faster subsequent loads
+      await _initializeServiceCache();
 
       // Remote Config: fetch, activate, apply URL and gate
       await _initRemoteConfigAndGate();
@@ -605,7 +621,7 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
 
       Logger.info('✅ Core initialization complete', tag: 'AppInit');
 
-      // Initialize other services after UI is ready
+      // Initialize other services after UI is ready (non-blocking)
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _initializeSecondaryServices();
       });
@@ -633,6 +649,21 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
           _isInitializing = false;
         });
       }
+    }
+  }
+
+  /// Initialize service cache manager for faster subsequent loads
+  Future<void> _initializeServiceCache() async {
+    try {
+      // Perform migration if needed
+      await ServiceMigrationHelper.performMigrationIfNeeded();
+      
+      // Initialize the service cache manager
+      final serviceCacheManager = ServiceCacheManager();
+      await serviceCacheManager.initialize();
+      Logger.info('✅ Service cache manager initialized', tag: 'AppInit');
+    } catch (e) {
+      Logger.warn('⚠️ Service cache initialization failed, continuing without cache: $e', tag: 'AppInit');
     }
   }
 

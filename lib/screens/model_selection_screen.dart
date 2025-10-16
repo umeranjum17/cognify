@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../models/mode_config.dart';
-import '../services/llm_service.dart'; // Added import for LLMService
+import '../services/optimized_llm_service.dart'; // Added import for OptimizedLLMService
 import 'package:provider/provider.dart';
 import '../providers/usage_quota_provider.dart';
 import '../services/model_service.dart';
@@ -1097,7 +1097,7 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
     widget.onModelSelected(modelId);
 
     // Also update the LLM service's current model to ensure API calls use the selected model
-    LLMService().setCurrentModel(modelId);
+    OptimizedLLMService().setCurrentModel(modelId);
     print(
       '🤖 ModelSelectionScreen: Updated LLM service current model to: $modelId',
     );

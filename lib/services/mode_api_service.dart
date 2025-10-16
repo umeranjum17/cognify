@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb;
+import 'package:flutter/foundation.dart';
 
 import '../config/app_config.dart';
 import '../models/mode_config.dart';
@@ -31,13 +32,39 @@ class ModeApiService {
   }
 
   Future<Map<String, String>> _getAuthHeaders() async {
-    final user = fb.FirebaseAuth.instance.currentUser;
-    if (user == null) return {};
-    final token = await user.getIdToken();
-    return {
-      'Authorization': 'Bearer $token',
-      'Content-Type': 'application/json',
-    };
+    try {
+      final auth = fb.FirebaseAuth.instance;
+      fb.User? user = auth.currentUser;
+
+      if (user == null) {
+        debugPrint('🔐 [AuthHeaders] No user found, attempting anonymous sign-in');
+        try {
+          final credential = await auth.signInAnonymously();
+          user = credential.user ?? auth.currentUser;
+          debugPrint('🔐 [AuthHeaders] Anonymous sign-in result user: ${user?.uid}');
+        } catch (e) {
+          debugPrint('🔐 [AuthHeaders] Anonymous sign-in failed: $e');
+          return {};
+        }
+      }
+
+      debugPrint('🔐 [AuthHeaders] Current user: ${user?.uid}, isAnonymous: ${user?.isAnonymous}');
+      
+      // Force token refresh to ensure we have a valid token
+      final token = await user?.getIdToken(true);
+      if (token == null || token.isEmpty) {
+        debugPrint('🔐 [AuthHeaders] Token is null');
+        return {};
+      }
+      debugPrint('🔐 [AuthHeaders] Got token: ${token.substring(0, 20)}...');
+      return {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      };
+    } catch (e) {
+      debugPrint('🔐 [AuthHeaders] Error getting token: $e');
+      return {};
+    }
   }
 
   // Cache for mode configurations from backend
@@ -53,6 +80,7 @@ class ModeApiService {
       print('🔗 [MODE_CONFIG] Full URL: ${AppConfig.backendBaseUrl}/api/config/modes');
       
       final headers = await _getAuthHeaders();
+      debugPrint('🔐 [MODE_CONFIG] Headers being sent: $headers');
       final response = await _dio.get(
         '/api/config/modes',
         options: Options(headers: headers),
@@ -98,6 +126,7 @@ class ModeApiService {
       print('🔗 [MODELS_CONFIG] Full URL: ${AppConfig.backendBaseUrl}/api/config/models');
       
       final headers = await _getAuthHeaders();
+      debugPrint('🔐 [MODELS_CONFIG] Headers being sent: $headers');
       final response = await _dio.get(
         '/api/config/models',
         options: Options(headers: headers),
@@ -381,4 +410,3 @@ class ModeApiService {
     }
   }
 }
-
