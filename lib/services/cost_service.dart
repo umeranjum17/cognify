@@ -40,15 +40,15 @@ class CostService {
     }
     
     if (cost < 0.000001) {
-      return '\$0.000001';
+      return '0.000001';
     }
     
     if (cost < 0.001) {
-      return '\$${cost.toStringAsFixed(6)}';
+      return '${cost.toStringAsFixed(6)}';
     } else if (cost < 1) {
-      return '\$${cost.toStringAsFixed(4)}';
+      return '${cost.toStringAsFixed(4)}';
     } else {
-      return '\$${cost.toStringAsFixed(2)}';
+      return '${cost.toStringAsFixed(2)}';
     }
   }
 

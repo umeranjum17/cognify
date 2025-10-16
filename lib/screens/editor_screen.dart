@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:math' as math;
 
 import 'package:file_picker/file_picker.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../services/request_usage_estimator.dart';
 import '../models/mode_config.dart';
@@ -26,6 +27,7 @@ import '../providers/mode_config_provider.dart';
 import '../services/conversation_service.dart';
 import '../services/optimized_llm_service.dart';
 import '../services/model_service.dart';
+import '../services/usage_quota_service.dart';
 // Removed: openrouter_client, services_manager, mode_engine — backend handles logic
 import '../config/model_registry.dart';
 // Premium/subscription removed; using quota-based access.
@@ -48,6 +50,7 @@ import '../widgets/model_quick_switcher_modal.dart';
 import '../widgets/model_capabilities_bottom_sheet.dart';
 import 'model_selection_screen.dart';
 import '../services/session_cost_service.dart';
+import '../services/credit_event_service.dart';
 // Premium gating and paywall removed.
 
 class EditorScreen extends StatefulWidget {
@@ -2440,6 +2443,42 @@ class _EditorScreenState extends State<EditorScreen> {
     } catch (e) {}
   }
 
+  /// Refresh credits immediately after message completion
+  void _refreshCreditsAfterMessage() {
+    print('🔄 [EDITOR] _refreshCreditsAfterMessage() called');
+    
+    // Get the current user
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      print('❌ [EDITOR] No user found, cannot refresh credits');
+      return;
+    }
+
+    print('👤 [EDITOR] User found: ${user.uid}, refreshing credits...');
+
+    // Add a small delay to ensure backend has processed the credit deduction
+    Future.delayed(const Duration(milliseconds: 500), () {
+      print('⏰ [EDITOR] Delay completed, calling refreshFromBackend...');
+      
+      // Refresh credits from backend and update UI immediately
+      UsageQuotaService.instance.refreshFromBackend(user.uid).then((quota) {
+        print('✅ [EDITOR] Credits refreshed from backend: ${quota.remaining} remaining');
+        
+        // Force refresh the usage quota provider to update UI
+        if (mounted) {
+          print('🔄 [EDITOR] Calling UsageQuotaProvider.refresh()...');
+          final usageQuotaProvider = Provider.of<UsageQuotaProvider>(context, listen: false);
+          usageQuotaProvider.refresh();
+          print('✅ [EDITOR] UsageQuotaProvider.refresh() completed');
+        } else {
+          print('⚠️ [EDITOR] Widget not mounted, skipping UI refresh');
+        }
+      }).catchError((error) {
+        print('❌ [EDITOR] Failed to refresh credits after message: $error');
+      });
+    });
+  }
+
   String _getChatModeModel() {
     final chatConfig = _modeConfigs[ChatMode.chat];
     final model =
@@ -2779,6 +2818,11 @@ class _EditorScreenState extends State<EditorScreen> {
           '📖 [CONVERSATION] Loaded conversation: $_currentConversationId (${messages.length} messages)',
           tag: 'EditorScreen',
         );
+        
+        // Emit chat opened event
+        CreditEventService.instance.emitChatOpened(
+          conversationId: _currentConversationId!,
+        );
       } else {
         // Set up empty conversation
         setState(() {
@@ -3032,6 +3076,9 @@ class _EditorScreenState extends State<EditorScreen> {
 
     // Reset session cost tracking
     SessionCostService().resetSession();
+    
+    // Emit session reset event
+    CreditEventService.instance.emitSessionReset();
 
     // Preserve the current model from mode config for new chat
     _loadModelForCurrentMode();
@@ -3611,6 +3658,18 @@ class _EditorScreenState extends State<EditorScreen> {
       );
 
       print('✅ [EDITOR] Stream created, starting to listen...');
+      
+      // Emit message consumed event when stream starts
+      CreditEventService.instance.emitMessageConsumed(
+        requestId: messageId,
+        amount: 1, // Will be calculated by backend
+        modelId: modelToUse,
+        mode: currentMode,
+      );
+
+      // Also trigger an immediate credit refresh when message starts
+      _refreshCreditsAfterMessage();
+      
       await for (final eventMap in stream) {
         print('📨 [EDITOR] Received event from stream: ${eventMap.keys.join(', ')}');
         // Check if operation was cancelled
@@ -3648,12 +3707,20 @@ class _EditorScreenState extends State<EditorScreen> {
               costBreakdown: processingMessage.costBreakdown,
             );
             _messages[processingMessageIndex] = updatedMessage;
+            
+            // Refresh credits immediately after setting isProcessing to false
+            print('🔄 [EDITOR] Message processing completed, refreshing credits...');
+            _refreshCreditsAfterMessage();
           }
           
           setState(() {
             _isProcessing = false;
             _showLoader = false;
           });
+          
+          // Also refresh credits when processing is complete (fallback)
+          print('🔄 [EDITOR] Processing state updated, refreshing credits as fallback...');
+          _refreshCreditsAfterMessage();
           break; // Exit the stream loop
         }
 
@@ -3878,6 +3945,19 @@ class _EditorScreenState extends State<EditorScreen> {
                 );
               }
             }
+
+            // Emit message completed event with cost information
+            CreditEventService.instance.emitMessageCompleted(
+              requestId: messageId,
+              messageCost: messageCost ?? 0.0,
+              sessionCost: sessionCost ?? 0.0,
+              messageCount: _messages.where((m) => m.type == 'assistant' && m.isProcessing != true).length,
+              costBreakdown: costBreakdown,
+            );
+
+            // Immediately refresh credits from backend after message completion
+            print('🔄 [EDITOR] Calling _refreshCreditsAfterMessage() after stream completion');
+            _refreshCreditsAfterMessage();
 
             // Update costs and LLM info
             setState(() {

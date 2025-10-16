@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 
 import '../models/usage_quota.dart';
 import '../services/usage_quota_service.dart';
+import '../services/credit_event_service.dart';
 import 'firebase_auth_provider.dart';
 
 /// Provider for user's request-based quota.
@@ -10,6 +11,7 @@ import 'firebase_auth_provider.dart';
 class UsageQuotaProvider extends ChangeNotifier {
   FirebaseAuthProvider? _auth;
   StreamSubscription<UsageQuota>? _quotaSub;
+  StreamSubscription<CreditEvent>? _creditEventSub;
   Timer? _refreshTimer;
 
   UsageQuota? _quota;
@@ -41,7 +43,7 @@ class UsageQuotaProvider extends ChangeNotifier {
       auth.addListener(_handleAuthChange);
     }
     _startStreamIfPossible(force: true);
-    _startAutoRefresh();
+    _startEventDrivenUpdates();
   }
 
   Future<UsageQuota?> refresh() async {
@@ -88,7 +90,7 @@ class UsageQuotaProvider extends ChangeNotifier {
 
   void _handleAuthChange() {
     _startStreamIfPossible(force: true);
-    _startAutoRefresh();
+    _startEventDrivenUpdates();
   }
 
   void _startStreamIfPossible({bool force = false}) {
@@ -125,16 +127,58 @@ class UsageQuotaProvider extends ChangeNotifier {
     );
   }
 
-  void _startAutoRefresh() {
+  void _startEventDrivenUpdates() {
+    _creditEventSub?.cancel();
     _refreshTimer?.cancel();
+    
     final uid = _uid;
     if (uid == null) return;
+    
     // Immediately refresh from backend once
     UsageQuotaService.instance.refreshFromBackend(uid).catchError((_) {});
-    // Then poll periodically to keep in sync with server-side changes
-    _refreshTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+    
+    // Listen to credit events for real-time updates
+    _creditEventSub = CreditEventService.instance.events.listen((event) {
+      final currentUid = _uid;
+      if (currentUid == null) {
+        debugPrint('❌ [UsageQuota] No user ID available for credit event: ${event.type.name}');
+        return;
+      }
+      
+      debugPrint('📨 [UsageQuota] Received credit event: ${event.type.name}');
+      
+      // Refresh credits on relevant events
+      switch (event.type) {
+        case CreditEventType.messageConsumed:
+        case CreditEventType.messageCompleted:
+        case CreditEventType.creditsPurchased:
+        case CreditEventType.creditsRefunded:
+          debugPrint('🔄 [UsageQuota] Refreshing credits due to ${event.type.name} event');
+          // Force immediate refresh and UI update
+          UsageQuotaService.instance.refreshFromBackend(currentUid).then((quota) {
+            debugPrint('✅ [UsageQuota] Backend refresh completed: ${quota.remaining} credits remaining');
+            // Trigger a manual refresh to ensure UI updates
+            refresh();
+            debugPrint('✅ [UsageQuota] Manual refresh completed');
+          }).catchError((error) {
+            debugPrint('❌ [UsageQuota] Failed to refresh from backend: $error');
+          });
+          break;
+        case CreditEventType.chatOpened:
+        case CreditEventType.sessionReset:
+          // These events don't require immediate refresh, but we can refresh
+          // to ensure we have the latest data when opening a new chat
+          debugPrint('ℹ️ [UsageQuota] Event ${event.type.name} received but no immediate refresh needed');
+          break;
+      }
+    });
+    
+    // Keep a minimal fallback polling (every 5 minutes instead of 30 seconds)
+    // This is just a safety net in case events are missed
+    _refreshTimer = Timer.periodic(const Duration(minutes: 5), (_) {
       final currentUid = _uid;
       if (currentUid == null) return;
+      debugPrint('🔄 [UsageQuota] Fallback refresh from backend');
       UsageQuotaService.instance.refreshFromBackend(currentUid).catchError((_) {});
     });
   }
@@ -142,6 +186,7 @@ class UsageQuotaProvider extends ChangeNotifier {
   @override
   void dispose() {
     _quotaSub?.cancel();
+    _creditEventSub?.cancel();
     _refreshTimer?.cancel();
     _auth?.removeListener(_handleAuthChange);
     super.dispose();

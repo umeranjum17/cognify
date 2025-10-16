@@ -256,6 +256,7 @@ class API {
   /// ```
   Future<double> getCreditsBalance() async {
     try {
+      print('🔄 [API] Fetching credits balance...');
       final headers = await _getAuthHeaders();
 
       final response = await _dio.get(
@@ -263,15 +264,22 @@ class API {
         options: Options(headers: headers),
       );
 
+      print('✅ [API] Credits balance response received: ${response.statusCode}');
+
       // Accept both { balance, lastUpdated } and legacy { data: { balance } }
       final data = response.data;
+      double balance = 0.0;
+      
       if (data is Map && data['balance'] != null) {
-        return (data['balance'] as num).toDouble();
+        balance = (data['balance'] as num).toDouble();
+      } else if (data is Map && data['data'] is Map && data['data']['balance'] != null) {
+        balance = (data['data']['balance'] as num).toDouble();
+      } else {
+        throw Exception('Invalid balance response: $data');
       }
-      if (data is Map && data['data'] is Map && data['data']['balance'] != null) {
-        return (data['data']['balance'] as num).toDouble();
-      }
-      throw Exception('Invalid balance response');
+      
+      print('💰 [API] Credits balance: $balance');
+      return balance;
     } catch (e) {
       print('❌ API Error [getCreditsBalance]: $e');
       return 0.0;

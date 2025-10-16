@@ -7,9 +7,7 @@ import '../services/access_service.dart';
 import '../providers/usage_quota_provider.dart';
 import '../theme/app_theme.dart';
 import '../services/data_deletion_service.dart';
-import '../services/feedback_service.dart';
 import '../services/analytics_service.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class GeneralSettingsTab extends StatefulWidget {
   const GeneralSettingsTab({super.key});
@@ -20,20 +18,10 @@ class GeneralSettingsTab extends StatefulWidget {
 
 class _GeneralSettingsTabState extends State<GeneralSettingsTab> {
   bool _signingOut = false;
-  final TextEditingController _feedbackController = TextEditingController();
-  final TextEditingController _contactEmailController = TextEditingController();
-  bool _submittingFeedback = false;
 
   @override
   void initState() {
     super.initState();
-  }
-
-  @override
-  void dispose() {
-    _feedbackController.dispose();
-    _contactEmailController.dispose();
-    super.dispose();
   }
 
   Future<void> _logout() async {
@@ -85,56 +73,6 @@ class _GeneralSettingsTabState extends State<GeneralSettingsTab> {
     }
   }
 
-  Future<void> _submitFeedback() async {
-    final message = _feedbackController.text.trim();
-    if (message.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please write some feedback before submitting.')),
-      );
-      return;
-    }
-
-    setState(() => _submittingFeedback = true);
-    try {
-      final authProvider = Provider.of<FirebaseAuthProvider>(context, listen: false);
-      final user = authProvider.user;
-      await FeedbackService.instance.submit(
-        message: message,
-        userId: user?.uid,
-        userEmail: _contactEmailController.text.trim().isNotEmpty
-            ? _contactEmailController.text.trim()
-            : user?.email,
-        extra: {
-          'platform': Theme.of(context).platform.toString(),
-        },
-      );
-      AnalyticsService.instance.logEvent('feedback_submitted');
-      _feedbackController.clear();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Thanks! Your feedback was sent.')),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to send feedback: $e')),
-      );
-    } finally {
-      if (mounted) setState(() => _submittingFeedback = false);
-    }
-  }
-
-  Future<void> _fallbackEmail() async {
-    final subject = Uri.encodeComponent('Cognify Feedback');
-    final body = Uri.encodeComponent(_feedbackController.text.trim());
-    final uri = Uri.parse('mailto:umerfarooq1995@gmail.com?subject=$subject&body=$body');
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
-      AnalyticsService.instance.logEvent('feedback_mailto_opened');
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No email client available on this device.')),
-      );
-    }
-  }
 
   Future<void> _deleteAllData() async {
     // Show detailed information dialog first
@@ -441,109 +379,40 @@ class _GeneralSettingsTabState extends State<GeneralSettingsTab> {
 
           const SizedBox(height: 24),
 
-          // API keys section removed: frontend does not manage provider keys.
+          // Support & Feedback section
+          _buildSection(theme, isDark, 'Support & Feedback', [
+            _buildActionCard(
+              theme,
+              isDark,
+              icon: Icons.feedback_outlined,
+              title: 'Send Feedback',
+              subtitle: 'Share your thoughts and report issues',
+              onTap: () => context.push('/feedback'),
+            ),
+          ]),
 
           const SizedBox(height: 24),
-
-          _buildSection(theme, isDark, 'Feedback', [
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.darkCard : AppColors.lightCard,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: isDark
-                      ? AppColors.darkDivider.withValues(alpha: 0.2)
-                      : AppColors.lightDivider.withValues(alpha: 0.2),
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Tell us what to improve'),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: _feedbackController,
-                    maxLines: 4,
-                    decoration: const InputDecoration(
-                      hintText: 'Describe your idea, bug, or request…',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: _contactEmailController,
-                    decoration: const InputDecoration(
-                      hintText: 'Optional: your email for follow-up',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: ElevatedButton.icon(
-                      onPressed: _submittingFeedback ? null : _submitFeedback,
-                      icon: _submittingFeedback
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.send),
-                      label: Text(_submittingFeedback ? 'Sending…' : 'Send'),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ]),
-          const SizedBox(height: 12),
-          // Data & Privacy moved to bottom and made smaller
-          _buildSection(theme, isDark, 'Data & Privacy', [
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: OutlinedButton.icon(
-                onPressed: _deleteAllData,
-                icon: const Icon(Icons.delete_forever, size: 18),
-                label: const Text('Delete All My Data'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.red,
-                  side: const BorderSide(color: Colors.red),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-              ),
-            ),
-          ]),
-          const SizedBox(height: 12),
+          // Account Actions - properly sized and organized
           _buildSection(theme, isDark, 'Account Actions', [
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: ElevatedButton(
-                onPressed: _signingOut ? null : _logout,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 0,
-                ),
-                child: Text(
-                  _signingOut ? 'Signing out…' : 'Sign out',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
+            _buildActionCard(
+              theme,
+              isDark,
+              icon: Icons.logout,
+              title: 'Sign Out',
+              subtitle: 'Sign out of your account',
+              onTap: _signingOut ? null : _logout,
+              isLoading: _signingOut,
+              isDestructive: false,
+            ),
+            const SizedBox(height: 12),
+            _buildActionCard(
+              theme,
+              isDark,
+              icon: Icons.delete_forever,
+              title: 'Delete All My Data',
+              subtitle: 'Permanently delete all your data',
+              onTap: _deleteAllData,
+              isDestructive: true,
             ),
           ]),
         ],
@@ -654,6 +523,102 @@ class _GeneralSettingsTabState extends State<GeneralSettingsTab> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildActionCard(
+    ThemeData theme,
+    bool isDark, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback? onTap,
+    bool isLoading = false,
+    bool isDestructive = false,
+  }) {
+    final iconColor = isDestructive 
+        ? Colors.red 
+        : (isDark ? AppColors.darkAccent : AppColors.lightAccent);
+    final textColor = isDestructive 
+        ? Colors.red 
+        : (isDark ? AppColors.darkText : AppColors.lightText);
+    final subtitleColor = isDestructive 
+        ? Colors.red.withValues(alpha: 0.7)
+        : (isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted);
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.darkCard : AppColors.lightCard,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isDark
+                  ? AppColors.darkDivider.withValues(alpha: 0.2)
+                  : AppColors.lightDivider.withValues(alpha: 0.2),
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: iconColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: isLoading
+                    ? SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(iconColor),
+                        ),
+                      )
+                    : Icon(
+                        icon,
+                        size: 20,
+                        color: iconColor,
+                      ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: textColor,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: subtitleColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (onTap != null && !isLoading)
+                Icon(
+                  Icons.arrow_forward_ios,
+                  size: 16,
+                  color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }

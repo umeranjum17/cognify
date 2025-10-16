@@ -9,6 +9,7 @@ import '../screens/auth/sign_in_screen.dart';
 import '../screens/conversation_history_screen.dart';
 import '../screens/editor_screen.dart';
 import '../screens/tabbed_editor_screen.dart';
+import '../screens/feedback_screen.dart';
 import '../widgets/auth_guard.dart';
 import '../services/analytics_service.dart';
 
@@ -147,6 +148,14 @@ class AppRouter {
               redirectTo: '/',
               child: ConversationHistoryScreen(),
             ),
+          ),
+        ),
+        GoRoute(
+          path: '/feedback',
+          name: 'feedback',
+          pageBuilder: (context, state) => MaterialPage(
+            key: state.pageKey,
+            child: const FeedbackScreen(),
           ),
         ),
         // Paywall removed; access is quota/token based.

@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
+import 'credit_event_service.dart';
 
 /// Immutable snapshot of session cost stats.
 class SessionCostData {
@@ -35,10 +37,13 @@ class SessionCostService {
   static final SessionCostService _instance = SessionCostService._internal();
   factory SessionCostService() => _instance;
 
-  SessionCostService._internal();
+  SessionCostService._internal() {
+    _initializeEventListeners();
+  }
 
   final StreamController<SessionCostData> _controller =
       StreamController<SessionCostData>.broadcast();
+  StreamSubscription<CreditEvent>? _eventSubscription;
 
   double _sessionCost = 0.0;
   double _lastMessageCost = 0.0;
@@ -54,6 +59,43 @@ class SessionCostService {
         lastMessageCost: _lastMessageCost,
         messageCount: _messageCount,
       );
+
+  /// Initialize event listeners for real-time updates
+  void _initializeEventListeners() {
+    _eventSubscription = CreditEventService.instance.events.listen((event) {
+      switch (event.type) {
+        case CreditEventType.messageCompleted:
+          _handleMessageCompleted(event);
+          break;
+        case CreditEventType.sessionReset:
+          resetSession();
+          break;
+        default:
+          // Other events don't affect session cost directly
+          break;
+      }
+    });
+  }
+
+  /// Handle message completed event
+  void _handleMessageCompleted(CreditEvent event) {
+    final data = event.data;
+    if (data != null) {
+      final messageCost = (data['messageCost'] as num?)?.toDouble() ?? 0.0;
+      final sessionCost = (data['sessionCost'] as num?)?.toDouble() ?? 0.0;
+      final messageCount = (data['messageCount'] as int?) ?? 0;
+      
+      // Update internal state
+      _lastMessageCost = messageCost;
+      _sessionCost = sessionCost;
+      _messageCount = messageCount;
+      
+      debugPrint('💰 [SessionCost] Updated: message=\$${messageCost.toStringAsFixed(4)}, session=\$${sessionCost.toStringAsFixed(4)}, count=$messageCount');
+      
+      // Emit update
+      _emit();
+    }
+  }
 
   /// Public API used by UI to register generation IDs for cost tracking.
   /// This is a no-op placeholder that just emits the current snapshot.
@@ -90,6 +132,7 @@ class SessionCostService {
   }
 
   void dispose() {
+    _eventSubscription?.cancel();
     _controller.close();
   }
 }

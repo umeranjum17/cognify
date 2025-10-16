@@ -14,6 +14,8 @@ import '../config/purchases_config.dart';
 import 'package:provider/provider.dart';
 import '../providers/credits_purchase_provider.dart';
 import '../providers/firebase_auth_provider.dart';
+import '../providers/usage_quota_provider.dart';
+import '../models/usage_quota.dart';
 
 class SessionInfoWidget extends StatefulWidget {
   final String? llmUsed;
@@ -65,6 +67,43 @@ class _SessionInfoWidgetState extends State<SessionInfoWidget> {
     super.initState();
     _loadCreditsIfNeeded();
     _estimateCurrentModelIfNeeded();
+  }
+
+
+  void _updateCreditsFromProvider(UsageQuota quota) {
+    if (mounted) {
+      print('🔄 [SessionInfoWidget] Updating credits from provider: ${quota.remaining} remaining');
+      setState(() {
+        _creditsData = {
+          'success': true,
+          'credits': {
+            'remaining_credits': quota.remaining.toDouble(),
+            'total_credits': quota.limit.toDouble(),
+            'total_usage': quota.requestsConsumed.toDouble(),
+            'fetched_at': DateTime.now().toUtc().toIso8601String(),
+          },
+        };
+        _isLoadingCredits = false;
+        _creditsError = null;
+      });
+      print('✅ [SessionInfoWidget] Credits updated in UI: ${quota.remaining} credits');
+    }
+  }
+
+  void _updateCreditsFromProviderWithoutSetState(UsageQuota quota) {
+    print('🔄 [SessionInfoWidget] Updating credits from provider (no setState): ${quota.remaining} remaining');
+    _creditsData = {
+      'success': true,
+      'credits': {
+        'remaining_credits': quota.remaining.toDouble(),
+        'total_credits': quota.limit.toDouble(),
+        'total_usage': quota.requestsConsumed.toDouble(),
+        'fetched_at': DateTime.now().toUtc().toIso8601String(),
+      },
+    };
+    _isLoadingCredits = false;
+    _creditsError = null;
+    print('✅ [SessionInfoWidget] Credits updated in UI (no setState): ${quota.remaining} credits');
   }
 
   Future<void> _loadCreditsIfNeeded() async {
@@ -123,16 +162,29 @@ class _SessionInfoWidgetState extends State<SessionInfoWidget> {
 
   @override
   Widget build(BuildContext context) {
+    return Consumer<UsageQuotaProvider>(
+      builder: (context, quotaProvider, child) {
+        return _buildContent(context, quotaProvider);
+      },
+    );
+  }
+
+  Widget _buildContent(BuildContext context, UsageQuotaProvider quotaProvider) {
     final theme = Theme.of(context);
     final quotaText = _getQuotaDisplayText();
     final quotaColor = _resolveQuotaDisplayColor(theme);
     final iconColor =
         quotaColor ?? theme.colorScheme.onSurface.withValues(alpha: 0.6);
 
-    // Get remaining credits for display
-    final remainingUnits = _creditsData != null && _creditsData!['success'] == true
-        ? ((_creditsData!['credits'] as Map<String, dynamic>)['remaining_credits'] as num?)?.toInt() ?? 0
-        : 0;
+    // Get remaining credits for display - use provider data if available, fallback to local data
+    int remainingUnits = 0;
+    if (quotaProvider.quota != null) {
+      remainingUnits = quotaProvider.quota!.remaining;
+      print('🔄 [SessionInfoWidget] Using provider data: ${remainingUnits} credits');
+    } else if (_creditsData != null && _creditsData!['success'] == true) {
+      remainingUnits = ((_creditsData!['credits'] as Map<String, dynamic>)['remaining_credits'] as num?)?.toInt() ?? 0;
+      print('🔄 [SessionInfoWidget] Using local data: ${remainingUnits} credits');
+    }
 
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -224,7 +276,7 @@ class _SessionInfoWidgetState extends State<SessionInfoWidget> {
     return '${units.toStringAsFixed(1)} per msg';
   }
 
-  Widget _buildCreditsDisplay(ThemeData theme) {
+  Widget _buildCreditsDisplay(ThemeData theme, {UsageQuotaProvider? quotaProvider}) {
     if (_isLoadingCredits) {
       return Row(
         mainAxisSize: MainAxisSize.min,
@@ -248,21 +300,25 @@ class _SessionInfoWidgetState extends State<SessionInfoWidget> {
       );
     }
 
-    if (_creditsError != null ||
-        _creditsData == null ||
-        _creditsData!['success'] != true) {
+    // Use provider data if available, otherwise fallback to local data
+    int remainingUnits = 0;
+    if (quotaProvider?.quota != null) {
+      remainingUnits = quotaProvider!.quota!.remaining;
+    } else if (_creditsData != null && _creditsData!['success'] == true) {
+      final credits = _creditsData!['credits'] as Map<String, dynamic>;
+      remainingUnits = (credits['remaining_credits'] as num?)?.toInt() ?? 0;
+    } else if (widget.remainingRequests != null && widget.remainingRequests! > 0) {
       // Show request count instead when credits are unavailable
-      final remaining = widget.remainingRequests;
-      if (remaining != null && remaining > 0) {
-        return Text(
-          '${_formatCount(remaining)} request${remaining == 1 ? '' : 's'} left',
-          style: theme.textTheme.bodySmall?.copyWith(
-            fontSize: 10,
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
-            fontWeight: FontWeight.w500,
-          ),
-        );
-      }
+      final remaining = widget.remainingRequests!;
+      return Text(
+        '${_formatCount(remaining)} request${remaining == 1 ? '' : 's'} left',
+        style: theme.textTheme.bodySmall?.copyWith(
+          fontSize: 10,
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+          fontWeight: FontWeight.w500,
+        ),
+      );
+    } else {
       return Text(
         'Credits unavailable',
         style: theme.textTheme.bodySmall?.copyWith(
@@ -271,10 +327,6 @@ class _SessionInfoWidgetState extends State<SessionInfoWidget> {
         ),
       );
     }
-
-    final credits = _creditsData!['credits'] as Map<String, dynamic>;
-    final remainingUnits =
-        (credits['remaining_credits'] as num?)?.toInt() ?? 0;
 
     final color = remainingUnits > 0
         ? theme.colorScheme.onSurface.withValues(alpha: 0.8)

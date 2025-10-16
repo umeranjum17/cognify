@@ -44,62 +44,6 @@ function getLastUserMessageText(messages: any[]): string {
   return '';
 }
 
-function needsClarification(userMessage: string, conversationHistory: any[]): boolean {
-  if (!userMessage || userMessage.length < 3) return true;
-  
-  // Check for vague references that need context
-  const vaguePatterns = [
-    /\b(this|that|it|them|those|these)\b/i,
-    /\b(what|how|why|when|where)\s+(about|with|is|are|was|were)\s+(it|this|that)\b/i,
-    /\b(explain|tell me about|what about)\s+(it|this|that)\b/i,
-    /\b(more|additional|further)\s+(info|information|details)\b/i,
-    /\b(continue|go on|keep going)\b/i,
-    /\b(same|similar|like that)\b/i
-  ];
-  
-  const hasVagueReference = vaguePatterns.some(pattern => pattern.test(userMessage));
-  
-  // If there's a vague reference and no recent context, clarification is needed
-  if (hasVagueReference && conversationHistory.length === 0) {
-    return true;
-  }
-  
-  // Check if the message is too short and vague
-  if (userMessage.length < 10 && /\b(what|how|why|when|where|explain|tell me)\b/i.test(userMessage)) {
-    return true;
-  }
-  
-  return false;
-}
-
-function extractContextTopics(conversationHistory: any[]): string[] {
-  const topics: string[] = [];
-  const recentMessages = conversationHistory.slice(-3); // Last 3 messages for topic extraction
-  
-  for (const msg of recentMessages) {
-    if (msg.role === 'user' || msg.role === 'assistant') {
-      let content = '';
-      if (typeof msg.content === 'string') {
-        content = msg.content;
-      } else if (Array.isArray(msg.content)) {
-        content = msg.content
-          .filter((part: any) => part.type === 'text')
-          .map((part: any) => part.text)
-          .join(' ');
-      }
-      
-      // Extract potential topics (simple keyword extraction)
-      const words = content.toLowerCase().split(/\s+/);
-      const topicWords = words.filter(word => 
-        word.length > 4 && 
-        !['this', 'that', 'with', 'from', 'they', 'them', 'their', 'there', 'where', 'when', 'what', 'how', 'why'].includes(word)
-      );
-      topics.push(...topicWords.slice(0, 3)); // Take first 3 potential topic words
-    }
-  }
-  
-  return [...new Set(topics)]; // Remove duplicates
-}
 
 async function braveWebSearch(query: string, count = 5): Promise<{ sources: any[] }> {
   const apiKey = process.env.BRAVE_API_KEY || '';
@@ -233,56 +177,24 @@ function createPlanningPromptFromAgents(query: string, mode: string, enabledTool
   ].join('\n');
 }
 
-function buildWriterPromptFromAgents(params: {
-  originalQuery: string;
-  mode: string;
-  sources: any[];
-  images: any[];
-  conversationHistory?: any[];
-}): string {
-  const { originalQuery, mode, sources, images, conversationHistory = [] } = params;
+function buildSourcesContext(params: { sources: any[]; images: any[]; }): string {
+  const { sources, images } = params;
   
-  // Build conversation context section
-  const conversationSection = conversationHistory.length > 0 ? `\n**CONVERSATION CONTEXT:**\n\n${conversationHistory
-    .map((msg: any, i: number) => {
-      const role = msg.role === 'user' ? 'User' : 'Assistant';
-      let content = '';
-      if (typeof msg.content === 'string') {
-        content = msg.content;
-      } else if (Array.isArray(msg.content)) {
-        content = msg.content
-          .filter((part: any) => part.type === 'text')
-          .map((part: any) => part.text)
-          .join(' ');
-      }
-      return `${role}: ${content}`;
-    })
-    .join('\n\n')}\n` : '';
+  let context = 'Use the following sources to inform your response:\n\n';
   
-  const sourcesSection = sources.length > 0 ? `\n**SOURCES WITH CONTENT:**\n\n${sources
-    .map((s: any, i: number) => `Source ${i + 1}: ${s.title || 'Untitled'}\nURL: ${s.url || ''}\nCONTENT: ${(s.content || s.description || '').slice(0, 1000)}`)
-    .join('\n\n')}` : '';
-  const imagesSection = images.length > 0 ? `\n**AVAILABLE IMAGES FOR MARKDOWN INCLUSION:**\n\n${images
-    .map((img: any, i: number) => `${i + 1}. **${img.title || 'Image'}**\n   MARKDOWN: ![${img.title || 'Image'}](${img.url})\n   DESCRIPTION: ${img.description || ''}\n   CONTEXT: ${img.source || ''}`)
-    .join('\n\n')}` : '';
-  const modeGuidance = mode === 'aipedia'
-    ? '\nProduce a structured overview: Summary, Key Facts (bullets), Main Sections (with headings).'
-    : '';
-  const responseGuidelines = `**RESPONSE EXCELLENCE GUIDELINES:** 
-- Use the conversation context to understand what the user is asking about
-- If the current query seems vague or unclear, ask for clarification
-- Maintain continuity with previous topics discussed
-- Use bold, lists, code blocks; be comprehensive but concise
-- Do not include a Sources section in the text (UI shows sources)`;
+  if (sources.length > 0) {
+    context += sources
+      .map((s: any, i: number) => `[${i + 1}] ${s.title}\n${s.url}\n${s.content || s.description}`)
+      .join('\n\n');
+  }
   
-  return `You are a helpful, professional AI assistant with strong context awareness.
-
-**CURRENT USER QUERY:** "${originalQuery}"
-**MODE:** ${mode}${modeGuidance}${conversationSection}${sourcesSection}${imagesSection}
-
-${responseGuidelines}
-
-Write your response now:`;
+  if (images.length > 0) {
+    context += '\n\nAvailable images:\n' + images
+      .map((img: any, i: number) => `![${img.title}](${img.url})`)
+      .join('\n');
+  }
+  
+  return context;
 }
 
 async function streamWithAiSDK(options: {
@@ -585,75 +497,42 @@ chatRouter.post('/', requireAuth, async (req: AuthRequest, res) => {
       // Phase 2 or single-phase: writer pass using agents prompt
       const writerStart = Date.now();
       
-      // Build conversation context with last 4 messages for better continuity
+      // Build conversation messages
       const conversationMessages = [];
-      
-      // Check if clarification is needed
-      const recentHistory = messages.slice(-4, -1); // Last 3 messages before current
-      const needsClarificationCheck = needsClarification(userQuery, recentHistory);
-      const contextTopics = extractContextTopics(recentHistory);
-      
-      // Add enhanced system message with context awareness
-      let systemMessage = `You are a helpful, professional AI assistant with strong context awareness. 
 
-IMPORTANT CONTEXT GUIDELINES:
-- Always maintain awareness of the conversation history and current topic
-- If a user's message seems vague or unclear, ask for clarification before responding
-- When the user refers to "this", "that", "it", or other pronouns, use the conversation context to understand what they mean
-- If you're unsure about what the user is asking about, politely ask: "I want to make sure I understand correctly - are you asking about [specific topic from context] or something else?"
-- Keep track of the main topics being discussed and maintain continuity
-- If the conversation topic seems to have changed abruptly, acknowledge it and ask for confirmation
-
-Be conversational, helpful, and always strive to understand the user's intent based on the conversation context.`;
-
-      // Add context-specific guidance if clarification might be needed
-      if (needsClarificationCheck && contextTopics.length > 0) {
-        systemMessage += `\n\nCURRENT CONTEXT TOPICS: ${contextTopics.join(', ')}\nIf the user's message seems to reference these topics but is unclear, ask for clarification.`;
-      }
-      
+      // Add system message
+      const systemMessage = mode === 'chat' 
+        ? 'You are a helpful AI assistant. Be conversational and natural.'
+        : 'You are a helpful AI assistant. When sources are provided, prioritize information from them while maintaining a natural conversational tone.';
       conversationMessages.push({ role: 'system', content: systemMessage });
-      
-      // Add conversation history (last 4 messages for better context)
-      const recentMessages = messages.slice(-4); // Last 4 messages for context as requested
+
+      // Inject sources for search/aipedia modes
+      if (isTwoPhase && (collectedSources.length > 0 || collectedImages.length > 0)) {
+        const sourcesContext = buildSourcesContext({ sources: collectedSources, images: collectedImages });
+        conversationMessages.push({ role: 'system', content: sourcesContext });
+      }
+
+      // Add conversation history (last 8 messages)
+      const recentMessages = messages.slice(-8);
       for (const msg of recentMessages) {
         if (msg.role === 'user' || msg.role === 'assistant') {
-          // Extract text content from message
           let content = '';
           if (typeof msg.content === 'string') {
             content = msg.content;
           } else if (Array.isArray(msg.content)) {
-            // Extract text from content array
-            const textParts = msg.content
+            content = msg.content
               .filter((part: any) => part.type === 'text')
               .map((part: any) => part.text)
               .join(' ');
-            content = textParts;
           }
           
           if (content.trim()) {
-            conversationMessages.push({
-              role: msg.role,
-              content: content.trim()
-            });
+            conversationMessages.push({ role: msg.role, content: content.trim() });
           }
         }
       }
       
-      // For two-phase modes (search/aipedia), enhance the writer prompt with conversation context
-      // For simple chat mode, use the conversation history directly
-      if (isTwoPhase) {
-        const writerPrompt = buildWriterPromptFromAgents({ 
-          originalQuery: userQuery, 
-          mode, 
-          sources: collectedSources, 
-          images: collectedImages,
-          conversationHistory: recentMessages.slice(0, -1) // Exclude the current message as it's already in the query
-        });
-        conversationMessages.push({ role: 'user', content: writerPrompt });
-      }
-      // For simple chat mode, the conversation history already includes the current user message
-      
-      console.log(`[chat] Using ${conversationMessages.length} messages for context (including system${isTwoPhase ? ' and writer prompt' : ''})`);
+      console.log(`[chat] Using ${conversationMessages.length} messages for context (including system${isTwoPhase ? ' and sources' : ''})`);
       
       await streamWithAiSDK({
         model,
@@ -692,4 +571,5 @@ Be conversational, helpful, and always strive to understand the user's intent ba
     res.status(500).json({ error: 'Chat request failed', message: error.message });
   }
 });
+
 

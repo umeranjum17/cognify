@@ -8,6 +8,7 @@ import '../config/subscriptions_config.dart';
 import '../providers/credits_purchase_provider.dart';
 import '../providers/firebase_auth_provider.dart';
 import '../services/revenuecat_service.dart';
+import '../services/credit_event_service.dart';
 import '../theme/app_theme.dart';
 
 /// Quick credit purchase bottom sheet for fast, prominent credit purchases
@@ -26,12 +27,16 @@ class QuickCreditPurchaseSheet extends StatefulWidget {
 class _QuickCreditPurchaseSheetState extends State<QuickCreditPurchaseSheet> {
   Package? _selectedPackage;
   bool _busy = false;
+  bool _waitingForCredits = false;
   String? _error;
   String? _statusMessage;
+  int _creditsToAdd = 0;
+  int _currentCredits = 0;
 
   @override
   void initState() {
     super.initState();
+    _currentCredits = widget.currentCredits ?? 0;
     _loadOfferings();
   }
 
@@ -126,53 +131,12 @@ class _QuickCreditPurchaseSheetState extends State<QuickCreditPurchaseSheet> {
       });
 
       if (result.success) {
-        // After successful purchase, poll backend for updated balance via webhook
-        // and show a transient processing message while waiting.
-        if (mounted) {
-          setState(() {
-            _statusMessage = 'Finalizing purchase… updating balance';
-          });
-        }
-
-        try {
-          // Poll GET /api/credits/balance with short backoff for ~15s
-          final started = DateTime.now();
-          double lastBalance = -1;
-          while (DateTime.now().difference(started).inSeconds < 15) {
-            await Future.delayed(const Duration(seconds: 1));
-            final balance = await API.instance.getCreditsBalance();
-            if (balance >= 0 && balance != lastBalance) {
-              lastBalance = balance;
-              // Heuristic: as soon as we observe a non-zero or changed balance after purchase, break
-              if (balance > (widget.currentCredits ?? 0)) {
-                break;
-              }
-            }
-          }
-        } catch (_) {}
-
-        if (mounted) {
-          setState(() {
-            _statusMessage = null;
-          });
-        }
-        if (mounted) {
-          // Show success message
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  const Icon(Icons.check_circle, color: Colors.white),
-                  const SizedBox(width: 8),
-                  const Text('Credits purchased successfully!'),
-                ],
-              ),
-              backgroundColor: Colors.green,
-              duration: const Duration(seconds: 3),
-            ),
-          );
-          Navigator.of(context).pop(true); // Return true to indicate success
-        }
+        // Calculate expected credits to add based on package
+        final expectedCredits = _getExpectedCreditsFromPackage(selected);
+        _creditsToAdd = expectedCredits;
+        
+        // Start waiting for webhook to process the purchase
+        await _waitForCreditsUpdate();
       } else {
         setState(() {
           _error = result.errorMessage ?? 'Purchase failed. Please try again.';
@@ -184,6 +148,145 @@ class _QuickCreditPurchaseSheetState extends State<QuickCreditPurchaseSheet> {
         _statusMessage = null;
         _error = 'Purchase error: ${e.toString()}';
       });
+    }
+  }
+
+  /// Get expected credits from package based on package identifier
+  int _getExpectedCreditsFromPackage(Package package) {
+    // Map package identifiers to credit amounts
+    // This should match your RevenueCat package configuration
+    final identifier = package.identifier.toLowerCase();
+    
+    if (identifier.contains('100')) return 100;
+    if (identifier.contains('500')) return 500;
+    if (identifier.contains('1000')) return 1000;
+    if (identifier.contains('2500')) return 2500;
+    if (identifier.contains('5000')) return 5000;
+    if (identifier.contains('10000')) return 10000;
+    
+    // Fallback: try to extract number from identifier
+    final regex = RegExp(r'(\d+)');
+    final match = regex.firstMatch(identifier);
+    if (match != null) {
+      return int.tryParse(match.group(1)!) ?? 100;
+    }
+    
+    return 100; // Default fallback
+  }
+
+  /// Wait for credits to be updated via webhook with smart polling and UX
+  Future<void> _waitForCreditsUpdate() async {
+    if (!mounted) return;
+    
+    setState(() {
+      _waitingForCredits = true;
+      _statusMessage = 'Processing your purchase...';
+    });
+
+    try {
+      final startTime = DateTime.now();
+      final maxWaitTime = const Duration(seconds: 30); // Increased timeout
+      final initialBalance = _currentCredits;
+      final expectedFinalBalance = initialBalance + _creditsToAdd;
+      
+      int pollCount = 0;
+      double lastKnownBalance = initialBalance.toDouble();
+      
+      while (DateTime.now().difference(startTime) < maxWaitTime) {
+        await Future.delayed(const Duration(milliseconds: 1500)); // Poll every 1.5s
+        pollCount++;
+        
+        if (!mounted) return;
+        
+        try {
+          final currentBalance = await API.instance.getCreditsBalance();
+          
+          // Update status message with progress
+          if (mounted) {
+            setState(() {
+              if (pollCount <= 3) {
+                _statusMessage = 'Processing your purchase...';
+              } else if (pollCount <= 8) {
+                _statusMessage = 'Adding $_creditsToAdd credits to your wallet...';
+              } else {
+                _statusMessage = 'Almost done, finalizing...';
+              }
+            });
+          }
+          
+          // Check if we got the expected credits
+          if (currentBalance >= expectedFinalBalance) {
+            lastKnownBalance = currentBalance;
+            break;
+          }
+          
+          // Check if we got any credits (partial success)
+          if (currentBalance > lastKnownBalance) {
+            lastKnownBalance = currentBalance;
+            // Continue waiting for the full amount
+          }
+          
+        } catch (e) {
+          // API error, continue waiting
+          debugPrint('Credit polling error: $e');
+        }
+      }
+      
+      // Final check and completion
+      if (mounted) {
+        final finalBalance = lastKnownBalance.toInt();
+        final actualCreditsAdded = finalBalance - initialBalance;
+        
+        setState(() {
+          _waitingForCredits = false;
+          _statusMessage = null;
+        });
+        
+        if (actualCreditsAdded > 0) {
+          // Success - credits were added
+          CreditEventService.instance.emitCreditsPurchased(
+            amount: actualCreditsAdded,
+            newBalance: finalBalance,
+          );
+          
+          // Show success message with actual credits added
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.check_circle, color: Colors.white),
+                  const SizedBox(width: 8),
+                  Text('+$actualCreditsAdded credits added to your wallet!'),
+                ],
+              ),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 4),
+            ),
+          );
+          
+          Navigator.of(context).pop(true);
+        } else {
+          // Timeout or no credits added
+          setState(() {
+            _error = 'Purchase completed but credits are still processing. They should appear in your wallet shortly.';
+          });
+          
+          // Still emit event for partial success
+          CreditEventService.instance.emitCreditsPurchased(
+            amount: _creditsToAdd,
+            newBalance: finalBalance,
+          );
+        }
+      }
+      
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _waitingForCredits = false;
+          _statusMessage = null;
+          _error = 'Purchase completed but there was an issue updating your credits. Please refresh the app.';
+        });
+      }
     }
   }
 
@@ -269,9 +372,15 @@ class _QuickCreditPurchaseSheetState extends State<QuickCreditPurchaseSheet> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.blue.withValues(alpha: 0.1),
+                    color: _waitingForCredits 
+                        ? Colors.green.withValues(alpha: 0.1)
+                        : Colors.blue.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
+                    border: Border.all(
+                      color: _waitingForCredits 
+                          ? Colors.green.withValues(alpha: 0.3)
+                          : Colors.blue.withValues(alpha: 0.3)
+                    ),
                   ),
                   child: Row(
                     children: [
@@ -280,7 +389,9 @@ class _QuickCreditPurchaseSheetState extends State<QuickCreditPurchaseSheet> {
                         height: 16,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            _waitingForCredits ? Colors.green : Colors.blue
+                          ),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -288,10 +399,19 @@ class _QuickCreditPurchaseSheetState extends State<QuickCreditPurchaseSheet> {
                         child: Text(
                           _statusMessage!,
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: Colors.blue,
+                            color: _waitingForCredits ? Colors.green : Colors.blue,
+                            fontWeight: _waitingForCredits ? FontWeight.w500 : FontWeight.normal,
                           ),
                         ),
                       ),
+                      if (_waitingForCredits) ...[
+                        const SizedBox(width: 8),
+                        Icon(
+                          Icons.account_balance_wallet,
+                          size: 16,
+                          color: Colors.green,
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -395,10 +515,12 @@ class _QuickCreditPurchaseSheetState extends State<QuickCreditPurchaseSheet> {
               // Purchase button
               if (packages.isNotEmpty)
                 ElevatedButton(
-                  onPressed: _busy ? null : _purchase,
+                  onPressed: (_busy || _waitingForCredits) ? null : _purchase,
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    backgroundColor: theme.colorScheme.primary,
+                    backgroundColor: _waitingForCredits 
+                        ? Colors.green 
+                        : theme.colorScheme.primary,
                     foregroundColor: theme.colorScheme.onPrimary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -407,7 +529,7 @@ class _QuickCreditPurchaseSheetState extends State<QuickCreditPurchaseSheet> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      if (_busy)
+                      if (_busy || _waitingForCredits)
                         const SizedBox(
                           width: 20,
                           height: 20,
@@ -420,7 +542,11 @@ class _QuickCreditPurchaseSheetState extends State<QuickCreditPurchaseSheet> {
                         const Icon(Icons.shopping_cart, size: 20),
                       const SizedBox(width: 8),
                       Text(
-                        _busy ? 'Processing...' : 'Purchase Credits',
+                        _busy 
+                            ? 'Processing...' 
+                            : _waitingForCredits 
+                                ? 'Adding Credits...' 
+                                : 'Purchase Credits',
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -454,7 +580,7 @@ class _QuickCreditPurchaseSheetState extends State<QuickCreditPurchaseSheet> {
     final isSelected = _selectedPackage?.identifier == package.identifier;
     
     return GestureDetector(
-      onTap: () {
+      onTap: (_busy || _waitingForCredits) ? null : () {
         setState(() {
           _selectedPackage = package;
         });
@@ -463,14 +589,18 @@ class _QuickCreditPurchaseSheetState extends State<QuickCreditPurchaseSheet> {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isSelected
-              ? theme.colorScheme.primary.withValues(alpha: 0.15)
-              : theme.colorScheme.surface.withValues(alpha: 0.5),
+          color: (_busy || _waitingForCredits)
+              ? theme.colorScheme.surface.withValues(alpha: 0.3)
+              : isSelected
+                  ? theme.colorScheme.primary.withValues(alpha: 0.15)
+                  : theme.colorScheme.surface.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected
-                ? theme.colorScheme.primary
-                : theme.dividerColor.withValues(alpha: 0.3),
+            color: (_busy || _waitingForCredits)
+                ? theme.dividerColor.withValues(alpha: 0.2)
+                : isSelected
+                    ? theme.colorScheme.primary
+                    : theme.dividerColor.withValues(alpha: 0.3),
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -509,12 +639,38 @@ class _QuickCreditPurchaseSheetState extends State<QuickCreditPurchaseSheet> {
                       color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                     ),
                   ),
+                  const SizedBox(height: 4),
+                  // Model capabilities description similar to modal switcher
+                  if (package.storeProduct.description.isNotEmpty) ...[
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Credits never expire and can be used for any AI model or feature',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                              fontSize: 10,
+                              height: 1.2,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(
+                          Icons.info_outline,
+                          size: 12,
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),
             const SizedBox(width: 12),
             Text(
-              package.storeProduct.priceString,
+              package.storeProduct.priceString.replaceAll('\$', ''),
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurface,
@@ -528,4 +684,5 @@ class _QuickCreditPurchaseSheetState extends State<QuickCreditPurchaseSheet> {
 
   // Restore purchases functionality removed per product decision
 }
+
 

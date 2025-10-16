@@ -251,7 +251,7 @@ class LLMService {
 
     print(
       '🔒 Reserving ${estimate.requestUnits} request unit(s) for model $model '
-      '(≈\$${estimate.dollarCost.toStringAsFixed(4)})',
+      '(≈${estimate.dollarCost.toStringAsFixed(4)})',
     );
 
     // Backend calculates fractional units; pass a minimal integer placeholder
