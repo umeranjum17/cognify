@@ -38,6 +38,7 @@ import 'api/api.dart';
 import 'utils/version.dart';
 import 'widgets/update_required_screen.dart';
 import 'widgets/update_soft_prompt.dart';
+import 'widgets/cognify_logo.dart';
 import 'package:firebase_remote_config/firebase_remote_config.dart';
 
 void main() async {
@@ -366,15 +367,7 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: Colors.blue,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Icon(Icons.smart_toy, size: 48, color: Colors.white),
-                ),
+                CognifyLogo(size: 80),
                 SizedBox(height: 24),
                 SizedBox(
                   width: 24,
