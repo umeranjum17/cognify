@@ -207,7 +207,7 @@ class _SessionInfoWidgetState extends State<SessionInfoWidget> {
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
                 const SizedBox(width: 4),
-                Expanded(child: _buildCreditsAndModelDisplay(theme, quotaText)),
+                Expanded(child: _buildCreditsAndModelDisplay(theme, quotaText, quotaProvider: quotaProvider)),
               ],
             ),
           ),
@@ -343,8 +343,8 @@ class _SessionInfoWidgetState extends State<SessionInfoWidget> {
     );
   }
 
-  Widget _buildCreditsAndModelDisplay(ThemeData theme, String quotaText) {
-    final left = _buildCreditsDisplay(theme);
+  Widget _buildCreditsAndModelDisplay(ThemeData theme, String quotaText, {UsageQuotaProvider? quotaProvider}) {
+    final left = _buildCreditsDisplay(theme, quotaProvider: quotaProvider);
     return Row(
       children: [
         Flexible(child: left),

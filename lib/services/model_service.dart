@@ -77,12 +77,74 @@ class ModelService {
     return await getModelsByMode(mode);
   }
 
-  /// Get full model data including pricing from backend (not yet provided)
+  /// Get full model data including modalities, context and request units (live)
   static Future<Map<String, dynamic>?> getModelData(String modelId) async {
-    // Defer to enhanced models cache for now
-    final enhanced = await getEnhancedModels();
-    final list = (enhanced['data'] as List).cast<Map<String, dynamic>>();
-    return list.firstWhere((m) => m['id'] == modelId, orElse: () => <String, dynamic>{});
+    try {
+      // Prefer the same source as getModelsByMode so we include requestEstimate
+      Map<String, dynamic>? modelsConfig = await _modeApi.loadModelsConfig();
+      if (modelsConfig == null) {
+        final url = Uri.parse('${AppConfig.backendBaseUrl}/api/config/models');
+        final user = fb.FirebaseAuth.instance.currentUser;
+        final token = user != null ? await user.getIdToken() : null;
+        final resp = await http.get(
+          url,
+          headers: {
+            if (token != null) 'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json',
+          },
+        );
+        if (resp.statusCode == 200) {
+          final decoded = jsonDecode(resp.body) as Map<String, dynamic>;
+          final raw = decoded['data'];
+          if (raw is Map) {
+            modelsConfig = Map<String, dynamic>.from(raw);
+          }
+        }
+      }
+
+      if (modelsConfig != null) {
+        final Map<String, dynamic> capabilities =
+            modelsConfig['capabilities'] is Map ? Map<String, dynamic>.from(modelsConfig['capabilities']) : {};
+        final Map<String, dynamic> pricing =
+            modelsConfig['pricing'] is Map ? Map<String, dynamic>.from(modelsConfig['pricing']) : {};
+        final Map<String, dynamic> perRequest =
+            modelsConfig['quotaPricing']?['perRequestSample']?['chat'] is Map
+                ? Map<String, dynamic>.from(modelsConfig['quotaPricing']['perRequestSample']['chat'])
+                : {};
+
+        final cap = capabilities[modelId] is Map ? Map<String, dynamic>.from(capabilities[modelId]) : <String, dynamic>{};
+        final price = pricing[modelId] is Map ? Map<String, dynamic>.from(pricing[modelId]) : <String, dynamic>{};
+        final estimate = perRequest[modelId] is Map ? Map<String, dynamic>.from(perRequest[modelId]) : <String, dynamic>{};
+
+        // Debug: Print what we're getting from backend
+        print('🔍 Model $modelId capabilities from backend:');
+        print('  - Full capabilities: $cap');
+        print('  - inputModalities: ${cap['inputModalities']}');
+        print('  - outputModalities: ${cap['outputModalities']}');
+        print('  - supportsImages: ${cap['supportsImages']}');
+        print('  - isMultimodal: ${cap['isMultimodal']}');
+
+        return {
+          'id': modelId,
+          'name': _formatModelName(modelId),
+          'description': cap['description'] ?? _getModelDescription(modelId),
+          'pricing': price,
+          'requestEstimate': estimate,
+          'provider': (cap['provider']) ?? modelId.split('/').first,
+          'context_length': cap['maxTokens'] ?? 8192,
+          'inputModalities': cap['inputModalities'] ?? ['text'],
+          'outputModalities': cap['outputModalities'] ?? ['text'],
+        };
+      }
+
+      // Fallback to enhanced cache if config unavailable
+      final enhanced = await getEnhancedModels();
+      final list = (enhanced['data'] as List).cast<Map<String, dynamic>>();
+      return list.firstWhere((m) => m['id'] == modelId, orElse: () => <String, dynamic>{});
+    } catch (e) {
+      print('❌ getModelData error: $e');
+      return {};
+    }
   }
 
   /// Get model capabilities
@@ -205,6 +267,16 @@ class ModelService {
           Map<String, dynamic> safeCap = cap is Map ? Map<String, dynamic>.from(cap) : {};
           Map<String, dynamic> safePrice = price is Map ? Map<String, dynamic>.from(price) : {};
           Map<String, dynamic> safeEstimate = requestEstimate is Map ? Map<String, dynamic>.from(requestEstimate) : {};
+
+          // Debug: Print what we're getting for enhanced models
+          if (id.contains('gpt') || id.contains('claude') || id.contains('gemini')) {
+            print('🔍 Enhanced Model $id:');
+            print('  - Full capabilities: $safeCap');
+            print('  - inputModalities: ${safeCap['inputModalities']}');
+            print('  - outputModalities: ${safeCap['outputModalities']}');
+            print('  - supportsImages: ${safeCap['supportsImages']}');
+            print('  - isMultimodal: ${safeCap['isMultimodal']}');
+          }
 
           // Determine free status only when pricing is explicitly provided and both input and output are zero
           final bool explicitlyFree = safePrice.containsKey('input') &&

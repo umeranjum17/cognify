@@ -38,7 +38,7 @@ export const MODE_CONFIGS = {
     defaultModel: 'google/gemini-2.5-flash-lite',
     // Empty list means: allow all models from unified models config
     availableModels: [],
-    capabilities: ['text'],
+    capabilities: ['text', 'image'],
     temperature: 0.7,
     // UI hints - backend tells frontend how to display
     showInMainMenu: true,
@@ -59,7 +59,7 @@ export const MODE_CONFIGS = {
     availableModels: [
       'google/gemini-2.5-flash-lite',
     ],
-    capabilities: ['text', 'web-search'],
+    capabilities: ['text', 'web-search', 'image'],
     temperature: 0.7,
     showInMainMenu: true,
     requiresPremium: false,
@@ -79,7 +79,7 @@ export const MODE_CONFIGS = {
     availableModels: [
       'google/gemini-2.5-flash-lite'
     ],
-    capabilities: ['text', 'web-search', 'image-search'],
+    capabilities: ['text', 'web-search', 'image-search', 'image'],
     temperature: 0.5,
     showInMainMenu: true,
     requiresPremium: false,

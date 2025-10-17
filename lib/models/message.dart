@@ -150,10 +150,26 @@ class Message {
     if (content is String) {
       return content as String;
     } else if (content is List) {
-      final textParts = (content as List)
-          .where((part) => part is Map && part['type'] == 'text')
-          .map((part) => part['text'] as String)
-          .toList();
+      final List<String> textParts = [];
+      for (final part in (content as List)) {
+        if (part is Map && part['type'] == 'text') {
+          final dynamic textVal = part['text'];
+          if (textVal is String) {
+            textParts.add(textVal);
+          } else if (textVal is List) {
+            // Handle nested text structures like lists of segments
+            for (final seg in textVal) {
+              if (seg is Map && seg['text'] is String) {
+                textParts.add(seg['text'] as String);
+              } else if (seg is String) {
+                textParts.add(seg);
+              }
+            }
+          } else if (textVal != null) {
+            textParts.add(textVal.toString());
+          }
+        }
+      }
       return textParts.join('\n');
     }
     return '';
@@ -251,7 +267,15 @@ class MessageContent {
   factory MessageContent.fromJson(Map<String, dynamic> json) => MessageContent(
         type: json['type'] ?? 'text',
         text: json['text'],
-        imageUrl: json['image_url'] != null ? ImageUrl.fromJson(json['image_url']) : null,
+        imageUrl: json['image_url'] != null
+            ? ImageUrl.fromJson(json['image_url'])
+            : (json['image'] != null
+                ? (json['image'] is String
+                    ? ImageUrl(url: json['image'] as String)
+                    : (json['image'] is Map<String, dynamic> && (json['image'] as Map<String, dynamic>)['url'] is String
+                        ? ImageUrl(url: (json['image'] as Map<String, dynamic>)['url'] as String)
+                        : null))
+                : null),
         fileUrl: json['file_url'] != null ? FileUrl.fromJson(json['file_url']) : null,
       );
 

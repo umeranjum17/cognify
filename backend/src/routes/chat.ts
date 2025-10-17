@@ -1,6 +1,6 @@
 import express from 'express';
 import { requireAuth, AuthRequest } from '../middleware/auth.js';
-import { MODE_CONFIGS } from '../config/config-data.js';
+import { MODE_CONFIGS, MODEL_DEFAULTS, CACHE_CONFIG } from '../config/config-data.js';
 import { streamText, generateText, generateObject, tool } from 'ai';
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { z } from 'zod';
@@ -28,6 +28,37 @@ function getOpenRouterProvider() {
   });
 }
 
+// Lightweight model capabilities cache (supportsImages) based on OpenRouter metadata
+let _modelCapsCache: { fetchedAt: number; supportsImages: Record<string, boolean> } | null = null;
+async function supportsImages(modelId: string): Promise<boolean> {
+  const ttlMs = (CACHE_CONFIG.modelsCacheDuration || 3600) * 1000;
+  const now = Date.now();
+  // Refresh cache if missing or expired
+  if (!_modelCapsCache || now - _modelCapsCache.fetchedAt > ttlMs) {
+    try {
+      const r = await fetch('https://openrouter.ai/api/v1/models', {
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (r.ok) {
+        const json: any = await r.json();
+        const map: Record<string, boolean> = {};
+        const arr: any[] = Array.isArray(json?.data) ? json.data : [];
+        for (const m of arr) {
+          const id = m?.id;
+          if (!id) continue;
+          // Check input_modalities array for image support
+          const inputModalities: string[] = m?.architecture?.input_modalities || [];
+          map[id] = Array.isArray(inputModalities) && inputModalities.includes('image');
+        }
+        _modelCapsCache = { fetchedAt: now, supportsImages: map };
+      }
+    } catch (_) {
+      // On failure, keep old cache if any; default to false
+    }
+  }
+  return Boolean(_modelCapsCache?.supportsImages?.[modelId]);
+}
+
 // Helpers
 function getLastUserMessageText(messages: any[]): string {
   const reversed = [...messages].reverse();
@@ -42,6 +73,92 @@ function getLastUserMessageText(messages: any[]): string {
     }
   }
   return '';
+}
+
+// Extract media type from data URL
+function extractMediaType(dataUrl: string): string | undefined {
+  try {
+    if (dataUrl.startsWith('data:')) {
+      const match = dataUrl.match(/^data:([^;,]+)/);
+      return match?.[1];
+    }
+  } catch (e) {
+    console.warn('[chat] Failed to extract media type from data URL');
+  }
+  return undefined;
+}
+
+// Validate base64 data URL
+function validateDataUrl(dataUrl: string): { valid: boolean; error?: string } {
+  try {
+    if (!dataUrl.startsWith('data:')) {
+      return { valid: false, error: 'Not a data URL' };
+    }
+
+    const [header, data] = dataUrl.split(',');
+    if (!header || !data) {
+      return { valid: false, error: 'Invalid data URL format' };
+    }
+
+    // Check if it's an image
+    if (!header.toLowerCase().includes('image/')) {
+      return { valid: false, error: 'Not an image data URL' };
+    }
+
+    // Validate base64 encoding
+    if (header.includes('base64')) {
+      // Basic base64 validation
+      if (!/^[A-Za-z0-9+/]*={0,2}$/.test(data)) {
+        return { valid: false, error: 'Invalid base64 encoding' };
+      }
+    }
+
+    // Check size (approximate, 1 base64 char ≈ 0.75 bytes)
+    const sizeBytes = data.length * 0.75;
+    const MAX_SIZE = 20 * 1024 * 1024; // 20MB
+    if (sizeBytes > MAX_SIZE) {
+      return { valid: false, error: 'Image too large (>20MB)' };
+    }
+
+    return { valid: true };
+  } catch (e) {
+    return { valid: false, error: 'Validation error' };
+  }
+}
+
+// Validate and select appropriate model based on content
+async function validateAndSelectModel(
+  requestedModel: string,
+  messages: any[]
+): Promise<string> {
+  // Check if any message contains images
+  const hasImages = messages.some((msg: any) => {
+    if (Array.isArray(msg.content)) {
+      return msg.content.some((part: any) =>
+        part.type === 'image_url' || part.type === 'image'
+      );
+    }
+    return false;
+  });
+
+  if (!hasImages) {
+    return requestedModel; // No images, use requested model
+  }
+
+  // Check if requested model supports images
+  try {
+    const canUseImages = await supportsImages(requestedModel);
+    if (canUseImages) {
+      console.log(`[chat] Model ${requestedModel} supports images`);
+      return requestedModel;
+    } else {
+      console.log(`[chat] Model ${requestedModel} lacks image support; switching to ${MODEL_DEFAULTS.CLOUD_FALLBACK}`);
+      return MODEL_DEFAULTS.CLOUD_FALLBACK;
+    }
+  } catch (e) {
+    console.warn('[chat] supportsImages check failed; using fallback model for safety');
+    return MODEL_DEFAULTS.CLOUD_FALLBACK;
+  }
 }
 
 
@@ -319,7 +436,7 @@ chatRouter.post('/', requireAuth, async (req: AuthRequest, res) => {
     const mode = typeof rawMode === 'string' ? rawMode : 'chat';
     const modeConfig: any = (MODE_CONFIGS as any)[mode] || (MODE_CONFIGS as any).chat;
     // Prioritize user-selected model over mode default
-    const model = (typeof rawModel === 'string' ? rawModel : null) || (modeConfig?.model as string) || 'google/gemini-2.5-flash-lite';
+    let model = (typeof rawModel === 'string' ? rawModel : null) || (modeConfig?.model as string) || MODEL_DEFAULTS.CHAT_MODE;
     
     // Debug logging for model selection
     console.log(`[chat] Mode: ${mode}, RawModel: ${rawModel}, SelectedModel: ${model}, ModeConfigModel: ${modeConfig?.model}`);
@@ -496,12 +613,17 @@ chatRouter.post('/', requireAuth, async (req: AuthRequest, res) => {
 
       // Phase 2 or single-phase: writer pass using agents prompt
       const writerStart = Date.now();
-      
+
+      // Validate model early (check if it supports images if needed)
+      const recentMessages = messages.slice(-8);
+      model = await validateAndSelectModel(model, recentMessages);
+      timings.model = model; // Update timing with final model
+
       // Build conversation messages
       const conversationMessages = [];
 
       // Add system message
-      const systemMessage = mode === 'chat' 
+      const systemMessage = mode === 'chat'
         ? 'You are a helpful AI assistant. Be conversational and natural.'
         : 'You are a helpful AI assistant. When sources are provided, prioritize information from them while maintaining a natural conversational tone.';
       conversationMessages.push({ role: 'system', content: systemMessage });
@@ -512,27 +634,77 @@ chatRouter.post('/', requireAuth, async (req: AuthRequest, res) => {
         conversationMessages.push({ role: 'system', content: sourcesContext });
       }
 
-      // Add conversation history (last 8 messages)
-      const recentMessages = messages.slice(-8);
+      // Add conversation history with simplified multimodal transformation
       for (const msg of recentMessages) {
         if (msg.role === 'user' || msg.role === 'assistant') {
-          let content = '';
           if (typeof msg.content === 'string') {
-            content = msg.content;
+            // Simple text content
+            if (msg.content.trim()) {
+              conversationMessages.push({ role: msg.role, content: msg.content.trim() });
+            }
           } else if (Array.isArray(msg.content)) {
-            content = msg.content
-              .filter((part: any) => part.type === 'text')
-              .map((part: any) => part.text)
-              .join(' ');
-          }
-          
-          if (content.trim()) {
-            conversationMessages.push({ role: msg.role, content: content.trim() });
+            // Multimodal content - transform to AI SDK format
+            const multimodalContent = msg.content
+              .map((part: any) => {
+                // Handle text parts
+                if (part.type === 'text' && part.text) {
+                  return { type: 'text', text: part.text };
+                }
+
+                // Handle image_url parts (OpenAI format from frontend)
+                if (part.type === 'image_url') {
+                  const imageUrl = part.image_url?.url || part.image_url;
+                  if (imageUrl && typeof imageUrl === 'string') {
+                    // Optional validation for data URLs
+                    if (imageUrl.startsWith('data:')) {
+                      const validation = validateDataUrl(imageUrl);
+                      if (!validation.valid) {
+                        console.warn(`[chat] Invalid image data URL: ${validation.error}`);
+                        return null; // Skip this image
+                      }
+                    }
+
+                    // AI SDK expects simple format: type 'image' with image property
+                    return {
+                      type: 'image',
+                      image: imageUrl,
+                      // Optional: extract mediaType from data URL
+                      ...(imageUrl.startsWith('data:') && {
+                        mediaType: extractMediaType(imageUrl)
+                      })
+                    };
+                  }
+                }
+
+                // Handle image parts (already in AI SDK format)
+                if (part.type === 'image' && part.image) {
+                  return { type: 'image', image: part.image };
+                }
+
+                // Drop invalid parts
+                return null;
+              })
+              .filter((part: any) => part !== null);
+
+            if (multimodalContent.length > 0) {
+              conversationMessages.push({ role: msg.role, content: multimodalContent });
+            }
           }
         }
       }
       
       console.log(`[chat] Using ${conversationMessages.length} messages for context (including system${isTwoPhase ? ' and sources' : ''})`);
+      
+      // Log multimodal content for debugging
+      const multimodalMessages = conversationMessages.filter(msg => Array.isArray(msg.content));
+      if (multimodalMessages.length > 0) {
+        console.log(`[chat] Found ${multimodalMessages.length} multimodal messages`);
+        multimodalMessages.forEach((msg, idx) => {
+          const imageCount = msg.content.filter((part: any) => part.type === 'image').length;
+          const textCount = msg.content.filter((part: any) => part.type === 'text').length;
+          console.log(`[chat] Message ${idx}: ${textCount} text parts, ${imageCount} image parts`);
+        });
+      }
       
       await streamWithAiSDK({
         model,
@@ -571,5 +743,3 @@ chatRouter.post('/', requireAuth, async (req: AuthRequest, res) => {
     res.status(500).json({ error: 'Chat request failed', message: error.message });
   }
 });
-
-

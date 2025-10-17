@@ -218,15 +218,37 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
 
   List<String> _getModalities(Map<String, dynamic> model) {
     List<String> modalities = [];
-    final inputModalities =
-        model['inputModalities'] as List<dynamic>? ??
-        model['input_modalities'] as List<dynamic>? ??
-        model['architecture']?['input_modalities'] as List<dynamic>? ??
-        [];
+    
+    // Try multiple sources for input modalities
+    final inputModalities = model['inputModalities'] as List<dynamic>? ??
+                           model['input_modalities'] as List<dynamic>? ??
+                           model['architecture']?['input_modalities'] as List<dynamic>? ??
+                           [];
+    
     modalities = inputModalities
         .map((modality) => modality.toString().toLowerCase())
         .toList();
+    
+    // If no modalities found, default to text
     if (modalities.isEmpty) modalities = ['text'];
+    
+    // Debug: Print what we're getting in model switcher (only for specific models)
+    if (model['id']?.toString().contains('gpt') == true || 
+        model['id']?.toString().contains('claude') == true || 
+        model['id']?.toString().contains('gemini') == true) {
+      print('🔍 Model ${model['id']} modalities in switcher:');
+      print('  - inputModalities: ${model['inputModalities']}');
+      print('  - outputModalities: ${model['outputModalities']}');
+      print('  - architecture: ${model['architecture']}');
+      print('  - extracted modalities: $modalities');
+      
+      // Also check if the model supports images based on capabilities
+      if (model['supportsImages'] == true && !modalities.contains('image')) {
+        print('  - Adding image modality based on supportsImages flag');
+        modalities.add('image');
+      }
+    }
+    
     return modalities;
   }
 

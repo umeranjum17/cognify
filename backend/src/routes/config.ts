@@ -138,18 +138,46 @@ configRouter.get('/models', requireAuth, async (req, res) => {
           };
         }
         const isFree = pricing[model.id]?.input === 0 && pricing[model.id]?.output === 0;
+        
+        // Extract modalities from OpenRouter architecture
+        const modalities = model.architecture?.modality || [];
+        const inputModalities = [];
+        const outputModalities = ['text']; // Default to text output
+        
+        // Map OpenRouter modalities to our format
+        if (modalities.includes('text')) inputModalities.push('text');
+        if (modalities.includes('image')) inputModalities.push('image');
+        if (modalities.includes('audio')) inputModalities.push('audio');
+        if (modalities.includes('video')) inputModalities.push('video');
+        
+        // Default to text if no modalities specified
+        if (inputModalities.length === 0) inputModalities.push('text');
+        
+        // Some models support image output
+        if (modalities.includes('image')) outputModalities.push('image');
+        if (modalities.includes('audio')) outputModalities.push('audio');
+
         capabilities[model.id] = {
           provider: model.id.split('/')[0] || 'unknown',
           isFree,
           isReasoning: model.id.includes('r1') || model.id.includes('reasoning'),
           maxTokens: model.context_length || 8192,
           description: model.description || model.name || 'No description available',
-          inputModalities: ['text'],
-          outputModalities: ['text'],
-          supportsImages: model.architecture?.modality?.includes('image') || false,
+          inputModalities,
+          outputModalities,
+          supportsImages: modalities.includes('image'),
           supportsFiles: false,
-          isMultimodal: model.architecture?.modality?.includes('image') || false,
+          isMultimodal: modalities.length > 1,
         };
+
+        // Debug: Print what we're setting for specific models
+        if (model.id.includes('gpt') || model.id.includes('claude') || model.id.includes('gemini')) {
+          console.log(`🔍 Backend setting capabilities for ${model.id}:`);
+          console.log(`  - inputModalities: ${inputModalities}`);
+          console.log(`  - outputModalities: ${outputModalities}`);
+          console.log(`  - supportsImages: ${modalities.includes('image')}`);
+          console.log(`  - isMultimodal: ${modalities.length > 1}`);
+        }
 
         const p = pricing[model.id];
         if (p) {

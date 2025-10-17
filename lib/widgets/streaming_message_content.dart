@@ -9,6 +9,7 @@ import '../models/streaming_message.dart';
 import '../theme/app_theme.dart';
 import '../utils/logger.dart';
 import 'safe_mermaid_code_builder.dart';
+import 'multimodal_message_content.dart';
 
 /// Widget that displays message content with real-time streaming support
 class StreamingMessageContent extends StatefulWidget {
@@ -55,6 +56,15 @@ class _StreamingMessageContentState extends State<StreamingMessageContent> {
 
   @override
   Widget build(BuildContext context) {
+    // Check if this is a user message with multimodal content
+    if (widget.message.type == 'user' && widget.message.content is List) {
+      // For user messages with multimodal content, use the multimodal widget
+      return MultimodalMessageContent(
+        message: widget.message,
+        theme: widget.theme,
+      );
+    }
+
     // Use the simple approach that works in the streaming test
     final String contentToRender = _displayedContent.isNotEmpty
         ? _displayedContent

@@ -3497,15 +3497,47 @@ class _EditorScreenState extends State<EditorScreen> {
       });
     }
 
+    // Build multimodal content if attachments exist
+    dynamic content;
+    if (_attachments.isNotEmpty) {
+      final contentParts = <Map<String, dynamic>>[];
+
+      // Combine any textual parts into a single string
+      if (messageContent.isNotEmpty) {
+        final combinedText = messageContent
+            .where((m) => m['type'] == 'text' && m['text'] is String)
+            .map((m) => m['text'] as String)
+            .join('\n');
+        if (combinedText.isNotEmpty) {
+          contentParts.add({
+            'type': 'text',
+            'text': combinedText,
+          });
+        }
+      }
+
+      // Add image attachments
+      for (final attachment in _attachments) {
+        if (attachment.isImage) {
+          contentParts.add({
+            'type': 'image_url',
+            'image_url': {
+              'url': 'data:${attachment.mimeType};base64,${attachment.base64Data}',
+            },
+          });
+        }
+      }
+
+      content = contentParts;
+    } else {
+      content = messageContent;
+    }
+
     final userMessage = Message(
       id: messageId,
       type: 'user',
-      content: messageContent,
+      content: content,
       timestamp: DateTime.now().toIso8601String(),
-      // File attachments simplified - attachment API changed
-      // attachments: _attachments.isNotEmpty
-      //     ? _attachments.map((fa) => Attachment.fromFileAttachment(fa)).toList()
-      //     : null,
     );
 
     setState(() {
@@ -4312,20 +4344,20 @@ class _EditorScreenState extends State<EditorScreen> {
     }
 
     // Add file options - Always show as enabled for now, let the model handle the error
-    options.add(
-      ListTile(
-        leading: const Icon(Icons.picture_as_pdf),
-        title: const Text('Choose Document (PDF, DOC, TXT)'),
-        subtitle: capabilities?.supportsFiles != true
-            ? const Text('May not be supported by current model')
-            : null,
-        onTap: () {
-          Navigator.pop(context);
-          Logger.debug('📄 Document option selected', tag: 'EditorScreen');
-          _pickDocument();
-        },
-      ),
-    );
+    // options.add(
+    //   ListTile(
+    //     leading: const Icon(Icons.picture_as_pdf),
+    //     title: const Text('Choose Document (PDF, DOC, TXT)'),
+    //     subtitle: capabilities?.supportsFiles != true
+    //         ? const Text('May not be supported by current model')
+    //         : null,
+    //     onTap: () {
+    //       Navigator.pop(context);
+    //       Logger.debug('📄 Document option selected', tag: 'EditorScreen');
+    //       _pickDocument();
+    //     },
+    //   ),
+    // );
 
     showModalBottomSheet(
       context: context,
