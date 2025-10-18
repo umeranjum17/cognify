@@ -495,6 +495,11 @@ class _ModelQuickSwitcherState extends State<ModelQuickSwitcher> {
         Padding(
           padding: const EdgeInsets.all(16),
           child: TextField(
+            contextMenuBuilder: (context, editableTextState) {
+              return AdaptiveTextSelectionToolbar.editableText(
+                editableTextState: editableTextState,
+              );
+            },
             onChanged: (value) {
               setState(() {
                 _searchQuery = value;

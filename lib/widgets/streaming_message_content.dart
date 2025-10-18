@@ -160,7 +160,11 @@ class _StreamingMessageContentState extends State<StreamingMessageContent> {
         codeblockDecoration: BoxDecoration(
           color: widget.theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(AppColors.borderRadiusSm),
-          border: Border.all(color: widget.theme.dividerColor),
+          border: Border.all(
+            color: widget.theme.colorScheme.outlineVariant
+                .withValues(alpha: widget.theme.brightness == Brightness.dark ? 0.28 : 0.45),
+            width: 1,
+          ),
         ),
         blockquoteDecoration: BoxDecoration(
           color: widget.theme.colorScheme.surface.withValues(alpha: 0.5),

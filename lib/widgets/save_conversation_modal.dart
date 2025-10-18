@@ -340,6 +340,11 @@ class _SaveConversationModalState extends State<SaveConversationModal> {
           const SizedBox(height: AppColors.spacingSm),
           TextField(
             controller: _titleController,
+            contextMenuBuilder: (context, editableTextState) {
+              return AdaptiveTextSelectionToolbar.editableText(
+                editableTextState: editableTextState,
+              );
+            },
             decoration: InputDecoration(
               hintText: 'Enter a title for your saved content',
               border: OutlineInputBorder(
@@ -363,6 +368,11 @@ class _SaveConversationModalState extends State<SaveConversationModal> {
               Expanded(
                 child: TextField(
                   controller: _tagController,
+                  contextMenuBuilder: (context, editableTextState) {
+                    return AdaptiveTextSelectionToolbar.editableText(
+                      editableTextState: editableTextState,
+                    );
+                  },
                   decoration: InputDecoration(
                     hintText: 'Add a tag',
                     border: OutlineInputBorder(

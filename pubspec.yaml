@@ -51,6 +51,7 @@ dependencies:
 
   # UI Components
   flutter_markdown: ^0.6.18       # Markdown rendering
+  flutter_highlight: ^0.7.0       # Syntax highlighted code blocks
   cached_network_image: ^3.3.1    # Image caching
   flutter_animate: ^4.5.0         # Advanced animations
 

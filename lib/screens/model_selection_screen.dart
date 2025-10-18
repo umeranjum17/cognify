@@ -326,6 +326,11 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
               ),
             ),
             child: TextField(
+              contextMenuBuilder: (context, editableTextState) {
+                return AdaptiveTextSelectionToolbar.editableText(
+                  editableTextState: editableTextState,
+                );
+              },
               decoration: InputDecoration(
                 hintText: 'Search models...',
                 hintStyle: TextStyle(

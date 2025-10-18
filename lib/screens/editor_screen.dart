@@ -5,6 +5,7 @@ import 'dart:math' as math;
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import '../services/request_usage_estimator.dart';
 import '../models/mode_config.dart';
 import 'package:flutter/services.dart';
@@ -49,6 +50,7 @@ import '../widgets/streaming_message_content.dart';
 import '../widgets/unified_settings_modal.dart';
 import '../widgets/model_quick_switcher_modal.dart';
 import '../widgets/model_capabilities_bottom_sheet.dart';
+import '../widgets/copy_message_sheet.dart';
 import 'model_selection_screen.dart';
 import '../services/session_cost_service.dart';
 import '../services/credit_event_service.dart';
@@ -1318,6 +1320,14 @@ class _EditorScreenState extends State<EditorScreen> {
                             focusNode: _messageFocusNode,
                             maxLines: null,
                             minLines: 1,
+                            // Use Flutter-rendered context menu to avoid
+                            // SystemContextMenu assertion when no active
+                            // text input connection (iOS 16+).
+                            contextMenuBuilder: (context, editableTextState) {
+                              return AdaptiveTextSelectionToolbar.editableText(
+                                editableTextState: editableTextState,
+                              );
+                            },
                             keyboardType: TextInputType.multiline,
                             textInputAction: TextInputAction.newline,
                             style: theme.textTheme.bodyLarge?.copyWith(
@@ -1530,27 +1540,7 @@ class _EditorScreenState extends State<EditorScreen> {
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
               ),
-              // Retry with different model button (for user messages)
-              if (isUser)
-                Padding(
-                  padding: const EdgeInsets.only(left: 8),
-                  child: IconButton(
-                    onPressed: () => _retryUserMessageWithModel(message),
-                    icon: const Icon(Icons.sync_alt, size: 14),
-                    iconSize: 14,
-                    padding: const EdgeInsets.all(2),
-                    constraints: const BoxConstraints(
-                      minWidth: 20,
-                      minHeight: 20,
-                    ),
-                    tooltip: 'Switch model and retry',
-                    style: IconButton.styleFrom(
-                      foregroundColor: theme.colorScheme.onSurface.withValues(
-                        alpha: 0.4,
-                      ),
-                    ),
-                  ),
-                ),
+              // Removed inline retry-with-model button; use context menu instead
             ],
           ),
 
@@ -1611,7 +1601,22 @@ class _EditorScreenState extends State<EditorScreen> {
             ),
             alignment: Alignment.centerLeft,
             child: isUser
-                ? Text(message.textContent, style: theme.textTheme.bodyMedium)
+                ? SelectableText(
+                    message.textContent,
+                    style: theme.textTheme.bodyMedium,
+                    contextMenuBuilder: (context, selectableTextState) {
+                      return AdaptiveTextSelectionToolbar.selectable(
+                        anchors: selectableTextState.contextMenuAnchors,
+                        onCopy: () => selectableTextState.copySelection(SelectionChangedCause.toolbar),
+                        onSelectAll: () => selectableTextState.selectAll(SelectionChangedCause.toolbar),
+                        onShare: () => selectableTextState.shareSelection(SelectionChangedCause.toolbar),
+                        selectionGeometry: SelectionGeometry(
+                          status: SelectionStatus.uncollapsed,
+                          hasContent: true,
+                        ),
+                      );
+                    },
+                  )
                 : Builder(
                     builder: (context) {
                       // Always show streaming content for assistant, even if isProcessing is true
@@ -5778,64 +5783,25 @@ class _EditorScreenState extends State<EditorScreen> {
     _messageFocusNode.requestFocus();
   }
 
-  /// Show friendly copy dialog with options
+  /// Best-in-class copy experience: full-screen sheet with selection
   void _showCopyDialog(Message message) {
-    final hasCode = TextUtils.hasCodeBlocks(message.textContent);
-    final codeBlockCount = hasCode ? TextUtils.countCodeBlocks(message.textContent) : 0;
+    // Prefer the final textContent; if empty (e.g., streaming), try the live controller
+    String content = message.textContent;
+    if (content.trim().isEmpty) {
+      final controller = StreamingMessageRegistry().getController(message.id);
+      if (controller != null && controller.content.trim().isNotEmpty) {
+        content = controller.content;
+      }
+    }
 
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Row(
-          children: [
-            Icon(Icons.content_copy, size: 20),
-            SizedBox(width: 8),
-            Text('Copy Message'),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              'What would you like to copy?',
-              style: TextStyle(fontSize: 14),
-            ),
-            const SizedBox(height: 16),
-
-            // Copy entire message (plain text)
-            _CopyOptionButton(
-              icon: Icons.article,
-              title: 'Entire Message',
-              subtitle: 'Copy as clean, readable text',
-              onTap: () {
-                Navigator.of(ctx).pop();
-                _copyMessage(message, asMarkdown: false);
-              },
-            ),
-
-            const SizedBox(height: 8),
-
-            // Copy code only (if has code blocks)
-            if (hasCode)
-              _CopyOptionButton(
-                icon: Icons.code,
-                title: 'Code Only',
-                subtitle: '$codeBlockCount code ${codeBlockCount == 1 ? "block" : "blocks"}',
-                onTap: () {
-                  Navigator.of(ctx).pop();
-                  _copyCodeOnly(message);
-                },
-              ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancel'),
-          ),
-        ],
-      ),
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return CopyMessageSheet(content: content, messageId: message.id);
+      },
     );
   }
 

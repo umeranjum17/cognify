@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import '../models/message.dart';
 import '../theme/app_theme.dart';
 
@@ -30,13 +31,25 @@ class MultimodalMessageContent extends StatelessWidget {
 
   Widget _buildTextContent(String text) {
     if (text.isEmpty) return const SizedBox.shrink();
-    
-    return Text(
+
+    return SelectableText(
       text,
       style: theme.textTheme.bodyMedium?.copyWith(
         height: 1.5,
         fontSize: 14,
       ),
+      contextMenuBuilder: (context, selectableTextState) {
+        return AdaptiveTextSelectionToolbar.selectable(
+          anchors: selectableTextState.contextMenuAnchors,
+          onCopy: () => selectableTextState.copySelection(SelectionChangedCause.toolbar),
+          onSelectAll: () => selectableTextState.selectAll(SelectionChangedCause.toolbar),
+          onShare: () => selectableTextState.shareSelection(SelectionChangedCause.toolbar),
+          selectionGeometry: SelectionGeometry(
+            status: SelectionStatus.uncollapsed,
+            hasContent: true,
+          ),
+        );
+      },
     );
   }
 

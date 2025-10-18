@@ -70,6 +70,11 @@ class _ConversationHistoryScreenState extends State<ConversationHistoryScreen> {
             padding: const EdgeInsets.all(16),
             child: TextField(
               controller: _searchController,
+              contextMenuBuilder: (context, editableTextState) {
+                return AdaptiveTextSelectionToolbar.editableText(
+                  editableTextState: editableTextState,
+                );
+              },
               decoration: InputDecoration(
                 hintText: 'Search conversations...',
                 prefixIcon: const Icon(Icons.search),

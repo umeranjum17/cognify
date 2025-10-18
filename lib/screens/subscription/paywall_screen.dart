@@ -1,5 +1,6 @@
 import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:provider/provider.dart';
 
@@ -251,6 +252,18 @@ class _PaywallScreenState extends State<PaywallScreen> {
                                 fontSize: 12,
                                 fontFamily: 'monospace',
                               ),
+                              contextMenuBuilder: (context, selectableTextState) {
+                                return AdaptiveTextSelectionToolbar.selectable(
+                                  anchors: selectableTextState.contextMenuAnchors,
+                                  onCopy: () => selectableTextState.copySelection(SelectionChangedCause.toolbar),
+                                  onSelectAll: () => selectableTextState.selectAll(SelectionChangedCause.toolbar),
+                                  onShare: () => selectableTextState.shareSelection(SelectionChangedCause.toolbar),
+                                  selectionGeometry: SelectionGeometry(
+                                    status: SelectionStatus.uncollapsed,
+                                    hasContent: true,
+                                  ),
+                                );
+                              },
                             ),
                           ),
                           const SizedBox(height: 8),

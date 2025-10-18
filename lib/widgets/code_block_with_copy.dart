@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:markdown/markdown.dart' as md;
+import 'package:flutter_highlight/flutter_highlight.dart';
+import 'package:flutter_highlight/themes/monokai-sublime.dart';
+import 'package:flutter_highlight/themes/github.dart';
 import '../theme/app_theme.dart';
 
 /// Custom markdown code builder that adds a copy button to code blocks
@@ -65,56 +68,71 @@ class CodeBlockWithCopy extends MarkdownElementBuilder {
   }
 
   Widget _buildCodeBlock(String code, String language) {
+    final isDark = theme.brightness == Brightness.dark;
+    final surfaceColor = isDark ? AppColors.darkCard : AppColors.lightCard;
+    final headerColor = isDark
+        ? AppColors.darkBackgroundLight.withValues(alpha: 0.3)
+        : AppColors.lightBackgroundLight.withValues(alpha: 0.5);
+    
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
+      margin: const EdgeInsets.symmetric(vertical: 12),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(AppColors.borderRadiusSm),
-        border: Border.all(color: theme.dividerColor),
+        color: surfaceColor,
+        borderRadius: BorderRadius.circular(AppColors.borderRadiusMd),
+        boxShadow: [
+          if (isDark)
+            BoxShadow(
+              color: Colors.black.withOpacity(0.4),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            )
+          else
+            BoxShadow(
+              color: Colors.black.withOpacity(0.12),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+            ),
+        ],
       ),
+      clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // Header with language and copy button
           Container(
             padding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 8,
+              horizontal: 16,
+              vertical: 10,
             ),
             decoration: BoxDecoration(
-              color: theme.dividerColor.withValues(alpha: 0.1),
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(AppColors.borderRadiusSm),
-                topRight: Radius.circular(AppColors.borderRadiusSm),
-              ),
+              color: headerColor,
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Language label
                 if (language.isNotEmpty)
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 2,
+                      horizontal: 10,
+                      vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(4),
+                      color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
                       language,
                       style: theme.textTheme.bodySmall?.copyWith(
-                        fontSize: 11,
+                        fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: theme.colorScheme.primary,
+                        letterSpacing: 0.5,
                       ),
                     ),
                   )
                 else
                   const SizedBox.shrink(),
 
-                // Copy button
                 _CopyButton(
                   code: code,
                   theme: theme,
@@ -123,18 +141,21 @@ class CodeBlockWithCopy extends MarkdownElementBuilder {
             ),
           ),
 
-          // Code content
+          // Code content using flutter_highlight
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(16),
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
-              child: SelectableText(
+              child: HighlightView(
                 code,
-                style: theme.textTheme.bodySmall?.copyWith(
+                language: language.isEmpty ? 'plaintext' : language,
+                theme: isDark ? monokaiSublimeTheme : githubTheme,
+                textStyle: theme.textTheme.bodySmall?.copyWith(
                   fontFamily: 'monospace',
-                  fontSize: 13,
-                  height: 1.4,
+                  fontSize: 14,
+                  height: 1.5,
                 ),
+                padding: EdgeInsets.zero,
               ),
             ),
           ),
@@ -179,32 +200,41 @@ class _CopyButtonState extends State<_CopyButton> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = widget.theme.brightness == Brightness.dark;
+    final buttonColor = isDark 
+        ? AppColors.darkBackgroundLight.withValues(alpha: 0.4)
+        : AppColors.lightBackgroundLight.withValues(alpha: 0.6);
+    
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: _copyCode,
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(6),
         child: Container(
           padding: const EdgeInsets.symmetric(
-            horizontal: 8,
-            vertical: 4,
+            horizontal: 12,
+            vertical: 6,
+          ),
+          decoration: BoxDecoration(
+            color: buttonColor,
+            borderRadius: BorderRadius.circular(6),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
                 _copied ? Icons.check : Icons.copy,
-                size: 14,
+                size: 16,
                 color: _copied
                     ? Colors.green
                     : widget.theme.textTheme.bodySmall?.color,
               ),
-              const SizedBox(width: 4),
+              const SizedBox(width: 6),
               Text(
                 _copied ? 'Copied!' : 'Copy',
                 style: widget.theme.textTheme.bodySmall?.copyWith(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
                   color: _copied
                       ? Colors.green
                       : widget.theme.textTheme.bodySmall?.color,

@@ -248,6 +248,11 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                   const SizedBox(height: 12),
                   TextField(
                     controller: _feedbackController,
+                    contextMenuBuilder: (context, editableTextState) {
+                      return AdaptiveTextSelectionToolbar.editableText(
+                        editableTextState: editableTextState,
+                      );
+                    },
                     maxLines: 6,
                     decoration: InputDecoration(
                       hintText: 'Describe your idea, bug report, or feature request...',
@@ -285,6 +290,11 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                   const SizedBox(height: 16),
                   TextField(
                     controller: _contactEmailController,
+                    contextMenuBuilder: (context, editableTextState) {
+                      return AdaptiveTextSelectionToolbar.editableText(
+                        editableTextState: editableTextState,
+                      );
+                    },
                     decoration: InputDecoration(
                       hintText: 'Optional: Your email for follow-up',
                       hintStyle: TextStyle(

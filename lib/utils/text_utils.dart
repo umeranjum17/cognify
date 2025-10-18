@@ -1,61 +1,86 @@
+import 'package:markdown/markdown.dart' as md;
+import 'package:html/parser.dart' as html_parser;
+
 /// Utility functions for text processing and formatting
 class TextUtils {
-  /// Strips markdown formatting from text while preserving structure
-  /// Converts markdown to clean, readable plain text
-  static String stripMarkdown(String text) {
-    String result = text;
+  /// Robust markdown-to-plain-text conversion using markdown AST.
+  /// Preserves newlines and list bullets; removes formatting.
+  static String stripMarkdown(String source) {
+    if (source.trim().isEmpty) return '';
 
-    // Remove code blocks (```code```) but keep the code content
-    result = result.replaceAllMapped(
-      RegExp(r'```[\w]*\n([\s\S]*?)```', multiLine: true),
-      (match) => '\n${match.group(1)?.trim() ?? ''}\n',
-    );
+    final document = md.Document(extensionSet: md.ExtensionSet.gitHubFlavored);
+    final nodes = document.parseLines(source.split('\n'));
+    final buffer = StringBuffer();
+    final List<int> olStack = [];
 
-    // Remove inline code backticks (`code`)
-    result = result.replaceAllMapped(
-      RegExp(r'`([^`]+)`'),
-      (match) => match.group(1) ?? '',
-    );
+    void walk(md.Node node, {String? parentTag}) {
+      if (node is md.Text) {
+        buffer.write(node.text);
+        return;
+      }
+      if (node is md.Element) {
+        final tag = node.tag;
+        if (tag == 'br') {
+          buffer.writeln();
+          return;
+        }
+        if (tag == 'img') {
+          final alt = node.attributes['alt'] ?? '';
+          buffer.write(alt);
+          return;
+        }
+        if (tag == 'hr') {
+          buffer.writeln();
+          buffer.writeln();
+          return;
+        }
+        if (tag == 'ul' || tag == 'ol') {
+          if (tag == 'ol') olStack.add(1);
+          for (final child in node.children ?? const <md.Node>[]) {
+            if (child is md.Element && child.tag == 'li') {
+              if (tag == 'ol') {
+                final index = olStack.isNotEmpty ? olStack.last : 1;
+                buffer.write('$index. ');
+                walk(child, parentTag: 'ol');
+                if (olStack.isNotEmpty) olStack[olStack.length - 1]++;
+              } else {
+                buffer.write('• ');
+                walk(child, parentTag: 'ul');
+              }
+              buffer.writeln();
+            } else {
+              walk(child, parentTag: tag);
+            }
+          }
+          if (tag == 'ol' && olStack.isNotEmpty) olStack.removeLast();
+          return;
+        }
+        final isBlock = <String>{
+          'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+          'blockquote', 'pre', 'table', 'tr', 'td', 'th', 'code',
+        }.contains(tag);
+        for (final child in node.children ?? const <md.Node>[]) {
+          walk(child, parentTag: tag);
+        }
+        if (isBlock) {
+          buffer.writeln();
+          if (tag == 'h1' || tag == 'h2') buffer.writeln();
+        }
+        return;
+      }
+    }
 
-    // Remove bold (**text** or __text__)
-    result = result.replaceAll(RegExp(r'\*\*([^\*]+)\*\*'), r'$1');
-    result = result.replaceAll(RegExp(r'__([^_]+)__'), r'$1');
+    for (final node in nodes) {
+      walk(node);
+    }
 
-    // Remove italic (*text* or _text_)
-    result = result.replaceAll(RegExp(r'\*([^\*]+)\*'), r'$1');
-    result = result.replaceAll(RegExp(r'_([^_]+)_'), r'$1');
-
-    // Remove strikethrough (~~text~~)
-    result = result.replaceAll(RegExp(r'~~([^~]+)~~'), r'$1');
-
-    // Remove headers (# Header)
-    result = result.replaceAll(RegExp(r'^#{1,6}\s+', multiLine: true), '');
-
-    // Remove blockquotes (> quote)
-    result = result.replaceAll(RegExp(r'^>\s+', multiLine: true), '');
-
-    // Remove horizontal rules (---, ___, ***)
-    result = result.replaceAll(RegExp(r'^[\-_\*]{3,}$', multiLine: true), '');
-
-    // Convert markdown links [text](url) to just text
-    result = result.replaceAllMapped(
-      RegExp(r'\[([^\]]+)\]\([^\)]+\)'),
-      (match) => match.group(1) ?? '',
-    );
-
-    // Remove image syntax ![alt](url)
-    result = result.replaceAll(RegExp(r'!\[([^\]]*)\]\([^\)]+\)'), r'$1');
-
-    // Remove list markers (-, *, +, 1.)
-    result = result.replaceAll(RegExp(r'^[\s]*[-\*\+]\s+', multiLine: true), '');
-    result = result.replaceAll(RegExp(r'^[\s]*\d+\.\s+', multiLine: true), '');
-
-    // Clean up multiple blank lines (more than 2 consecutive)
-    result = result.replaceAll(RegExp(r'\n{3,}'), '\n\n');
-
-    // Trim leading/trailing whitespace
-    result = result.trim();
-
+    var result = buffer
+        .toString()
+        .replaceAll(RegExp(r'\s+\n'), '\n')
+        .replaceAll(RegExp(r'\n{3,}'), '\n\n')
+        .trim();
+    // Decode any HTML entities that may have slipped through
+    result = html_parser.parseFragment(result).text ?? result;
     return result;
   }
 
