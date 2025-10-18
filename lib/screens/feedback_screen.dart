@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../providers/firebase_auth_provider.dart';
+import '../config/app_config.dart';
 import '../services/feedback_service.dart';
 import '../services/analytics_service.dart';
 import '../theme/app_theme.dart';
@@ -39,6 +40,12 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
     try {
       final authProvider = Provider.of<FirebaseAuthProvider>(context, listen: false);
       final user = authProvider.user;
+      // Build rich context to help backend triage
+      final locale = Localizations.localeOf(context).toString();
+      final mq = MediaQuery.of(context);
+      final isDarkNow = Theme.of(context).brightness == Brightness.dark;
+      final themeMode = isDarkNow ? 'dark' : 'light';
+
       await FeedbackService.instance.submit(
         message: message,
         userId: user?.uid,
@@ -46,7 +53,19 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
             ? _contactEmailController.text.trim()
             : user?.email,
         extra: {
+          'route': 'feedback',
           'platform': Theme.of(context).platform.toString(),
+          'theme': themeMode,
+          'locale': locale,
+          'screen': {
+            'width': mq.size.width,
+            'height': mq.size.height,
+            'devicePixelRatio': mq.devicePixelRatio,
+          },
+          'app': {
+            'name': AppConfig.appName,
+            'version': AppConfig.appVersion,
+          },
         },
       );
       AnalyticsService.instance.logEvent('feedback_submitted');

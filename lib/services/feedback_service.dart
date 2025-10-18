@@ -1,15 +1,10 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+import '../api/api.dart';
+import '../config/app_config.dart';
 
 class FeedbackService {
   FeedbackService._();
   static final FeedbackService instance = FeedbackService._();
-
-  CollectionReference<Map<String, dynamic>> get _collection =>
-      FirebaseFirestore.instance.collection('feedback').withConverter(
-            fromFirestore: (snap, _) => snap.data() ?? <String, dynamic>{},
-            toFirestore: (data, _) => data,
-          );
 
   Future<void> submit({
     required String message,
@@ -18,28 +13,36 @@ class FeedbackService {
     Map<String, dynamic>? extra,
   }) async {
     try {
-      final payload = <String, dynamic>{
-        'message': message.trim(),
-        if (userId != null) 'userId': userId,
-        if (userEmail != null && userEmail.isNotEmpty) 'userEmail': userEmail,
-        'createdAt': FieldValue.serverTimestamp(),
+      // Route feedback through backend API (not client-side Firestore)
+      // Enrich with app context + any provided extras
+      final context = <String, dynamic>{
+        'user': {
+          if (userId != null) 'id': userId,
+          if (userEmail != null && userEmail.isNotEmpty) 'email': userEmail,
+        },
+        'app': {
+          'name': AppConfig.appName,
+          'version': AppConfig.appVersion,
+          'backendBaseUrl': AppConfig.backendBaseUrl,
+        },
         if (extra != null) ...extra,
       };
-      
-      await _collection.add(payload);
-      
-      if (kDebugMode) {
-        print('✅ Feedback submitted successfully to Firestore');
-      }
+
+      await API.instance.sendFeedback(
+        message: message.trim(),
+        contactEmail: userEmail,
+        context: context,
+      );
+
+      if (kDebugMode) print('✅ Feedback submitted successfully via backend');
     } catch (e) {
       if (kDebugMode) {
-        print('❌ Firestore feedback submission failed: $e');
+        print('❌ Backend feedback submission failed: $e');
       }
-      
-      // Re-throw with more context
-      throw Exception('Failed to submit feedback to database: ${e.toString()}');
+
+      // Re-throw with more context for UI to handle fallback
+      throw Exception('Failed to submit feedback to backend: ${e.toString()}');
     }
   }
 }
-
 

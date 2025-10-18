@@ -2,6 +2,6 @@
 #include? "../Pods/Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"
 
 // Production flavor configuration
-PRODUCT_BUNDLE_IDENTIFIER = com.umerfarooq1995.cognifyFlutter
+PRODUCT_BUNDLE_IDENTIFIER = com.umerfarooq1995.cognify-flutter
 PRODUCT_NAME = Cognify
 DISPLAY_NAME = Cognify

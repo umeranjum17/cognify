@@ -436,6 +436,61 @@ class API {
     }
   }
 
+  // ========== FEEDBACK ==========
+
+  /// Send user feedback to backend with auth and rich context
+  ///
+  /// Parameters:
+  /// - `message`: Feedback text from the user
+  /// - `contactEmail`: Optional email to follow up
+  /// - `context`: Additional diagnostic/context data (theme, route, locale, etc.)
+  ///
+  /// The request automatically includes Authorization header (Firebase ID token)
+  /// so the backend can associate the feedback with the authenticated user.
+  Future<void> sendFeedback({
+    required String message,
+    String? contactEmail,
+    Map<String, dynamic>? context,
+  }) async {
+    try {
+      final headers = await _getAuthHeaders();
+
+      // Basic user metadata for context (non-sensitive)
+      final fbUser = fb.FirebaseAuth.instance.currentUser;
+
+      final payload = <String, dynamic>{
+        'message': message.trim(),
+        if (contactEmail != null && contactEmail.isNotEmpty)
+          'contactEmail': contactEmail.trim(),
+        'meta': {
+          'timestamp': DateTime.now().toIso8601String(),
+          'app': {
+            'name': AppConfig.appName,
+            'version': AppConfig.appVersion,
+            'backendBaseUrl': AppConfig.backendBaseUrl,
+          },
+          'auth': {
+            'isAuthenticated': fbUser != null,
+            if (fbUser != null) 'uid': fbUser.uid,
+            if (fbUser != null) 'isAnonymous': fbUser.isAnonymous,
+            if (fbUser != null) 'email': fbUser.email,
+            if (fbUser != null) 'providers': fbUser.providerData.map((p) => p.providerId).toList(),
+          },
+          if (context != null) 'context': context,
+        },
+      };
+
+      await _dio.post(
+        '/api/feedback',
+        data: payload,
+        options: Options(headers: headers),
+      );
+    } catch (e) {
+      print('❌ API Error [sendFeedback]: $e');
+      rethrow;
+    }
+  }
+
   // ========== REVENUECAT / SUBSCRIPTIONS ==========
 
   bool _revenueCatConfigured = false;

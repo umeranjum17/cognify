@@ -325,7 +325,7 @@ async function streamWithAiSDK(options: {
     model: getOpenRouterProvider()(options.model),
     messages: options.messages as any,
     temperature: options.temperature ?? 0.7,
-    ...(options.maxTokens ? { maxOutputTokens: options.maxTokens } : {}),
+    ...(options.maxTokens !== undefined ? { maxOutputTokens: options.maxTokens } : {}),
   });
   
   try {
@@ -442,7 +442,8 @@ chatRouter.post('/', requireAuth, async (req: AuthRequest, res) => {
     console.log(`[chat] Mode: ${mode}, RawModel: ${rawModel}, SelectedModel: ${model}, ModeConfigModel: ${modeConfig?.model}`);
     
     const userQuery = getLastUserMessageText(messages);
-    const effectiveMaxTokens = typeof maxTokens === 'number' ? maxTokens : mode === 'aipedia' ? 900 : 700;
+    // Only set maxTokens if explicitly provided - let model complete naturally otherwise
+    const effectiveMaxTokens = typeof maxTokens === 'number' ? maxTokens : undefined;
 
     // Pre-deduct credits using server-side calculation
     const requestId = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
@@ -474,7 +475,11 @@ chatRouter.post('/', requireAuth, async (req: AuthRequest, res) => {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
       Connection: 'keep-alive',
+      // Disable proxy buffering where applicable (e.g., Nginx)
+      'X-Accel-Buffering': 'no',
     });
+    // Ensure headers are flushed so the client can start receiving events immediately
+    try { (res as any).flushHeaders?.(); } catch {}
 
     const sendEvent = (obj: any) => {
       res.write(`data: ${JSON.stringify(obj)}\n\n`);
@@ -499,6 +504,7 @@ chatRouter.post('/', requireAuth, async (req: AuthRequest, res) => {
       timings.searches = [] as any[];
       timings.imagesSearch = [] as any[];
       let firstChunkSent = false;
+      let fullText = '';
       let collectedSources: any[] = [];
       let collectedImages: any[] = [];
 
@@ -717,10 +723,22 @@ chatRouter.post('/', requireAuth, async (req: AuthRequest, res) => {
             timings.writerTtfbMs = Date.now() - writerStart;
             timings.ttfbTotalMs = Date.now() - reqStartMs;
           }
+          fullText += text;
           sendEvent({ type: 'content', content: text });
         },
       });
       timings.writerTotalMs = Date.now() - writerStart;
+
+      // Emit a final completion event so frontend can finalize the message cleanly
+      sendEvent({
+        type: 'complete',
+        message: fullText,
+        sources: collectedSources,
+        images: collectedImages,
+        model,
+        llmUsed: model,
+        done: true,
+      });
 
       finish();
     } catch (err) {
