@@ -37,6 +37,7 @@ import '../providers/firebase_auth_provider.dart';
 import '../providers/anonymous_access_provider.dart';
 import '../theme/app_theme.dart';
 import '../utils/logger.dart';
+import '../utils/text_utils.dart';
 import '../widgets/cost_display_widget.dart';
 import '../widgets/enhanced_loading_indicator.dart';
 import '../widgets/model_switch_recommendation_modal.dart';
@@ -1489,11 +1490,14 @@ class _EditorScreenState extends State<EditorScreen> {
       );
     }
 
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: AppColors.spacingSm),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    return GestureDetector(
+      onLongPressStart: (details) => _showContextMenu(context, message, details.globalPosition),
+      onSecondaryTapDown: (details) => _showContextMenu(context, message, details.globalPosition),
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: AppColors.spacingSm),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
           // Message Header
           Row(
             children: [
@@ -1555,8 +1559,9 @@ class _EditorScreenState extends State<EditorScreen> {
           // Attachments
           if (message.attachments != null && message.attachments!.isNotEmpty)
             Container(
+              // Align attachments the same for user and AI messages
               margin: const EdgeInsets.only(
-                left: 40,
+                left: 0,
                 bottom: AppColors.spacingSm,
               ),
               child: Wrap(
@@ -1599,7 +1604,11 @@ class _EditorScreenState extends State<EditorScreen> {
 
           // Message Content
           Container(
-            margin: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+            // Match left padding for AI with user messages
+            margin: const EdgeInsets.only(
+              left: 0,
+              top: 4,
+            ),
             alignment: Alignment.centerLeft,
             child: isUser
                 ? Text(message.textContent, style: theme.textTheme.bodyMedium)
@@ -1725,28 +1734,40 @@ class _EditorScreenState extends State<EditorScreen> {
               ),
             ),
 
-          // Standard action buttons for assistant messages
+          // Enhanced action buttons for assistant messages
           if (!isUser && message.isProcessing != true)
             Container(
               margin: const EdgeInsets.only(top: AppColors.spacingSm),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Standard action buttons
+                  // Enhanced action buttons row
                   Wrap(
                     spacing: 8,
+                    runSpacing: 8,
                     children: [
-                      // Copy button
-                      TextButton.icon(
-                        onPressed: () => _copyMessage(message),
-                        icon: const Icon(Icons.copy, size: 14),
-                        label: const Text('Copy'),
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppColors.spacingSm,
-                            vertical: 4,
-                          ),
-                        ),
+                      // Copy button - opens dialog with options
+                      _ActionButton(
+                        icon: Icons.content_copy,
+                        label: 'Copy',
+                        onPressed: () => _showCopyDialog(message),
+                        tooltip: 'Copy message',
+                      ),
+
+                      // Regenerate button
+                      _ActionButton(
+                        icon: Icons.refresh,
+                        label: 'Regenerate',
+                        onPressed: () => _regenerateResponse(message),
+                        tooltip: 'Generate a new response',
+                      ),
+
+                      // Try Different Model button
+                      _ActionButton(
+                        icon: Icons.swap_horiz,
+                        label: 'Try Different Model',
+                        onPressed: () => _showModelSwitchForRegenerate(message),
+                        tooltip: 'Regenerate with a different AI model',
                       ),
                     ],
                   ),
@@ -1754,25 +1775,113 @@ class _EditorScreenState extends State<EditorScreen> {
               ),
             ),
 
-          // Retry button for user messages when next response failed
-          if (isUser && _shouldShowRetryButton(message))
+          // Action buttons for user messages
+          if (isUser && message.isProcessing != true)
             Container(
-              margin: const EdgeInsets.only(left: 40, top: AppColors.spacingSm),
-              child: TextButton.icon(
-                onPressed: () => _retryUserMessage(message),
-                icon: const Icon(Icons.refresh, size: 14),
-                label: const Text('Retry'),
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppColors.spacingSm,
-                    vertical: 4,
+              margin: const EdgeInsets.only(top: AppColors.spacingSm),
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  // Edit button
+                  _ActionButton(
+                    icon: Icons.edit,
+                    label: 'Edit',
+                    onPressed: () => _editUserMessage(message),
+                    tooltip: 'Edit and resend message',
                   ),
-                ),
+
+                  // Copy button
+                  _ActionButton(
+                    icon: Icons.copy,
+                    label: 'Copy',
+                    onPressed: () => _copyMessage(message, asMarkdown: false),
+                    tooltip: 'Copy message',
+                  ),
+                ],
               ),
             ),
         ],
+        ),
       ),
     );
+  }
+
+  /// Show context menu for message actions
+  void _showContextMenu(BuildContext context, Message message, Offset position) {
+    final isUser = message.type == 'user';
+    final RenderBox overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+
+    showMenu<String>(
+      context: context,
+      position: RelativeRect.fromRect(
+        position & const Size(40, 40),
+        Offset.zero & overlay.size,
+      ),
+      items: [
+        const PopupMenuItem<String>(
+          value: 'copy',
+          child: Row(
+            children: [
+              Icon(Icons.copy, size: 16),
+              SizedBox(width: 12),
+              Text('Copy'),
+            ],
+          ),
+        ),
+        const PopupMenuDivider(),
+        if (isUser)
+          const PopupMenuItem<String>(
+            value: 'edit',
+            child: Row(
+              children: [
+                Icon(Icons.edit, size: 16),
+                SizedBox(width: 12),
+                Text('Edit Message'),
+              ],
+            ),
+          ),
+        if (!isUser)
+          const PopupMenuItem<String>(
+            value: 'regenerate',
+            child: Row(
+              children: [
+                Icon(Icons.refresh, size: 16),
+                SizedBox(width: 12),
+                Text('Regenerate Response'),
+              ],
+            ),
+          ),
+        if (!isUser)
+          const PopupMenuItem<String>(
+            value: 'try_different_model',
+            child: Row(
+              children: [
+                Icon(Icons.swap_horiz, size: 16),
+                SizedBox(width: 12),
+                Text('Try Different Model'),
+              ],
+            ),
+          ),
+      ],
+    ).then((value) {
+      if (value == null) return;
+
+      switch (value) {
+        case 'copy':
+          _showCopyDialog(message);
+          break;
+        case 'edit':
+          _editUserMessage(message);
+          break;
+        case 'regenerate':
+          _regenerateResponse(message);
+          break;
+        case 'try_different_model':
+          _showModelSwitchForRegenerate(message);
+          break;
+      }
+    });
   }
 
   Widget _buildModeButton({
@@ -2412,14 +2521,26 @@ class _EditorScreenState extends State<EditorScreen> {
     return true;
   }
 
-  void _copyMessage(Message message) async {
+  void _copyMessage(Message message, {bool asMarkdown = false}) async {
     try {
-      await Clipboard.setData(ClipboardData(text: message.textContent));
+      String textToCopy;
+
+      if (asMarkdown) {
+        // Copy as-is with markdown formatting
+        textToCopy = message.textContent;
+      } else {
+        // Smart copy - strip markdown for clean, reusable text
+        textToCopy = TextUtils.stripMarkdown(message.textContent);
+      }
+
+      await Clipboard.setData(ClipboardData(text: textToCopy));
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Message copied to clipboard'),
-            duration: Duration(seconds: 2),
+          SnackBar(
+            content: Text(asMarkdown
+              ? 'Message copied with formatting'
+              : 'Message copied as plain text'),
+            duration: const Duration(seconds: 2),
           ),
         );
       }
@@ -2428,6 +2549,44 @@ class _EditorScreenState extends State<EditorScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Failed to copy message'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    }
+  }
+
+  void _copyCodeOnly(Message message) async {
+    try {
+      final codeContent = TextUtils.extractCodeOnly(message.textContent);
+
+      if (codeContent.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('No code blocks found in message'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+        return;
+      }
+
+      await Clipboard.setData(ClipboardData(text: codeContent));
+      if (mounted) {
+        final blockCount = TextUtils.countCodeBlocks(message.textContent);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Copied $blockCount code ${blockCount == 1 ? "block" : "blocks"}'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to copy code'),
             duration: Duration(seconds: 2),
           ),
         );
@@ -3297,7 +3456,7 @@ class _EditorScreenState extends State<EditorScreen> {
     }
   }
 
-  void _retryUserMessage(Message userMessage) async {
+  Future<void> _retryUserMessage(Message userMessage) async {
     // Remove any failed assistant responses after this user message
     final userIndex = _messages.indexWhere((m) => m.id == userMessage.id);
     if (userIndex != -1) {
@@ -3649,7 +3808,10 @@ class _EditorScreenState extends State<EditorScreen> {
       // Typing effect variables removed for instant streaming
 
       // Choose the appropriate streaming endpoint
-      final modelToUse = _getModelForCurrentMode();
+      // Use the currently selected model immediately; fall back to mode config
+      final modelToUse = (_selectedModel.isNotEmpty)
+          ? _selectedModel
+          : _getModelForCurrentMode();
       final currentMode = _getCurrentModeName();
       // Determine if this is a source grounded conversation
       final isSourceGrounded =
@@ -5569,6 +5731,208 @@ class _EditorScreenState extends State<EditorScreen> {
       ),
     );
   }
+
+  /// Regenerate the AI response for a given message
+  void _regenerateResponse(Message message) async {
+    // Find the user message that triggered this AI response
+    final messageIndex = _messages.indexOf(message);
+    if (messageIndex <= 0) return;
+
+    // Find the preceding user message
+    Message? userMessage;
+    for (int i = messageIndex - 1; i >= 0; i--) {
+      if (_messages[i].type == 'user') {
+        userMessage = _messages[i];
+        break;
+      }
+    }
+
+    if (userMessage == null) return;
+
+    // Remove the AI message and regenerate
+    setState(() {
+      _messages.removeAt(messageIndex);
+    });
+
+    // Resend the user message
+    await _retryUserMessage(userMessage);
+  }
+
+  /// Edit a user message and resend
+  void _editUserMessage(Message message) async {
+    // Find the message index
+    final messageIndex = _messages.indexOf(message);
+    if (messageIndex == -1) return;
+
+    // Populate the input with the message content
+    setState(() {
+      _messageController.text = message.textContent;
+    });
+
+    // Remove this message and all messages after it
+    setState(() {
+      _messages.removeRange(messageIndex, _messages.length);
+    });
+
+    // Focus on the input
+    _messageFocusNode.requestFocus();
+  }
+
+  /// Show friendly copy dialog with options
+  void _showCopyDialog(Message message) {
+    final hasCode = TextUtils.hasCodeBlocks(message.textContent);
+    final codeBlockCount = hasCode ? TextUtils.countCodeBlocks(message.textContent) : 0;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.content_copy, size: 20),
+            SizedBox(width: 8),
+            Text('Copy Message'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'What would you like to copy?',
+              style: TextStyle(fontSize: 14),
+            ),
+            const SizedBox(height: 16),
+
+            // Copy entire message (plain text)
+            _CopyOptionButton(
+              icon: Icons.article,
+              title: 'Entire Message',
+              subtitle: 'Copy as clean, readable text',
+              onTap: () {
+                Navigator.of(ctx).pop();
+                _copyMessage(message, asMarkdown: false);
+              },
+            ),
+
+            const SizedBox(height: 8),
+
+            // Copy code only (if has code blocks)
+            if (hasCode)
+              _CopyOptionButton(
+                icon: Icons.code,
+                title: 'Code Only',
+                subtitle: '$codeBlockCount code ${codeBlockCount == 1 ? "block" : "blocks"}',
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  _copyCodeOnly(message);
+                },
+              ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Show model switcher for regenerating with a different model
+  void _showModelSwitchForRegenerate(Message aiMessage) async {
+    // Find the user message that triggered this AI response
+    final messageIndex = _messages.indexOf(aiMessage);
+    if (messageIndex <= 0) return;
+
+    Message? userMessage;
+    for (int i = messageIndex - 1; i >= 0; i--) {
+      if (_messages[i].type == 'user') {
+        userMessage = _messages[i];
+        break;
+      }
+    }
+
+    if (userMessage == null) return;
+
+    // Capture non-null userMessage for closure
+    final capturedUserMessage = userMessage;
+
+    // Show model quick switcher
+    showModelQuickSwitcher(
+      context: context,
+      mode: _currentMode,
+      selectedModel: _selectedModel,
+      onModelSelected: (String newModel) async {
+        if (newModel != _selectedModel) {
+          // Switch model
+          setState(() {
+            _selectedModel = newModel;
+            _messages.removeAt(messageIndex); // Remove old AI response
+          });
+
+          // Update model in provider (same as _retryUserMessageWithModel)
+          final modeConfigProvider = Provider.of<ModeConfigProvider>(
+            context,
+            listen: false,
+          );
+          final currentConfig = modeConfigProvider.getConfigForMode(_currentMode);
+          if (currentConfig != null) {
+            modeConfigProvider.updateConfig(
+              _currentMode,
+              currentConfig.copyWith(model: newModel),
+            );
+          }
+
+          // Update LLM service with new model
+          _llmService.setCurrentModel(newModel);
+
+          // Save the new model preference
+          await _saveSelectedModel(newModel);
+
+          // Regenerate with new model
+          await _retryUserMessage(capturedUserMessage);
+
+          // Check capabilities of new model
+          _checkModelCapabilities();
+        }
+      },
+    );
+  }
+
+  Future<void> _showSignInBlocker(BuildContext context, {String? reason}) async {
+    final theme = Theme.of(context);
+    await showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (ctx) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.lock_open, color: theme.colorScheme.primary),
+            const SizedBox(width: 8),
+            const Text('Sign in to continue'),
+          ],
+        ),
+        content: Text(
+          reason ??
+              'Sign in to keep chatting, switch models, and unlock your credits.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Not now'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              context.push('/sign-in');
+            },
+            child: const Text('Sign In'),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 // Widget to display model rate consistently from backend
@@ -5671,36 +6035,117 @@ String _getModelShortName(String? modelName) {
   final shortName = lastPart.split('-').first;
   return shortName.length > 8 ? shortName.substring(0, 8) : shortName;
 }
-  Future<void> _showSignInBlocker(BuildContext context, {String? reason}) async {
+
+/// Reusable action button widget for message actions
+class _ActionButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onPressed;
+  final String? tooltip;
+
+  const _ActionButton({
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+    this.tooltip,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final button = TextButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon, size: 14),
+      label: Text(label),
+      style: TextButton.styleFrom(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppColors.spacingSm,
+          vertical: 4,
+        ),
+        textStyle: const TextStyle(fontSize: 13),
+      ),
+    );
+
+    if (tooltip != null) {
+      return Tooltip(
+        message: tooltip!,
+        child: button,
+      );
+    }
+
+    return button;
+  }
+}
+
+/// Copy option button for the copy dialog
+class _CopyOptionButton extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _CopyOptionButton({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    await showDialog(
-      context: context,
-      barrierDismissible: true,
-      builder: (ctx) => AlertDialog(
-        title: Row(
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          border: Border.all(color: theme.dividerColor),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
           children: [
-            Icon(Icons.lock_open, color: theme.colorScheme.primary),
-            const SizedBox(width: 8),
-            const Text('Sign in to continue'),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Icon(
+                icon,
+                size: 20,
+                color: theme.colorScheme.primary,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.chevron_right,
+              size: 20,
+              color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.5),
+            ),
           ],
         ),
-        content: Text(
-          reason ??
-              'Sign in to keep chatting, switch models, and unlock your credits.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Not now'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(ctx).pop();
-              context.push('/sign-in');
-            },
-            child: const Text('Sign In'),
-          ),
-        ],
       ),
     );
   }
+}

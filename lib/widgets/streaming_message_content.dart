@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:markdown/markdown.dart' as md;
 import 'package:url_launcher/url_launcher.dart';
 
 import '../models/message.dart';
@@ -10,6 +11,7 @@ import '../theme/app_theme.dart';
 import '../utils/logger.dart';
 import 'safe_mermaid_code_builder.dart';
 import 'multimodal_message_content.dart';
+import 'code_block_with_copy.dart';
 
 /// Widget that displays message content with real-time streaming support
 class StreamingMessageContent extends StatefulWidget {
@@ -118,7 +120,7 @@ class _StreamingMessageContentState extends State<StreamingMessageContent> {
       data: content,
       selectable: true,
       builders: {
-        'code': SafeMermaidCodeBuilder(),
+        'code': _CombinedCodeBuilder(theme: widget.theme),
       },
       styleSheet: MarkdownStyleSheet(
         p: widget.theme.textTheme.bodyMedium?.copyWith(
@@ -468,5 +470,34 @@ class _StreamingMessageContentState extends State<StreamingMessageContent> {
         }
       }
     });
+  }
+}
+
+/// Combined code builder that handles both Mermaid diagrams and regular code blocks
+class _CombinedCodeBuilder extends MarkdownElementBuilder {
+  final ThemeData theme;
+  late final SafeMermaidCodeBuilder _mermaidBuilder;
+  late final CodeBlockWithCopy _codeBlockBuilder;
+
+  _CombinedCodeBuilder({required this.theme}) {
+    _mermaidBuilder = SafeMermaidCodeBuilder();
+    _codeBlockBuilder = CodeBlockWithCopy(theme: theme);
+  }
+
+  @override
+  Widget? visitElementAfter(md.Element element, TextStyle? preferredStyle) {
+    // Check if this is a Mermaid diagram
+    final className = element.attributes['class'];
+    final isMermaidBlock = className != null &&
+                          (className.contains('language-mermaid') ||
+                           className == 'mermaid');
+
+    if (isMermaidBlock) {
+      // Use Mermaid builder for mermaid diagrams
+      return _mermaidBuilder.visitElementAfter(element, preferredStyle);
+    }
+
+    // Use code block builder for all other code
+    return _codeBlockBuilder.visitElementAfter(element, preferredStyle);
   }
 }
