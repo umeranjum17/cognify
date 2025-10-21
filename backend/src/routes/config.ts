@@ -35,7 +35,7 @@ configRouter.get('/', requireAuth, async (req, res) => {
     const openRouterData: any = await getOpenRouterModelsCached();
 
     const capabilities: Record<string, any> = {};
-    const pricing: Record<string, { input: number; output: number }> = {};
+    const pricing: Record<string, { input: number; output: number; web_search?: number; image?: number; internal_reasoning?: number }> = {};
     const availableModels: string[] = [];
 
     if (openRouterData.data && Array.isArray(openRouterData.data)) {
@@ -46,6 +46,9 @@ configRouter.get('/', requireAuth, async (req, res) => {
           pricing[model.id] = {
             input: parseFloat(model.pricing.prompt) * 1_000_000,
             output: parseFloat(model.pricing.completion) * 1_000_000,
+            web_search: model.pricing.web_search ? parseFloat(model.pricing.web_search) * 1000 : undefined,
+            image: model.pricing.image ? parseFloat(model.pricing.image) : undefined,
+            internal_reasoning: model.pricing.internal_reasoning ? parseFloat(model.pricing.internal_reasoning) * 1_000_000 : undefined,
           };
         }
         const isFree = pricing[model.id]?.input === 0 && pricing[model.id]?.output === 0;
@@ -122,7 +125,7 @@ configRouter.get('/models', requireAuth, async (req, res) => {
   try {
     const openRouterData: any = await getOpenRouterModelsCached();
     const capabilities: Record<string, any> = {};
-    const pricing: Record<string, { input: number; output: number }> = {};
+    const pricing: Record<string, { input: number; output: number; web_search?: number; image?: number; internal_reasoning?: number }> = {};
     const perModelSampleCosts: Record<string, { per1kTokensDollarCost: number; per1kTokensRequestUnits: number }> = {};
     const perRequestSampleChat: Record<string, { requestUnits: number; dollarCost: number; inputTokens: number; outputTokens: number }> = {};
     const availableModels: string[] = [];
@@ -135,6 +138,9 @@ configRouter.get('/models', requireAuth, async (req, res) => {
           pricing[model.id] = {
             input: parseFloat(model.pricing.prompt) * 1_000_000,
             output: parseFloat(model.pricing.completion) * 1_000_000,
+            web_search: model.pricing.web_search ? parseFloat(model.pricing.web_search) * 1000 : undefined,
+            image: model.pricing.image ? parseFloat(model.pricing.image) : undefined,
+            internal_reasoning: model.pricing.internal_reasoning ? parseFloat(model.pricing.internal_reasoning) * 1_000_000 : undefined,
           };
         }
         const isFree = pricing[model.id]?.input === 0 && pricing[model.id]?.output === 0;

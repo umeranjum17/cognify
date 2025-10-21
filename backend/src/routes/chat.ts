@@ -447,10 +447,10 @@ chatRouter.post('/', requireAuth, async (req: AuthRequest, res) => {
 
     // Pre-deduct credits using server-side calculation
     const requestId = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    const internalBase = getInternalBaseUrl(req);
     let didConsume = false;
     try {
       const t0 = Date.now();
-      const internalBase = getInternalBaseUrl(req);
       const consumeRes = await fetch(`${internalBase}/api/credits/consume`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: String(req.headers.authorization || '') },

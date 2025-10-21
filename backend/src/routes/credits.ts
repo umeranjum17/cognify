@@ -106,10 +106,24 @@ creditsRouter.post('/consume', requireAuth, async (req: AuthRequest, res) => {
         const roundToStep = (x: number) => Math.round(x / step) * step;
         const inputPricePer1M = Number(pricing?.input || 0);
         const outputPricePer1M = Number(pricing?.output || 0);
+        const webSearchPricePer1K = Number(pricing?.web_search || 0);
+        const imagePricePerImage = Number(pricing?.image || 0);
+        const internalReasoningPricePer1M = Number(pricing?.internal_reasoning || 0);
         const inT = Number(inputTokens ?? 900);
         const outT = Number(outputTokens ?? 1100);
-        const dollarCost = (inT / 1_000_000) * inputPricePer1M + (outT / 1_000_000) * outputPricePer1M;
-        const isFreeModel = Number(inputPricePer1M) === 0 && Number(outputPricePer1M) === 0;
+        
+        // Calculate total dollar cost including model capability costs
+        // If model has web search, image, or internal reasoning pricing, include base costs regardless of usage
+        const tokenCost = (inT / 1_000_000) * inputPricePer1M + (outT / 1_000_000) * outputPricePer1M;
+        
+        // Include model capability costs if the model supports these features
+        const webSearchCost = webSearchPricePer1K > 0 ? (1 / 1000) * webSearchPricePer1K : 0; // Base cost for 1 search
+        const imageCost = imagePricePerImage > 0 ? imagePricePerImage : 0; // Base cost for 1 image
+        const internalReasoningCost = internalReasoningPricePer1M > 0 ? (1000 / 1_000_000) * internalReasoningPricePer1M : 0; // Base cost for 1K reasoning tokens
+        
+        const dollarCost = tokenCost + webSearchCost + imageCost + internalReasoningCost;
+        
+        const isFreeModel = Number(inputPricePer1M) === 0 && Number(outputPricePer1M) === 0 && Number(webSearchPricePer1K) === 0 && Number(imagePricePerImage) === 0 && Number(internalReasoningPricePer1M) === 0;
         if (isFreeModel) {
           consumeAmount = (QUOTA_CONFIG as any).freeModelRate ?? 0.1; // Use configurable free model rate
         } else {
@@ -124,6 +138,12 @@ creditsRouter.post('/consume', requireAuth, async (req: AuthRequest, res) => {
           dollarCost,
           inputTokens: inT,
           outputTokens: outT,
+          modelWebSearchCapability: webSearchPricePer1K > 0,
+          modelImageCapability: imagePricePerImage > 0,
+          modelInternalReasoningCapability: internalReasoningPricePer1M > 0,
+          webSearchCapabilityCost: webSearchCost,
+          imageCapabilityCost: imageCost,
+          internalReasoningCapabilityCost: internalReasoningCost,
           calculatedByBackend: true,
           method: 'models-config-derived',
         };
@@ -199,9 +219,15 @@ creditsRouter.post('/consume', requireAuth, async (req: AuthRequest, res) => {
         dollarsPerRequestUnit: Number(dollarsPerUnitUsed),
         inputTokens: calculatedMetadata.inputTokens ?? null,
         outputTokens: calculatedMetadata.outputTokens ?? null,
+        modelWebSearchCapability: calculatedMetadata.modelWebSearchCapability ?? null,
+        modelImageCapability: calculatedMetadata.modelImageCapability ?? null,
+        modelInternalReasoningCapability: calculatedMetadata.modelInternalReasoningCapability ?? null,
+        webSearchCapabilityCost: calculatedMetadata.webSearchCapabilityCost ?? null,
+        imageCapabilityCost: calculatedMetadata.imageCapabilityCost ?? null,
+        internalReasoningCapabilityCost: calculatedMetadata.internalReasoningCapabilityCost ?? null,
         timestamp: new Date().toISOString(),
       });
-      console.log(`[credits] model=${calculatedMetadata.modelId || modelId} mode=${calculatedMetadata.mode || mode} $=${Number(calculatedMetadata.dollarCost ?? 0).toFixed(6)} units=${Number(consumeAmount).toFixed(2)} free=${isFreeModelForAnalytics ? 'y' : 'n'}`);
+      console.log(`[credits] model=${calculatedMetadata.modelId || modelId} mode=${calculatedMetadata.mode || mode} $=${Number(calculatedMetadata.dollarCost ?? 0).toFixed(6)} units=${Number(consumeAmount).toFixed(2)} web_cap=${calculatedMetadata.webSearchCapabilityCost?.toFixed(6) ?? '0'} img_cap=${calculatedMetadata.imageCapabilityCost?.toFixed(6) ?? '0'} reasoning_cap=${calculatedMetadata.internalReasoningCapabilityCost?.toFixed(6) ?? '0'} free=${isFreeModelForAnalytics ? 'y' : 'n'}`);
     } catch (e) {
       // Analytics failures must not affect the request
       console.warn('Analytics write failed:', (e as any)?.message || e);
