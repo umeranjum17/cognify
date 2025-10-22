@@ -65,8 +65,9 @@ class _SignInScreenState extends State<SignInScreen> {
       if (!mounted) return;
       _handlePostSignIn(context);
     } catch (e) {
+      String errorMessage = _getUserFriendlyErrorMessage(e.toString());
       setState(() {
-        _error = e.toString();
+        _error = errorMessage;
       });
     } finally {
       if (mounted) {
@@ -74,6 +75,26 @@ class _SignInScreenState extends State<SignInScreen> {
           _busy = false;
         });
       }
+    }
+  }
+
+  String _getUserFriendlyErrorMessage(String error) {
+    if (error.contains('Sign in with Apple not available')) {
+      return 'Apple Sign-In is not available on this device. Please try again or use a different sign-in method.';
+    } else if (error.contains('Apple did not return an identity token')) {
+      return 'Apple Sign-In failed. Please make sure you\'re signed into iCloud and try again.';
+    } else if (error.contains('credential-already-in-use')) {
+      return 'This Apple ID is already linked to another account. Please try a different Apple ID or contact support.';
+    } else if (error.contains('invalid-credential')) {
+      return 'Apple Sign-In failed. Please try signing in with Apple again.';
+    } else if (error.contains('account-exists-with-different-credential')) {
+      return 'An account already exists with this email. Please try signing in with the original method.';
+    } else if (error.contains('network') || error.contains('connection')) {
+      return 'Network error. Please check your internet connection and try again.';
+    } else if (error.contains('AuthorizationErrorCode.canceled') || error.contains('error 1001')) {
+      return 'Sign-in was canceled. Please try again when ready.';
+    } else {
+      return 'Sign-in failed. Please try again. If the problem persists, contact support.';
     }
   }
 

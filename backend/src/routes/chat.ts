@@ -325,6 +325,8 @@ async function streamWithAiSDK(options: {
     model: getOpenRouterProvider()(options.model),
     messages: options.messages as any,
     temperature: options.temperature ?? 0.7,
+    frequencyPenalty: 0.3,  // Discourage repeating tokens
+    presencePenalty: 0.1,   // Encourage topic diversity
     ...(options.maxTokens !== undefined ? { maxOutputTokens: options.maxTokens } : {}),
   });
   
@@ -621,7 +623,7 @@ chatRouter.post('/', requireAuth, async (req: AuthRequest, res) => {
       const writerStart = Date.now();
 
       // Validate model early (check if it supports images if needed)
-      const recentMessages = messages.slice(-8);
+      const recentMessages = messages.slice(-15);  // Industry standard: 10-15 turns
       model = await validateAndSelectModel(model, recentMessages);
       timings.model = model; // Update timing with final model
 
@@ -630,8 +632,8 @@ chatRouter.post('/', requireAuth, async (req: AuthRequest, res) => {
 
       // Add system message
       const systemMessage = mode === 'chat'
-        ? 'You are a helpful AI assistant. Be conversational and natural.'
-        : 'You are a helpful AI assistant. When sources are provided, prioritize information from them while maintaining a natural conversational tone.';
+        ? 'You are a helpful AI assistant. Be conversational, natural, and concise. Build naturally on the conversation without repeating what you just said.'
+        : 'You are a helpful AI assistant. When sources are provided, use them to give fresh, specific information. Be conversational and concise, building naturally on previous responses without repetition.';
       conversationMessages.push({ role: 'system', content: systemMessage });
 
       // Inject sources for search/aipedia modes

@@ -223,9 +223,6 @@ class FirebaseAuthProvider extends ChangeNotifier {
         throw Exception('Sign in with Apple not available on this device');
       }
 
-      // Clear any previous Apple Sign-In state to avoid duplicate credential errors
-      await AppleSignInHelper.clearAppleSignInState();
-
       // Nonce protects against replay attacks and is recommended for Firebase
       final String rawNonce = _generateNonce();
       final String nonceSha256 = _sha256ofString(rawNonce);
@@ -289,7 +286,12 @@ class FirebaseAuthProvider extends ChangeNotifier {
       );
 
       try {
-        if (_auth.currentUser?.isAnonymous == true) {
+        if (_auth.currentUser == null) {
+          // No user at all - direct sign in
+          debugPrint('🔄 [FirebaseAuth] No current user - signing in with Apple');
+          final signInRes = await _auth.signInWithCredential(oauthCred);
+          _user = signInRes.user;
+        } else if (_auth.currentUser!.isAnonymous) {
           // Anonymous user - sign out and sign in fresh (no linking)
           debugPrint('🔄 [FirebaseAuth] Anonymous user - signing out and signing in with Apple');
           await _auth.signOut();

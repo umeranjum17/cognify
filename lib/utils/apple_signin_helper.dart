@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:crypto/crypto.dart';
 import 'dart:convert';
@@ -7,22 +8,13 @@ import 'dart:math';
 /// Helper class to manage Apple Sign-In state and resolve common issues
 class AppleSignInHelper {
   /// Clear Apple Sign-In state to resolve duplicate credential errors
+  /// Note: This method no longer triggers UI - it's a no-op to maintain API compatibility
   static Future<void> clearAppleSignInState() async {
     if (!Platform.isIOS) return;
     
-    try {
-      // Force a fresh Apple Sign-In request to clear any cached state
-      final String rawNonce = _generateNonce();
-      final String nonceSha256 = _sha256ofString(rawNonce);
-      
-      await SignInWithApple.getAppleIDCredential(
-        scopes: [AppleIDAuthorizationScopes.email],
-        nonce: nonceSha256,
-      );
-    } catch (e) {
-      // Ignore errors - this is just to clear the state
-      print('🔄 [AppleSignInHelper] Cleared Apple Sign-In state');
-    }
+    // No-op: We don't need to clear state by triggering another sign-in
+    // The Apple Sign-In SDK handles state management internally
+    debugPrint('🔄 [AppleSignInHelper] Apple Sign-In state clearing (no-op)');
   }
 
   /// Check if Apple Sign-In is available and properly configured
