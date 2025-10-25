@@ -20,7 +20,7 @@ import '../models/chat_source.dart';
 import '../models/chat_stream_event.dart';
 import '../models/file_attachment.dart';
 import '../models/message.dart';
-import '../models/mode_config.dart';
+// (duplicate import removed)
 import '../models/source.dart';
 import '../models/streaming_message.dart';
 import '../models/tools_config.dart';
@@ -35,16 +35,16 @@ import '../config/model_registry.dart';
 import '../providers/tab_provider.dart';
 import '../providers/usage_quota_provider.dart';
 import '../providers/firebase_auth_provider.dart';
-import '../providers/anonymous_access_provider.dart';
+// Removed anonymous access gating and demo content
 import '../theme/app_theme.dart';
 import '../utils/logger.dart';
 import '../utils/text_utils.dart';
+import '../widgets/cognify_logo.dart';
 import '../widgets/cost_display_widget.dart';
 import '../widgets/enhanced_loading_indicator.dart';
 import '../widgets/model_switch_recommendation_modal.dart';
 import '../widgets/modern_app_header.dart';
 import '../widgets/organized_post_message_content.dart';
-import '../widgets/session_info_widget.dart';
 import '../widgets/stacked_media_bubbles.dart';
 import '../widgets/streaming_message_content.dart';
 import '../widgets/unified_settings_modal.dart';
@@ -54,6 +54,10 @@ import '../widgets/copy_message_sheet.dart';
 import 'model_selection_screen.dart';
 import '../services/session_cost_service.dart';
 import '../services/credit_event_service.dart';
+import '../config/app_config.dart';
+// (duplicate import removed)
+import '../providers/credits_purchase_provider.dart';
+import '../widgets/quick_credit_purchase_sheet.dart';
 // Premium gating and paywall removed.
 
 class EditorScreen extends StatefulWidget {
@@ -140,20 +144,25 @@ class _EditorScreenState extends State<EditorScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    print('🔍 [EditorScreen] Building with showAppBar: ${widget.showAppBar}');
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: widget.showAppBar
-          ? ModernAppHeader(
-              showBackButton: false,
-              showLogo: true,
-              centerTitle: false,
-              title: _buildHeaderTitle(),
-              showNewChatButton: true,
-              onMenuItemSelected: (value) {
-                if (value == 'settings') {
-                  _showSettings();
-                }
-              },
+          ? PreferredSize(
+              preferredSize: const Size.fromHeight(kToolbarHeight + 10),
+              child: ModernAppHeader(
+                showBackButton: false,
+                showLogo: true,
+                centerTitle: false,
+                title: _buildHeaderTitle(),
+                showNewChatButton: true,
+                onBuyCredits: () => _showQuickCreditPurchaseFromEditor(context),
+                onMenuItemSelected: (value) {
+                  if (value == 'settings') {
+                    _showSettings();
+                  }
+                },
+              ),
             )
           : null,
       body: GestureDetector(
@@ -514,13 +523,19 @@ class _EditorScreenState extends State<EditorScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             FutureBuilder<RequestUsageEstimate>(
-              future: RequestUsageEstimator.estimate(modelId: _selectedModel, mode: ChatMode.chat),
+              future: RequestUsageEstimator.estimate(
+                modelId: _selectedModel,
+                mode: ChatMode.chat,
+              ),
               builder: (context, snapshot) {
                 final units = snapshot.data?.requestUnits ?? -1.0;
                 final label = units > 0 ? '${units.toStringAsFixed(1)}' : '—';
                 final cheap = units > 0 && units <= 0.5;
                 return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: cheap
                         ? (isDark
@@ -593,17 +608,32 @@ class _EditorScreenState extends State<EditorScreen> {
       mode: _currentMode,
       selectedModel: _selectedModel,
       onModelSelected: (modelId) {
-        final auth = Provider.of<FirebaseAuthProvider>(context, listen: false);
-        // Anonymous users must sign in to switch models
-        if (auth.isAnonymous) {
-          _showSignInBlocker(context, reason: 'Sign in to switch AI models.');
-          return;
-        }
         setState(() {
           _selectedModel = modelId;
         });
         _checkModelCapabilities();
       },
+    );
+  }
+
+  void _showQuickCreditPurchaseFromEditor(BuildContext context) {
+    // Capture providers in current scope
+    final subs = Provider.of<CreditsPurchaseProvider>(context, listen: false);
+    final auth = Provider.of<FirebaseAuthProvider>(context, listen: false);
+    final remaining = context.read<UsageQuotaProvider>().quota?.remaining ?? 0;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      useRootNavigator: false,
+      builder: (ctx) => MultiProvider(
+        providers: [
+          ChangeNotifierProvider<CreditsPurchaseProvider>.value(value: subs),
+          ChangeNotifierProvider<FirebaseAuthProvider>.value(value: auth),
+        ],
+        child: QuickCreditPurchaseSheet(currentCredits: remaining),
+      ),
     );
   }
 
@@ -776,75 +806,6 @@ class _EditorScreenState extends State<EditorScreen> {
             ),
           ),
 
-        // Session Info
-        StreamBuilder<SessionCostData>(
-          stream: SessionCostService().costUpdates,
-          builder: (context, snapshot) {
-            final costData = snapshot.data;
-
-            final finalSessionCost = costData?.sessionCost ?? _sessionCost;
-            final finalLastCost =
-                costData?.lastMessageCost ?? _lastOperationCost;
-
-            return Consumer2<ModeConfigProvider, UsageQuotaProvider>(
-              builder: (context, modeConfigProvider, quotaProvider, child) {
-                final usageQuota = quotaProvider.quota;
-                final auth = Provider.of<FirebaseAuthProvider>(context, listen: false);
-
-                return SessionInfoWidget(
-                  llmUsed: _lastUsedLLM,
-                  modelName: _lastUsedModel ?? _getModelForCurrentMode(),
-                  cost: finalLastCost,
-                  sessionCost: finalSessionCost,
-                  toolResults: _lastToolResults,
-                  messageCount:
-                      costData?.messageCount ??
-                      SessionCostService().messageCount,
-                  modelCapabilities: _currentModelCapabilities,
-                  mode: _currentMode,
-                  onModelSwitched: (modelId) {
-                    final auth = Provider.of<FirebaseAuthProvider>(context, listen: false);
-                    if (auth.isAnonymous) {
-                      _showSignInBlocker(context, reason: 'Sign in to change your AI model.');
-                      return;
-                    }
-                    setState(() {
-                      _selectedModel = modelId;
-                    });
-                    // Save the selected model
-                    _saveSelectedModel(modelId);
-                    // Update provider for the current mode
-                    final provider = Provider.of<ModeConfigProvider>(
-                      context,
-                      listen: false,
-                    );
-                    final currentConfig = provider.getConfigForMode(
-                      _currentMode,
-                    );
-                    if (currentConfig != null) {
-                      provider.updateConfig(
-                        _currentMode,
-                        currentConfig.copyWith(model: modelId),
-                      );
-                    }
-                    // Update LLM service
-                    _llmService.setCurrentModel(modelId);
-                    _checkModelCapabilities();
-                  },
-                  onBuyCreditsTapped: auth.isAnonymous
-                      ? () => _showSignInBlocker(
-                            context,
-                            reason: 'Sign in to purchase or use credits.',
-                          )
-                      : null,
-                  remainingRequests: usageQuota?.remaining,
-                  isQuotaLoading: quotaProvider.isLoading,
-                );
-              },
-            );
-          },
-        ),
-
         // Messages List (fills available space, avoids extra bottom space)
         Expanded(
           child: Stack(
@@ -941,17 +902,24 @@ class _EditorScreenState extends State<EditorScreen> {
                         ],
                       ),
                     )
-                  : ListView.builder(
-                      controller: _scrollController,
-                      padding: const EdgeInsets.all(AppColors.spacingMd),
-                      itemCount: _messages.length,
-                      itemBuilder: (context, index) {
-                        final message = _messages[index];
-                        return KeyedSubtree(
-                          key: ValueKey(message.id),
-                          child: _buildMessageWidget(message, theme),
-                        );
-                      },
+                  : Column(
+                      children: [
+                        // Messages list
+                        Expanded(
+                          child: ListView.builder(
+                            controller: _scrollController,
+                            padding: const EdgeInsets.all(AppColors.spacingMd),
+                            itemCount: _messages.length,
+                            itemBuilder: (context, index) {
+                              final message = _messages[index];
+                              return KeyedSubtree(
+                                key: ValueKey(message.id),
+                                child: _buildMessageWidget(message, theme),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
                     ),
 
               // Minimal scroll-to-bottom button inside messages area
@@ -1170,7 +1138,10 @@ class _EditorScreenState extends State<EditorScreen> {
                   child: MouseRegion(
                     cursor: SystemMouseCursors.click,
                     child: _ModelRateDisplay(
-                      modelId: _selectedModel ?? _lastUsedModel ?? _getModelForCurrentMode(),
+                      modelId:
+                          _selectedModel ??
+                          _lastUsedModel ??
+                          _getModelForCurrentMode(),
                       baseText: _getModelDisplayTextForSelector(),
                       style: theme.textTheme.bodySmall?.copyWith(
                         fontSize: 11,
@@ -1501,321 +1472,341 @@ class _EditorScreenState extends State<EditorScreen> {
     }
 
     return GestureDetector(
-      onLongPressStart: (details) => _showContextMenu(context, message, details.globalPosition),
-      onSecondaryTapDown: (details) => _showContextMenu(context, message, details.globalPosition),
+      onLongPressStart: (details) =>
+          _showContextMenu(context, message, details.globalPosition),
+      onSecondaryTapDown: (details) =>
+          _showContextMenu(context, message, details.globalPosition),
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: AppColors.spacingSm),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-          // Message Header
-          Row(
-            children: [
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: isUser
-                      ? theme.colorScheme.primary
-                      : theme.colorScheme.secondary,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Icon(
-                  isUser ? Icons.person : Icons.smart_toy,
-                  size: 16,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(width: AppColors.spacingSm),
-              Text(
-                isUser ? 'You' : 'Cognify',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const Spacer(),
-              Text(
-                timeString,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                ),
-              ),
-              // Removed inline retry-with-model button; use context menu instead
-            ],
-          ),
-
-          const SizedBox(height: 4),
-
-          // Attachments
-          if (message.attachments != null && message.attachments!.isNotEmpty)
-            Container(
-              // Align attachments the same for user and AI messages
-              margin: const EdgeInsets.only(
-                left: 0,
-                bottom: AppColors.spacingSm,
-              ),
-              child: Wrap(
-                spacing: AppColors.spacingSm,
-                children: message.attachments!.map((attachment) {
-                  return Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppColors.spacingSm,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surface,
-                      borderRadius: BorderRadius.circular(
-                        AppColors.borderRadiusSm,
+            // Message Header
+            Row(
+              children: [
+                isUser
+                    ? Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Icon(
+                          Icons.person,
+                          size: 16,
+                          color: Colors.white,
+                        ),
+                      )
+                    : ClipOval(
+                        child: SizedBox(
+                          width: 32,
+                          height: 32,
+                          child: CognifyLogo(size: 32),
+                        ),
                       ),
-                      border: Border.all(color: theme.dividerColor),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          attachment.type == 'pdf'
-                              ? Icons.picture_as_pdf
-                              : attachment.type == 'image'
-                              ? Icons.image
-                              : Icons.description,
-                          size: 14,
-                          color: theme.colorScheme.onSurface.withValues(
-                            alpha: 0.6,
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(attachment.name, style: theme.textTheme.bodySmall),
-                      ],
-                    ),
-                  );
-                }).toList(),
-              ),
+                const SizedBox(width: AppColors.spacingSm),
+                Text(
+                  isUser ? 'You' : 'Cognify',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  timeString,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                  ),
+                ),
+                // Removed inline retry-with-model button; use context menu instead
+              ],
             ),
 
-          // Message Content
-          Container(
-            // Match left padding for AI with user messages
-            margin: const EdgeInsets.only(
-              left: 0,
-              top: 4,
-            ),
-            alignment: Alignment.centerLeft,
-            child: isUser
-                ? SelectableText(
-                    message.textContent,
-                    style: theme.textTheme.bodyMedium,
-                    contextMenuBuilder: (context, selectableTextState) {
-                      return AdaptiveTextSelectionToolbar.selectable(
-                        anchors: selectableTextState.contextMenuAnchors,
-                        onCopy: () => selectableTextState.copySelection(SelectionChangedCause.toolbar),
-                        onSelectAll: () => selectableTextState.selectAll(SelectionChangedCause.toolbar),
-                        onShare: () => selectableTextState.shareSelection(SelectionChangedCause.toolbar),
-                        selectionGeometry: SelectionGeometry(
-                          status: SelectionStatus.uncollapsed,
-                          hasContent: true,
+            const SizedBox(height: 4),
+
+            // Attachments
+            if (message.attachments != null && message.attachments!.isNotEmpty)
+              Container(
+                // Align attachments the same for user and AI messages
+                margin: const EdgeInsets.only(
+                  left: 0,
+                  bottom: AppColors.spacingSm,
+                ),
+                child: Wrap(
+                  spacing: AppColors.spacingSm,
+                  children: message.attachments!.map((attachment) {
+                    return Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppColors.spacingSm,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surface,
+                        borderRadius: BorderRadius.circular(
+                          AppColors.borderRadiusSm,
                         ),
-                      );
-                    },
-                  )
-                : Builder(
-                    builder: (context) {
-                      // Always show streaming content for assistant, even if isProcessing is true
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        border: Border.all(color: theme.dividerColor),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          // Sources and Images at the top of the message bubble
-                          if ((message.sources != null &&
-                                  message.sources!.isNotEmpty) ||
-                              _getMessageImages(message).isNotEmpty)
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 12.0),
-                              child: Align(
-                                alignment: Alignment.centerRight,
-                                child: StackedMediaBubbles(
-                                  sources: message.sources ?? [],
-                                  images: _getMessageImages(message),
-                                  onExpandedChanged: (isSources, isImages) {
-                                    setState(() {
-                                      if (isSources) {
-                                        _expandedSourcesMessageId =
-                                            _expandedSourcesMessageId ==
-                                                message.id
-                                            ? null
-                                            : message.id;
-                                        _expandedImagesMessageId = null;
-                                      } else if (isImages) {
-                                        _expandedImagesMessageId =
-                                            _expandedImagesMessageId ==
-                                                message.id
-                                            ? null
-                                            : message.id;
-                                        _expandedSourcesMessageId = null;
-                                      }
-                                    });
-                                  },
-                                  areSourcesExpanded:
-                                      _expandedSourcesMessageId == message.id,
-                                  areImagesExpanded:
-                                      _expandedImagesMessageId == message.id,
-                                ),
-                              ),
+                          Icon(
+                            attachment.type == 'pdf'
+                                ? Icons.picture_as_pdf
+                                : attachment.type == 'image'
+                                ? Icons.image
+                                : Icons.description,
+                            size: 14,
+                            color: theme.colorScheme.onSurface.withValues(
+                              alpha: 0.6,
                             ),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            attachment.name,
+                            style: theme.textTheme.bodySmall,
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
 
-                          // Full-width expanded content inside the message bubble
-                          if ((message.sources != null &&
-                                  message.sources!.isNotEmpty) ||
-                              _getMessageImages(message).isNotEmpty) ...[
-                            if (_expandedSourcesMessageId == message.id &&
-                                message.sources != null &&
-                                message.sources!.isNotEmpty)
-                              Container(
-                                margin: const EdgeInsets.only(bottom: 12),
-                                child: _buildExpandedSourcesContent(
-                                  message.sources!,
-                                  theme,
+            // Message Content
+            Container(
+              // Match left padding for AI with user messages
+              margin: const EdgeInsets.only(left: 0, top: 4),
+              alignment: Alignment.centerLeft,
+              child: isUser
+                  ? SelectableText(
+                      message.textContent,
+                      style: theme.textTheme.bodyMedium,
+                      contextMenuBuilder: (context, selectableTextState) {
+                        return AdaptiveTextSelectionToolbar.selectable(
+                          anchors: selectableTextState.contextMenuAnchors,
+                          onCopy: () => selectableTextState.copySelection(
+                            SelectionChangedCause.toolbar,
+                          ),
+                          onSelectAll: () => selectableTextState.selectAll(
+                            SelectionChangedCause.toolbar,
+                          ),
+                          onShare: () => selectableTextState.shareSelection(
+                            SelectionChangedCause.toolbar,
+                          ),
+                          selectionGeometry: SelectionGeometry(
+                            status: SelectionStatus.uncollapsed,
+                            hasContent: true,
+                          ),
+                        );
+                      },
+                    )
+                  : Builder(
+                      builder: (context) {
+                        // Always show streaming content for assistant, even if isProcessing is true
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Sources and Images at the top of the message bubble
+                            if ((message.sources != null &&
+                                    message.sources!.isNotEmpty) ||
+                                _getMessageImages(message).isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 12.0),
+                                child: Align(
+                                  alignment: Alignment.centerRight,
+                                  child: StackedMediaBubbles(
+                                    sources: message.sources ?? [],
+                                    images: _getMessageImages(message),
+                                    onExpandedChanged: (isSources, isImages) {
+                                      setState(() {
+                                        if (isSources) {
+                                          _expandedSourcesMessageId =
+                                              _expandedSourcesMessageId ==
+                                                  message.id
+                                              ? null
+                                              : message.id;
+                                          _expandedImagesMessageId = null;
+                                        } else if (isImages) {
+                                          _expandedImagesMessageId =
+                                              _expandedImagesMessageId ==
+                                                  message.id
+                                              ? null
+                                              : message.id;
+                                          _expandedSourcesMessageId = null;
+                                        }
+                                      });
+                                    },
+                                    areSourcesExpanded:
+                                        _expandedSourcesMessageId == message.id,
+                                    areImagesExpanded:
+                                        _expandedImagesMessageId == message.id,
+                                  ),
                                 ),
                               ),
 
-                            if (_expandedImagesMessageId == message.id &&
-                                _getMessageImages(message).isNotEmpty)
-                              Container(
-                                margin: const EdgeInsets.only(bottom: 12),
-                                child: _buildExpandedImagesContent(
-                                  _getMessageImages(message),
-                                  theme,
+                            // Full-width expanded content inside the message bubble
+                            if ((message.sources != null &&
+                                    message.sources!.isNotEmpty) ||
+                                _getMessageImages(message).isNotEmpty) ...[
+                              if (_expandedSourcesMessageId == message.id &&
+                                  message.sources != null &&
+                                  message.sources!.isNotEmpty)
+                                Container(
+                                  margin: const EdgeInsets.only(bottom: 12),
+                                  child: _buildExpandedSourcesContent(
+                                    message.sources!,
+                                    theme,
+                                  ),
+                                ),
+
+                              if (_expandedImagesMessageId == message.id &&
+                                  _getMessageImages(message).isNotEmpty)
+                                Container(
+                                  margin: const EdgeInsets.only(bottom: 12),
+                                  child: _buildExpandedImagesContent(
+                                    _getMessageImages(message),
+                                    theme,
+                                  ),
+                                ),
+                            ],
+
+                            StreamingMessageContent(
+                              message: message,
+                              theme: theme,
+                            ),
+                            if (message.isProcessing == true ||
+                                (_isProcessing &&
+                                    _messages.last.id == message.id))
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                  left: 0,
+                                  top: 4.0,
+                                  bottom: 4.0,
+                                ),
+                                child: EnhancedLoadingIndicator(
+                                  currentMilestone: _currentMilestone,
+                                  progress: _currentProgress,
+                                  phase: _currentPhase,
                                 ),
                               ),
                           ],
-
-                          StreamingMessageContent(
-                            message: message,
-                            theme: theme,
-                          ),
-                          if (message.isProcessing == true ||
-                              (_isProcessing &&
-                                  _messages.last.id == message.id))
-                            Padding(
-                              padding: const EdgeInsets.only(
-                                left: 0,
-                                top: 4.0,
-                                bottom: 4.0,
-                              ),
-                              child: EnhancedLoadingIndicator(
-                                currentMilestone: _currentMilestone,
-                                progress: _currentProgress,
-                                phase: _currentPhase,
-                              ),
-                            ),
-                        ],
-                      );
-                    },
-                  ),
-          ),
-
-          // Organized post-message content (follow-up questions, images, quick actions)
-          // Only show when the answer is finalized and non-empty
-          if (!isUser &&
-              message.isProcessing != true &&
-              message.textContent.trim().isNotEmpty)
-            OrganizedPostMessageContent(
-              message: message,
-              getModelForCurrentMode: _getModelForCurrentMode,
-              messages: _messages,
-              sendMessage: _sendMessage,
-              selectedSourceIds: _selectedSourceIds,
-              selectedSources: _selectedSources,
+                        );
+                      },
+                    ),
             ),
 
-          // Cost display for assistant messages
-          if (!isUser &&
-              message.isProcessing != true &&
-              (message.messageCost != null || message.sessionCost != null))
-            Container(
-              margin: const EdgeInsets.only(top: AppColors.spacingSm),
-              child: CostDisplayWidget(
-                messageCost: message.messageCost,
-                costBreakdown: message.costBreakdown,
-                compact: true,
+            // Organized post-message content (follow-up questions, images, quick actions)
+            // Only show when the answer is finalized and non-empty
+            if (!isUser &&
+                message.isProcessing != true &&
+                message.textContent.trim().isNotEmpty)
+              OrganizedPostMessageContent(
+                message: message,
+                getModelForCurrentMode: _getModelForCurrentMode,
+                messages: _messages,
+                sendMessage: _sendMessage,
+                selectedSourceIds: _selectedSourceIds,
+                selectedSources: _selectedSources,
               ),
-            ),
 
-          // Enhanced action buttons for assistant messages
-          if (!isUser && message.isProcessing != true)
-            Container(
-              margin: const EdgeInsets.only(top: AppColors.spacingSm),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Enhanced action buttons row
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      // Copy button - opens dialog with options
-                      _ActionButton(
-                        icon: Icons.content_copy,
-                        label: 'Copy',
-                        onPressed: () => _showCopyDialog(message),
-                        tooltip: 'Copy message',
-                      ),
-
-                      // Regenerate button
-                      _ActionButton(
-                        icon: Icons.refresh,
-                        label: 'Regenerate',
-                        onPressed: () => _regenerateResponse(message),
-                        tooltip: 'Generate a new response',
-                      ),
-
-                      // Try Different Model button
-                      _ActionButton(
-                        icon: Icons.swap_horiz,
-                        label: 'Try Different Model',
-                        onPressed: () => _showModelSwitchForRegenerate(message),
-                        tooltip: 'Regenerate with a different AI model',
-                      ),
-                    ],
-                  ),
-                ],
+            // Cost display for assistant messages
+            if (!isUser &&
+                message.isProcessing != true &&
+                (message.messageCost != null || message.sessionCost != null))
+              Container(
+                margin: const EdgeInsets.only(top: AppColors.spacingSm),
+                child: CostDisplayWidget(
+                  messageCost: message.messageCost,
+                  costBreakdown: message.costBreakdown,
+                  compact: true,
+                ),
               ),
-            ),
 
-          // Action buttons for user messages
-          if (isUser && message.isProcessing != true)
-            Container(
-              margin: const EdgeInsets.only(top: AppColors.spacingSm),
-              child: Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  // Edit button
-                  _ActionButton(
-                    icon: Icons.edit,
-                    label: 'Edit',
-                    onPressed: () => _editUserMessage(message),
-                    tooltip: 'Edit and resend message',
-                  ),
+            // Enhanced action buttons for assistant messages
+            if (!isUser && message.isProcessing != true)
+              Container(
+                margin: const EdgeInsets.only(top: AppColors.spacingSm),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Enhanced action buttons row
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        // Copy button - opens dialog with options
+                        _ActionButton(
+                          icon: Icons.content_copy,
+                          label: 'Copy',
+                          onPressed: () => _showCopyDialog(message),
+                          tooltip: 'Copy message',
+                        ),
 
-                  // Copy button
-                  _ActionButton(
-                    icon: Icons.copy,
-                    label: 'Copy',
-                    onPressed: () => _copyMessage(message, asMarkdown: false),
-                    tooltip: 'Copy message',
-                  ),
-                ],
+                        // Regenerate button
+                        _ActionButton(
+                          icon: Icons.refresh,
+                          label: 'Regenerate',
+                          onPressed: () => _regenerateResponse(message),
+                          tooltip: 'Generate a new response',
+                        ),
+
+                        // Try Different Model button
+                        _ActionButton(
+                          icon: Icons.swap_horiz,
+                          label: 'Try Different Model',
+                          onPressed: () =>
+                              _showModelSwitchForRegenerate(message),
+                          tooltip: 'Regenerate with a different AI model',
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-        ],
+
+            // Action buttons for user messages
+            if (isUser && message.isProcessing != true)
+              Container(
+                margin: const EdgeInsets.only(top: AppColors.spacingSm),
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    // Edit button
+                    _ActionButton(
+                      icon: Icons.edit,
+                      label: 'Edit',
+                      onPressed: () => _editUserMessage(message),
+                      tooltip: 'Edit and resend message',
+                    ),
+
+                    // Copy button
+                    _ActionButton(
+                      icon: Icons.copy,
+                      label: 'Copy',
+                      onPressed: () => _copyMessage(message, asMarkdown: false),
+                      tooltip: 'Copy message',
+                    ),
+                  ],
+                ),
+              ),
+          ],
         ),
       ),
     );
   }
 
   /// Show context menu for message actions
-  void _showContextMenu(BuildContext context, Message message, Offset position) {
+  void _showContextMenu(
+    BuildContext context,
+    Message message,
+    Offset position,
+  ) {
     final isUser = message.type == 'user';
-    final RenderBox overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+    final RenderBox overlay =
+        Overlay.of(context).context.findRenderObject() as RenderBox;
 
     showMenu<String>(
       context: context,
@@ -2542,9 +2533,11 @@ class _EditorScreenState extends State<EditorScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(asMarkdown
-              ? 'Message copied with formatting'
-              : 'Message copied as plain text'),
+            content: Text(
+              asMarkdown
+                  ? 'Message copied with formatting'
+                  : 'Message copied as plain text',
+            ),
             duration: const Duration(seconds: 2),
           ),
         );
@@ -2582,7 +2575,9 @@ class _EditorScreenState extends State<EditorScreen> {
         final blockCount = TextUtils.countCodeBlocks(message.textContent);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Copied $blockCount code ${blockCount == 1 ? "block" : "blocks"}'),
+            content: Text(
+              'Copied $blockCount code ${blockCount == 1 ? "block" : "blocks"}',
+            ),
             duration: const Duration(seconds: 2),
           ),
         );
@@ -2610,7 +2605,7 @@ class _EditorScreenState extends State<EditorScreen> {
   /// Refresh credits immediately after message completion
   void _refreshCreditsAfterMessage() {
     print('🔄 [EDITOR] _refreshCreditsAfterMessage() called');
-    
+
     // Get the current user
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
@@ -2623,23 +2618,31 @@ class _EditorScreenState extends State<EditorScreen> {
     // Add a small delay to ensure backend has processed the credit deduction
     Future.delayed(const Duration(milliseconds: 500), () {
       print('⏰ [EDITOR] Delay completed, calling refreshFromBackend...');
-      
+
       // Refresh credits from backend and update UI immediately
-      UsageQuotaService.instance.refreshFromBackend(user.uid).then((quota) {
-        print('✅ [EDITOR] Credits refreshed from backend: ${quota.remaining} remaining');
-        
-        // Force refresh the usage quota provider to update UI
-        if (mounted) {
-          print('🔄 [EDITOR] Calling UsageQuotaProvider.refresh()...');
-          final usageQuotaProvider = Provider.of<UsageQuotaProvider>(context, listen: false);
-          usageQuotaProvider.refresh();
-          print('✅ [EDITOR] UsageQuotaProvider.refresh() completed');
-        } else {
-          print('⚠️ [EDITOR] Widget not mounted, skipping UI refresh');
-        }
-      }).catchError((error) {
-        print('❌ [EDITOR] Failed to refresh credits after message: $error');
-      });
+      UsageQuotaService.instance
+          .refreshFromBackend(user.uid)
+          .then((quota) {
+            print(
+              '✅ [EDITOR] Credits refreshed from backend: ${quota.remaining} remaining',
+            );
+
+            // Force refresh the usage quota provider to update UI
+            if (mounted) {
+              print('🔄 [EDITOR] Calling UsageQuotaProvider.refresh()...');
+              final usageQuotaProvider = Provider.of<UsageQuotaProvider>(
+                context,
+                listen: false,
+              );
+              usageQuotaProvider.refresh();
+              print('✅ [EDITOR] UsageQuotaProvider.refresh() completed');
+            } else {
+              print('⚠️ [EDITOR] Widget not mounted, skipping UI refresh');
+            }
+          })
+          .catchError((error) {
+            print('❌ [EDITOR] Failed to refresh credits after message: $error');
+          });
     });
   }
 
@@ -2942,6 +2945,8 @@ class _EditorScreenState extends State<EditorScreen> {
     }
   }
 
+  // Demo content removed
+
   Future<void> _loadConversation() async {
     if (_currentConversationId == null) return;
 
@@ -2982,7 +2987,7 @@ class _EditorScreenState extends State<EditorScreen> {
           '📖 [CONVERSATION] Loaded conversation: $_currentConversationId (${messages.length} messages)',
           tag: 'EditorScreen',
         );
-        
+
         // Emit chat opened event
         CreditEventService.instance.emitChatOpened(
           conversationId: _currentConversationId!,
@@ -3107,7 +3112,7 @@ class _EditorScreenState extends State<EditorScreen> {
         setState(() {
           _modeConfigs = {
             for (var mode in ChatMode.values)
-              mode: ModeConfigManager.getDefaultConfigForMode(mode)
+              mode: ModeConfigManager.getDefaultConfigForMode(mode),
           };
         });
       } else {
@@ -3240,7 +3245,7 @@ class _EditorScreenState extends State<EditorScreen> {
 
     // Reset session cost tracking
     SessionCostService().resetSession();
-    
+
     // Emit session reset event
     CreditEventService.instance.emitSessionReset();
 
@@ -3578,31 +3583,6 @@ class _EditorScreenState extends State<EditorScreen> {
     final textToSend = initialText ?? _messageController.text.trim();
     if (textToSend.isEmpty && _attachments.isEmpty) return;
 
-    // Gate anonymous users with proper limit management
-    try {
-      final auth = Provider.of<FirebaseAuthProvider>(context, listen: false);
-      if (auth.isAnonymous) {
-        final anonymousAccess = Provider.of<AnonymousAccessProvider>(context, listen: false);
-        debugPrint('🔍 [Editor] Anonymous user trying to send message');
-        debugPrint('  - Can send message: ${anonymousAccess.canSendMessage()}');
-        debugPrint('  - Messages used: ${anonymousAccess.messagesUsed}');
-        debugPrint('  - Messages remaining: ${anonymousAccess.messagesRemaining}');
-        debugPrint('  - Has reached limit: ${anonymousAccess.hasReachedLimit}');
-        
-        if (!anonymousAccess.canSendMessage()) {
-          debugPrint('🚫 [Editor] Anonymous user blocked - showing sign-in blocker');
-          await _showSignInBlocker(
-            context,
-            reason: anonymousAccess.getLimitMessage(),
-          );
-          return;
-        }
-      }
-    } catch (e) {
-      debugPrint('❌ [Editor] Error checking anonymous access: $e');
-      // If provider not available yet, allow and continue
-    }
-
     // Reset cancellation flag
     _isCancelled = false;
 
@@ -3673,10 +3653,7 @@ class _EditorScreenState extends State<EditorScreen> {
             .map((m) => m['text'] as String)
             .join('\n');
         if (combinedText.isNotEmpty) {
-          contentParts.add({
-            'type': 'text',
-            'text': combinedText,
-          });
+          contentParts.add({'type': 'text', 'text': combinedText});
         }
       }
 
@@ -3686,7 +3663,8 @@ class _EditorScreenState extends State<EditorScreen> {
           contentParts.add({
             'type': 'image_url',
             'image_url': {
-              'url': 'data:${attachment.mimeType};base64,${attachment.base64Data}',
+              'url':
+                  'data:${attachment.mimeType};base64,${attachment.base64Data}',
             },
           });
         }
@@ -3715,16 +3693,7 @@ class _EditorScreenState extends State<EditorScreen> {
       _currentProgress = null;
     });
 
-    // Record anonymous usage after successful message addition
-    try {
-      final auth = Provider.of<FirebaseAuthProvider>(context, listen: false);
-      if (auth.isAnonymous) {
-        final anonymousAccess = Provider.of<AnonymousAccessProvider>(context, listen: false);
-        await anonymousAccess.recordMessageUsage();
-      }
-    } catch (_) {
-      // If provider not available, continue silently
-    }
+    // Anonymous usage tracking removed
 
     // Save conversation immediately after adding user message
     if (_currentConversationId != null) {
@@ -3838,9 +3807,11 @@ class _EditorScreenState extends State<EditorScreen> {
       print('🚀🚀🚀 [EDITOR] About to call chatCompletionStream');
       print('🎯 [EDITOR] Model: $modelToUse');
       print('🏷️  [EDITOR] Chat Mode: $_currentMode');
-      print('💬 [EDITOR] Message count: ${_messages.where((m) => m.isProcessing != true).length}');
+      print(
+        '💬 [EDITOR] Message count: ${_messages.where((m) => m.isProcessing != true).length}',
+      );
       print('🔧 [EDITOR] Has tools: ${_toolsConfig != null}');
-      
+
       final stream = _llmService.chatCompletionStream(
         model: modelToUse,
         messages: _messages.where((m) => m.isProcessing != true).toList(),
@@ -3857,7 +3828,7 @@ class _EditorScreenState extends State<EditorScreen> {
       );
 
       print('✅ [EDITOR] Stream created, starting to listen...');
-      
+
       // Emit message consumed event when stream starts
       CreditEventService.instance.emitMessageConsumed(
         requestId: messageId,
@@ -3868,9 +3839,11 @@ class _EditorScreenState extends State<EditorScreen> {
 
       // Also trigger an immediate credit refresh when message starts
       _refreshCreditsAfterMessage();
-      
+
       await for (final eventMap in stream) {
-        print('📨 [EDITOR] Received event from stream: ${eventMap.keys.join(', ')}');
+        print(
+          '📨 [EDITOR] Received event from stream: ${eventMap.keys.join(', ')}',
+        );
         // Check if operation was cancelled
         if (_isCancelled) {
           print('🚫 Breaking stream loop due to cancellation');
@@ -3880,13 +3853,15 @@ class _EditorScreenState extends State<EditorScreen> {
         // Check for done event before converting to ChatStreamEvent
         if (eventMap['done'] == true) {
           print('✅ [EDITOR] Stream done event received, hiding loader');
-          
+
           // Find the processing message and update its isProcessing state
           final processingMessageIndex = _messages.indexWhere(
             (m) => m.isProcessing == true,
           );
-          
-          print('🔍 [EDITOR] Processing message index: $processingMessageIndex');
+
+          print(
+            '🔍 [EDITOR] Processing message index: $processingMessageIndex',
+          );
           if (processingMessageIndex != -1) {
             print('📝 [EDITOR] Updating message.isProcessing to false');
             final processingMessage = _messages[processingMessageIndex];
@@ -3899,26 +3874,31 @@ class _EditorScreenState extends State<EditorScreen> {
               attachments: processingMessage.attachments,
               sources: processingMessage.sources,
               followUpQuestions: processingMessage.followUpQuestions,
-              additionalFollowUpQuestions: processingMessage.additionalFollowUpQuestions,
+              additionalFollowUpQuestions:
+                  processingMessage.additionalFollowUpQuestions,
               images: processingMessage.images,
               messageCost: processingMessage.messageCost,
               sessionCost: processingMessage.sessionCost,
               costBreakdown: processingMessage.costBreakdown,
             );
             _messages[processingMessageIndex] = updatedMessage;
-            
+
             // Refresh credits immediately after setting isProcessing to false
-            print('🔄 [EDITOR] Message processing completed, refreshing credits...');
+            print(
+              '🔄 [EDITOR] Message processing completed, refreshing credits...',
+            );
             _refreshCreditsAfterMessage();
           }
-          
+
           setState(() {
             _isProcessing = false;
             _showLoader = false;
           });
-          
+
           // Also refresh credits when processing is complete (fallback)
-          print('🔄 [EDITOR] Processing state updated, refreshing credits as fallback...');
+          print(
+            '🔄 [EDITOR] Processing state updated, refreshing credits as fallback...',
+          );
           _refreshCreditsAfterMessage();
           break; // Exit the stream loop
         }
@@ -4112,7 +4092,7 @@ class _EditorScreenState extends State<EditorScreen> {
                 costBreakdown: costBreakdown,
               );
 
-            // Update the message in the list
+              // Update the message in the list
               setState(() {
                 _messages[index] = updatedMessage;
                 // Clear milestone state when complete
@@ -4150,12 +4130,16 @@ class _EditorScreenState extends State<EditorScreen> {
               requestId: messageId,
               messageCost: messageCost ?? 0.0,
               sessionCost: sessionCost ?? 0.0,
-              messageCount: _messages.where((m) => m.type == 'assistant' && m.isProcessing != true).length,
+              messageCount: _messages
+                  .where((m) => m.type == 'assistant' && m.isProcessing != true)
+                  .length,
               costBreakdown: costBreakdown,
             );
 
             // Immediately refresh credits from backend after message completion
-            print('🔄 [EDITOR] Calling _refreshCreditsAfterMessage() after stream completion');
+            print(
+              '🔄 [EDITOR] Calling _refreshCreditsAfterMessage() after stream completion',
+            );
             _refreshCreditsAfterMessage();
 
             // Update costs and LLM info
@@ -4646,7 +4630,9 @@ class _EditorScreenState extends State<EditorScreen> {
                                     }
                                   } catch (e) {
                                     if (mounted) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
                                         SnackBar(
                                           content: Text(
                                             'Could not open source: $e',
@@ -4843,7 +4829,9 @@ class _EditorScreenState extends State<EditorScreen> {
                                 if (mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
-                                      content: Text('Could not open source: $e'),
+                                      content: Text(
+                                        'Could not open source: $e',
+                                      ),
                                       backgroundColor: Colors.red,
                                     ),
                                   );
@@ -5411,7 +5399,9 @@ class _EditorScreenState extends State<EditorScreen> {
                                       onPressed: () async {
                                         Navigator.of(context).pop();
                                         if (mounted) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
                                             const SnackBar(
                                               content: Text(
                                                 'Quota-based access: add or manage your API key/quota in settings.',
@@ -5673,7 +5663,9 @@ class _EditorScreenState extends State<EditorScreen> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Switched to ${ModelRegistry.formatModelName(modelId)}'),
+          content: Text(
+            'Switched to ${ModelRegistry.formatModelName(modelId)}',
+          ),
           backgroundColor: Theme.of(context).colorScheme.primary,
         ),
       );
@@ -5842,7 +5834,9 @@ class _EditorScreenState extends State<EditorScreen> {
             context,
             listen: false,
           );
-          final currentConfig = modeConfigProvider.getConfigForMode(_currentMode);
+          final currentConfig = modeConfigProvider.getConfigForMode(
+            _currentMode,
+          );
           if (currentConfig != null) {
             modeConfigProvider.updateConfig(
               _currentMode,
@@ -5863,40 +5857,6 @@ class _EditorScreenState extends State<EditorScreen> {
           _checkModelCapabilities();
         }
       },
-    );
-  }
-
-  Future<void> _showSignInBlocker(BuildContext context, {String? reason}) async {
-    final theme = Theme.of(context);
-    await showDialog(
-      context: context,
-      barrierDismissible: true,
-      builder: (ctx) => AlertDialog(
-        title: Row(
-          children: [
-            Icon(Icons.lock_open, color: theme.colorScheme.primary),
-            const SizedBox(width: 8),
-            const Text('Sign in to continue'),
-          ],
-        ),
-        content: Text(
-          reason ??
-              'Sign in to keep chatting, switch models, and unlock your credits.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Not now'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(ctx).pop();
-              context.push('/sign-in');
-            },
-            child: const Text('Sign In'),
-          ),
-        ],
-      ),
     );
   }
 }
@@ -5930,7 +5890,7 @@ class _ModelRateDisplay extends StatelessWidget {
       ),
       builder: (context, snapshot) {
         String suffix = ' (Loading...)';
-        
+
         if (snapshot.hasData) {
           final units = snapshot.data!.requestUnits;
           suffix = units > 0 ? ' (x${units.toStringAsFixed(1)})' : ' (x0.3)';
@@ -5938,7 +5898,7 @@ class _ModelRateDisplay extends StatelessWidget {
           // Fallback for errors - could be improved to get from config
           suffix = ' (x0.3)';
         }
-        
+
         return Text(
           '$baseText$suffix',
           style: style,
@@ -6032,10 +5992,7 @@ class _ActionButton extends StatelessWidget {
     );
 
     if (tooltip != null) {
-      return Tooltip(
-        message: tooltip!,
-        child: button,
-      );
+      return Tooltip(message: tooltip!, child: button);
     }
 
     return button;
@@ -6077,11 +6034,7 @@ class _CopyOptionButton extends StatelessWidget {
                 color: theme.colorScheme.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(6),
               ),
-              child: Icon(
-                icon,
-                size: 20,
-                color: theme.colorScheme.primary,
-              ),
+              child: Icon(icon, size: 20, color: theme.colorScheme.primary),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -6098,7 +6051,9 @@ class _CopyOptionButton extends StatelessWidget {
                   Text(
                     subtitle,
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+                      color: theme.textTheme.bodySmall?.color?.withValues(
+                        alpha: 0.7,
+                      ),
                     ),
                   ),
                 ],

@@ -8,7 +8,7 @@ import 'package:firebase_auth/firebase_auth.dart' as fb;
 class AnonymousAccessProvider extends ChangeNotifier {
   static const String _usageKey = 'anonymous_usage';
   static const String _lastResetKey = 'anonymous_last_reset';
-  static const int _maxFreeMessages = 1; // Allow 1 free message for anonymous users to try the app
+  static const int _maxFreeMessages = 3; // Allow 3 free messages for anonymous users to try the app
   static const int _resetIntervalHours = 24; // Reset limits every 24 hours
 
   int _messagesUsed = 0;
@@ -81,13 +81,13 @@ class AnonymousAccessProvider extends ChangeNotifier {
   /// Get user-friendly limit message
   String getLimitMessage() {
     if (_hasReachedLimit) {
-      return 'You\'ve used your free message! Sign in with Apple or Google to continue chatting.';
+      return 'You\'ve used your free messages! Purchase credits to continue or sign in to sync your data.';
     }
     final remaining = messagesRemaining;
     if (remaining == 1) {
-      return 'You have 1 free message to try the app. Sign in to continue chatting!';
+      return 'You have 1 free message remaining. Purchase credits or sign in for more!';
     }
-    return 'You have $remaining free messages remaining. Sign in to get more credits.';
+    return 'You have $remaining free messages remaining. Purchase credits or sign in for more!';
   }
 
   // Account linking simplified - just reset limits when user signs in

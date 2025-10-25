@@ -63,7 +63,18 @@
 				<string>https</string>
 			</array>
 		</dict>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>google</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.702035468371-pngvh8gjcquh2rh8po66aumvonrpmjar</string>
+			</array>
+		</dict>
 	</array>
+	<!-- Google Sign In Configuration -->
+	<key>GIDClientID</key>
+	<string>702035468371-pngvh8gjcquh2rh8po66aumvonrpmjar.apps.googleusercontent.com</string>
 	<!-- iOS Privacy Usage Descriptions required for photo/camera access used by plugins like image_picker -->
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Allow Cognify to access your photo library to select images and attachments.</string>

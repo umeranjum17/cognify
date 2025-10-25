@@ -10,12 +10,15 @@ class CognifyLogo extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Image.asset(
-      isDark ? 'assets/images/cognify_dark.png' : 'assets/images/cognify_robot_512x512.png',
-      width: size,
-      height: size,
-      fit: BoxFit.contain,
-      filterQuality: FilterQuality.high,
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(size * 0.15),
+      child: Image.asset(
+        isDark ? 'assets/images/cognify_dark.png' : 'assets/images/cognify_robot_512x512.png',
+        width: size,
+        height: size,
+        fit: BoxFit.cover,
+        filterQuality: FilterQuality.high,
+      ),
     );
   }
 }

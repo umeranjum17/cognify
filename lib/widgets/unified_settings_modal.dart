@@ -41,14 +41,13 @@ class _UnifiedSettingsModalState extends State<UnifiedSettingsModal>
       child: Scaffold(
         backgroundColor: isDark ? AppColors.darkBackground : AppColors.lightBackground,
         appBar: AppBar(
+          title: const Text('Settings'),
           backgroundColor: isDark ? AppColors.darkBackground : AppColors.lightBackground,
+          foregroundColor: isDark ? AppColors.darkText : AppColors.lightText,
           surfaceTintColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
-            icon: Icon(
-              Icons.close,
-              color: isDark ? AppColors.darkText : AppColors.lightText,
-            ),
+            icon: const Icon(Icons.arrow_back),
             onPressed: () => Navigator.of(context).pop(),
           ),
           bottom: PreferredSize(

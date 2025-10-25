@@ -392,29 +392,31 @@ class _GeneralSettingsTabState extends State<GeneralSettingsTab> {
           ]),
 
           const SizedBox(height: 24),
-          // Account Actions - properly sized and organized
-          _buildSection(theme, isDark, 'Account Actions', [
-            _buildActionCard(
-              theme,
-              isDark,
-              icon: Icons.logout,
-              title: 'Sign Out',
-              subtitle: 'Sign out of your account',
-              onTap: _signingOut ? null : _logout,
-              isLoading: _signingOut,
-              isDestructive: false,
-            ),
-            const SizedBox(height: 12),
-            _buildActionCard(
-              theme,
-              isDark,
-              icon: Icons.delete_forever,
-              title: 'Delete All My Data',
-              subtitle: 'Permanently delete all your data',
-              onTap: _deleteAllData,
-              isDestructive: true,
-            ),
-          ]),
+          // Account Actions - only show for non-anonymous users
+          if (!authProvider.isAnonymous)
+            _buildSection(theme, isDark, 'Account Actions', [
+              // Sign Out button for authenticated users
+              _buildActionCard(
+                theme,
+                isDark,
+                icon: Icons.logout,
+                title: 'Sign Out',
+                subtitle: 'Sign out of your account',
+                onTap: _signingOut ? null : _logout,
+                isLoading: _signingOut,
+                isDestructive: false,
+              ),
+              const SizedBox(height: 12),
+              _buildActionCard(
+                theme,
+                isDark,
+                icon: Icons.delete_forever,
+                title: 'Delete All My Data',
+                subtitle: 'Permanently delete all your data',
+                onTap: _deleteAllData,
+                isDestructive: true,
+              ),
+            ]),
         ],
       ),
     );

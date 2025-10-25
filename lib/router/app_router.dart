@@ -37,15 +37,12 @@ class AppRouter {
         final isAnonymous = authProvider.isAnonymous;
         final loggingIn = state.matchedLocation == '/sign-in';
 
-        // If not signed in at all, redirect to sign-in for protected routes
+        // If not signed in at all, redirect to sign-in screen
         if (!signedIn) {
           if (loggingIn) {
-            return null;
+            return null; // Already on sign-in screen
           }
-          // Allow demo mode on home route, redirect to sign-in for other routes
-          if (state.matchedLocation == '/') {
-            return null; // Let pageBuilder handle demo mode
-          }
+          // Redirect all routes to sign-in when not signed in
           final qp = Map<String, String>.from(state.uri.queryParameters);
           return Uri(
             path: '/sign-in',
@@ -58,9 +55,9 @@ class AppRouter {
           return '/editor';
         }
 
-        // If anonymous user on sign-in page, let them stay to sign in
+        // Anonymous users can access the app freely and sign in whenever they want
         if (signedIn && isAnonymous && loggingIn) {
-          return null; // Stay on sign-in page
+          return null; // Stay on sign-in page if they choose to visit it
         }
 
         if (loc.contains('://')) {
@@ -103,7 +100,7 @@ class AppRouter {
             }
 
             // Show the editor for both anonymous and signed-in users.
-            // Anonymous users are gated in-editor to one free message, then prompted to sign in.
+            // Anonymous users can use the app, buy credits, and sign in whenever they want.
             return const MaterialPage(child: TabbedEditorScreen());
           },
         ),
@@ -153,10 +150,8 @@ class AppRouter {
         GoRoute(
           path: '/feedback',
           name: 'feedback',
-          pageBuilder: (context, state) => MaterialPage(
-            key: state.pageKey,
-            child: const FeedbackScreen(),
-          ),
+          pageBuilder: (context, state) =>
+              MaterialPage(key: state.pageKey, child: const FeedbackScreen()),
         ),
         // Paywall removed; access is quota/token based.
       ],

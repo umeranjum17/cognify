@@ -31,14 +31,14 @@ class RevenueCatService {
   Stream<CustomerInfo> get customerInfoStream => _customerInfoController.stream;
 
   bool _configured = false;
-  
+
   // Public getter to check if RevenueCat is configured
   bool get isConfigured => _configured;
 
   /// Reset RevenueCat configuration to allow reinitialization with a different user
   Future<void> reset({Duration timeout = const Duration(seconds: 6)}) async {
     debugPrint('🔄 [RevenueCat] Resetting configuration...');
-    
+
     // First, try to logout from RevenueCat if configured
     if (_configured) {
       try {
@@ -48,14 +48,14 @@ class RevenueCatService {
         debugPrint('⚠️ [RevenueCat] Error logging out during reset: $e');
       }
     }
-    
+
     // Clear cached data
     _offeringsCache = null;
     _customerInfoCache = null;
-    
+
     // Reset configured flag to allow reinitialization
     _configured = false;
-    
+
     debugPrint('✅ [RevenueCat] Reset completed');
   }
 
@@ -72,16 +72,23 @@ class RevenueCatService {
 
     try {
       // Configure SDK with platform-specific public SDK key
-      final isApplePlatform = defaultTargetPlatform == TargetPlatform.iOS ||
+      final isApplePlatform =
+          defaultTargetPlatform == TargetPlatform.iOS ||
           defaultTargetPlatform == TargetPlatform.macOS;
       final apiKey = isApplePlatform
           ? PurchasesConfig.rcPublicKeyIOS
           : PurchasesConfig.rcPublicKeyAndroid;
 
       // Check for placeholder keys and skip initialization
-      if (apiKey.contains('TODO_') || apiKey.contains('placeholder') || apiKey.length < 10) {
-        debugPrint('⚠️ [RevenueCat] Placeholder API key detected, skipping initialization');
-        debugPrint('ℹ️ [RevenueCat] App will continue without subscription functionality');
+      if (apiKey.contains('TODO_') ||
+          apiKey.contains('placeholder') ||
+          apiKey.length < 10) {
+        debugPrint(
+          '⚠️ [RevenueCat] Placeholder API key detected, skipping initialization',
+        );
+        debugPrint(
+          'ℹ️ [RevenueCat] App will continue without subscription functionality',
+        );
         _configured = false;
         return;
       }
@@ -90,7 +97,7 @@ class RevenueCatService {
       debugPrint('  - Platform: ${isApplePlatform ? 'Apple' : 'Android'}');
       debugPrint('  - SDK Key (first 10): ${apiKey.substring(0, 10)}...');
       debugPrint('  - App User ID (provided): ${appUserId ?? 'anonymous'}');
-      
+
       final configuration = PurchasesConfiguration(apiKey);
       // If we already know the user, set it on configuration to avoid identity races
       if (appUserId != null && appUserId.isNotEmpty) {
@@ -110,7 +117,8 @@ class RevenueCatService {
       debugPrint('✅ [RevenueCat] Configuration successful');
     } catch (e, st) {
       debugPrint('❌ [RevenueCat] configure failed, continuing without RC: $e');
-      if (e.toString().contains('Invalid API Key') || e.toString().contains('credentials')) {
+      if (e.toString().contains('Invalid API Key') ||
+          e.toString().contains('credentials')) {
         debugPrint('🔑 [RevenueCat] Invalid credentials - check your API keys');
       }
       debugPrint('$st');
@@ -130,12 +138,18 @@ class RevenueCatService {
 
     // Warm caches and set up listener
     try {
-      debugPrint('🔍 [RevenueCat] Fetching initial customer info after configure...');
-      _customerInfoCache =
-          await _withTimeout(() => Purchases.getCustomerInfo(), timeout);
+      debugPrint(
+        '🔍 [RevenueCat] Fetching initial customer info after configure...',
+      );
+      _customerInfoCache = await _withTimeout(
+        () => Purchases.getCustomerInfo(),
+        timeout,
+      );
       if (_customerInfoCache != null) {
         final ent = _customerInfoCache!.entitlements.active;
-        debugPrint('🎟️ [RevenueCat] Initial entitlements: ${ent.keys.join(', ')}');
+        debugPrint(
+          '🎟️ [RevenueCat] Initial entitlements: ${ent.keys.join(', ')}',
+        );
         _customerInfoController.add(_customerInfoCache!);
       }
     } catch (e) {
@@ -150,7 +164,9 @@ class RevenueCatService {
         try {
           _customerInfoController.add(customerInfo);
           final ent = customerInfo.entitlements.active;
-          debugPrint('🔔 [RevenueCat] CustomerInfo updated. Active entitlements: ${ent.keys.join(', ')}');
+          debugPrint(
+            '🔔 [RevenueCat] CustomerInfo updated. Active entitlements: ${ent.keys.join(', ')}',
+          );
         } catch (e) {
           debugPrint('⚠️ [RevenueCat] stream add error: $e');
         }
@@ -160,18 +176,23 @@ class RevenueCatService {
     }
   }
 
-  Future<void> identify(String appUserId,
-      {Duration timeout = const Duration(seconds: 6)}) async {
+  Future<void> identify(
+    String appUserId, {
+    Duration timeout = const Duration(seconds: 6),
+  }) async {
     if (!_configured) return; // silently no-op if RC unavailable
     try {
       debugPrint('🔄 [RevenueCat] Identifying user: $appUserId');
       await _withTimeout(() => Purchases.logIn(appUserId), timeout);
-      
+
       // Force refresh customer info to ensure we get the latest data
-      final info = await _withTimeout(() => Purchases.getCustomerInfo(), timeout);
+      final info = await _withTimeout(
+        () => Purchases.getCustomerInfo(),
+        timeout,
+      );
       _customerInfoCache = info;
       _customerInfoController.add(info);
-      
+
       debugPrint('✅ [RevenueCat] User identified successfully: $appUserId');
     } catch (e) {
       debugPrint('⚠️ [RevenueCat] identify error: $e');
@@ -179,15 +200,22 @@ class RevenueCatService {
   }
 
   /// Force refresh customer info from RevenueCat servers (bypassing cache)
-  Future<CustomerInfo?> forceRefreshCustomerInfo({Duration timeout = const Duration(seconds: 6)}) async {
+  Future<CustomerInfo?> forceRefreshCustomerInfo({
+    Duration timeout = const Duration(seconds: 6),
+  }) async {
     if (!PurchasesConfig.purchasesEnabled) {
-      debugPrint('⛔ [RevenueCat] Purchases disabled. Skipping forceRefreshCustomerInfo().');
+      debugPrint(
+        '⛔ [RevenueCat] Purchases disabled. Skipping forceRefreshCustomerInfo().',
+      );
       return _customerInfoCache;
     }
     if (!_configured) return _customerInfoCache;
     try {
       debugPrint('🔄 [RevenueCat] Force refreshing customer info...');
-      final info = await _withTimeout(() => Purchases.getCustomerInfo(), timeout);
+      final info = await _withTimeout(
+        () => Purchases.getCustomerInfo(),
+        timeout,
+      );
       _customerInfoCache = info;
       _customerInfoController.add(info);
       debugPrint('✅ [RevenueCat] Customer info force refreshed');
@@ -206,8 +234,10 @@ class RevenueCatService {
     if (!_configured) return;
     try {
       await _withTimeout(() => Purchases.logOut(), timeout);
-      final info =
-          await _withTimeout(() => Purchases.getCustomerInfo(), timeout);
+      final info = await _withTimeout(
+        () => Purchases.getCustomerInfo(),
+        timeout,
+      );
       _customerInfoCache = info;
       _customerInfoController.add(info);
     } catch (e) {
@@ -220,26 +250,38 @@ class RevenueCatService {
     Duration timeout = const Duration(seconds: 8),
   }) async {
     if (!PurchasesConfig.purchasesEnabled) {
-      debugPrint('⛔ [RevenueCat] Purchases disabled. Returning null from getOfferings().');
+      debugPrint(
+        '⛔ [RevenueCat] Purchases disabled. Returning null from getOfferings().',
+      );
       return null;
     }
     if (!_configured) {
-      debugPrint('⚠️ [RevenueCat] getOfferings: RC not configured - returning null');
+      debugPrint(
+        '⚠️ [RevenueCat] getOfferings: RC not configured - returning null',
+      );
       return null;
     }
     if (!forceRefresh && _offeringsCache != null) return _offeringsCache;
     try {
-      debugPrint('📡 [RevenueCat] Fetching offerings (force: $forceRefresh)...');
-      _offeringsCache =
-          await _withTimeout(() => Purchases.getOfferings(), timeout);
+      debugPrint(
+        '📡 [RevenueCat] Fetching offerings (force: $forceRefresh)...',
+      );
+      _offeringsCache = await _withTimeout(
+        () => Purchases.getOfferings(),
+        timeout,
+      );
       if (_offeringsCache == null) {
         debugPrint('⚠️ [RevenueCat] getOfferings: No offerings returned');
       } else {
-        debugPrint('✅ [RevenueCat] getOfferings: Found ${_offeringsCache!.all.length} offerings');
-        
+        debugPrint(
+          '✅ [RevenueCat] getOfferings: Found ${_offeringsCache!.all.length} offerings',
+        );
+
         // Debug: List all available products
         _offeringsCache!.all.forEach((key, offering) {
-          debugPrint('📦 [RevenueCat] Offering "$key": ${offering.availablePackages.length} packages');
+          debugPrint(
+            '📦 [RevenueCat] Offering "$key": ${offering.availablePackages.length} packages',
+          );
           offering.availablePackages.forEach((package) {
             final sp = package.storeProduct;
             debugPrint('  📦 Package: ${package.identifier}');
@@ -263,10 +305,13 @@ class RevenueCatService {
     return _offeringsCache;
   }
 
-  Future<CustomerInfo?> restorePurchases(
-      {Duration timeout = const Duration(seconds: 10)}) async {
+  Future<CustomerInfo?> restorePurchases({
+    Duration timeout = const Duration(seconds: 10),
+  }) async {
     if (!PurchasesConfig.purchasesEnabled) {
-      debugPrint('⛔ [RevenueCat] Purchases disabled. Skipping restorePurchases().');
+      debugPrint(
+        '⛔ [RevenueCat] Purchases disabled. Skipping restorePurchases().',
+      );
       return null;
     }
     if (!_configured) {
@@ -274,8 +319,10 @@ class RevenueCatService {
       return null;
     }
     try {
-      final info =
-          await _withTimeout(() => Purchases.restorePurchases(), timeout);
+      final info = await _withTimeout(
+        () => Purchases.restorePurchases(),
+        timeout,
+      );
       _customerInfoCache = info;
       _customerInfoController.add(info);
       return info;
@@ -305,26 +352,83 @@ class RevenueCatService {
     debugPrint('  Product ID: ${pkg.storeProduct.identifier}');
     debugPrint('  Price: ${pkg.storeProduct.priceString}');
     debugPrint('  Product type: ${pkg.packageType}');
-    
+
     try {
       final customerInfo = await _withTimeout(
-          () => Purchases.purchasePackage(pkg), timeout);
+        () => Purchases.purchasePackage(pkg),
+        timeout,
+      );
       _customerInfoCache = customerInfo;
       _customerInfoController.add(customerInfo);
       debugPrint('✅ [RevenueCat] Purchase successful');
+      debugPrint(
+        '  - Transaction ID: ${customerInfo.nonSubscriptionTransactions.isNotEmpty ? customerInfo.nonSubscriptionTransactions.last.transactionIdentifier : "N/A"}',
+      );
       return PurchaseResult(success: true, customerInfo: customerInfo);
     } on PlatformException catch (e) {
       final code = PurchasesErrorHelper.getErrorCode(e);
+
+      // Enhanced error logging
+      debugPrint('❌ [RevenueCat] PlatformException during purchase:');
+      debugPrint('  - Error Code: $code');
+      debugPrint('  - Error Message: ${e.message}');
+      debugPrint('  - Error Details: ${e.details}');
+      debugPrint('  - Platform Code: ${e.code}');
+
       if (code == PurchasesErrorCode.purchaseCancelledError) {
         debugPrint('ℹ️ [RevenueCat] Purchase cancelled by user');
-        return PurchaseResult(success: false, errorMessage: 'cancelled');
+        debugPrint('  ⚠️ Note: This can also mean:');
+        debugPrint('     - Payment authentication failed');
+        debugPrint('     - Product not available in your region');
+        debugPrint('     - Sandbox test account issue');
+        debugPrint('     - Product ID mismatch');
+        return PurchaseResult(
+          success: false,
+          errorMessage: 'cancelled',
+          errorCode: code,
+        );
       }
-      debugPrint(
-          '❌ [RevenueCat] Purchases error: $code ${e.message ?? e.code}');
-      return PurchaseResult(success: false, errorMessage: e.message ?? '$code');
+
+      // Provide more specific error messages
+      String userMessage;
+      switch (code) {
+        case PurchasesErrorCode.productNotAvailableForPurchaseError:
+          userMessage =
+              'This product is not available for purchase. Please contact support.';
+          break;
+        case PurchasesErrorCode.purchaseNotAllowedError:
+          userMessage =
+              'Purchases are not allowed on this device. Check your device settings.';
+          break;
+        case PurchasesErrorCode.purchaseInvalidError:
+          userMessage =
+              'Invalid purchase. The product may not be properly configured.';
+          break;
+        case PurchasesErrorCode.storeProblemError:
+          userMessage = 'App Store connection issue. Please try again later.';
+          break;
+        case PurchasesErrorCode.networkError:
+          userMessage = 'Network error. Please check your internet connection.';
+          break;
+        default:
+          userMessage =
+              e.message ??
+              'Purchase failed: ${code.toString().split('.').last}';
+      }
+
+      debugPrint('  - User Message: $userMessage');
+      return PurchaseResult(
+        success: false,
+        errorMessage: userMessage,
+        errorCode: code,
+      );
     } catch (e) {
       debugPrint('❌ [RevenueCat] General purchase error: ${e.toString()}');
-      return PurchaseResult(success: false, errorMessage: e.toString());
+      debugPrint('  - Error Type: ${e.runtimeType}');
+      return PurchaseResult(
+        success: false,
+        errorMessage: 'Unexpected error: ${e.toString()}',
+      );
     }
   }
 
@@ -336,10 +440,14 @@ class RevenueCatService {
 
   // Helper to enforce timeouts and prevent hangs
   Future<T> _withTimeout<T>(Future<T> Function() op, Duration timeout) {
-    return op().timeout(timeout, onTimeout: () {
-      throw TimeoutException(
-          'RevenueCat operation timed out after ${timeout.inSeconds}s');
-    });
+    return op().timeout(
+      timeout,
+      onTimeout: () {
+        throw TimeoutException(
+          'RevenueCat operation timed out after ${timeout.inSeconds}s',
+        );
+      },
+    );
   }
 }
 
@@ -347,5 +455,12 @@ class PurchaseResult {
   final bool success;
   final CustomerInfo? customerInfo;
   final String? errorMessage;
-  PurchaseResult({required this.success, this.customerInfo, this.errorMessage});
+  final PurchasesErrorCode? errorCode;
+
+  PurchaseResult({
+    required this.success,
+    this.customerInfo,
+    this.errorMessage,
+    this.errorCode,
+  });
 }

@@ -129,6 +129,30 @@ class RemoteConfigService {
     return null;
   }
 
+  /// Get base credits amount (initialRequestAllocation)
+  /// This is the amount of credits new users start with
+  ///
+  /// Returns the base credits value, or 5.0 as fallback
+  Future<double> getBaseCredits() async {
+    try {
+      final appConfig = await fetchAppConfig();
+      final quotas = appConfig?['quotas'] as Map<String, dynamic>?;
+      final initialAllocation = quotas?['initialRequestAllocation'];
+
+      if (initialAllocation != null) {
+        final value = (initialAllocation as num).toDouble();
+        Logger.debug('📊 Base credits from config: $value', tag: 'RemoteConfig');
+        return value;
+      }
+    } catch (e) {
+      Logger.warn('Failed to get base credits from config: $e', tag: 'RemoteConfig');
+    }
+
+    // Fallback to default
+    Logger.debug('📊 Using fallback base credits: 5.0', tag: 'RemoteConfig');
+    return 5.0;
+  }
+
   /// Fetch mode configurations (chat, search, deepsearch, etc.)
   Future<Map<String, dynamic>?> fetchModes({
     bool forceRefresh = false,

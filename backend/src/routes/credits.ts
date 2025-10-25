@@ -234,12 +234,9 @@ creditsRouter.post('/consume', requireAuth, async (req: AuthRequest, res) => {
     }
     
     res.json({
-      success: true,
-      data: {
-        balance: newBalance,
-        consumed: consumeAmount,
-        requestId,
-      },
+      balance: newBalance,
+      consumed: consumeAmount,
+      requestId,
     });
   } catch (error: any) {
     console.error('Error consuming credits:', error);
@@ -309,7 +306,6 @@ creditsRouter.post('/refund', requireAuth, async (req: AuthRequest, res) => {
     });
     
     res.json({
-      success: true,
       balance: newBalance,
       refunded: refundAmount,
       requestId,
@@ -318,5 +314,182 @@ creditsRouter.post('/refund', requireAuth, async (req: AuthRequest, res) => {
     console.error('Error refunding credits:', error);
     res.status(500).json({ error: 'Failed to refund credits' });
   }
+});
+
+// POST /api/credits/transfer - Transfer credits from one user to another (e.g., anonymous -> permanent account)
+creditsRouter.post('/transfer', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const targetUid = req.user!.uid;
+    const { sourceUid } = req.body;
+
+    if (!sourceUid) {
+      res.status(400).json({ success: false, error: 'sourceUid is required' });
+      return;
+    }
+
+    if (sourceUid === targetUid) {
+      res.status(400).json({ success: false, error: 'Cannot transfer credits to the same account' });
+      return;
+    }
+
+    const db = getAdminDb();
+    const sourceBalanceRef = db.collection('users').doc(sourceUid).collection('credits').doc('balance');
+    const targetBalanceRef = db.collection('users').doc(targetUid).collection('credits').doc('balance');
+
+    // Get source balance
+    const sourceSnap = await sourceBalanceRef.get();
+    if (!sourceSnap.exists) {
+      res.status(404).json({ success: false, error: 'Source account has no credits' });
+      return;
+    }
+
+    const sourceBalance = Number((sourceSnap.data() as any)?.balance ?? 0);
+    if (sourceBalance <= 0) {
+      res.json({ success: true, transferred: 0, message: 'No credits to transfer' });
+      return;
+    }
+
+    // Get target balance
+    let targetSnap = await targetBalanceRef.get();
+    const currentTargetBalance = targetSnap.exists ? Number((targetSnap.data() as any)?.balance ?? 0) : 0;
+
+    // Transfer credits
+    const newTargetBalance = currentTargetBalance + sourceBalance;
+    await targetBalanceRef.set({
+      balance: newTargetBalance,
+      lastUpdated: new Date().toISOString(),
+    });
+
+    // Zero out source balance
+    await sourceBalanceRef.set({
+      balance: 0,
+      lastUpdated: new Date().toISOString(),
+      transferredTo: targetUid,
+      transferredAt: new Date().toISOString(),
+    });
+
+    // Record transfer transaction in target account
+    const transferTxRef = targetBalanceRef.collection('transactions').doc();
+    await transferTxRef.set({
+      type: 'transfer_in',
+      amount: sourceBalance,
+      balanceBefore: currentTargetBalance,
+      balanceAfter: newTargetBalance,
+      timestamp: new Date().toISOString(),
+      metadata: {
+        sourceUid,
+        reason: 'Account linking credit transfer',
+      },
+    });
+
+    res.json({
+      success: true,
+      transferred: sourceBalance,
+      newBalance: newTargetBalance,
+      sourceUid,
+      targetUid,
+    });
+  } catch (error: any) {
+    console.error('Error transferring credits:', error);
+    res.status(500).json({ success: false, error: error?.message || 'Internal error' });
+  }
+});
+
+// GET /api/credits/stream - Server-Sent Events for real-time credits updates
+creditsRouter.get('/stream', requireAuth, async (req: AuthRequest, res) => {
+  const uid = req.user!.uid;
+  const db = getAdminDb();
+  
+  // Set SSE headers
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Headers', 'Cache-Control');
+  res.flushHeaders();
+  
+  console.log(`[SSE] Credits stream started for user ${uid}`);
+  
+  // Send initial connection event
+  res.write(`event: connected\n`);
+  res.write(`data: {"timestamp": "${new Date().toISOString()}"}\n\n`);
+  
+  // Subscribe to Firestore balance document
+  const balanceRef = db.collection('users').doc(uid).collection('credits').doc('balance');
+  let lastEventId = new Date().toISOString();
+  
+  const unsubscribe = balanceRef.onSnapshot(
+    (snapshot) => {
+      try {
+        if (snapshot.exists) {
+          const data = snapshot.data() as any;
+          const balance = Number(data.balance ?? 0);
+          const lastUpdated = data.lastUpdated || new Date().toISOString();
+          
+          const eventData = {
+            balance,
+            lastUpdated,
+            precision: 1,
+            fallback: false
+          };
+          
+          res.write(`event: balance\n`);
+          res.write(`data: ${JSON.stringify(eventData)}\n`);
+          res.write(`id: ${lastUpdated}\n\n`);
+          
+          lastEventId = lastUpdated;
+          console.log(`[SSE] Sent balance update: ${balance} credits for user ${uid}`);
+        } else {
+          // No balance document - send zero with fallback flag
+          const eventData = {
+            balance: 0,
+            lastUpdated: new Date().toISOString(),
+            precision: 1,
+            fallback: true
+          };
+          
+          res.write(`event: balance\n`);
+          res.write(`data: ${JSON.stringify(eventData)}\n`);
+          res.write(`id: ${lastEventId}\n\n`);
+          
+          console.log(`[SSE] No balance document found, sent fallback for user ${uid}`);
+        }
+      } catch (error) {
+        console.error(`[SSE] Error processing snapshot for user ${uid}:`, error);
+        res.write(`event: error\n`);
+        res.write(`data: {"error": "Failed to process balance update"}\n\n`);
+      }
+    },
+    (error) => {
+      console.error(`[SSE] Firestore listener error for user ${uid}:`, error);
+      res.write(`event: error\n`);
+      res.write(`data: {"error": "Database connection failed"}\n\n`);
+    }
+  );
+  
+  // Send heartbeat every 30 seconds
+  const heartbeatInterval = setInterval(() => {
+    try {
+      res.write(`event: ping\n`);
+      res.write(`data: {"timestamp": "${new Date().toISOString()}"}\n\n`);
+    } catch (error) {
+      console.error(`[SSE] Heartbeat failed for user ${uid}:`, error);
+      clearInterval(heartbeatInterval);
+      unsubscribe();
+    }
+  }, 30000);
+  
+  // Handle client disconnect
+  req.on('close', () => {
+    console.log(`[SSE] Client disconnected for user ${uid}`);
+    clearInterval(heartbeatInterval);
+    unsubscribe();
+  });
+  
+  req.on('error', (error) => {
+    console.error(`[SSE] Request error for user ${uid}:`, error);
+    clearInterval(heartbeatInterval);
+    unsubscribe();
+  });
 });
 

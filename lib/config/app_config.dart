@@ -49,7 +49,7 @@ class EnvironmentConfig {
 
 class DemoModeConfig {
   // Enable demo mode for unauthenticated users (Apple Guideline 5.1.1)
-  static const bool enabled = true;
+  static const bool enabled = false;
   
   // Sample conversations to display in demo mode
   static const List<Map<String, String>> sampleConversations = [

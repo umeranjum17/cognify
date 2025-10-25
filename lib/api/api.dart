@@ -60,6 +60,44 @@ class API {
         handler.next(e);
       },
     ));
+
+    // Add 401 retry interceptor
+    _dio.interceptors.add(InterceptorsWrapper(
+      onError: (DioException error, ErrorInterceptorHandler handler) async {
+        if (error.response?.statusCode == 401) {
+          print('🔄 [API] Got 401, refreshing token and retrying...');
+          try {
+            // Force refresh token
+            final user = fb.FirebaseAuth.instance.currentUser;
+            if (user != null) {
+              final newToken = await user.getIdToken(true);
+              
+              // Retry original request with new token
+              final options = Options(
+                method: error.requestOptions.method,
+                headers: {
+                  'Authorization': 'Bearer $newToken',
+                  'Content-Type': 'application/json',
+                },
+              );
+              
+              final response = await _dio.request(
+                error.requestOptions.path,
+                options: options,
+                data: error.requestOptions.data,
+                queryParameters: error.requestOptions.queryParameters,
+              );
+              
+              print('✅ [API] Retry after 401 successful');
+              return handler.resolve(response);
+            }
+          } catch (retryError) {
+            print('❌ [API] Retry after 401 failed: $retryError');
+          }
+        }
+        return handler.next(error);
+      },
+    ));
   }
 
   late final Dio _dio;
@@ -266,23 +304,28 @@ class API {
 
       print('✅ [API] Credits balance response received: ${response.statusCode}');
 
-      // Accept both { balance, lastUpdated } and legacy { data: { balance } }
+      // Handle standardized response format: { balance, lastUpdated }
       final data = response.data;
       double balance = 0.0;
       
       if (data is Map && data['balance'] != null) {
         balance = (data['balance'] as num).toDouble();
-      } else if (data is Map && data['data'] is Map && data['data']['balance'] != null) {
-        balance = (data['data']['balance'] as num).toDouble();
       } else {
-        throw Exception('Invalid balance response: $data');
+        print('❌ [API] Invalid balance response format: $data');
+        throw Exception('Invalid balance response: missing balance field');
       }
       
       print('💰 [API] Credits balance: $balance');
       return balance;
-    } catch (e) {
-      print('❌ API Error [getCreditsBalance]: $e');
-      return 0.0;
+    } on DioException catch (e) {
+      print('❌ [API] DioException in getCreditsBalance: ${e.type} - ${e.message}');
+      print('❌ [API] Status code: ${e.response?.statusCode}');
+      print('❌ [API] Response data: ${e.response?.data}');
+      rethrow; // Don't suppress - let caller handle
+    } catch (e, stack) {
+      print('❌ [API] Unexpected error in getCreditsBalance: $e');
+      print('❌ [API] Stack trace: $stack');
+      rethrow; // Don't suppress - let caller handle
     }
   }
 
@@ -326,12 +369,50 @@ class API {
         options: Options(headers: headers),
       );
 
-      return (response.data['data']['balance'] as num).toDouble();
+      return (response.data['balance'] as num).toDouble();
     } catch (e) {
       if (e is DioException && e.response?.statusCode == 409) {
         throw Exception('INSUFFICIENT_CREDITS');
       }
       print('❌ API Error [consumeCredits]: $e');
+      rethrow;
+    }
+  }
+
+  /// Transfer credits from source account to current account
+  ///
+  /// This is used when linking anonymous accounts to permanent accounts
+  /// to preserve the user's credits.
+  ///
+  /// Parameters:
+  /// - `sourceUid`: UID of the source account (e.g., anonymous account)
+  ///
+  /// Returns: New balance after transfer
+  /// ```dart
+  /// final newBalance = await API.instance.transferCredits(
+  ///   sourceUid: 'anonymous-uid-123',
+  /// );
+  /// print('Transferred! New balance: $newBalance');
+  /// ```
+  Future<double> transferCredits({required String sourceUid}) async {
+    try {
+      print('🔄 [API] Transferring credits from $sourceUid...');
+      final headers = await _getAuthHeaders();
+
+      final response = await _dio.post(
+        '/api/credits/transfer',
+        data: {'sourceUid': sourceUid},
+        options: Options(headers: headers),
+      );
+
+      print('✅ [API] Credits transferred successfully');
+      final transferred = (response.data['transferred'] as num?)?.toDouble() ?? 0;
+      final newBalance = (response.data['newBalance'] as num).toDouble();
+      print('💰 [API] Transferred: $transferred, New balance: $newBalance');
+
+      return newBalance;
+    } catch (e) {
+      print('❌ API Error [transferCredits]: $e');
       rethrow;
     }
   }

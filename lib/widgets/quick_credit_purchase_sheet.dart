@@ -14,14 +14,12 @@ import '../theme/app_theme.dart';
 /// Quick credit purchase bottom sheet for fast, prominent credit purchases
 class QuickCreditPurchaseSheet extends StatefulWidget {
   final int? currentCredits;
-  
-  const QuickCreditPurchaseSheet({
-    super.key,
-    this.currentCredits,
-  });
+
+  const QuickCreditPurchaseSheet({super.key, this.currentCredits});
 
   @override
-  State<QuickCreditPurchaseSheet> createState() => _QuickCreditPurchaseSheetState();
+  State<QuickCreditPurchaseSheet> createState() =>
+      _QuickCreditPurchaseSheetState();
 }
 
 class _QuickCreditPurchaseSheetState extends State<QuickCreditPurchaseSheet> {
@@ -42,7 +40,7 @@ class _QuickCreditPurchaseSheetState extends State<QuickCreditPurchaseSheet> {
 
   Future<void> _loadOfferings() async {
     final subs = context.read<CreditsPurchaseProvider>();
-    
+
     setState(() {
       _statusMessage = 'Loading credit options...';
     });
@@ -54,7 +52,7 @@ class _QuickCreditPurchaseSheetState extends State<QuickCreditPurchaseSheet> {
     }
 
     final offerings = subs.offerings;
-    
+
     setState(() {
       _statusMessage = null;
       if (offerings?.current?.availablePackages.isNotEmpty == true) {
@@ -70,7 +68,7 @@ class _QuickCreditPurchaseSheetState extends State<QuickCreditPurchaseSheet> {
     final subs = context.read<CreditsPurchaseProvider>();
     final auth = context.read<FirebaseAuthProvider>();
     final selected = _selectedPackage;
-    
+
     if (selected == null) {
       setState(() {
         _error = 'Please select a credit pack';
@@ -85,40 +83,16 @@ class _QuickCreditPurchaseSheetState extends State<QuickCreditPurchaseSheet> {
     });
 
     try {
-      // Step 1: Ensure user is signed in with a persistent account (not anonymous)
-      if (auth.uid == null || auth.uid!.isEmpty || auth.isAnonymous) {
-        final isIOS = Platform.isIOS;
+      // Step 1: Identify user with RevenueCat if signed in (optional, not required)
+      // Anonymous users can purchase - credits are linked to Apple ID via RevenueCat
+      if (auth.uid != null && auth.uid!.isNotEmpty && !auth.isAnonymous) {
         setState(() {
-          _statusMessage = isIOS
-              ? 'Signing in with Apple...'
-              : 'Signing in with Google...';
+          _statusMessage = 'Setting up your account...';
         });
-
-        if (isIOS) {
-          await auth.signInWithApple();
-        } else {
-          await auth.signInWithGoogle();
-        }
-
-        // After sign-in, identify with RevenueCat
-        if (auth.uid != null && auth.uid!.isNotEmpty) {
-          setState(() {
-            _statusMessage = 'Setting up your account...';
-          });
-
-          await RevenueCatService.instance.identify(auth.uid!);
-          await subs.refreshOfferings();
-          await _loadOfferings();
-        } else {
-          setState(() {
-            _busy = false;
-            _error = 'Sign-in failed. Please try again.';
-          });
-          return;
-        }
+        await RevenueCatService.instance.identify(auth.uid!);
       }
 
-      // Step 2: Proceed with purchase
+      // Step 2: Proceed with purchase (works for both anonymous and signed-in users)
       setState(() {
         _statusMessage = 'Processing purchase...';
       });
@@ -134,12 +108,23 @@ class _QuickCreditPurchaseSheetState extends State<QuickCreditPurchaseSheet> {
         // Calculate expected credits to add based on package
         final expectedCredits = _getExpectedCreditsFromPackage(selected);
         _creditsToAdd = expectedCredits;
-        
+
         // Start waiting for webhook to process the purchase
         await _waitForCreditsUpdate();
       } else {
+        // Handle different error types
+        String? userFriendlyError;
+        if (result.errorMessage == 'cancelled') {
+          // Don't show error for user cancellation - just log it
+          debugPrint('User cancelled the purchase');
+          userFriendlyError = null;
+        } else {
+          userFriendlyError =
+              result.errorMessage ?? 'Purchase failed. Please try again.';
+        }
+
         setState(() {
-          _error = result.errorMessage ?? 'Purchase failed. Please try again.';
+          _error = userFriendlyError;
         });
       }
     } catch (e) {
@@ -156,28 +141,28 @@ class _QuickCreditPurchaseSheetState extends State<QuickCreditPurchaseSheet> {
     // Map package identifiers to credit amounts
     // This should match your RevenueCat package configuration
     final identifier = package.identifier.toLowerCase();
-    
+
     if (identifier.contains('100')) return 100;
     if (identifier.contains('500')) return 500;
     if (identifier.contains('1000')) return 1000;
     if (identifier.contains('2500')) return 2500;
     if (identifier.contains('5000')) return 5000;
     if (identifier.contains('10000')) return 10000;
-    
+
     // Fallback: try to extract number from identifier
     final regex = RegExp(r'(\d+)');
     final match = regex.firstMatch(identifier);
     if (match != null) {
       return int.tryParse(match.group(1)!) ?? 100;
     }
-    
+
     return 100; // Default fallback
   }
 
   /// Wait for credits to be updated via webhook with smart polling and UX
   Future<void> _waitForCreditsUpdate() async {
     if (!mounted) return;
-    
+
     setState(() {
       _waitingForCredits = true;
       _statusMessage = 'Processing your purchase...';
@@ -188,67 +173,69 @@ class _QuickCreditPurchaseSheetState extends State<QuickCreditPurchaseSheet> {
       final maxWaitTime = const Duration(seconds: 30); // Increased timeout
       final initialBalance = _currentCredits;
       final expectedFinalBalance = initialBalance + _creditsToAdd;
-      
+
       int pollCount = 0;
       double lastKnownBalance = initialBalance.toDouble();
-      
+
       while (DateTime.now().difference(startTime) < maxWaitTime) {
-        await Future.delayed(const Duration(milliseconds: 1500)); // Poll every 1.5s
+        await Future.delayed(
+          const Duration(milliseconds: 1500),
+        ); // Poll every 1.5s
         pollCount++;
-        
+
         if (!mounted) return;
-        
+
         try {
           final currentBalance = await API.instance.getCreditsBalance();
-          
+
           // Update status message with progress
           if (mounted) {
             setState(() {
               if (pollCount <= 3) {
                 _statusMessage = 'Processing your purchase...';
               } else if (pollCount <= 8) {
-                _statusMessage = 'Adding $_creditsToAdd credits to your wallet...';
+                _statusMessage =
+                    'Adding $_creditsToAdd credits to your wallet...';
               } else {
                 _statusMessage = 'Almost done, finalizing...';
               }
             });
           }
-          
+
           // Check if we got the expected credits
           if (currentBalance >= expectedFinalBalance) {
             lastKnownBalance = currentBalance;
             break;
           }
-          
+
           // Check if we got any credits (partial success)
           if (currentBalance > lastKnownBalance) {
             lastKnownBalance = currentBalance;
             // Continue waiting for the full amount
           }
-          
         } catch (e) {
           // API error, continue waiting
           debugPrint('Credit polling error: $e');
         }
       }
-      
+
       // Final check and completion
       if (mounted) {
         final finalBalance = lastKnownBalance.toInt();
         final actualCreditsAdded = finalBalance - initialBalance;
-        
+
         setState(() {
           _waitingForCredits = false;
           _statusMessage = null;
         });
-        
+
         if (actualCreditsAdded > 0) {
           // Success - credits were added
           CreditEventService.instance.emitCreditsPurchased(
             amount: actualCreditsAdded,
             newBalance: finalBalance,
           );
-          
+
           // Show success message with actual credits added
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -263,14 +250,15 @@ class _QuickCreditPurchaseSheetState extends State<QuickCreditPurchaseSheet> {
               duration: const Duration(seconds: 4),
             ),
           );
-          
+
           Navigator.of(context).pop(true);
         } else {
           // Timeout or no credits added
           setState(() {
-            _error = 'Purchase completed but credits are still processing. They should appear in your wallet shortly.';
+            _error =
+                'Purchase completed but credits are still processing. They should appear in your wallet shortly.';
           });
-          
+
           // Still emit event for partial success
           CreditEventService.instance.emitCreditsPurchased(
             amount: _creditsToAdd,
@@ -278,13 +266,13 @@ class _QuickCreditPurchaseSheetState extends State<QuickCreditPurchaseSheet> {
           );
         }
       }
-      
     } catch (e) {
       if (mounted) {
         setState(() {
           _waitingForCredits = false;
           _statusMessage = null;
-          _error = 'Purchase completed but there was an issue updating your credits. Please refresh the app.';
+          _error =
+              'Purchase completed but there was an issue updating your credits. Please refresh the app.';
         });
       }
     }
@@ -353,7 +341,9 @@ class _QuickCreditPurchaseSheetState extends State<QuickCreditPurchaseSheet> {
                           Text(
                             'Current balance: ${widget.currentCredits} credits',
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                              color: theme.colorScheme.onSurface.withValues(
+                                alpha: 0.6,
+                              ),
                             ),
                           ),
                       ],
@@ -372,14 +362,14 @@ class _QuickCreditPurchaseSheetState extends State<QuickCreditPurchaseSheet> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: _waitingForCredits 
+                    color: _waitingForCredits
                         ? Colors.green.withValues(alpha: 0.1)
                         : Colors.blue.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: _waitingForCredits 
+                      color: _waitingForCredits
                           ? Colors.green.withValues(alpha: 0.3)
-                          : Colors.blue.withValues(alpha: 0.3)
+                          : Colors.blue.withValues(alpha: 0.3),
                     ),
                   ),
                   child: Row(
@@ -390,7 +380,7 @@ class _QuickCreditPurchaseSheetState extends State<QuickCreditPurchaseSheet> {
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
                           valueColor: AlwaysStoppedAnimation<Color>(
-                            _waitingForCredits ? Colors.green : Colors.blue
+                            _waitingForCredits ? Colors.green : Colors.blue,
                           ),
                         ),
                       ),
@@ -399,8 +389,12 @@ class _QuickCreditPurchaseSheetState extends State<QuickCreditPurchaseSheet> {
                         child: Text(
                           _statusMessage!,
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: _waitingForCredits ? Colors.green : Colors.blue,
-                            fontWeight: _waitingForCredits ? FontWeight.w500 : FontWeight.normal,
+                            color: _waitingForCredits
+                                ? Colors.green
+                                : Colors.blue,
+                            fontWeight: _waitingForCredits
+                                ? FontWeight.w500
+                                : FontWeight.normal,
                           ),
                         ),
                       ),
@@ -421,11 +415,17 @@ class _QuickCreditPurchaseSheetState extends State<QuickCreditPurchaseSheet> {
                   decoration: BoxDecoration(
                     color: Colors.red.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+                    border: Border.all(
+                      color: Colors.red.withValues(alpha: 0.3),
+                    ),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.error_outline, color: Colors.red, size: 20),
+                      const Icon(
+                        Icons.error_outline,
+                        color: Colors.red,
+                        size: 20,
+                      ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
@@ -441,42 +441,8 @@ class _QuickCreditPurchaseSheetState extends State<QuickCreditPurchaseSheet> {
               if (_statusMessage != null || _error != null)
                 const SizedBox(height: 16),
 
-              // Sign-in prompt if not signed in
-              if (!auth.isSignedIn) ...[
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceVariant,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    children: [
-                      Icon(
-                        Icons.security,
-                        size: 40,
-                        color: theme.colorScheme.primary,
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        'Secure Your Purchase',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        Platform.isIOS
-                            ? 'Sign in with Apple to link your credits to your Apple ID and restore on any device.'
-                            : 'Sign in with Google to link your credits to your account and restore on any device.',
-                        style: theme.textTheme.bodySmall,
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-              ],
+              // Simplified info - no confusing sign-in prompts
+              // Credits are automatically linked via RevenueCat to Apple ID
 
               // Credit pack options
               if (packages.isEmpty)
@@ -518,8 +484,8 @@ class _QuickCreditPurchaseSheetState extends State<QuickCreditPurchaseSheet> {
                   onPressed: (_busy || _waitingForCredits) ? null : _purchase,
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    backgroundColor: _waitingForCredits 
-                        ? Colors.green 
+                    backgroundColor: _waitingForCredits
+                        ? Colors.green
                         : theme.colorScheme.primary,
                     foregroundColor: theme.colorScheme.onPrimary,
                     shape: RoundedRectangleBorder(
@@ -535,18 +501,20 @@ class _QuickCreditPurchaseSheetState extends State<QuickCreditPurchaseSheet> {
                           height: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
                           ),
                         )
                       else
                         const Icon(Icons.shopping_cart, size: 20),
                       const SizedBox(width: 8),
                       Text(
-                        _busy 
-                            ? 'Processing...' 
-                            : _waitingForCredits 
-                                ? 'Adding Credits...' 
-                                : 'Purchase Credits',
+                        _busy
+                            ? 'Processing...'
+                            : _waitingForCredits
+                            ? 'Adding Credits...'
+                            : 'Purchase Credits',
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -578,13 +546,15 @@ class _QuickCreditPurchaseSheetState extends State<QuickCreditPurchaseSheet> {
 
   Widget _buildCreditPackCard(ThemeData theme, Package package) {
     final isSelected = _selectedPackage?.identifier == package.identifier;
-    
+
     return GestureDetector(
-      onTap: (_busy || _waitingForCredits) ? null : () {
-        setState(() {
-          _selectedPackage = package;
-        });
-      },
+      onTap: (_busy || _waitingForCredits)
+          ? null
+          : () {
+              setState(() {
+                _selectedPackage = package;
+              });
+            },
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
@@ -592,15 +562,15 @@ class _QuickCreditPurchaseSheetState extends State<QuickCreditPurchaseSheet> {
           color: (_busy || _waitingForCredits)
               ? theme.colorScheme.surface.withValues(alpha: 0.3)
               : isSelected
-                  ? theme.colorScheme.primary.withValues(alpha: 0.15)
-                  : theme.colorScheme.surface.withValues(alpha: 0.5),
+              ? theme.colorScheme.primary.withValues(alpha: 0.15)
+              : theme.colorScheme.surface.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: (_busy || _waitingForCredits)
                 ? theme.dividerColor.withValues(alpha: 0.2)
                 : isSelected
-                    ? theme.colorScheme.primary
-                    : theme.dividerColor.withValues(alpha: 0.3),
+                ? theme.colorScheme.primary
+                : theme.dividerColor.withValues(alpha: 0.3),
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -612,25 +582,49 @@ class _QuickCreditPurchaseSheetState extends State<QuickCreditPurchaseSheet> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isSelected ? theme.colorScheme.primary : theme.dividerColor,
+                  color: isSelected
+                      ? theme.colorScheme.primary
+                      : theme.dividerColor,
                   width: 2,
                 ),
-                color: isSelected ? theme.colorScheme.primary : Colors.transparent,
+                color: isSelected
+                    ? theme.colorScheme.primary
+                    : Colors.transparent,
               ),
               child: isSelected
-                  ? Icon(Icons.check, size: 16, color: theme.colorScheme.onPrimary)
+                  ? Icon(
+                      Icons.check,
+                      size: 16,
+                      color: theme.colorScheme.onPrimary,
+                    )
                   : null,
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    package.storeProduct.title,
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          package.storeProduct.title,
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        package.storeProduct.priceString,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: isSelected
+                              ? theme.colorScheme.primary
+                              : theme.colorScheme.onSurface,
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -648,7 +642,9 @@ class _QuickCreditPurchaseSheetState extends State<QuickCreditPurchaseSheet> {
                           child: Text(
                             'Credits never expire and can be used for any AI model or feature',
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                              color: theme.colorScheme.onSurface.withValues(
+                                alpha: 0.5,
+                              ),
                               fontSize: 10,
                               height: 1.2,
                             ),
@@ -660,20 +656,14 @@ class _QuickCreditPurchaseSheetState extends State<QuickCreditPurchaseSheet> {
                         Icon(
                           Icons.info_outline,
                           size: 12,
-                          color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.4,
+                          ),
                         ),
                       ],
                     ),
                   ],
                 ],
-              ),
-            ),
-            const SizedBox(width: 12),
-            Text(
-              package.storeProduct.priceString.replaceAll('\$', ''),
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurface,
               ),
             ),
           ],
@@ -684,5 +674,3 @@ class _QuickCreditPurchaseSheetState extends State<QuickCreditPurchaseSheet> {
 
   // Restore purchases functionality removed per product decision
 }
-
-

@@ -58,10 +58,15 @@ class _ConversationHistoryScreenState extends State<ConversationHistoryScreen> {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: const ModernAppHeader(
-        title: 'Conversation History',
-        showBackButton: true,
-        showNewChatButton: false,
+      appBar: AppBar(
+        title: const Text('History'),
+        backgroundColor: isDark ? AppColors.darkBackground : AppColors.lightBackground,
+        foregroundColor: isDark ? AppColors.darkText : AppColors.lightText,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
       ),
       body: Column(
         children: [

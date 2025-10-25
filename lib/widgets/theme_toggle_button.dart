@@ -83,25 +83,33 @@ class _ThemeToggleButtonState extends State<ThemeToggleButton>
                 end: Alignment.bottomRight,
                 colors: isDark
                     ? [
-                        AppColors.darkAccentQuaternary.withValues(alpha: 0.2),
-                        AppColors.darkAccentQuaternary.withValues(alpha: 0.1),
+                        AppColors.darkAccent.withValues(alpha: 0.5),
+                        AppColors.darkAccent.withValues(alpha: 0.35),
                       ]
                     : [
-                        AppColors.lightAccentQuaternary.withValues(alpha: 0.2),
-                        AppColors.lightAccentQuaternary.withValues(alpha: 0.1),
+                        AppColors.lightAccent.withValues(alpha: 0.5),
+                        AppColors.lightAccent.withValues(alpha: 0.35),
                       ],
               ),
               borderRadius: BorderRadius.circular(widget.size * 0.3),
               border: Border.all(
                 color: isDark
-                    ? AppColors.darkAccentQuaternary.withValues(alpha: 0.3)
-                    : AppColors.lightAccentQuaternary.withValues(alpha: 0.3),
-                width: 1.5,
+                    ? AppColors.darkAccent.withValues(alpha: 0.6)
+                    : AppColors.lightAccent.withValues(alpha: 0.7),
+                width: 2,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: (isDark ? AppColors.darkAccentQuaternary : AppColors.lightAccentQuaternary)
-                      .withValues(alpha: 0.2),
+                  color: (isDark ? AppColors.darkAccent : AppColors.lightAccent)
+                      .withValues(alpha: 0.4),
+                  blurRadius: 12,
+                  offset: const Offset(0, 3),
+                  spreadRadius: 1,
+                ),
+                BoxShadow(
+                  color: isDark
+                    ? Colors.black.withValues(alpha: 0.3)
+                    : Colors.black.withValues(alpha: 0.08),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -127,8 +135,8 @@ class _ThemeToggleButtonState extends State<ThemeToggleButton>
                         isDark ? Icons.light_mode : Icons.dark_mode,
                         key: ValueKey(isDark),
                         color: isDark
-                            ? AppColors.darkAccentQuaternary
-                            : AppColors.lightAccentQuaternary,
+                            ? AppColors.darkAccent
+                            : AppColors.lightAccent,
                         size: widget.size * 0.5,
                       ),
                     ),

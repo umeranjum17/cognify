@@ -20,7 +20,7 @@ import 'providers/app_access_provider.dart';
 import 'providers/firebase_auth_provider.dart';
 import 'providers/credits_purchase_provider.dart';
 import 'providers/usage_quota_provider.dart';
-import 'providers/anonymous_access_provider.dart';
+import 'providers/credits_provider.dart';
 import 'services/revenuecat_service.dart';
 
 import 'providers/mode_config_provider.dart';
@@ -416,15 +416,15 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
             return quota;
           },
         ),
-        // Anonymous access provider for managing anonymous user limits
-        ChangeNotifierProxyProvider<FirebaseAuthProvider, AnonymousAccessProvider>(
-          create: (_) => AnonymousAccessProvider(),
-          update: (_, auth, anonymousAccess) {
-            anonymousAccess ??= AnonymousAccessProvider();
-            anonymousAccess.initialize(auth.user);
-            return anonymousAccess;
+        ChangeNotifierProxyProvider<FirebaseAuthProvider, CreditsProvider>(
+          create: (_) => CreditsProvider(),
+          update: (_, auth, credits) {
+            credits ??= CreditsProvider();
+            credits.attach(auth: auth);
+            return credits;
           },
         ),
+        // Anonymous limit gating removed; purchases work without login
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, _) {

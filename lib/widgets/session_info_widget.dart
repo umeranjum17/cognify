@@ -15,6 +15,7 @@ import 'package:provider/provider.dart';
 import '../providers/credits_purchase_provider.dart';
 import '../providers/firebase_auth_provider.dart';
 import '../providers/usage_quota_provider.dart';
+import '../providers/credits_provider.dart';
 import '../models/usage_quota.dart';
 
 class SessionInfoWidget extends StatefulWidget {
@@ -32,7 +33,8 @@ class SessionInfoWidget extends StatefulWidget {
   final Map<String, dynamic>? openRouterCredits; // NEW: OpenRouter credits data
   final int? remainingRequests;
   final bool isQuotaLoading;
-  final VoidCallback? onBuyCreditsTapped; // Optional override for buy credits action
+  final VoidCallback?
+  onBuyCreditsTapped; // Optional override for buy credits action
 
   const SessionInfoWidget({
     super.key,
@@ -69,10 +71,11 @@ class _SessionInfoWidgetState extends State<SessionInfoWidget> {
     _estimateCurrentModelIfNeeded();
   }
 
-
   void _updateCreditsFromProvider(UsageQuota quota) {
     if (mounted) {
-      print('🔄 [SessionInfoWidget] Updating credits from provider: ${quota.remaining} remaining');
+      print(
+        '🔄 [SessionInfoWidget] Updating credits from provider: ${quota.remaining} remaining',
+      );
       setState(() {
         _creditsData = {
           'success': true,
@@ -86,12 +89,16 @@ class _SessionInfoWidgetState extends State<SessionInfoWidget> {
         _isLoadingCredits = false;
         _creditsError = null;
       });
-      print('✅ [SessionInfoWidget] Credits updated in UI: ${quota.remaining} credits');
+      print(
+        '✅ [SessionInfoWidget] Credits updated in UI: ${quota.remaining} credits',
+      );
     }
   }
 
   void _updateCreditsFromProviderWithoutSetState(UsageQuota quota) {
-    print('🔄 [SessionInfoWidget] Updating credits from provider (no setState): ${quota.remaining} remaining');
+    print(
+      '🔄 [SessionInfoWidget] Updating credits from provider (no setState): ${quota.remaining} remaining',
+    );
     _creditsData = {
       'success': true,
       'credits': {
@@ -103,7 +110,9 @@ class _SessionInfoWidgetState extends State<SessionInfoWidget> {
     };
     _isLoadingCredits = false;
     _creditsError = null;
-    print('✅ [SessionInfoWidget] Credits updated in UI (no setState): ${quota.remaining} credits');
+    print(
+      '✅ [SessionInfoWidget] Credits updated in UI (no setState): ${quota.remaining} credits',
+    );
   }
 
   Future<void> _loadCreditsIfNeeded() async {
@@ -148,7 +157,9 @@ class _SessionInfoWidgetState extends State<SessionInfoWidget> {
         modelId: modelId,
         mode: widget.mode,
       );
-      print('📊 Model estimate for $modelId: ${estimate.requestUnits} units, \$${estimate.dollarCost}, isFree: ${estimate.isFree}');
+      print(
+        '📊 Model estimate for $modelId: ${estimate.requestUnits} units, \$${estimate.dollarCost}, isFree: ${estimate.isFree}',
+      );
       if (mounted) {
         setState(() {
           _modelEstimate = estimate;
@@ -162,28 +173,46 @@ class _SessionInfoWidgetState extends State<SessionInfoWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<UsageQuotaProvider>(
-      builder: (context, quotaProvider, child) {
-        return _buildContent(context, quotaProvider);
+    return Consumer2<UsageQuotaProvider, CreditsProvider>(
+      builder: (context, quotaProvider, creditsProvider, child) {
+        return _buildContent(context, quotaProvider, creditsProvider);
       },
     );
   }
 
-  Widget _buildContent(BuildContext context, UsageQuotaProvider quotaProvider) {
+  Widget _buildContent(
+    BuildContext context,
+    UsageQuotaProvider quotaProvider,
+    CreditsProvider creditsProvider,
+  ) {
     final theme = Theme.of(context);
     final quotaText = _getQuotaDisplayText();
     final quotaColor = _resolveQuotaDisplayColor(theme);
     final iconColor =
         quotaColor ?? theme.colorScheme.onSurface.withValues(alpha: 0.6);
 
-    // Get remaining credits for display - use provider data if available, fallback to local data
-    int remainingUnits = 0;
-    if (quotaProvider.quota != null) {
-      remainingUnits = quotaProvider.quota!.remaining;
-      print('🔄 [SessionInfoWidget] Using provider data: ${remainingUnits} credits');
+    // Get remaining credits for display - prioritize CreditsProvider (real-time), fallback to UsageQuotaProvider
+    double remainingUnits = 0.0;
+    if (creditsProvider.hasInitialData) {
+      remainingUnits = creditsProvider.balance;
+      print(
+        '🔄 [SessionInfoWidget] Using CreditsProvider: ${remainingUnits} credits (real-time)',
+      );
+    } else if (quotaProvider.quota != null) {
+      remainingUnits = quotaProvider.quota!.remaining.toDouble();
+      print(
+        '🔄 [SessionInfoWidget] Using UsageQuotaProvider: ${remainingUnits} credits',
+      );
     } else if (_creditsData != null && _creditsData!['success'] == true) {
-      remainingUnits = ((_creditsData!['credits'] as Map<String, dynamic>)['remaining_credits'] as num?)?.toInt() ?? 0;
-      print('🔄 [SessionInfoWidget] Using local data: ${remainingUnits} credits');
+      remainingUnits =
+          ((_creditsData!['credits']
+                      as Map<String, dynamic>)['remaining_credits']
+                  as num?)
+              ?.toDouble() ??
+          0.0;
+      print(
+        '🔄 [SessionInfoWidget] Using local data: ${remainingUnits} credits',
+      );
     }
 
     return Container(
@@ -207,58 +236,21 @@ class _SessionInfoWidgetState extends State<SessionInfoWidget> {
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
                 const SizedBox(width: 4),
-                Expanded(child: _buildCreditsAndModelDisplay(theme, quotaText, quotaProvider: quotaProvider)),
+                Expanded(
+                  child: _buildCreditsAndModelDisplay(
+                    theme,
+                    quotaText,
+                    quotaProvider: quotaProvider,
+                    creditsProvider: creditsProvider,
+                  ),
+                ),
               ],
             ),
           ),
 
           // (Cost info merged into left label)
 
-          // Buy Credits chip (classy, subtle – primary action as rightmost)
-          if (!_isLoadingCredits) ...[
-            const SizedBox(width: 8),
-            Tooltip(
-              message: 'Purchase more credits',
-              child: GestureDetector(
-                onTap: () {
-                  if (widget.onBuyCreditsTapped != null) {
-                    widget.onBuyCreditsTapped!();
-                  } else {
-                    _showQuickCreditPurchase(context, remainingUnits);
-                  }
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surface.withValues(alpha: 0.5),
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(
-                      color: theme.dividerColor.withValues(alpha: 0.3),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.add_circle_outline,
-                        size: 12,
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.75),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Buy credits',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          fontSize: 10,
-                          color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
+          // Buy Credits moved to header - removed from here
         ],
       ),
     );
@@ -269,15 +261,20 @@ class _SessionInfoWidgetState extends State<SessionInfoWidget> {
     if (_modelEstimate == null) {
       return 'Loading...';
     }
-    
+
     // Always show fractional request units; never label as Free
     final units = _modelEstimate!.requestUnits;
     if (units <= 0) return 'x0.3 per msg';
     return '${units.toStringAsFixed(1)} per msg';
   }
 
-  Widget _buildCreditsDisplay(ThemeData theme, {UsageQuotaProvider? quotaProvider}) {
-    if (_isLoadingCredits) {
+  Widget _buildCreditsDisplay(
+    ThemeData theme, {
+    UsageQuotaProvider? quotaProvider,
+    CreditsProvider? creditsProvider,
+  }) {
+    // Show loading state
+    if (_isLoadingCredits || (creditsProvider?.isLoading == true)) {
       return Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -300,14 +297,23 @@ class _SessionInfoWidgetState extends State<SessionInfoWidget> {
       );
     }
 
-    // Use provider data if available, otherwise fallback to local data
-    int remainingUnits = 0;
-    if (quotaProvider?.quota != null) {
-      remainingUnits = quotaProvider!.quota!.remaining;
+    // Get remaining credits - prioritize CreditsProvider
+    double remainingUnits = 0.0;
+    bool isFallback = false;
+    bool isConnected = true;
+
+    if (creditsProvider?.hasInitialData == true) {
+      remainingUnits = creditsProvider!.balance;
+      isFallback = creditsProvider.isFallback;
+      isConnected = creditsProvider.isConnected;
+    } else if (quotaProvider?.quota != null) {
+      remainingUnits = quotaProvider!.quota!.remaining.toDouble();
     } else if (_creditsData != null && _creditsData!['success'] == true) {
       final credits = _creditsData!['credits'] as Map<String, dynamic>;
-      remainingUnits = (credits['remaining_credits'] as num?)?.toInt() ?? 0;
-    } else if (widget.remainingRequests != null && widget.remainingRequests! > 0) {
+      remainingUnits =
+          (credits['remaining_credits'] as num?)?.toDouble() ?? 0.0;
+    } else if (widget.remainingRequests != null &&
+        widget.remainingRequests! > 0) {
       // Show request count instead when credits are unavailable
       final remaining = widget.remainingRequests!;
       return Text(
@@ -328,23 +334,70 @@ class _SessionInfoWidgetState extends State<SessionInfoWidget> {
       );
     }
 
-    final color = remainingUnits > 0
-        ? theme.colorScheme.onSurface.withValues(alpha: 0.8)
-        : Colors.red;
+    // Determine color based on balance and connection status
+    Color color;
+    if (!isConnected) {
+      color = theme.colorScheme.onSurface.withValues(
+        alpha: 0.5,
+      ); // Gray for disconnected
+    } else if (remainingUnits > 0) {
+      color = theme.colorScheme.onSurface.withValues(alpha: 0.8);
+    } else {
+      color = Colors.red;
+    }
 
-    return Text(
-      '${_formatCount(remainingUnits)} credits',
-      style: theme.textTheme.bodySmall?.copyWith(
-        fontSize: 10,
-        color: color,
-        fontWeight: FontWeight.w500,
-      ),
-      overflow: TextOverflow.ellipsis,
+    // Format credits with proper precision
+    String creditsText;
+    if (creditsProvider?.precision == 1) {
+      creditsText = '${remainingUnits.toStringAsFixed(1)}x';
+    } else {
+      creditsText =
+          '${remainingUnits.toStringAsFixed(creditsProvider?.precision ?? 1)}x';
+    }
+
+    // Add status indicators
+    String statusText = creditsText;
+    if (isFallback) {
+      statusText = '$creditsText (cached)';
+    } else if (!isConnected) {
+      statusText = '$creditsText (offline)';
+    }
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          statusText,
+          style: theme.textTheme.bodySmall?.copyWith(
+            fontSize: 10,
+            color: color,
+            fontWeight: FontWeight.w500,
+          ),
+          overflow: TextOverflow.ellipsis,
+        ),
+        if (isConnected && !isFallback) ...[
+          const SizedBox(width: 4),
+          Icon(
+            Icons.wifi,
+            size: 8,
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+          ),
+        ],
+      ],
     );
   }
 
-  Widget _buildCreditsAndModelDisplay(ThemeData theme, String quotaText, {UsageQuotaProvider? quotaProvider}) {
-    final left = _buildCreditsDisplay(theme, quotaProvider: quotaProvider);
+  Widget _buildCreditsAndModelDisplay(
+    ThemeData theme,
+    String quotaText, {
+    UsageQuotaProvider? quotaProvider,
+    CreditsProvider? creditsProvider,
+  }) {
+    final left = _buildCreditsDisplay(
+      theme,
+      quotaProvider: quotaProvider,
+      creditsProvider: creditsProvider,
+    );
     return Row(
       children: [
         Flexible(child: left),
@@ -372,7 +425,7 @@ class _SessionInfoWidgetState extends State<SessionInfoWidget> {
 
     final remaining = widget.remainingRequests;
 
-    const fallback = 0;
+    const fallback = 3; // Show 3 initial messages by default
     final effectiveRemaining = ((remaining ?? fallback).clamp(
       0,
       1 << 30,

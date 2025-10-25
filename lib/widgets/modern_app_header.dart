@@ -7,6 +7,8 @@ import '../theme/theme_provider.dart';
 import '../utils/logger.dart';
 import '../widgets/cognify_logo.dart';
 import '../widgets/unified_settings_modal.dart';
+import '../providers/firebase_auth_provider.dart';
+import '../widgets/credits_button.dart';
 
 // Modern action button for header
 class HeaderActionButton extends StatelessWidget {
@@ -33,23 +35,24 @@ class HeaderActionButton extends StatelessWidget {
     return IconButton(
       icon: Icon(
         icon,
-        color: color ?? (isActive
-            ? (isDark ? AppColors.darkAccent : AppColors.lightPrimary)
-            : (isDark ? AppColors.darkText : theme.textTheme.titleLarge?.color)),
+        color:
+            color ??
+            (isActive
+                ? (isDark ? AppColors.darkAccent : AppColors.lightPrimary)
+                : (isDark
+                      ? AppColors.darkText
+                      : theme.textTheme.titleLarge?.color)),
         size: 20,
       ),
       onPressed: onPressed,
       padding: const EdgeInsets.all(8),
-      constraints: const BoxConstraints(
-        minWidth: 40,
-        minHeight: 40,
-      ),
+      constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
       tooltip: tooltip,
     );
   }
 }
 
-class ModernAppHeader extends StatelessWidget implements PreferredSizeWidget {
+class ModernAppHeader extends StatefulWidget implements PreferredSizeWidget {
   final String? title;
   final bool showBackButton;
   final bool showLogo;
@@ -60,6 +63,7 @@ class ModernAppHeader extends StatelessWidget implements PreferredSizeWidget {
   final bool showNewChatButton;
   final List<PopupMenuEntry<String>>? additionalMenuItems;
   final Function(String)? onMenuItemSelected;
+  final VoidCallback? onBuyCredits;
 
   const ModernAppHeader({
     super.key,
@@ -73,11 +77,17 @@ class ModernAppHeader extends StatelessWidget implements PreferredSizeWidget {
     this.showNewChatButton = true,
     this.additionalMenuItems,
     this.onMenuItemSelected,
+    this.onBuyCredits,
   });
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight + 10);
 
+  @override
+  State<ModernAppHeader> createState() => _ModernAppHeaderState();
+}
+
+class _ModernAppHeaderState extends State<ModernAppHeader> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -95,8 +105,8 @@ class ModernAppHeader extends StatelessWidget implements PreferredSizeWidget {
     return Container(
       decoration: BoxDecoration(
         // Use scaffold background for seamless integration
-        color: backgroundColor ?? theme.scaffoldBackgroundColor,
-        boxShadow: elevation > 0
+        color: widget.backgroundColor ?? theme.scaffoldBackgroundColor,
+        boxShadow: widget.elevation > 0
             ? [
                 BoxShadow(
                   color: isDark
@@ -110,7 +120,9 @@ class ModernAppHeader extends StatelessWidget implements PreferredSizeWidget {
         border: Border(
           bottom: BorderSide(
             // Very subtle border for separation
-            color: isDark ? AppColors.darkBorder.withValues(alpha: 0.3) : Colors.transparent,
+            color: isDark
+                ? AppColors.darkBorder.withValues(alpha: 0.3)
+                : Colors.transparent,
             width: isDark ? 0.5 : 0,
           ),
         ),
@@ -126,58 +138,71 @@ class ModernAppHeader extends StatelessWidget implements PreferredSizeWidget {
           ),
           child: Row(
             children: [
-              // Leading section
-              if (showBackButton) ...[
-                IconButton(
-                  icon: Icon(
-                    Icons.arrow_back_ios_new,
-                    color: isDark ? AppColors.darkText : theme.textTheme.titleLarge?.color,
-                    size: 20,
+              // Leading section - Drawer and Back Button
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Navigation drawer button - minimal style
+                  Builder(
+                    builder: (context) => IconButton(
+                      icon: _ModernMenuIcon(
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.7)
+                            : Colors.black.withValues(alpha: 0.7),
+                      ),
+                      onPressed: () => Scaffold.of(context).openDrawer(),
+                      padding: const EdgeInsets.all(8),
+                      constraints: const BoxConstraints(
+                        minWidth: 40,
+                        minHeight: 40,
+                      ),
+                      tooltip: 'Menu',
+                    ),
                   ),
-                  onPressed: () => _handleBackButton(context),
-                  padding: const EdgeInsets.all(8),
-                  constraints: const BoxConstraints(
-                    minWidth: 40,
-                    minHeight: 40,
-                  ),
-                ),
-                SizedBox(width: isMobile ? 8 : 16),
-              ],
 
-              // Logo and title section
-              if (showLogo && !centerTitle) ...[
-                GestureDetector(
-                  onTap: () => GoRouter.of(context).go('/'),
-                  child: CognifyLogo(
-                    size: isMobile ? 36 : 44,
-                    variant: 'robot',
-                  ),
-                ),
-              ],
+                  if (widget.showBackButton) ...[
+                    SizedBox(width: isMobile ? 4 : 8),
+                    IconButton(
+                      icon: Icon(
+                        Icons.arrow_back_ios_new,
+                        color: isDark
+                            ? AppColors.darkText
+                            : theme.textTheme.titleLarge?.color,
+                        size: 20,
+                      ),
+                      onPressed: () => _handleBackButton(context),
+                      padding: const EdgeInsets.all(8),
+                      constraints: const BoxConstraints(
+                        minWidth: 40,
+                        minHeight: 40,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
 
               // Centered title
-              if (centerTitle) ...[
+              if (widget.centerTitle) ...[
                 Expanded(
                   child: Center(
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        if (showLogo) ...[
+                        if (widget.showLogo) ...[
                           GestureDetector(
                             onTap: () => GoRouter.of(context).go('/'),
-                            child: CognifyLogo(
-                              size: logoSizeCentered,
-                              variant: 'robot',
-                            ),
+                            child: CognifyLogo(size: logoSizeCentered),
                           ),
                           SizedBox(width: isMobile ? 2 : 6),
                         ],
-                        if (title != null)
+                        if (widget.title != null)
                           Flexible(
                             child: Text(
-                              title!,
+                              widget.title!,
                               style: theme.textTheme.titleLarge?.copyWith(
-                                fontWeight: isMobile ? FontWeight.w500 : FontWeight.w600,
+                                fontWeight: isMobile
+                                    ? FontWeight.w500
+                                    : FontWeight.w600,
                                 letterSpacing: isMobile ? -0.1 : -0.3,
                                 fontSize: textSizeCentered,
                               ),
@@ -192,39 +217,19 @@ class ModernAppHeader extends StatelessWidget implements PreferredSizeWidget {
               ] else
                 const Spacer(),
 
-              // Actions section
+              // Actions section - Clean and minimal
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Theme toggle with modern styling
-                  IconButton(
-                    icon: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 300),
-                      child: Icon(
-                        isDark ? Icons.light_mode : Icons.dark_mode,
-                        key: ValueKey(isDark),
-                        color: isDark
-                            ? AppColors.darkAccent
-                            : AppColors.lightAccentQuaternary,
-                        size: 20,
-                      ),
-                    ),
-                    onPressed: () => themeProvider.toggleTheme(),
-                    padding: const EdgeInsets.all(8),
-                    constraints: const BoxConstraints(
-                      minWidth: 40,
-                      minHeight: 40,
-                    ),
-                  ),
-
-                  // New Chat button (always visible)
-                  if (showNewChatButton) ...[
-                    SizedBox(width: isMobile ? 6 : 12),
+                  // New Chat button (primary action)
+                  if (widget.showNewChatButton) ...[
                     IconButton(
                       icon: Icon(
                         Icons.add_comment,
-                        color: isDark ? AppColors.darkText : theme.textTheme.titleLarge?.color,
-                        size: 20,
+                        color: isDark
+                            ? AppColors.darkAccent
+                            : AppColors.lightPrimary,
+                        size: 22,
                       ),
                       onPressed: () => GoRouter.of(context).push('/editor'),
                       padding: const EdgeInsets.all(8),
@@ -234,39 +239,21 @@ class ModernAppHeader extends StatelessWidget implements PreferredSizeWidget {
                       ),
                       tooltip: 'New Chat',
                     ),
+                    SizedBox(width: isMobile ? 4 : 8),
                   ],
 
-                  // Unified navigation menu
-                  SizedBox(width: isMobile ? 6 : 12),
-                  PopupMenuButton<String>(
-                    icon: Icon(
-                      Icons.more_vert,
-                      color: isDark ? AppColors.darkText : theme.textTheme.titleLarge?.color,
-                      size: 20,
-                    ),
-                    padding: const EdgeInsets.all(8),
-                    constraints: const BoxConstraints(
-                      minWidth: 40,
-                      minHeight: 40,
-                    ),
-                    onSelected: (value) => _handleMenuSelection(context, value),
-                    itemBuilder: (context) => _buildMenuItems(context),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    elevation: 8,
-                    shadowColor: isDark ? Colors.black.withValues(alpha: 0.3) : Colors.black.withValues(alpha: 0.1),
-                    color: isDark ? AppColors.darkBackgroundLight : AppColors.lightCard,
-                    offset: const Offset(0, 8),
-                  ),
+                  // Credits button with balance display
+                  CreditsButton(onTap: widget.onBuyCredits, isMobile: isMobile),
 
                   // Custom actions (deprecated - use menu instead)
-                  if (actions != null) ...[
+                  if (widget.actions != null) ...[
                     SizedBox(width: isMobile ? 6 : 12),
-                    ...actions!.map((action) => Padding(
-                      padding: EdgeInsets.only(left: isMobile ? 4 : 8),
-                      child: action,
-                    )),
+                    ...widget.actions!.map(
+                      (action) => Padding(
+                        padding: EdgeInsets.only(left: isMobile ? 4 : 8),
+                        child: action,
+                      ),
+                    ),
                   ],
                 ],
               ),
@@ -290,13 +277,17 @@ class ModernAppHeader extends StatelessWidget implements PreferredSizeWidget {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: isDark ? AppColors.darkAccent.withValues(alpha: 0.15) : AppColors.lightTextSecondary.withValues(alpha: 0.1),
+                color: isDark
+                    ? AppColors.darkAccent.withValues(alpha: 0.15)
+                    : AppColors.lightTextSecondary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
                 Icons.history,
                 size: 18,
-                color: isDark ? AppColors.darkAccent : AppColors.lightTextSecondary,
+                color: isDark
+                    ? AppColors.darkAccent
+                    : AppColors.lightTextSecondary,
               ),
             ),
             const SizedBox(width: 12),
@@ -319,13 +310,17 @@ class ModernAppHeader extends StatelessWidget implements PreferredSizeWidget {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: isDark ? AppColors.darkAccent.withValues(alpha: 0.15) : AppColors.lightTextSecondary.withValues(alpha: 0.1),
+                color: isDark
+                    ? AppColors.darkAccent.withValues(alpha: 0.15)
+                    : AppColors.lightTextSecondary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
                 Icons.settings,
                 size: 18,
-                color: isDark ? AppColors.darkAccent : AppColors.lightTextSecondary,
+                color: isDark
+                    ? AppColors.darkAccent
+                    : AppColors.lightTextSecondary,
               ),
             ),
             const SizedBox(width: 12),
@@ -342,9 +337,9 @@ class ModernAppHeader extends StatelessWidget implements PreferredSizeWidget {
     ];
 
     // Add additional menu items if provided
-    if (additionalMenuItems != null) {
+    if (widget.additionalMenuItems != null) {
       items.add(const PopupMenuDivider());
-      items.addAll(additionalMenuItems!);
+      items.addAll(widget.additionalMenuItems!);
     }
 
     return items;
@@ -354,7 +349,10 @@ class ModernAppHeader extends StatelessWidget implements PreferredSizeWidget {
     final router = GoRouter.of(context);
     final currentLocation = GoRouterState.of(context).uri.toString();
 
-    Logger.debug('🔙 Header back button pressed. Current location: $currentLocation', tag: 'Navigation');
+    Logger.debug(
+      '🔙 Header back button pressed. Current location: $currentLocation',
+      tag: 'Navigation',
+    );
     Logger.debug('🔙 Can pop: ${router.canPop()}', tag: 'Navigation');
 
     // Check if we can pop the current route
@@ -381,11 +379,479 @@ class ModernAppHeader extends StatelessWidget implements PreferredSizeWidget {
         break;
       default:
         // Handle additional menu items
-        if (onMenuItemSelected != null) {
-          onMenuItemSelected!(value);
+        if (widget.onMenuItemSelected != null) {
+          widget.onMenuItemSelected!(value);
         }
         break;
     }
+  }
+
+  Widget _buildNavigationDrawer(BuildContext context) {
+    final theme = Theme.of(context);
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final authProvider = Provider.of<FirebaseAuthProvider>(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Drawer(
+      backgroundColor: isDark
+          ? AppColors.darkBackground
+          : AppColors.lightBackground,
+      child: SafeArea(
+        child: Column(
+          children: [
+            // Clean header with logo
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 32, 20, 24),
+              child: Row(
+                children: [
+                  CognifyLogo(size: 36),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Cognify',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 22,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Simple divider
+            Divider(
+              height: 1,
+              thickness: 1,
+              color: isDark
+                  ? AppColors.darkBorder.withValues(alpha: 0.15)
+                  : AppColors.lightTextSecondary.withValues(alpha: 0.08),
+            ),
+
+            const SizedBox(height: 16),
+
+            // Drawer items
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                children: [
+                  // Sign In option for anonymous users
+                  if (authProvider.isAnonymous) ...[
+                    _buildDrawerItem(
+                      context: context,
+                      icon: Icons.login,
+                      label: 'Sign In',
+                      onTap: () {
+                        Navigator.pop(context);
+                        GoRouter.of(context).push('/sign-in');
+                      },
+                      isPrimary: true,
+                    ),
+                    const SizedBox(height: 8),
+                    // Divider after sign in
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Divider(
+                        height: 1,
+                        thickness: 1,
+                        color: isDark
+                            ? AppColors.darkBorder.withValues(alpha: 0.15)
+                            : AppColors.lightTextSecondary.withValues(
+                                alpha: 0.08,
+                              ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+
+                  // Theme toggle
+                  _buildDrawerItem(
+                    context: context,
+                    icon: isDark
+                        ? Icons.light_mode_outlined
+                        : Icons.dark_mode_outlined,
+                    label: isDark ? 'Light Mode' : 'Dark Mode',
+                    onTap: () {
+                      themeProvider.toggleTheme();
+                      Navigator.pop(context);
+                    },
+                  ),
+
+                  const SizedBox(height: 2),
+
+                  // History
+                  _buildDrawerItem(
+                    context: context,
+                    icon: Icons.history_outlined,
+                    label: 'History',
+                    onTap: () {
+                      Navigator.pop(context);
+                      GoRouter.of(context).push('/history');
+                    },
+                  ),
+
+                  const SizedBox(height: 2),
+
+                  // Settings
+                  _buildDrawerItem(
+                    context: context,
+                    icon: Icons.settings_outlined,
+                    label: 'Settings',
+                    onTap: () {
+                      Navigator.pop(context);
+                      _showSettingsModal(context);
+                    },
+                  ),
+
+                  const SizedBox(height: 2),
+
+                  // Help & Support
+                  _buildDrawerItem(
+                    context: context,
+                    icon: Icons.help_outline,
+                    label: 'Help & Support',
+                    onTap: () {
+                      Navigator.pop(context);
+                      _showHelpDialog(context);
+                    },
+                  ),
+
+                  const SizedBox(height: 2),
+
+                  // About
+                  _buildDrawerItem(
+                    context: context,
+                    icon: Icons.info_outline,
+                    label: 'About',
+                    onTap: () {
+                      Navigator.pop(context);
+                      _showAboutDialog(context);
+                    },
+                  ),
+                ],
+              ),
+            ),
+
+            // App version footer
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Text(
+                'Version 1.0.0',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: isDark
+                      ? AppColors.darkTextSecondary.withValues(alpha: 0.4)
+                      : AppColors.lightTextSecondary.withValues(alpha: 0.4),
+                  fontSize: 12,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDrawerItem({
+    required BuildContext context,
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    bool isPrimary = false,
+  }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Material(
+      color: isPrimary
+          ? (isDark
+                ? AppColors.darkAccent.withValues(alpha: 0.1)
+                : AppColors.lightPrimary.withValues(alpha: 0.08))
+          : Colors.transparent,
+      borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        splashColor: AppColors.lightAccent.withValues(alpha: 0.08),
+        highlightColor: AppColors.lightAccent.withValues(alpha: 0.05),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Row(
+            children: [
+              Icon(
+                icon,
+                size: 22,
+                color: isPrimary
+                    ? (isDark ? AppColors.darkAccent : AppColors.lightPrimary)
+                    : AppColors.lightAccent,
+              ),
+              const SizedBox(width: 20),
+              Expanded(
+                child: Text(
+                  label,
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    fontWeight: isPrimary ? FontWeight.w600 : FontWeight.w400,
+                    fontSize: 16,
+                    letterSpacing: -0.2,
+                    color: isPrimary
+                        ? (isDark
+                              ? AppColors.darkAccent
+                              : AppColors.lightPrimary)
+                        : null,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showHelpDialog(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: isDark
+            ? AppColors.darkSurface
+            : AppColors.lightBackground,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Icon(
+              Icons.help_outline,
+              color: isDark ? AppColors.darkAccent : AppColors.lightPrimary,
+            ),
+            const SizedBox(width: 12),
+            Text('Help & Support'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Need assistance? We\'re here to help!',
+              style: theme.textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 16),
+            _buildHelpOption(
+              context,
+              icon: Icons.email_outlined,
+              title: 'Email Support',
+              subtitle: 'support@cognify.app',
+            ),
+            const SizedBox(height: 12),
+            _buildHelpOption(
+              context,
+              icon: Icons.description_outlined,
+              title: 'Documentation',
+              subtitle: 'View user guide',
+            ),
+            const SizedBox(height: 12),
+            _buildHelpOption(
+              context,
+              icon: Icons.bug_report_outlined,
+              title: 'Report a Bug',
+              subtitle: 'Help us improve',
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Close',
+              style: TextStyle(
+                color: isDark ? AppColors.darkAccent : AppColors.lightPrimary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHelpOption(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+  }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isDark
+            ? AppColors.darkAccent.withValues(alpha: 0.08)
+            : AppColors.lightPrimary.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDark
+              ? AppColors.darkBorder.withValues(alpha: 0.2)
+              : AppColors.lightTextSecondary.withValues(alpha: 0.1),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            size: 20,
+            color: isDark ? AppColors.darkAccent : AppColors.lightPrimary,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: isDark
+                        ? AppColors.darkTextSecondary
+                        : AppColors.lightTextSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAboutDialog(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: isDark
+            ? AppColors.darkSurface
+            : AppColors.lightBackground,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Column(
+          children: [
+            CognifyLogo(size: 64),
+            const SizedBox(height: 16),
+            Text(
+              'Cognify',
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Version 1.0.0',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: isDark
+                    ? AppColors.darkTextSecondary
+                    : AppColors.lightTextSecondary,
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'AI-Powered Assistant',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w500,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Cognify uses advanced AI to help you with creative tasks, problem-solving, and more.',
+              style: theme.textTheme.bodySmall,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _buildAboutLink(
+                  context,
+                  icon: Icons.gavel,
+                  label: 'Terms',
+                  onTap: () {
+                    // TODO: Open terms
+                  },
+                ),
+                const SizedBox(width: 24),
+                _buildAboutLink(
+                  context,
+                  icon: Icons.privacy_tip_outlined,
+                  label: 'Privacy',
+                  onTap: () {
+                    // TODO: Open privacy policy
+                  },
+                ),
+              ],
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Close',
+              style: TextStyle(
+                color: isDark ? AppColors.darkAccent : AppColors.lightPrimary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAboutLink(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.all(8),
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              size: 20,
+              color: isDark ? AppColors.darkAccent : AppColors.lightPrimary,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: isDark ? AppColors.darkAccent : AppColors.lightPrimary,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   void _showSettingsModal(BuildContext context) {
@@ -399,7 +865,6 @@ class ModernAppHeader extends StatelessWidget implements PreferredSizeWidget {
       ),
     );
   }
-
 }
 
 // Modern floating action button
@@ -439,12 +904,16 @@ class ModernFloatingActionButton extends StatelessWidget {
           onPressed: onPressed,
           icon: Icon(
             icon,
-            color: isDark ? AppColors.darkButtonText : AppColors.lightButtonText,
+            color: isDark
+                ? AppColors.darkButtonText
+                : AppColors.lightButtonText,
           ),
           label: Text(
             label!,
             style: TextStyle(
-              color: isDark ? AppColors.darkButtonText : AppColors.lightButtonText,
+              color: isDark
+                  ? AppColors.darkButtonText
+                  : AppColors.lightButtonText,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -481,6 +950,42 @@ class ModernFloatingActionButton extends StatelessWidget {
           icon,
           color: isDark ? AppColors.darkButtonText : AppColors.lightButtonText,
         ),
+      ),
+    );
+  }
+}
+
+// Modern 2-line minimalistic menu icon
+class _ModernMenuIcon extends StatelessWidget {
+  final Color color;
+  final double size;
+
+  const _ModernMenuIcon({required this.color, this.size = 18});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: size,
+      height: size,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            height: 2,
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(1),
+            ),
+          ),
+          const SizedBox(height: 5),
+          Container(
+            height: 2,
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(1),
+            ),
+          ),
+        ],
       ),
     );
   }
