@@ -1,6 +1,6 @@
 import express from 'express';
 import { requireAuth, AuthRequest } from '../middleware/auth.js';
-import { MODE_CONFIGS, MODEL_DEFAULTS, CACHE_CONFIG } from '../config/config-data.js';
+import { MODE_CONFIGS, MODEL_DEFAULTS, CACHE_CONFIG, QUOTA_CONFIG } from '../config/config-data.js';
 import { streamText, generateText, generateObject, tool } from 'ai';
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { z } from 'zod';
@@ -444,8 +444,42 @@ chatRouter.post('/', requireAuth, async (req: AuthRequest, res) => {
     console.log(`[chat] Mode: ${mode}, RawModel: ${rawModel}, SelectedModel: ${model}, ModeConfigModel: ${modeConfig?.model}`);
     
     const userQuery = getLastUserMessageText(messages);
-    // Only set maxTokens if explicitly provided - let model complete naturally otherwise
-    const effectiveMaxTokens = typeof maxTokens === 'number' ? maxTokens : undefined;
+    
+    // CRITICAL: Apply hard global maximum token limit
+    const globalMaxTokens = QUOTA_CONFIG.globalMaxTokens;
+    
+    // Apply safety limit from mode config
+    const modeMaxTokens = modeConfig?.maxTokens as number | undefined;
+    let effectiveMaxTokens: number | undefined;
+    
+    if (typeof maxTokens === 'number') {
+      // User explicitly provided maxTokens - apply mode limit AND global limit as caps
+      effectiveMaxTokens = Math.min(
+        modeMaxTokens || Infinity,
+        maxTokens,
+        globalMaxTokens
+      );
+    } else if (modeMaxTokens) {
+      // Apply mode's default safety limit, capped by global max
+      effectiveMaxTokens = Math.min(modeMaxTokens, globalMaxTokens);
+    } else {
+      // No mode limit, but still enforce global max
+      effectiveMaxTokens = globalMaxTokens;
+    }
+    
+    // EXTRA PROTECTION: Reasoning models (like deepseek-r1) can generate massive outputs
+    // Apply an additional safety cap specifically for reasoning models
+    const isReasoningModel = model.includes('r1') || model.includes('reasoning') || model.includes('deepseek-r1');
+    if (isReasoningModel && effectiveMaxTokens && effectiveMaxTokens > 15000) {
+      console.warn(`⚠️ [SAFETY] Reasoning model detected (${model}), applying extra tight limit (15k tokens, 10x cost)`);
+      effectiveMaxTokens = 15000; // Very strict limit for reasoning models
+    }
+    
+    // Log token limits for debugging (and alert if limit was reduced)
+    if (maxTokens && maxTokens > effectiveMaxTokens) {
+      console.warn(`⚠️ [SAFETY] User requested ${maxTokens} tokens but limited to ${effectiveMaxTokens} by safety guardrails`);
+    }
+    console.log(`[chat] Token limit enforced: ${effectiveMaxTokens} (global: ${globalMaxTokens}, mode max: ${modeMaxTokens}, requested: ${maxTokens}, isReasoningModel: ${isReasoningModel})`);
 
     // Pre-deduct credits using server-side calculation
     const requestId = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;

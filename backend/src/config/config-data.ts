@@ -40,6 +40,7 @@ export const MODE_CONFIGS = {
     availableModels: [],
     capabilities: ['text', 'image'],
     temperature: 0.7,
+    maxTokens: 8000, // Safety limit: 8k tokens max
     // UI hints - backend tells frontend how to display
     showInMainMenu: true,
     requiresPremium: false,
@@ -61,6 +62,7 @@ export const MODE_CONFIGS = {
     ],
     capabilities: ['text', 'web-search', 'image'],
     temperature: 0.7,
+    maxTokens: 12000, // Safety limit: 12k tokens max
     showInMainMenu: true,
     requiresPremium: false,
     badge: null,
@@ -81,6 +83,7 @@ export const MODE_CONFIGS = {
     ],
     capabilities: ['text', 'web-search', 'image-search', 'image'],
     temperature: 0.5,
+    maxTokens: 16000, // Safety limit: 16k tokens max
     showInMainMenu: true,
     requiresPremium: false,
     badge: null,
@@ -102,6 +105,7 @@ export const MODE_CONFIGS = {
     ],
     capabilities: ['text', 'web-search', 'deep-research'],
     temperature: 0.6,
+    maxTokens: 15000, // Safety limit: 15k tokens max (reasoning models charged 10x)
     showInMainMenu: true,
     requiresPremium: true, // Backend can gate premium features
     badge: 'BETA',
@@ -162,6 +166,10 @@ export const QUOTA_CONFIG = {
 
   // Legacy token allocation (deprecated)
   initialTokenAllocation: 10,
+  
+  // CRITICAL SAFETY: Global maximum token limit (hard cap for all models)
+  // This prevents runaway token generation that could cost thousands
+  globalMaxTokens: 50000, // Absolute maximum ANY model can generate
 } as const;
 
 // ========== VERSION CONTROL ==========

@@ -121,7 +121,15 @@ creditsRouter.post('/consume', requireAuth, async (req: AuthRequest, res) => {
         const imageCost = imagePricePerImage > 0 ? imagePricePerImage : 0; // Base cost for 1 image
         const internalReasoningCost = internalReasoningPricePer1M > 0 ? (1000 / 1_000_000) * internalReasoningPricePer1M : 0; // Base cost for 1K reasoning tokens
         
-        const dollarCost = tokenCost + webSearchCost + imageCost + internalReasoningCost;
+        let dollarCost = tokenCost + webSearchCost + imageCost + internalReasoningCost;
+        
+        // CRITICAL SAFETY: Reasoning models are 10x more expensive due to internal reasoning tokens
+        // Apply 10x multiplier to all reasoning model costs
+        const isReasoningModel = modelId.includes('r1') || modelId.includes('reasoning') || modelId.includes('deepseek-r1');
+        if (isReasoningModel) {
+          dollarCost = dollarCost * 10;
+          console.log(`⚠️ [COST SAFETY] Reasoning model detected (${modelId}), applying 10x cost multiplier`);
+        }
         
         const isFreeModel = Number(inputPricePer1M) === 0 && Number(outputPricePer1M) === 0 && Number(webSearchPricePer1K) === 0 && Number(imagePricePerImage) === 0 && Number(internalReasoningPricePer1M) === 0;
         if (isFreeModel) {

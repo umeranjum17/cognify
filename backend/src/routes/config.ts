@@ -41,14 +41,18 @@ configRouter.get('/', requireAuth, async (req, res) => {
     if (openRouterData.data && Array.isArray(openRouterData.data)) {
       for (const model of openRouterData.data) {
         if (!model.id) continue;
+        // Hide synthetic/alias auto models
+        if (model.id === 'auto' || model.id === 'openrouter/auto' || (typeof model.id === 'string' && model.id.endsWith('/auto'))) continue;
+        
         availableModels.push(model.id);
         if (model.pricing) {
+          const p = model.pricing;
           pricing[model.id] = {
-            input: parseFloat(model.pricing.prompt) * 1_000_000,
-            output: parseFloat(model.pricing.completion) * 1_000_000,
-            web_search: model.pricing.web_search ? parseFloat(model.pricing.web_search) * 1000 : undefined,
-            image: model.pricing.image ? parseFloat(model.pricing.image) : undefined,
-            internal_reasoning: model.pricing.internal_reasoning ? parseFloat(model.pricing.internal_reasoning) * 1_000_000 : undefined,
+            input: parseFloat(p.prompt) * 1_000_000,
+            output: parseFloat(p.completion) * 1_000_000,
+            web_search: p.web_search ? parseFloat(p.web_search) * 1000 : undefined,
+            image: p.image ? parseFloat(p.image) : undefined,
+            internal_reasoning: p.internal_reasoning ? parseFloat(p.internal_reasoning) * 1_000_000 : undefined,
           };
         }
         const isFree = pricing[model.id]?.input === 0 && pricing[model.id]?.output === 0;
@@ -73,7 +77,15 @@ configRouter.get('/', requireAuth, async (req, res) => {
       initialRequestAllocation: QUOTA_CONFIG.initialRequestAllocation,
       perModelSampleCosts: Object.fromEntries(
         Object.entries(pricing).map(([modelId, p]) => {
-          const costPer1k = (1000 / 1_000_000) * (p.input + p.output);
+          // Base token costs
+          const tokenCostPer1k = (1000 / 1_000_000) * (p.input + p.output);
+          
+          // Per-capability markup: 0.5 each (no cap)
+          const perCapMark =
+            (p.web_search ? 0.5 : 0) +
+            (p.image ? 0.5 : 0) +
+            (p.internal_reasoning ? 0.5 : 0);
+          const costPer1k = tokenCostPer1k * (1 + perCapMark);
           const requestUnits = costPer1k > 0 ? Math.max(1, Math.ceil(costPer1k / dollarsPerRequestUnit)) : 0;
           return [modelId, { per1kTokensDollarCost: costPer1k, per1kTokensRequestUnits: requestUnits }];
         })
@@ -133,14 +145,18 @@ configRouter.get('/models', requireAuth, async (req, res) => {
     if (openRouterData.data && Array.isArray(openRouterData.data)) {
       for (const model of openRouterData.data) {
         if (!model.id) continue;
+        // Hide synthetic/alias auto models
+        if (model.id === 'auto' || model.id === 'openrouter/auto' || (typeof model.id === 'string' && model.id.endsWith('/auto'))) continue;
+        
         availableModels.push(model.id);
         if (model.pricing) {
+          const p = model.pricing;
           pricing[model.id] = {
-            input: parseFloat(model.pricing.prompt) * 1_000_000,
-            output: parseFloat(model.pricing.completion) * 1_000_000,
-            web_search: model.pricing.web_search ? parseFloat(model.pricing.web_search) * 1000 : undefined,
-            image: model.pricing.image ? parseFloat(model.pricing.image) : undefined,
-            internal_reasoning: model.pricing.internal_reasoning ? parseFloat(model.pricing.internal_reasoning) * 1_000_000 : undefined,
+            input: parseFloat(p.prompt) * 1_000_000,
+            output: parseFloat(p.completion) * 1_000_000,
+            web_search: p.web_search ? parseFloat(p.web_search) * 1000 : undefined,
+            image: p.image ? parseFloat(p.image) : undefined,
+            internal_reasoning: p.internal_reasoning ? parseFloat(p.internal_reasoning) * 1_000_000 : undefined,
           };
         }
         const isFree = pricing[model.id]?.input === 0 && pricing[model.id]?.output === 0;
@@ -202,7 +218,15 @@ configRouter.get('/models', requireAuth, async (req, res) => {
 
           const inT = 900;
           const outT = 1100;
-          const chatDollar = (inT / 1_000_000) * p.input + (outT / 1_000_000) * p.output;
+          // Base token cost
+          const tokenDollar = (inT / 1_000_000) * p.input + (outT / 1_000_000) * p.output;
+          
+          // Per-capability markup: 0.5 each (no cap) applied to token base
+          const perCapMarkChat =
+            (p.web_search ? 0.5 : 0) +
+            (p.image ? 0.5 : 0) +
+            (p.internal_reasoning ? 0.5 : 0);
+          const chatDollar = tokenDollar * (1 + perCapMarkChat);
           // If model is marked free, we still charge a configurable budget rate
           const freeModelRate = (QUOTA_CONFIG as any).freeModelRate ?? 0.1;
           const chatUnits = isFree
