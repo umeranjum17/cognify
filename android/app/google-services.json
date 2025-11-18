@@ -14,6 +14,22 @@
       },
       "oauth_client": [
         {
+          "client_id": "702035468371-0boud9dguje6tdkabj73i9j9at10thkn.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.umerfarooq1995.cognify_flutter",
+            "certificate_hash": "dc6c494d813cf8646d822e3cdc664110827aeaf9"
+          }
+        },
+        {
+          "client_id": "702035468371-0ncofs747ocpbjm4jvtn7gpr8ggml5lt.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.umerfarooq1995.cognify_flutter",
+            "certificate_hash": "e0197d649855b1d33f4aa151de9c36516e9b7f1c"
+          }
+        },
+        {
           "client_id": "702035468371-631rie04aumlld25mu9ol8e4fpb51ach.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
@@ -27,6 +43,14 @@
           "android_info": {
             "package_name": "com.umerfarooq1995.cognify_flutter",
             "certificate_hash": "b81ba8e1b9a8f407b2d143a1fe68ea687bbdf967"
+          }
+        },
+        {
+          "client_id": "702035468371-q0tm5cne84hjn59mdfeorrg4drin8e6f.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.umerfarooq1995.cognify_flutter",
+            "certificate_hash": "ed417ac74c6907b510189f89c5aa851865a6483a"
           }
         },
         {
@@ -45,6 +69,13 @@
             {
               "client_id": "702035468371-vslhss1u3t5cv907av88eei95v02jkhv.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "702035468371-pngvh8gjcquh2rh8po66aumvonrpmjar.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.umerfarooq1995.cognify-flutter"
+              }
             }
           ]
         }

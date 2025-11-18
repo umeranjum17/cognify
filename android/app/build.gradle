@@ -24,8 +24,8 @@ if (flutterVersionName == null) {
 
 android {
     namespace "com.umerfarooq1995.cognify_flutter"
-    compileSdkVersion 35
-    ndkVersion "25.2.9519653"
+    compileSdkVersion 36
+    ndkVersion "27.0.12077973"
 
     buildFeatures {
         buildConfig true
@@ -49,8 +49,8 @@ android {
 
     defaultConfig {
         applicationId "com.umerfarooq1995.cognify_flutter"
-        minSdkVersion 23
-        targetSdkVersion 35
+        minSdkVersion flutter.minSdkVersion
+        targetSdkVersion 36
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
 
@@ -158,3 +158,23 @@ dependencies {
 
 // Firebase Google Services plugin to process google-services.json
 apply plugin: "com.google.gms.google-services"
+
+// Task to print SHA-1 fingerprint for Google Sign-In setup
+tasks.register('printSha1') {
+    doLast {
+        def keystoreFile = file("${System.getProperty('user.home')}/.android/debug.keystore")
+        if (keystoreFile.exists()) {
+            println "\n🔍 Debug Keystore SHA-1 Fingerprint:"
+            exec {
+                commandLine 'keytool', '-list', '-v', '-keystore', keystoreFile.absolutePath,
+                        '-alias', 'androiddebugkey', '-storepass', 'android', '-keypass', 'android'
+            }
+            println "\n📋 Copy the SHA1 value above and add it to Firebase Console"
+            println "   Firebase Console: https://console.firebase.google.com/project/cognify-eb0a2/settings/general/android:com.umerfarooq1995.cognify_flutter"
+        } else {
+            println "\n⚠️  Debug keystore not found at: ${keystoreFile.absolutePath}"
+            println "   Build your app once to create it: flutter build apk --debug"
+            println "   Then run: cd android && ./gradlew printSha1"
+        }
+    }
+}

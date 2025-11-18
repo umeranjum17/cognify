@@ -210,7 +210,18 @@ class FirebaseAuthProvider extends ChangeNotifier {
           accessToken: auth.accessToken,
         );
 
-        if (_auth.currentUser?.isAnonymous == true) {
+        // Three distinct cases:
+        // 1) No Firebase user at all  -> direct sign-in
+        // 2) Anonymous user           -> link to preserve credits/purchases
+        // 3) Authenticated user       -> link Google as an additional provider
+        if (_auth.currentUser == null) {
+          debugPrint(
+            '🔄 [FirebaseAuth] No current user - signing in with Google account',
+          );
+          final signInRes = await _auth.signInWithCredential(credential);
+          _user = signInRes.user;
+          debugPrint('✅ [FirebaseAuth] Google sign-in completed for new user');
+        } else if (_auth.currentUser!.isAnonymous) {
           // Anonymous user - link account to preserve purchases and credits
           debugPrint(
             '🔄 [FirebaseAuth] Anonymous user - linking with Google account',
