@@ -46,14 +46,6 @@
           }
         },
         {
-          "client_id": "702035468371-fg9g0tgpnok8d91bjnbc8jjkbg3gb13s.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.umerfarooq1995.cognify_flutter",
-            "certificate_hash": "be28f8bdc220def9c998554d04a051c52f47ce72"
-          }
-        },
-        {
           "client_id": "702035468371-nhmberc5s05ooqp216luc5nbc3eoqtg0.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {

@@ -53,18 +53,8 @@ class FirebaseAuthProvider extends ChangeNotifier {
     });
 
     try {
-      // Assume Firebase is initialized in main.dart; fail gracefully if not
-      if (Firebase.apps.isEmpty) {
-        debugPrint(
-          '⚠️ [FirebaseAuth] Firebase not initialized before auth provider. Skipping auth setup.',
-        );
-        _initialized = true;
-        _initializing = false;
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          notifyListeners();
-        });
-        return;
-      }
+      // Wait for Firebase to be initialized (it runs in background after app starts)
+      await _waitForFirebase();
 
       _auth = fb.FirebaseAuth.instance;
 
@@ -138,6 +128,23 @@ class FirebaseAuthProvider extends ChangeNotifier {
     }
   }
 
+  /// Waits for Firebase to be initialized (it runs in background after app starts)
+  Future<void> _waitForFirebase() async {
+    if (Firebase.apps.isNotEmpty) return;
+    
+    debugPrint('⏳ [FirebaseAuth] Waiting for Firebase to initialize...');
+    int attempts = 0;
+    while (Firebase.apps.isEmpty && attempts < 100) {
+      await Future.delayed(const Duration(milliseconds: 50));
+      attempts++;
+    }
+    
+    if (Firebase.apps.isEmpty) {
+      throw Exception('Firebase failed to initialize after ${attempts * 50}ms');
+    }
+    debugPrint('✅ [FirebaseAuth] Firebase ready after ${attempts * 50}ms');
+  }
+
   Future<void> signInWithGoogle() async {
     _lastError = null;
     try {
@@ -197,8 +204,11 @@ class FirebaseAuthProvider extends ChangeNotifier {
           }
         }
       } else {
+        // serverClientId is the Web OAuth client ID (client_type: 3) from google-services.json
+        // Required for Android to get an ID token and avoid ApiException: 10
         final GoogleSignIn googleSignIn = GoogleSignIn(
           scopes: ['email', 'profile'],
+          serverClientId: '702035468371-vslhss1u3t5cv907av88eei95v02jkhv.apps.googleusercontent.com',
         );
         final GoogleSignInAccount? account = await googleSignIn.signIn();
         if (account == null) {

@@ -5883,11 +5883,17 @@ class _ModelRateDisplay extends StatelessWidget {
       );
     }
 
+    final initialEstimate = RequestUsageEstimator.peekCachedEstimate(
+      modelId!,
+      mode: ChatMode.chat,
+    );
+
     return FutureBuilder<RequestUsageEstimate>(
       future: RequestUsageEstimator.estimate(
         modelId: modelId!,
         mode: ChatMode.chat,
       ),
+      initialData: initialEstimate,
       builder: (context, snapshot) {
         String suffix = ' (Loading...)';
 

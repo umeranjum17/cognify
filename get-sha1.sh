@@ -11,7 +11,11 @@ DEBUG_KEYSTORE="$HOME/.android/debug.keystore"
 
 if [ -f "$DEBUG_KEYSTORE" ]; then
     echo "📱 Debug Keystore SHA-1:"
-    keytool -list -v -keystore "$DEBUG_KEYSTORE" -alias androiddebugkey -storepass android -keypass android 2>/dev/null | grep -A 1 "SHA1:" | grep -o "[0-9A-F:]\{47\}" | tr '[:upper:]' '[:lower:]' | sed 's/://g'
+    keytool -list -v -keystore "$DEBUG_KEYSTORE" \
+        -alias androiddebugkey \
+        -storepass android \
+        -keypass android 2>/dev/null | \
+        awk '/SHA1:/{print $2}' | tr -d ':' | tr '[:upper:]' '[:lower:]'
     echo ""
 else
     echo "⚠️  Debug keystore not found at $DEBUG_KEYSTORE"
@@ -30,7 +34,11 @@ if [ -f "android/local.properties" ]; then
         
         if [ -n "$KEY_ALIAS" ] && [ -n "$STORE_PASS" ] && [ -n "$KEY_PASS" ]; then
             echo "📦 Release Keystore SHA-1:"
-            keytool -list -v -keystore "$STORE_FILE" -alias "$KEY_ALIAS" -storepass "$STORE_PASS" -keypass "$KEY_PASS" 2>/dev/null | grep -A 1 "SHA1:" | grep -o "[0-9A-F:]\{47\}" | tr '[:upper:]' '[:lower:]' | sed 's/://g'
+            keytool -list -v -keystore "$STORE_FILE" \
+                -alias "$KEY_ALIAS" \
+                -storepass "$STORE_PASS" \
+                -keypass "$KEY_PASS" 2>/dev/null | \
+                awk '/SHA1:/{print $2}' | tr -d ':' | tr '[:upper:]' '[:lower:]'
             echo ""
         fi
     fi

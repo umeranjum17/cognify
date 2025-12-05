@@ -27,8 +27,9 @@ class AppRouter {
       observers: [AnalyticsRouteObserver()],
       redirect: (context, state) {
         final loc = state.uri.toString();
-        final isInitializing =
-            authProvider.initializing && !authProvider.initialized;
+        
+        // While auth is initializing, don't redirect - let the current page show
+        final isInitializing = !authProvider.initialized;
         if (isInitializing) {
           return null;
         }
@@ -88,19 +89,8 @@ class AppRouter {
           path: '/',
           name: 'home',
           pageBuilder: (context, state) {
-            final firebaseAuth = context.read<FirebaseAuthProvider>();
-            final sharedUrl = state.uri.queryParameters['sharedUrl'];
-
-            if (!firebaseAuth.initialized || firebaseAuth.initializing) {
-              return const MaterialPage(
-                child: Scaffold(
-                  body: Center(child: CircularProgressIndicator()),
-                ),
-              );
-            }
-
-            // Show the editor for both anonymous and signed-in users.
-            // Anonymous users can use the app, buy credits, and sign in whenever they want.
+            // Show the editor immediately - no loading spinner!
+            // The editor handles its own loading states for user-specific data.
             return const MaterialPage(child: TabbedEditorScreen());
           },
         ),

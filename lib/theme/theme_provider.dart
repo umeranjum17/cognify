@@ -4,7 +4,7 @@ import 'app_theme.dart';
 import '../utils/logger.dart';
 
 class ThemeProvider extends ChangeNotifier {
-  ThemeMode _themeMode = ThemeMode.light;
+  ThemeMode _themeMode = ThemeMode.dark;
   bool _isInitialized = false;
 
   ThemeMode get themeMode => _themeMode;

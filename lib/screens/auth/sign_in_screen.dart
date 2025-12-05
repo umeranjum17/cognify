@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb;
+import 'package:firebase_core/firebase_core.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../config/app_config.dart';
@@ -289,6 +290,10 @@ class _SignInScreenState extends State<SignInScreen> {
       // If not signed in, sign in anonymously directly
       if (!authProvider.isSignedIn) {
         debugPrint('🔄 [SignIn] Signing in anonymously via skip...');
+        
+        // Ensure Firebase is initialized before calling auth methods
+        await _ensureFirebaseInitialized();
+        
         await fb.FirebaseAuth.instance.signInAnonymously();
         debugPrint('✅ [SignIn] Anonymous sign-in successful');
 
@@ -317,6 +322,25 @@ class _SignInScreenState extends State<SignInScreen> {
         });
       }
     }
+  }
+
+  /// Ensures Firebase is initialized before using Firebase services
+  Future<void> _ensureFirebaseInitialized() async {
+    // Check if Firebase is already initialized
+    if (Firebase.apps.isNotEmpty) return;
+    
+    // Wait for Firebase to initialize (with timeout)
+    debugPrint('⏳ [SignIn] Waiting for Firebase to initialize...');
+    int attempts = 0;
+    while (Firebase.apps.isEmpty && attempts < 50) {
+      await Future.delayed(const Duration(milliseconds: 100));
+      attempts++;
+    }
+    
+    if (Firebase.apps.isEmpty) {
+      throw Exception('Firebase not initialized. Please restart the app.');
+    }
+    debugPrint('✅ [SignIn] Firebase ready after ${attempts * 100}ms');
   }
 
   Future<void> _markFirstLaunchComplete() async {

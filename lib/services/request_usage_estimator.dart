@@ -1,20 +1,155 @@
+import 'dart:async';
+import 'dart:convert';
+
+import 'package:shared_preferences/shared_preferences.dart';
+
 import '../models/mode_config.dart';
 import './mode_api_service.dart';
 
 /// Estimates how many subscription request units a model invocation consumes.
-/// Uses cached config data from /api/config/models instead of separate API call
+/// Uses cached config data from /api/config/models instead of separate API call.
 class RequestUsageEstimator {
   RequestUsageEstimator._();
 
   static final ModeApiService _modeApi = ModeApiService.instance;
+  static const _prefsKey = 'request_usage_estimates_v1';
+  static const _cacheTtl = Duration(hours: 1);
+  static final Map<String, _CachedEstimate> _memoryCache = {};
+  static final Map<String, Future<RequestUsageEstimate>> _inFlight = {};
+  static bool _hydrated = false;
+  static Future<void>? _hydrating;
 
-  /// Estimate request usage for a model - uses cached config data
+  /// Preload cached pricing estimates to reduce first-render spinners.
+  static Future<void> warmUp() async {
+    await _ensureHydrated();
+  }
+
+  /// Estimate request usage for a model - uses cached config data.
   static Future<RequestUsageEstimate> estimate({
     required String modelId,
     ChatMode? mode,
     int? inputTokens,
     int? outputTokens,
     Map<String, dynamic>? pricing, // Deprecated, kept for backwards compatibility
+  }) async {
+    await _ensureHydrated();
+    final key = _cacheKey(modelId, mode);
+    final cached = _memoryCache[key];
+
+    if (cached != null) {
+      if (_isFresh(cached.timestamp)) {
+        return cached.estimate;
+      }
+      // Stale cache: kick off refresh but keep UI responsive by returning stale data.
+      unawaited(_scheduleRefresh(
+        cacheKey: key,
+        modelId: modelId,
+        mode: mode,
+        inputTokens: inputTokens,
+        outputTokens: outputTokens,
+        pricing: pricing,
+      ));
+      return cached.estimate;
+    }
+
+    return _scheduleRefresh(
+      cacheKey: key,
+      modelId: modelId,
+      mode: mode,
+      inputTokens: inputTokens,
+      outputTokens: outputTokens,
+      pricing: pricing,
+    );
+  }
+
+  /// Returns a cached estimate immediately when available and still within TTL.
+  static RequestUsageEstimate? peekCachedEstimate(
+    String modelId, {
+    ChatMode? mode,
+  }) {
+    final entry = _memoryCache[_cacheKey(modelId, mode)];
+    if (entry != null && _isFresh(entry.timestamp)) {
+      return entry.estimate;
+    }
+    return null;
+  }
+
+  /// Helper to present a human-friendly label for the request estimate.
+  static String formatLabel(
+    RequestUsageEstimate estimate, {
+    bool compact = false,
+  }) {
+    if (estimate.isFree) {
+      return 'Free';
+    }
+
+    final units = estimate.requestUnits;
+    if (compact) {
+      final suffix = units == 1 ? 'req' : 'reqs';
+      return '~$units $suffix';
+    }
+
+    final suffix = units == 1 ? 'request' : 'requests';
+    return '≈$units $suffix';
+  }
+
+  static Future<RequestUsageEstimate> _scheduleRefresh({
+    required String cacheKey,
+    required String modelId,
+    ChatMode? mode,
+    int? inputTokens,
+    int? outputTokens,
+    Map<String, dynamic>? pricing,
+  }) {
+    final existing = _inFlight[cacheKey];
+    if (existing != null) {
+      return existing;
+    }
+
+    final future = _fetchAndCache(
+      cacheKey: cacheKey,
+      modelId: modelId,
+      mode: mode,
+      inputTokens: inputTokens,
+      outputTokens: outputTokens,
+      pricing: pricing,
+    );
+    _inFlight[cacheKey] = future;
+    future.whenComplete(() {
+      _inFlight.remove(cacheKey);
+    });
+    return future;
+  }
+
+  static Future<RequestUsageEstimate> _fetchAndCache({
+    required String cacheKey,
+    required String modelId,
+    ChatMode? mode,
+    int? inputTokens,
+    int? outputTokens,
+    Map<String, dynamic>? pricing,
+  }) async {
+    final estimate = await _fetchEstimateFromBackend(
+      modelId: modelId,
+      mode: mode,
+      inputTokens: inputTokens,
+      outputTokens: outputTokens,
+      pricing: pricing,
+    );
+    _memoryCache[cacheKey] = _CachedEstimate(
+      estimate: estimate,
+      timestamp: DateTime.now(),
+    );
+    await _persistCache();
+    return estimate;
+  }
+
+  static Future<RequestUsageEstimate> _fetchEstimateFromBackend({
+    required String modelId,
+    ChatMode? mode,
+    int? inputTokens,
+    int? outputTokens,
+    Map<String, dynamic>? pricing,
   }) async {
     try {
       // Load config (uses cache if available)
@@ -71,7 +206,7 @@ class RequestUsageEstimator {
         final minUnits = (config['quotaPricing']?['minRequestUnits'] as num?)?.toDouble() ?? 0.1;
         double units = ((modelEstimate['requestUnits'] ?? 0) as num).toDouble();
         units = (units.isFinite ? units : 0);
-        double rounded = (step > 0) ? ( (units / step).round() * step ) : units;
+        double rounded = (step > 0) ? ((units / step).round() * step) : units;
         rounded = rounded < minUnits && rounded > 0 ? minUnits : rounded;
         return RequestUsageEstimate(
           requestUnits: rounded,
@@ -115,11 +250,12 @@ class RequestUsageEstimator {
           return const RequestUsageEstimate.free();
         }
 
-        final dollarsPerUnit = (quotaPricing?['dollarsPerRequestUnit'] as num?)?.toDouble() ?? 0.01;
+        final dollarsPerUnit =
+            (quotaPricing?['dollarsPerRequestUnit'] as num?)?.toDouble() ?? 0.01;
         final step = (quotaPricing?['requestUnitStep'] as num?)?.toDouble() ?? 0.1;
         final minUnits = (quotaPricing?['minRequestUnits'] as num?)?.toDouble() ?? 0.1;
         final rawUnits = dollarCost / dollarsPerUnit;
-        double rounded = step > 0 ? ( (rawUnits / step).round() * step ) : rawUnits;
+        double rounded = step > 0 ? ((rawUnits / step).round() * step) : rawUnits;
         if (rounded > 0 && rounded < minUnits) rounded = minUnits;
         final requestUnits = rounded;
 
@@ -134,8 +270,7 @@ class RequestUsageEstimator {
       // Final fallback: treat provider-marked free models as Budget (x0.3)
       final capabilities = (config['models'] is Map
               ? (config['models'] as Map)['capabilities']
-              : config['capabilities'])
-          as Map<String, dynamic>?;
+              : config['capabilities']) as Map<String, dynamic>?;
       bool isFreeByCapabilities = false;
       if (capabilities != null) {
         final cap = capabilities[canonicalId] as Map<String, dynamic>?;
@@ -145,9 +280,8 @@ class RequestUsageEstimator {
           // try suffix match
           for (final entry in capabilities.entries) {
             if (entry.key is String) {
-              final last = entry.key.split('/').length > 1
-                  ? entry.key.split('/').last
-                  : entry.key;
+              final last =
+                  entry.key.split('/').length > 1 ? entry.key.split('/').last : entry.key;
               if (last == canonicalId &&
                   (entry.value is Map && (entry.value as Map)['isFree'] == true)) {
                 isFreeByCapabilities = true;
@@ -177,23 +311,57 @@ class RequestUsageEstimator {
     }
   }
 
-  /// Helper to present a human-friendly label for the request estimate.
-  static String formatLabel(
-    RequestUsageEstimate estimate, {
-    bool compact = false,
-  }) {
-    if (estimate.isFree) {
-      return 'Free';
-    }
+  static Future<void> _ensureHydrated() async {
+    if (_hydrated) return;
+    _hydrating ??= _hydrateCache();
+    await _hydrating;
+  }
 
-    final units = estimate.requestUnits;
-    if (compact) {
-      final suffix = units == 1 ? 'req' : 'reqs';
-      return '~$units $suffix';
+  static Future<void> _hydrateCache() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_prefsKey);
+      if (raw != null && raw.isNotEmpty) {
+        final decoded = jsonDecode(raw) as Map<String, dynamic>;
+        decoded.forEach((key, value) {
+          if (value is Map<String, dynamic>) {
+            final entry = _CachedEstimate.fromJson(value);
+            if (entry != null && _isFresh(entry.timestamp)) {
+              _memoryCache[key] = entry;
+            }
+          }
+        });
+      }
+    } catch (e) {
+      print('⚠️ Failed to hydrate usage cache: $e');
+    } finally {
+      _hydrated = true;
+      _hydrating = null;
     }
+  }
 
-    final suffix = units == 1 ? 'request' : 'requests';
-    return '≈$units $suffix';
+  static Future<void> _persistCache() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final encoded = jsonEncode(
+        _memoryCache.map(
+          (key, entry) => MapEntry(key, entry.toJson()),
+        ),
+      );
+      await prefs.setString(_prefsKey, encoded);
+    } catch (e) {
+      print('⚠️ Failed to persist usage cache: $e');
+    }
+  }
+
+  static bool _isFresh(DateTime timestamp) {
+    return DateTime.now().difference(timestamp) < _cacheTtl;
+  }
+
+  static String _cacheKey(String modelId, ChatMode? mode) {
+    final normalizedModel = modelId.toLowerCase();
+    final normalizedMode = (mode ?? ChatMode.chat).toString();
+    return '$normalizedMode|$normalizedModel';
   }
 }
 
@@ -218,4 +386,41 @@ class RequestUsageEstimate {
 
   bool get isFree => requestUnits <= 0.0 || dollarCost <= 0.0;
   int get totalTokens => inputTokens + outputTokens;
+}
+
+class _CachedEstimate {
+  const _CachedEstimate({
+    required this.estimate,
+    required this.timestamp,
+  });
+
+  final RequestUsageEstimate estimate;
+  final DateTime timestamp;
+
+  Map<String, dynamic> toJson() {
+    return {
+      'estimate': {
+        'requestUnits': estimate.requestUnits,
+        'dollarCost': estimate.dollarCost,
+        'inputTokens': estimate.inputTokens,
+        'outputTokens': estimate.outputTokens,
+      },
+      'timestamp': timestamp.millisecondsSinceEpoch,
+    };
+  }
+
+  static _CachedEstimate? fromJson(Map<String, dynamic> json) {
+    final estimateJson = json['estimate'] as Map<String, dynamic>?;
+    final ts = json['timestamp'];
+    if (estimateJson == null || ts is! int) return null;
+    return _CachedEstimate(
+      estimate: RequestUsageEstimate(
+        requestUnits: (estimateJson['requestUnits'] ?? 0).toDouble(),
+        dollarCost: (estimateJson['dollarCost'] ?? 0).toDouble(),
+        inputTokens: (estimateJson['inputTokens'] ?? 0).round(),
+        outputTokens: (estimateJson['outputTokens'] ?? 0).round(),
+      ),
+      timestamp: DateTime.fromMillisecondsSinceEpoch(ts),
+    );
+  }
 }

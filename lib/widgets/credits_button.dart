@@ -171,8 +171,9 @@ class _CreditsButtonState extends State<CreditsButton>
 
                     SizedBox(width: widget.isMobile ? 6 : 8),
 
-                    // Credit balance
-                    if (isLoading)
+                    // Credit balance - show cached value with optional loading indicator
+                    if (isLoading && balance == 0)
+                      // Only show spinner if we have no data at all
                       SizedBox(
                         width: widget.isMobile ? 12 : 13,
                         height: widget.isMobile ? 12 : 13,
@@ -182,14 +183,33 @@ class _CreditsButtonState extends State<CreditsButton>
                         ),
                       )
                     else
-                      Text(
-                        '$creditsText×',
-                        style: TextStyle(
-                          color: textColor,
-                          fontSize: widget.isMobile ? 12 : 13,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.3,
-                        ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            '$creditsText×',
+                            style: TextStyle(
+                              color: textColor,
+                              fontSize: widget.isMobile ? 12 : 13,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                          // Subtle refresh indicator when loading with cached data
+                          if (isLoading && balance > 0) ...[
+                            const SizedBox(width: 4),
+                            SizedBox(
+                              width: 8,
+                              height: 8,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 1,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  textColor.withValues(alpha: 0.5),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                   ],
                 ),

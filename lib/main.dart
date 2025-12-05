@@ -34,79 +34,99 @@ import 'firebase_options.dart';
 import 'services/analytics_service.dart';
 import 'services/service_cache_manager.dart';
 import 'services/service_migration_helper.dart';
+import 'services/request_usage_estimator.dart';
 import 'api/api.dart';
 import 'utils/version.dart';
 import 'widgets/update_required_screen.dart';
 import 'widgets/update_soft_prompt.dart';
 import 'widgets/cognify_logo.dart';
 import 'package:firebase_remote_config/firebase_remote_config.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Load environment variables (optional)
-  try {
-    const compileTimeBackend = String.fromEnvironment('BACKEND_BASE_URL', defaultValue: '');
-    if (compileTimeBackend.isEmpty) {
-      await dotenv.load(fileName: ".env");
-    }
-  } catch (_) {
-    // Silent: we have sane fallbacks (Android emulator defaults to 10.0.2.2:3000)
-  }
-
-  // Initialize Firebase as early as possible for all features
-  try {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-    // Optional: connect to Firestore emulator when env is set
-    final emulator = dotenv.maybeGet('FIRESTORE_EMULATOR_HOST');
-    if (emulator != null && emulator.isNotEmpty && !kIsWeb) {
-      final parts = emulator.split(':');
-      final host = parts.first;
-      final port = int.tryParse(parts.length > 1 ? parts[1] : '8080') ?? 8080;
-      FirebaseFirestore.instance.useFirestoreEmulator(host, port);
-      Logger.info('🧪 Using Firestore emulator at $host:$port', tag: 'Firebase');
-    }
-    // Enable offline persistence for efficient sync
-    try {
-      FirebaseFirestore.instance.settings = const Settings(persistenceEnabled: true);
-      Logger.info('📦 Firestore persistence enabled', tag: 'Firebase');
-    } catch (e) {
-      Logger.warn('⚠️ Could not enable Firestore persistence: $e', tag: 'Firebase');
-    }
-  } catch (e) {
-    Logger.error('❌ Firebase initialization failed early: $e', tag: 'Firebase');
-  }
 
   // Disable Provider debug checks to prevent subtype warnings
   Provider.debugCheckInvalidValueType = null;
 
-  // Initialize WebView platform implementation
+  // Initialize logger with appropriate verbosity
+  Logger.setLevel(LogLevel.info);
+
+  // Initialize WebView platform implementation (synchronous)
   if (defaultTargetPlatform == TargetPlatform.android) {
     WebViewPlatform.instance ??= AndroidWebViewPlatform();
   }
 
-  // Initialize logger with appropriate verbosity
-  Logger.setLevel(LogLevel.info);
+  // CRITICAL: Await cache warm-ups BEFORE runApp so providers have data
+  // This is fast (~10-50ms) since SharedPreferences caches internally
+  await SharedPreferences.getInstance();
+  await Future.wait([
+    CreditsProvider.warmUp(),
+    RequestUsageEstimator.warmUp(),
+  ]);
 
-  // Ensure any previously running background service is stopped on launch
-  // This prevents crashes if a lingering service tries to post a notification without permission
-  try {
-    final backgroundService = FlutterBackgroundService();
-    final isRunning = await backgroundService.isRunning();
-    if (isRunning) {
-      backgroundService.invoke('stopService');
-    }
-  } catch (_) {
-    // Ignore - service might not be initialized yet in this install
-  }
-
-  // Background service disabled to prevent permission crashes
-  // Users can manually enable "Allow background activity" in Android settings if needed
-  // await initializeServiceSafely();
-
+  // Now start app - providers will have cached data ready
   runApp(const CognifyApp());
+
+  // Fire off remaining async initializations (non-blocking)
+  _initializeServicesInBackground();
+}
+
+/// Runs all async initialization work in the background after the app has started.
+void _initializeServicesInBackground() {
+  // Note: SharedPreferences and cache warm-ups are kicked off before runApp() for faster startup
+
+  // Load environment variables (optional, non-blocking)
+  unawaited(() async {
+    try {
+      const compileTimeBackend = String.fromEnvironment('BACKEND_BASE_URL', defaultValue: '');
+      if (compileTimeBackend.isEmpty) {
+        await dotenv.load(fileName: ".env");
+      }
+    } catch (_) {
+      // Silent: we have sane fallbacks
+    }
+  }());
+
+  // Initialize Firebase (non-blocking - CognifyApp handles waiting for it)
+  unawaited(() async {
+    try {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+      // Optional: connect to Firestore emulator when env is set
+      final emulator = dotenv.maybeGet('FIRESTORE_EMULATOR_HOST');
+      if (emulator != null && emulator.isNotEmpty && !kIsWeb) {
+        final parts = emulator.split(':');
+        final host = parts.first;
+        final port = int.tryParse(parts.length > 1 ? parts[1] : '8080') ?? 8080;
+        FirebaseFirestore.instance.useFirestoreEmulator(host, port);
+        Logger.info('🧪 Using Firestore emulator at $host:$port', tag: 'Firebase');
+      }
+      // Enable offline persistence for efficient sync
+      try {
+        FirebaseFirestore.instance.settings = const Settings(persistenceEnabled: true);
+        Logger.info('📦 Firestore persistence enabled', tag: 'Firebase');
+      } catch (e) {
+        Logger.warn('⚠️ Could not enable Firestore persistence: $e', tag: 'Firebase');
+      }
+    } catch (e) {
+      Logger.error('❌ Firebase initialization failed early: $e', tag: 'Firebase');
+    }
+  }());
+
+  // Stop any lingering background service (non-blocking)
+  unawaited(() async {
+    try {
+      final backgroundService = FlutterBackgroundService();
+      final isRunning = await backgroundService.isRunning();
+      if (isRunning) {
+        backgroundService.invoke('stopService');
+      }
+    } catch (_) {
+      // Ignore - service might not be initialized yet
+    }
+  }());
 }
 
 // Resilient background service initialization with graceful error handling
@@ -334,69 +354,32 @@ class CognifyApp extends StatefulWidget {
 }
 
 class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
-  GoRouter? _router;
+  late GoRouter _router;
   late AppLinks _appLinks;
   StreamSubscription? _linkSubscription;
-  ThemeProvider? _themeProvider;
-  FirebaseAuthProvider? _firebaseAuthProvider;
-  bool _isInitializing = true;
+  late final ThemeProvider _themeProvider;
+  late final FirebaseAuthProvider _firebaseAuthProvider;
   bool _hardBlocked = false;
   String _updateUrl = '';
+  String _lastSoftPromptVersion = '';
 
   @override
   Widget build(BuildContext context) {
-    // Show consistent loading screen while initializing
-    if (_isInitializing ||
-        _themeProvider == null ||
-        _firebaseAuthProvider == null ||
-        _router == null) {
-      if (_hardBlocked && _updateUrl.isNotEmpty) {
-        return MaterialApp(
-          theme: lightTheme,
-          darkTheme: darkTheme,
-          home: UpdateRequiredScreen(updateUrl: _updateUrl),
-          debugShowCheckedModeBanner: false,
-        );
-      }
+    // Hard block for forced updates - rare case
+    if (_hardBlocked && _updateUrl.isNotEmpty) {
       return MaterialApp(
         theme: lightTheme,
         darkTheme: darkTheme,
-        home: Scaffold(
-          backgroundColor: Colors.white,
-          body: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                CognifyLogo(size: 80),
-                SizedBox(height: 24),
-                SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
-                  ),
-                ),
-                SizedBox(height: 16),
-                Text(
-                  'Starting Cognify...',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey[600],
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
+        home: UpdateRequiredScreen(updateUrl: _updateUrl),
+        debugShowCheckedModeBanner: false,
       );
     }
 
+    // Render the app immediately - no loading screen!
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider.value(value: _themeProvider!),
-        ChangeNotifierProvider.value(value: _firebaseAuthProvider!),
+        ChangeNotifierProvider.value(value: _themeProvider),
+        ChangeNotifierProvider.value(value: _firebaseAuthProvider),
         ChangeNotifierProvider(create: (_) => ModeConfigProvider()),
         ChangeNotifierProvider(create: (_) => TabProvider()),
         // Provide CreditsPurchaseProvider app-wide and wire it to FirebaseAuthProvider.
@@ -433,7 +416,7 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
             theme: lightTheme,
             darkTheme: darkTheme,
             themeMode: themeProvider.themeMode,
-            routerConfig: _router!,
+            routerConfig: _router,
             debugShowCheckedModeBanner: false,
             builder: (context, child) {
               return PopScope(
@@ -522,16 +505,24 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
+    // Create providers synchronously - they initialize in background and notify listeners
+    _themeProvider = ThemeProvider();
     _firebaseAuthProvider = FirebaseAuthProvider();
 
-    // Initialize everything before building UI
+    // Create router immediately - it handles "initializing" state via redirect
+    final defaultRouteName =
+        WidgetsBinding.instance.platformDispatcher.defaultRouteName;
+    final initialLocation = AppRouter.normalizeInitialLocation(defaultRouteName);
+    _router = AppRouter.createRouter(
+      initialLocation: initialLocation,
+      authProvider: _firebaseAuthProvider,
+    );
+
+    // Kick off background initialization (non-blocking)
     _initializeApp();
 
     // Initialize app links for deep linking
     _initializeAppLinks();
-
-    // Delay router creation until after auth provider is initialized
-    // This prevents the onboarding screen from flashing for authenticated users
   }
 
   void _initializeAppLinks() {
@@ -569,80 +560,31 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
     // Additional deep-link handling (e.g., magic links) can be wired here.
   }
 
-  Future<void> _initializeApp() async {
-    try {
-      Logger.info('🚀 Starting optimized app initialization...', tag: 'AppInit');
+  void _initializeApp() {
+    Logger.info('🚀 Starting instant app initialization...', tag: 'AppInit');
 
-      // Initialize theme provider first (synchronously)
-      _themeProvider = await ThemeProvider.create();
-      Logger.info('✅ Theme provider initialized', tag: 'AppInit');
-
-      // Initialize Firebase auth provider
-      await _firebaseAuthProvider!.initialize();
+    // Auth provider initializes in background and notifies listeners when ready
+    unawaited(_firebaseAuthProvider.initialize().then((_) {
       Logger.info('✅ Firebase auth provider initialized', tag: 'AppInit');
+    }));
 
-      // Initialize service cache manager early for faster subsequent loads
-      await _initializeServiceCache();
+    // Warm up service cache in background (non-blocking)
+    // Note: CreditsProvider and RequestUsageEstimator warm-up is done earlier in _initializeServicesInBackground
+    unawaited(_initializeServiceCache());
 
-      // Remote Config: fetch, activate, apply URL and gate
-      await _initRemoteConfigAndGate();
+    // Fetch remote config in background, apply when ready
+    unawaited(_fetchRemoteConfigGateResult().then((gateResult) {
+      _applyRemoteConfigGateResult(gateResult);
+      _maybePromptForSoftUpdate(gateResult);
+    }));
 
-      // Create router after auth provider is initialized
-      final defaultRouteName =
-          WidgetsBinding.instance.platformDispatcher.defaultRouteName;
-      final initialLocation = AppRouter.normalizeInitialLocation(
-        defaultRouteName,
-      );
-      Logger.debug(
-        '🚀 Initial location (normalized): $initialLocation',
-        tag: 'AppInit',
-      );
-      Logger.debug('🚀 Base URI: ${Uri.base}', tag: 'AppInit');
-      Logger.debug('🚀 defaultRouteName: $defaultRouteName', tag: 'AppInit');
-      _router = AppRouter.createRouter(
-        initialLocation: initialLocation,
-        authProvider: _firebaseAuthProvider!,
-      );
-      Logger.info('✅ Router initialized', tag: 'AppInit');
+    // Initialize secondary services after first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _initializeSecondaryServices();
+    });
 
-      // Mark initialization complete
-      if (mounted) {
-        setState(() {
-          _isInitializing = false;
-        });
-      }
-
-      Logger.info('✅ Core initialization complete', tag: 'AppInit');
-
-      // Initialize other services after UI is ready (non-blocking)
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _initializeSecondaryServices();
-      });
-    } catch (e) {
-      Logger.error('❌ Error during app initialization: $e', tag: 'AppInit');
-      // Fallback initialization
-      _themeProvider ??= ThemeProvider();
-      _firebaseAuthProvider ??= FirebaseAuthProvider();
-
-      // Create fallback router
-      if (_router == null) {
-        final defaultRouteName =
-            WidgetsBinding.instance.platformDispatcher.defaultRouteName;
-        final initialLocation = AppRouter.normalizeInitialLocation(
-          defaultRouteName,
-        );
-        _router = AppRouter.createRouter(
-          initialLocation: initialLocation,
-          authProvider: _firebaseAuthProvider!,
-        );
-      }
-
-      if (mounted) {
-        setState(() {
-          _isInitializing = false;
-        });
-      }
-    }
+    Logger.info('✅ Instant initialization complete', tag: 'AppInit');
   }
 
   /// Initialize service cache manager for faster subsequent loads
@@ -660,13 +602,15 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
     }
   }
 
-  Future<void> _initRemoteConfigAndGate() async {
+  Future<_RemoteConfigGateResult> _fetchRemoteConfigGateResult({bool forceRefresh = false}) async {
     try {
       final rc = FirebaseRemoteConfig.instance;
-      await rc.setConfigSettings(RemoteConfigSettings(
-        fetchTimeout: const Duration(seconds: 10),
-        minimumFetchInterval: const Duration(seconds: AppConfig.defaultRcFetchMinIntervalSec),
-      ));
+      await rc.setConfigSettings(
+        RemoteConfigSettings(
+          fetchTimeout: const Duration(seconds: 10),
+          minimumFetchInterval: _resolveRemoteConfigInterval(forceRefresh: forceRefresh),
+        ),
+      );
       await rc.setDefaults({
         'backend_base_url': AppConfig.backendBaseUrl,
         'min_supported_version': AppConfig.defaultMinSupportedVersion,
@@ -676,105 +620,112 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
         'update_url_web': AppConfig.defaultUpdateUrlWeb,
       });
 
-      await rc.fetchAndActivate();
+      final versionFuture = VersionInfo.current();
 
-      // Apply backend base URL
-      final remoteUrl = rc.getString('backend_base_url');
-      if (Uri.tryParse(remoteUrl)?.hasScheme == true) {
-        AppConfig.setRemoteBackendBaseUrl(remoteUrl);
-        API.instance.updateBaseUrl(remoteUrl);
-        Logger.info('🔄 Applied Remote Config backend_base_url: $remoteUrl', tag: 'RemoteConfig');
+      try {
+        await rc.fetchAndActivate().timeout(const Duration(seconds: 3));
+      } on TimeoutException catch (_) {
+        Logger.warn('⚠️ Remote Config fetch timed out, using cached values', tag: 'RemoteConfig');
+        await rc.activate();
+      } catch (e) {
+        Logger.warn('⚠️ Remote Config fetch failed: $e', tag: 'RemoteConfig');
+        await rc.activate();
       }
 
-      // Determine update URLs
-      String updateUrl = '';
-      if (kIsWeb) {
-        updateUrl = rc.getString('update_url_web');
-      } else if (defaultTargetPlatform == TargetPlatform.iOS || defaultTargetPlatform == TargetPlatform.macOS) {
-        updateUrl = rc.getString('update_url_ios');
-      } else {
-        updateUrl = rc.getString('update_url_android');
-      }
-
-      // Version gating
-      final current = await VersionInfo.current();
+      final backendUrl = rc.getString('backend_base_url');
+      final updateUrl = _resolveUpdateUrl(rc);
+      final current = await versionFuture;
       final hard = Version.parse(rc.getString('min_supported_version'));
       final soft = Version.parse(rc.getString('soft_min_version'));
 
-      if (current < hard && updateUrl.isNotEmpty) {
-        _hardBlocked = true;
-        _updateUrl = updateUrl;
-      } else if (current < soft && updateUrl.isNotEmpty) {
-        // Soft prompt after first frame
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) {
-            showDialog(
-              context: context,
-              barrierDismissible: true,
-              builder: (_) => UpdateSoftPrompt(
-                updateUrl: updateUrl,
-                currentVersion: current.toString(),
-                requiredVersion: soft.toString(),
-              ),
-            );
-          }
-        });
-      }
+      final hardBlocked = updateUrl.isNotEmpty && current < hard;
+      final shouldSoftPrompt =
+          !hardBlocked && updateUrl.isNotEmpty && current < soft;
+
+      return _RemoteConfigGateResult(
+        backendBaseUrl: Uri.tryParse(backendUrl)?.hasScheme == true ? backendUrl : null,
+        updateUrl: updateUrl,
+        hardBlock: hardBlocked,
+        shouldSoftPrompt: shouldSoftPrompt,
+        currentVersion: current,
+        softVersion: soft,
+        hardVersion: hard,
+      );
     } catch (e) {
       Logger.warn('⚠️ Remote Config unavailable or failed: $e', tag: 'RemoteConfig');
+      return const _RemoteConfigGateResult.fallback();
     }
   }
 
-  Future<void> _recheckRemoteConfig() async {
-    try {
-      final rc = FirebaseRemoteConfig.instance;
-      final activated = await rc.fetchAndActivate();
-      if (activated) {
-        // Re-apply backend URL if changed
-        final remoteUrl = rc.getString('backend_base_url');
-        if (Uri.tryParse(remoteUrl)?.hasScheme == true) {
-          AppConfig.setRemoteBackendBaseUrl(remoteUrl);
-          API.instance.updateBaseUrl(remoteUrl);
-          Logger.info('🔄 Re-applied Remote Config backend_base_url: $remoteUrl', tag: 'RemoteConfig');
-        }
-      }
-
-      // Compute gate again
-      String updateUrl = '';
-      if (kIsWeb) {
-        updateUrl = rc.getString('update_url_web');
-      } else if (defaultTargetPlatform == TargetPlatform.iOS || defaultTargetPlatform == TargetPlatform.macOS) {
-        updateUrl = rc.getString('update_url_ios');
-      } else {
-        updateUrl = rc.getString('update_url_android');
-      }
-      final current = await VersionInfo.current();
-      final hard = Version.parse(rc.getString('min_supported_version'));
-      final soft = Version.parse(rc.getString('soft_min_version'));
-
-      if (current < hard && updateUrl.isNotEmpty) {
-        if (mounted) {
-          setState(() {
-            _hardBlocked = true;
-            _updateUrl = updateUrl;
-          });
-        }
-      } else if (current < soft && updateUrl.isNotEmpty) {
-        if (mounted) {
-          showDialog(
-            context: context,
-            barrierDismissible: true,
-            builder: (_) => UpdateSoftPrompt(
-              updateUrl: updateUrl,
-              currentVersion: current.toString(),
-              requiredVersion: soft.toString(),
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      Logger.warn('⚠️ Remote Config re-check failed: $e', tag: 'RemoteConfig');
+  void _applyRemoteConfigGateResult(_RemoteConfigGateResult gateResult) {
+    final backendUrl = gateResult.backendBaseUrl;
+    if (backendUrl != null) {
+      AppConfig.setRemoteBackendBaseUrl(backendUrl);
+      API.instance.updateBaseUrl(backendUrl);
+      Logger.info('🔄 Applied Remote Config backend_base_url: $backendUrl', tag: 'RemoteConfig');
     }
+
+    _hardBlocked = gateResult.hardBlock && gateResult.updateUrl.isNotEmpty;
+    _updateUrl = gateResult.updateUrl;
+  }
+
+  void _maybePromptForSoftUpdate(_RemoteConfigGateResult gateResult) {
+    if (!gateResult.shouldSoftPrompt ||
+        gateResult.updateUrl.isEmpty ||
+        !mounted) {
+      return;
+    }
+
+    final requiredVersion = gateResult.softVersion.toString();
+    if (_lastSoftPromptVersion == requiredVersion) {
+      return;
+    }
+    _lastSoftPromptVersion = requiredVersion;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        barrierDismissible: true,
+        builder: (_) => UpdateSoftPrompt(
+          updateUrl: gateResult.updateUrl,
+          currentVersion: gateResult.currentVersion.toString(),
+          requiredVersion: requiredVersion,
+        ),
+      );
+    });
+  }
+
+  Duration _resolveRemoteConfigInterval({required bool forceRefresh}) {
+    if (forceRefresh) {
+      return Duration.zero;
+    }
+    if (AppConfig.defaultRcFetchMinIntervalSec > 0) {
+      return Duration(seconds: AppConfig.defaultRcFetchMinIntervalSec);
+    }
+    return kReleaseMode ? const Duration(hours: 1) : const Duration(minutes: 1);
+  }
+
+  String _resolveUpdateUrl(FirebaseRemoteConfig rc) {
+    if (kIsWeb) {
+      return rc.getString('update_url_web');
+    }
+    if (defaultTargetPlatform == TargetPlatform.iOS ||
+        defaultTargetPlatform == TargetPlatform.macOS) {
+      return rc.getString('update_url_ios');
+    }
+    return rc.getString('update_url_android');
+  }
+
+  Future<void> _recheckRemoteConfig() async {
+    final gateResult = await _fetchRemoteConfigGateResult(forceRefresh: true);
+    if (!mounted) return;
+
+    setState(() {
+      _applyRemoteConfigGateResult(gateResult);
+    });
+
+    _maybePromptForSoftUpdate(gateResult);
   }
 
   Future<void> _initializeSecondaryServices() async {
@@ -809,4 +760,33 @@ class _CognifyAppState extends State<CognifyApp> with WidgetsBindingObserver {
       );
     }
   }
+}
+
+class _RemoteConfigGateResult {
+  final String? backendBaseUrl;
+  final bool hardBlock;
+  final bool shouldSoftPrompt;
+  final String updateUrl;
+  final Version currentVersion;
+  final Version softVersion;
+  final Version hardVersion;
+
+  const _RemoteConfigGateResult({
+    this.backendBaseUrl,
+    required this.hardBlock,
+    required this.shouldSoftPrompt,
+    required this.updateUrl,
+    required this.currentVersion,
+    required this.softVersion,
+    required this.hardVersion,
+  });
+
+  const _RemoteConfigGateResult.fallback()
+      : backendBaseUrl = null,
+        hardBlock = false,
+        shouldSoftPrompt = false,
+        updateUrl = '',
+        currentVersion = const Version(0, 0, 0),
+        softVersion = const Version(0, 0, 0),
+        hardVersion = const Version(0, 0, 0);
 }
