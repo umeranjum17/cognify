@@ -1,0 +1,23 @@
+# Gradle Configuration Template
+# Copy this to android/gradle.properties and update the Java path
+
+org.gradle.jvmargs=-Xmx4096M -XX:MaxMetaspaceSize=512m -XX:+HeapDumpOnOutOfMemoryError
+android.useAndroidX=true
+android.enableJetifier=true
+android.ndkVersion=27.0.12077973
+
+# IMPORTANT: Update this path to your Java 21 installation
+# macOS example:
+org.gradle.java.home=/Users/YOUR_USERNAME/jdk/jdk-21.0.9+10/Contents/Home
+
+# Linux example:
+# org.gradle.java.home=/home/YOUR_USERNAME/jdk/jdk-21.0.9+10
+
+# Windows example:
+# org.gradle.java.home=C:\\Users\\YOUR_USERNAME\\jdk\\jdk-21.0.9+10
+
+# Alternative: Use Android Studio's bundled JDK (if installed)
+# org.gradle.java.home=/Applications/Android Studio.app/Contents/jbr/Contents/Home
+
+
+

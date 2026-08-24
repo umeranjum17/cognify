@@ -1,0 +1,10 @@
+# Ignore credentials file - contains sensitive information
+CREDENTIALS.txt
+
+# Ignore any local configuration files
+local.properties
+*.jks
+*.keystore
+
+
+
